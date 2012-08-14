@@ -3,8 +3,8 @@ FC = gfortran
 FFLAGS = 
 
 RUN = cea2
-SRC = cea2.f
-INC = cea.inc
+SRC = cea2.f90
+INC = cea.f90
 
 
 $(RUN): $(SRC) $(INC)
