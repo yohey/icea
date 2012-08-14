@@ -154,12 +154,11 @@ subroutine CPHS
       use cea
       implicit none
 ! LOCAL VARIABLES
-      real(8):: cx(7), hcx(7)
+      real(8):: cx(7) = (/0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0/)
+      real(8):: hcx(7) = (/0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0/)
       real(8), save:: scx(7)
       integer, save:: i, ij, j, jj, k
 
-      DATA cx/2*0., 1.D0, .5D0, .6666666666666667D0, .75D0, .8D0/
-      DATA hcx(3)/1.D0/
       k = 1
       if( Tt > Tg(2) ) k = 2
       if( Tt > Tg(3) ) k = 3
@@ -261,7 +260,16 @@ subroutine DETON
       use cea
       implicit none
 ! LOCAL VARIABLES
-      character(15):: fdv, fg1, fh1, fhs1, fm1, fmm1, fpp1, frr1, ft1, ftt1
+      character(15):: ft1  = 'T1, K'
+      character(15):: fh1  = 'H1, CAL/G'
+      character(15):: fhs1 = 'H1, KJ/KG'
+      character(15):: fm1  = 'M1, (1/n) '
+      character(15):: fg1  = 'GAMMA1'
+      character(15):: fpp1 = 'P/P1'
+      character(15):: ftt1 = 'T/T1'
+      character(15):: fmm1 = 'M/M1'
+      character(15):: frr1 = 'RHO/RHO1'
+      character(15):: fdv  = 'DET VEL,M/SEC'
       character(3), save:: unit
       integer, save:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt, mxx(8)
       integer:: index
@@ -276,9 +284,6 @@ subroutine DETON
       equivalence(mxx(5), mdv)
       equivalence(mxx(6), mson)
       equivalence(mxx(7), mmach)
-      DATA ft1/'T1, K'/, fh1/'H1, CAL/G'/, fhs1/'H1, KJ/KG'/, &
-           fm1/'M1, (1/n) '/, fg1/'GAMMA1'/, fpp1/'P/P1'/, ftt1/'T/T1'/, &
-           fmm1/'M/M1'/, frr1/'RHO/RHO1'/, fdv/'DET VEL,M/SEC'/
       iof = 0
       Eql = .true.
       if( T(1) == 0. ) then
@@ -527,8 +532,9 @@ subroutine EFMT(Fone, Aa, Vx)
       real(8), save:: ee, fe, w(Ncol)
       real(8):: dabs, dlog10
 
-      DATA frmt/'(1H ', ',A15', ',', '9X,', '13(F', '6.4,', 'I2,', '1X))'/
-      DATA fmix/'I3,', '6.4,', 'I2,', '9X,', '5.3,'/
+      data frmt /'(1H ', ',A15', ',', '9X,', '13(F', '6.4,', 'I2,', '1X))'/
+      data fmix /'I3,', '6.4,', 'I2,', '9X,', '5.3,'/
+
       frmt(6) = fmix(2)
       frmt(7) = fmix(3)
       j1 = 1
@@ -576,10 +582,9 @@ subroutine EQLBRM
       real(8), save:: aa, ambda, ambda1, bigen, bigneg, delg, dlnt, dpie, ensol, esize, &
              gap, gasfrc, pie, pisave(maxMat-2), siz9, sizeg, &
              sum, sum1, szgj, tem, tmelt, tsize, ween, xi, xln, xsize, xx(maxMat)
-      real(8):: smalno, smnol
+      real(8):: smalno = 1e-6, smnol = -13.815511
       real(8):: dabs, dexp, dlog, dmax1
 
-      DATA smalno/1.E-6/, smnol/ - 13.815511/
       ixsing = 0
       lsing = 0
       jsw = 0
@@ -1597,11 +1602,10 @@ subroutine GAUSS
       implicit none
 ! LOCAL VARIABLES
       integer, save:: i, imatp1, j, k, nn, nnp1
-      real(8):: bigno
+      real(8):: bigno = 1e25
       real(8), save:: coefx(50), tmp
       real(8):: dabs, dmax1
 
-      DATA bigno/1.E+25/
 ! BEGIN ELIMINATION OF NNTH VARIABLE
       imatp1 = Imat + 1
       do nn = 1, Imat
@@ -1857,10 +1861,11 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
       character(4):: w1
       integer:: i, ich1, j, kcin, nb, nch1, nx
 
-      DATA fmtl/'(g', '16', '.0)'/
-      DATA nums/'+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'/
-      DATA numg/'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', &
+      data fmtl /'(g', '16', '.0)'/
+      data nums /'+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'/
+      data numg /'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', &
            '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'/
+
       Ncin = 1
       Lcin(1) = 0
       kcin = 0
@@ -1989,15 +1994,13 @@ subroutine INPUT(Readok, Caseok, Ensert)
       character(1), save:: cx1
       character(2), save:: cx2
       character(3), save:: cx3
-      character(26):: lc, uc
+      character(26):: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       logical, save:: eqrats, incd, phi, pltdat, reacts, refl
       integer, save:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
       integer:: index
       real(8), save:: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
       real(8):: dabs, dmin1, dsqrt
 
-      DATA uc/'ABCDEFGHIJKLMNOPQRSTUVWXYZ'/
-      DATA lc/'abcdefghijklmnopqrstuvwxyz'/
       write(IOOUT, 99001)
       Caseok = .true.
       Nonly = 0
@@ -3546,7 +3549,7 @@ subroutine RKTOUT
       use cea
       implicit none
 ! LOCAL VARIABLES
-      character(4):: exit(11)
+      character(4):: exit(11) = 'EXIT'
       character(15), save:: fi, fiv, fr, z(4)
       integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, &
               misp, mivac, mmach, mppf, mppj, mxx(8), nex
@@ -3560,7 +3563,7 @@ subroutine RKTOUT
       equivalence(mxx(5), mcf)
       equivalence(mxx(6), mivac)
       equivalence(mxx(7), misp)
-      DATA exit/11*'EXIT'/
+
       if( .not. Eql ) then
         write(IOOUT, 99004)
         if( Nfz > 1 ) write(IOOUT, 99005) Nfz
@@ -3773,13 +3776,12 @@ subroutine ROCKET
       integer, save:: i, i01, i12, iof, iplt1, iplte, ipp, isub, isup1, isupsv, itnum, &
               itrot, nar, nipp, niter, nn, npr1, nptth
       logical, save:: done, seql, thi
-      real(8):: a1l, b1, c1, pa
+      real(8):: a1l = -1.26505, b1 = 1.0257, c1 = -1.2318, pa = 1e5
       real(8), save:: acatsv, aeatl, appl, aratio, asq, check, cprf, dd, dh, &
              dlnp, dlnpe, dlt, dp, eln, mat, msq, p1, pcpa, pcplt, pinf, pinj, &
              pinjas, pjrat, ppa, pr, pracat, prat, pratsv, pvg, test, tmelt, usq
       real(8):: dabs, dlog, dmax1, dsqrt
 
-      DATA a1l/-1.26505/, b1/1.0257/, c1/-1.2318/, pa/1.E05/
       iplte = Iplt
       isup1 = 1
       App(1) = 1.
