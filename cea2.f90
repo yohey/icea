@@ -3,6 +3,7 @@
 !
 !             CHEMICAL EQULIBRIUM WITH APPLICATIONS         5/21/04
 !***********************************************************************
+program main
       use cea
       implicit none
 ! LOCAL VARIABLES
@@ -142,9 +143,11 @@
               ' AND NASA RP-1311, PART II, 1996')
 99008 format (/, 'OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)')
 99009 format ('#', 2x, 20A12)
-      end
+end program
 
-      subroutine CPHS
+
+
+subroutine CPHS
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
@@ -247,8 +250,11 @@
         S(j) = S(j) + Cft(jj, 9)
         H0(j) = H0(j) + Cft(jj, 8)*cx(2)
       end do
-99999 end
-      subroutine DETON
+99999 end subroutine
+
+
+
+subroutine DETON
 !***********************************************************************
 ! CHAPMAN-JOUGUET DETONATIONS.
 !***********************************************************************
@@ -500,8 +506,11 @@
 99007 format (/' BURNED GAS'/)
 99008 format (/' DETONATION PARAMETERS'/)
 99009 format (///)
-      end
-      subroutine EFMT(Fone, Aa, Vx)
+end subroutine
+
+
+
+subroutine EFMT(Fone, Aa, Vx)
 !***********************************************************************
 ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
 !***********************************************************************
@@ -545,8 +554,11 @@
         end if
       end do
       write(IOOUT, frmt) Aa, (w(j), ne(j), j=j1, Npt)
-      end
-      subroutine EQLBRM
+end subroutine
+
+
+
+subroutine EQLBRM
 !***********************************************************************
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
@@ -1494,8 +1506,11 @@
 99034 format (/, I3, ' CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED', &
               ' SPECIES (EQLBRM)')
 99035 format (/' CALCULATIONS STOPPED AFTER POINT', I3, '(EQLBRM)')
-      end
-      subroutine FROZEN
+end subroutine
+
+
+
+subroutine FROZEN
 !***********************************************************************
 ! CALCULATE PROPERTIES WITH FROZEN COMPOSITION AT ASSIGNED ENTROPY
 ! AND PRESSURE.  CALLED FROM ROCKET.
@@ -1569,8 +1584,11 @@
       Npt = Npt - 1
  200  return
 99001 format (/' FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)')
-      end
-      subroutine GAUSS
+end subroutine
+
+
+
+subroutine GAUSS
 !***********************************************************************
 ! SOLVE ANY LINEAR SET OF UP TO maxMat EQUATIONS
 ! NUMBER OF EQUATIONS = IMAT
@@ -1665,8 +1683,11 @@
       X(k) = G(k, imatp1) - tmp
       k = k - 1
       if( k /= 0 ) go to 100
-99999 end
-      subroutine HCALC
+99999 end subroutine
+
+
+
+subroutine HCALC
 !***********************************************************************
 ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
 ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
@@ -1798,8 +1819,11 @@
 99002 format (/' COEFFICIENTS FOR ', A15, ' ARE NOT AVAILABLE (HCALC)')
 99003 format (/' ERROR IN DATA FOR ', A15, ' CHECK NAME AND TEMPERATURE', &
               ' RANGE IN', /, ' thermo.inp (HCALC)')
-      end
-      subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
+end subroutine
+
+
+
+subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
 !***********************************************************************
 ! FREE-FORM READ FOR CEA.  READS AND DECIPHERS DATA FOR ONE DATASET.
 !
@@ -1946,8 +1970,11 @@
 99002 format (1x, 80A1)
 99003 format (/' FATAL ERROR IN INPUT format (INFREE)')
 99004 format (/' WARNING!!  UNACCEPTABLE NUMBER ', A15, ' (INFREE)')
-      end
-      subroutine INPUT(Readok, Caseok, Ensert)
+end subroutine
+
+
+
+subroutine INPUT(Readok, Caseok, Ensert)
 !***********************************************************************
 ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
 !***********************************************************************
@@ -2616,8 +2643,11 @@
 99024 format (/' NOTE!! MAXIMUM NUMBER OF ASSIGNED ', A5, ' VALUES IS', I3, &
               ' (INPUT)', /)
 99025 format (/' FATAL ERROR IN DATASET (INPUT)')
-      end
-      subroutine MATRIX
+end subroutine
+
+
+
+subroutine MATRIX
 !***********************************************************************
 ! SET UP ITERATION OR DERIVATIVE MATRIX.
 !***********************************************************************
@@ -2757,8 +2787,11 @@
         kmat = Imat
         Imat = Imat - 1
       end if
-      end
-      subroutine NEWOF
+end subroutine
+
+
+
+subroutine NEWOF
 !***********************************************************************
 ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
 !***********************************************************************
@@ -2825,8 +2858,11 @@
 99005 format (' (KG-MOL)(K)/KG', 4X, E18.8, 2E20.8)
 99006 format (/' KG-FORM.WT./KG', 13X, 'bi(2)', 15X, 'bi(1)', 15X, 'b0i')
 99007 format (1X, A16, 3E20.8)
-      end
-      subroutine OUT1
+end subroutine
+
+
+
+subroutine OUT1
 !***********************************************************************
 ! OUT1 WRITES REACTANT AND FUEL-OXIDANT RATIO INformatION.
 ! ENTRY OUT2 WRITES THERMODYNAMIC PROPERTIES.
@@ -3229,8 +3265,11 @@
 99020 format (/'  WITH FROZEN REACTIONS'/)
 99021 format (/' REACTANT DENSITY=', F8.2, ' KG/CU M')
 99022 format (/' REACTANT DENSITY=', F8.4, ' G/CC')
-      end
-      subroutine REACT
+end subroutine
+
+
+
+subroutine REACT
 !***********************************************************************
 ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
 !***********************************************************************
@@ -3496,8 +3535,11 @@
 99009 format (1x, a1, ': ', a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))
 99010 format (/' YOUR ASSIGNED TEMPERATURE', F8.2, 'K FOR ', A15, /, &
        'IS OUTSIDE ITS TEMPERATURE RANGE', F8.2, ' TO', F9.2, 'K (REACT)')
-      end
-      subroutine RKTOUT
+end subroutine
+
+
+
+subroutine RKTOUT
 !***********************************************************************
 ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
 !***********************************************************************
@@ -3717,8 +3759,11 @@
 99013 format (/' PERFORMANCE PARAMETERS'/)
 99014 format (1x, A4, ' FRACTIONS'/)
 99015 format (1X, 3(A15, F8.5, 3X))
-      end
-      subroutine ROCKET
+end subroutine
+
+
+
+subroutine ROCKET
 !***********************************************************************
 ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
 !***********************************************************************
@@ -4307,8 +4352,11 @@
               'PRESSURE RATIO FOR nfz GREATER'/' THAN 1. FROZEN ', &
               'PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)')
 99025 format (/' AN ASSIGNED AREA RATIO IS < 1 (ROCKET)' )
-      end
-      subroutine SEARCH
+end subroutine
+
+
+
+subroutine SEARCH
 !***********************************************************************
 ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
 !***********************************************************************
@@ -4546,8 +4594,11 @@
 99008 format (/'     BINARY INTERACTIONS'/)
 99009 format (5X, 2A16)
 99010 format ()
-      end
-      subroutine SETEN
+end subroutine
+
+
+
+subroutine SETEN
 !***********************************************************************
 ! USE COMPOSITIONS FROM PREVIOUS POINT AS INITIAL ESTIMATES FOR
 ! CURRENT POINT NPT.  IF -
@@ -4623,8 +4674,11 @@
           En(j, Npt) = En(j, Isv)
         end do
       end if
-      end
-      subroutine SHCK
+end subroutine
+
+
+
+subroutine SHCK
 !***********************************************************************
 ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
 !***********************************************************************
@@ -5024,8 +5078,11 @@
 99021 format (/' SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM')
 99022 format (/1x, A4, ' FRACTIONS'/)
 99023 format (' ', A16, F8.5, 12F9.5)
-      end
-      subroutine THERMP
+end subroutine
+
+
+
+subroutine THERMP
 !***********************************************************************
 ! ASSIGNED THERMODYNAMIC STATES.  HP, SP, TP, UV, SV, AND TV PROBLEMS.
 !***********************************************************************
@@ -5102,8 +5159,11 @@
 99008 format (/29X, 'ENTROPY AND PRESSURE'/)
 99009 format (/' THERMODYNAMIC PROPERTIES'/)
 99010 format (////)
-      end
-      subroutine TRANIN
+end subroutine
+
+
+
+subroutine TRANIN
 !***********************************************************************
 ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
 !***********************************************************************
@@ -5377,8 +5437,11 @@
               ' WAS USED IN ', &
               /' TRANSPORT PROPERTY CALCULATIONS FOR POINT', I3, &
               '(TRANIN))')
-      end
-      subroutine TRANP
+end subroutine
+
+
+
+subroutine TRANP
 !***********************************************************************
 ! CALCULATES GAS TRANSPORT PROPERTIES
 !
@@ -5537,8 +5600,11 @@
         Coneql(Npt) = Confro(Npt) + reacon
         Preql(Npt) = Vis(Npt)*Cpeql(Npt)/Coneql(Npt)
       end if
-      end
-      subroutine UTHERM(Readok)
+end subroutine
+
+
+
+subroutine UTHERM(Readok)
 !***********************************************************************
 ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
 ! UNformatTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
@@ -5791,8 +5857,11 @@
 99006 format (5D16.8/2D16.8, 16x, 2D16.8)
 99007 format (/' ERROR IN PROCESSING thermo.inp AT OR NEAR ', A15, &
               ' (UTHERM)')
-      end
-      subroutine UTRAN(Readok)
+end subroutine
+
+
+
+subroutine UTRAN(Readok)
 !***********************************************************************
 ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
 ! UNformatTED ON I/O UNIT IOTRN.  USES SCRATCH I/O UNIT IOSCH.
@@ -5861,8 +5930,11 @@
 99002 format (1X, A1, 2F9.2, 4E15.8)
 99003 format (/' ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)', /1X, &
               2A16)
-      end
-      subroutine VARFMT(Vx)
+end subroutine
+
+
+
+subroutine VARFMT(Vx)
 !***********************************************************************
 ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-format IN
 ! VARIABLE format FMT.
@@ -5887,4 +5959,4 @@
         if( vi >= 1000000. ) Fmt(k) = '0,'
       end do
       Fmt(29)(2:) = ' '
-      end
+end subroutine
