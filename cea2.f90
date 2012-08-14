@@ -3,104 +3,6 @@
 !
 !             CHEMICAL EQULIBRIUM WITH APPLICATIONS         5/21/04
 !***********************************************************************
-! 11/01/94 - CORRECTION IN EQLBRM  TEST FOR CONVERGENCE ON CONDENSED
-!            CHANGED FROM: DABS(DELN(J))<.5D-05
-!                      TO: DABS(DELN(J)/TOTN(NPT))<.5D-05
-! 06/03/96 - INFREE CHANGED TO BE MORE COMPATIABLE WITH VARIOUS FORTRAN
-!            COMPILERS AND TO ACCEPT NUMERICS WITH UP TO 24 CHARACTERS.
-! 07/05/96 - CORRECTIONS MADE FOR COMPATIBILITY WITH OTHER COMPILERS.
-! 08/29/96 - CORRECTION IN EQLBRM TO CORRECT FOR CONDENSED SPECIES
-!            TEST AT TEMPERATURE INTERVAL OVERLAP POINTS.
-! 09/17/96 - ADD 2 MORE VARIABLES FOR PLOTING, THE VOLUME PARTIAL
-!            DERIVATIVES: (DLNV/DLNT)P AND (DLNV/DLNP)T AS DEFINED
-!            IN EQUATIONS (2.50) AND (2.51) IN RP-1311, PT1. THE PLOT
-!            LIST VARIABLES IN DATASET 'OUTPUT' HAVE EMBEDDED STRINGS
-!            'DLNT' AND 'DLNP' RESPECTIVELY (E.G. 'DLNV/DLNT' OR
-!            '(DLNV/DLNP)T'
-! 10/18/96 - CORRECT INFREE SO THAT NUMERICAL INPUT ARRAYS MAY BE SPLIT
-!            FROM RECORD TO RECORD.
-! 12/11/96 - INPUT: ELIMINATE 'PSI' POSSIBILITY IN PCP CHECK.
-! 12/12/96 - INPUT: WRITE MESSAGE WHEN VALUES OF P OR T ARE MISSING.
-! 01/31/97 - MAIN: REVERSE ORDER FOR INSERTING CONDENSED SO THAT HIGHEST
-!            T INTERVAL IS INSERTED.
-! 01/31/97 - EQLBRM: CHECK ON INITIAL T INTERVALS FOR NON-TP PROBLEMS
-!            WHEN A T ESTIMATE IS GIVEN. IF NO T EST., USE 3800K.
-! 01/31/97 - THERMP: REMOVE INITIAL ESTIMATE OF 3800K WHEN NO T IS GIVEN
-! 03/18/97 - INPUT: INSURE THAT INPUT VARIABLES P, T, MACH, U1, V, RHO, SUBAR, 
-!            SUPAR, O/F, AND PCP DO NOT EXCEED STORAGE.  WRITE MESSAGE IF
-!            TOO MANY VALUES ARE LISTED IN THE INPUT FILE.
-! 03/18/97 - SEARCH: IFZ(NC+1) SET TO 0. CAUSED PROBLEMS WITH CONDENSED.
-! 03/20/97 - MAIN: CHECK FOR 100%FUEL WHEN OXIDANT IS GIVEN AND OMITTING
-!            THE OXIDANT CHANGES THE CHEMICAL SYSTEM. FATAL ERROR MESSAGE.
-! 03/21/97 - MAIN: FOR NON-TP CASES AND FIRST POINT AND NO T ESTIMATE IS
-!            GIVEN, AND CONDENSED SPECIES ARE INSERTED, ESTIMATE T TO BE
-!            THE LOWEST T MAXIMUM OF THE INSERTED SPECIES MINUS 10K..
-! 04/22/97 - HCALC AND DETON: CEA WAS ALLOWING ALLOWING EXECUTION OF
-!            DETON PROBLEMS WITH CONDENSED REACTANTS.
-! 04/28/97 - EQLBRM: CORRECT PHASES OF CONDENSED PRODUCTS WERE NOT BEING
-!            CHECKED AT THE BEGINING OF THE ROUTINE FOR TP PROBLEMS.
-! 08/11/97 - SEARCH: PRINT MESSAGE FOR EXCEEDING maxNgc, maxNg, OR maxNc.
-! 09/04/97 - MAIN, SEARCH: CHECK TO SEE IF PRODUCTS CONTAIN ALL ELEMENTS.
-! 10/09/97 - REACT, HCALC: CHANGE ERROR MESSAGE FOR REACTANT DATA NOT
-!            FOUND IN THERMO.LIB.
-! 12/22/97 - INTRODUCE VARIABLE ARRAY SIZES FOR INPUT VARIABLES P, T, V, 
-!            (CORRECTED AND REACTANT MIXTURES. THESE MAXIMUM VALUES ARE
-!             IN 1/29/98)  PARAMETER STATEMENTS
-!             maxPv - MAX NUMBER OF PRESSURES OR DENSITIES (DEFAULT 26)
-!             maxT - MAX NUMBER OF TEMPERATURES (DEFAULT 51)
-!             maxMix - MAX NUMBER OF MIXTURE VALUES (DEFAULT 52)
-! 02/12/98 - UTHERM: CHECK FOR NUMBER OF T INTERVALS (NT) BEING > 3 FOR
-!            GASES (IFAZ=0).  IF SO, EXIT WITH MESSAGE.
-! 03/02/98 - INCREASE DIMENSIONS OF VARIABLES FOR PLOT DUMP - PLTVAR, 
-!            PLTOUT, MAX NPLT, AND FORMAT STATEMENT IN MAIN.
-! 03/10/98 - CORRECTED 3/2/98 CHANGE.
-! 05/20/98 - UTHERM & HCALC. CORRECTED 'AIR' CALCULATIONS ABOVE 6000K
-!            IN HCALC BY USING COEFS FOR 1000-6000. CORRECT MOLAR AMTS
-!            IN UTHERM.
-! 12/01/98 - INFREE & INPUT. CHANGED ICH ARRAY.
-! 02/12/99 - UTHERM & SEARCH. ADDED DATE TO THERMO DATA.
-!            VARFMT. ELIMINATE "," BEFORE ")" IN FORMAT FMT.
-! 02/16/99 - INFREE. USE "CTRL I" FOR TAB.
-! 04/16/99 - NOTE: THIS VERSION CONTAINS SOME CLEANUP CHANGES NOT
-!            INCLUDED IN PREVIOUS VERSIONS.
-! 04/16/99 - UTHERM: WHEN SETTING 'AIR' COMPOSITION, REMOVE CHECK ON C
-!            ALSO INSERT WEIGHT WITH MORE FIGURES FOR E-.
-! 04/16/99 - THERMO.INP CHANGED SO THAT ALL COEFFICIENTS LISTED IN ORDER:
-!             -2  -1 0 1 2 3 4 WHETHER ALL COEFFICIENTS EXIST OR NOT.
-! 05/26/99 - NEW ATOMIC WEIGHTS IN BLOCKDATA. CARBON NOW 12.0107.
-! 06/11/99 - EQLBRM: MANY SMALL CHANGES THAT DO NOT AFFECT CALCULATIONS.
-!            (CORRECTED 7/16/99)
-! 07/01/99 - COMMON INPT AND NEWOF: BRATIO IS REPLACED BY BCHECK WHERE
-!            BCHECK = (BIGGEST B0I)*.000001 AND USED IN EQN.(3.6A), RP-1311.
-!            BRATIO AS DESCRIBED IN SEC.3.2 IS USED IN NEWOF ONLY.
-! 08/30/99 - CHANGE I/O UNITS FOR INPUT AND OUTPUT FROM 5 & 6 TO 7 & 8.
-! 11/05/99 - REWORD '99000 FORM...' IN SEARCH & '99003 FORM...' IN REACT.
-! 06/13/00 - INPUT. BYPASS TCEST VARIABLE IN T(I) LOOP. CEA WAS CONVERTING
-!            VALUE FROM CENTIGRADE TO KELVIN AND ASSIGNING TEMPERATURE.
-! 09/15/00 - MAIN. PRINT MESSAGE IF INSERT SPECIES IS NOT FOUND.
-! 10/17/00 - CHANGE MAX NUMBER OF ELEMENTS IN A REACTANT FROM 6 TO 12.
-! 01/16/01 - EQLBRM: PRINT MESSAGE IF TT DRIVEN DOWN TO < .2*TG(1).
-! 01/16/01 - INPUT: HP IN PRINTOUT CORRECTED TO F WHEN UV = T.
-! 04/23/01 - TEST FOR THERMO PROPERTY EXTRAPOLATION FOR PURE SPECIES:
-!            ( TT.GE.TG(1)*.8D0.AND.TT.LE.TG(4)*1.1D0) WHERE TG(1)= 200K.
-! 08/06/01 - UTHERM: CORRECT LABELLING FOR CONDENSED REACTANTS.
-! 05/30/02 - ROCKET: In "IF ( ipp.LT.Npp ) ipp = ipp-1", change LT to LE
-! 06/21/02 - UPDATED FORTRAN
-! 08/19/02 - INPUT: DISCONTINUE RUN FOR ILLEGAL EQUIVALENCE RATIO.
-! 09/20/02 - REACT: FOR REACTANT TEMPS OUT OF RANGE, PRINT T RANGE.
-! 10/18/02 - BLOCKDATA: New atomic weights inc. N=14.0067, S=32.065, ...
-!  1/17/03 - cea.inc: Change maxTr from 30 to 40 for large systems.
-!  3/31/03 - Declare I/O units 7 & 8 to be IOINP & IOOUT in cea.inc  
-!  4/03/03 - ROCKET: Added check for assigned ae/at < 1.
-! 10/22/03 - OUT2: Plot check on p, s, and g needs check on first 2 letters.
-! 11/14/03 - OUT: Add cond...fz and pran...fz to .plt for all problems.
-! 11/18/03 - INPUT: If exploded formula, Energy = ' ', not 'lib'.
-! 11/25/03 - DETON: Extra line for .plt data with multiple DETON calls.
-! 01/30/04 - ROCKET: To correct points printed after fac, change 
-!            IF(ipp.LE.Npp)ipp=ipp-1 to IF(ipp.LT.Npp.OR.Npp.EQ.4) ...
-! 02/05/04 - Chg. numbered ENDDO's to CONTINUE's for Watson compiler.
-! 05/21/04 - Added labels to columns in .plt file
-!***********************************************************************
       use cea
       implicit none
 ! LOCAL VARIABLES
@@ -109,140 +11,140 @@
       character(196):: prefix
       logical:: caseok, ex, readok
       integer:: i, inc, iof, j, ln, n
-      integer:: INDEX
+      integer:: index
       real(8):: xi, xln
-      real(8):: DLOG
+      real(8):: dlog
 
-      WRITE (*, 99001)
-      READ (*, 99002) prefix
-      ln = INDEX(prefix, ' ') - 1
+      write(*, 99001)
+      read(*, 99002) prefix
+      ln = index(prefix, ' ') - 1
       infile = prefix(1:ln)//'.inp'
       ofile = prefix(1:ln)//'.out'
       Pfile = prefix(1:ln)//'.plt'
-      INQUIRE (FILE=infile, EXIST=ex)
-      IF ( .NOT.ex ) THEN
-        PRINT *, infile, ' DOES NOT EXIST'
-        GOTO 400
-      ENDIF
-      OPEN (IOINP, FILE=infile, STATUS='old', FORM='formatted')
-      OPEN (IOOUT, FILE=ofile, STATUS='unknown', FORM='formatted')
-      OPEN (IOSCH, STATUS='scratch', FORM='unformatted')
-      OPEN (IOTHM, FILE='thermo.lib', FORM='unformatted')
-      OPEN (IOTRN, FILE='trans.lib', FORM='unformatted')
-      WRITE (IOOUT, 99006)
-      WRITE (IOOUT, 99007)
-      WRITE (IOOUT, 99006)
-      readok = .TRUE.
-      Newr = .FALSE.
+      inquire(file=infile, exist=ex)
+      if( .not. ex ) then
+        print *, infile, ' DOES NOT EXIST'
+        go to 400
+      end if
+      open(IOINP, FILE=infile, STATUS='old', FORM='formatted')
+      open(IOOUT, FILE=ofile, STATUS='unknown', FORM='formatted')
+      open(IOSCH, STATUS='scratch', FORM='unformatted')
+      open(IOTHM, FILE='thermo.lib', FORM='unformatted')
+      open(IOTRN, FILE='trans.lib', FORM='unformatted')
+      write(IOOUT, 99006)
+      write(IOOUT, 99007)
+      write(IOOUT, 99006)
+      readok = .true.
+      Newr = .false.
  100  Iplt = 0
       Nplt = 0
-      CALL INPUT(readok, caseok, ensert)
-      IF ( caseok.AND.readok ) THEN
-        DO iof = 1, Nof
-          IF ( Oxf(iof).EQ.0..AND.B0p(1, 1).NE.0. ) THEN
-            DO i = 1, Nlm
-              IF ( B0p(i, 1).EQ.0..OR.B0p(i, 2).EQ.0. ) THEN
-                WRITE (IOOUT, 99008)
-                GOTO 200
-              ENDIF
-            ENDDO
-          ENDIF
-        ENDDO
-        IF ( Ions ) THEN
-          IF ( Elmt(Nlm).NE.'E' ) THEN
+      call INPUT(readok, caseok, ensert)
+      if( caseok .and. readok ) then
+        do iof = 1, Nof
+          if( Oxf(iof) == 0. .and. B0p(1, 1) /= 0. ) then
+            do i = 1, Nlm
+              if( B0p(i, 1) == 0. .or. B0p(i, 2) == 0. ) then
+                write(IOOUT, 99008)
+                go to 200
+              end if
+            end do
+          end if
+        end do
+        if( Ions ) then
+          if( Elmt(Nlm) /= 'E' ) then
             Nlm = Nlm + 1
             Elmt(Nlm) = 'E'
             B0p(Nlm, 1) = 0.
             B0p(Nlm, 2) = 0.
-          ENDIF
-        ELSEIF ( Elmt(Nlm).EQ.'E' ) THEN
+          end if
+        else if( Elmt(Nlm) == 'E' ) then
           Nlm = Nlm - 1
-        ENDIF
-        DO n = 1, Nreac
+        end if
+        do n = 1, Nreac
           Jray(n) = 0
-        ENDDO
-        CALL SEARCH
-        IF ( Ngc.EQ.0 ) GOTO 300
-        Newr = .FALSE.
-        IF ( Trnspt ) CALL READTR
+        end do
+        call SEARCH
+        if( Ngc == 0 ) go to 300
+        Newr = .false.
+        if( Trnspt ) call READTR
 ! INITIAL ESTIMATES
         Npr = 0
-        Gonly = .TRUE.
+        Gonly = .true.
         Enn = .1D0
         Ennl = -2.3025851
         Sumn = Enn
         xi = Ng
-        IF ( xi.EQ.0. ) xi = 1.
+        if( xi == 0. ) xi = 1.
         xi = Enn/xi
-        xln = DLOG(xi)
-        DO inc = 1, Nc
+        xln = dlog(xi)
+        do inc = 1, Nc
           j = Ng + inc
           En(j, 1) = 0.D0
           Enln(j) = 0.D0
-        ENDDO
-        DO j = 1, Ng
+        end do
+        do j = 1, Ng
           En(j, 1) = xi
           Enln(j) = xln
-        ENDDO
-        IF ( Nc.NE.0.AND.Nsert.NE.0 ) THEN
-          DO 120 i = 1, Nsert
-            DO j = Ngc, Ngp1, - 1
-              IF ( Prod(j).EQ.ensert(i) ) THEN
+        end do
+        if( Nc /= 0 .and. Nsert /= 0 ) then
+          do 120 i = 1, Nsert
+            do j = Ngc, Ngp1, - 1
+              if( Prod(j) == ensert(i) ) then
                 Npr = Npr + 1
                 Jcond(Npr) = j
-                IF ( .NOT.Short ) WRITE (IOOUT, 99003) Prod(j)
-                GOTO 120
-              ENDIF
-            ENDDO
-            WRITE (IOOUT, 99004) ensert(i)
- 120      CONTINUE
-        ENDIF
-        IF ( Rkt ) THEN
-          CALL ROCKET
-        ELSEIF ( Tp.OR.Hp.OR.Sp ) THEN
-          CALL THERMP
-        ELSEIF ( Detn ) THEN
-          CALL DETON
-        ELSEIF ( Shock ) THEN
-          CALL SHCK
-        ENDIF
-        IF ( Nplt.GT.0 ) THEN
-          OPEN (IOPLT, FILE=Pfile, FORM='formatted')
-          WRITE (IOPLT, 99009) (Pltvar(j), j=1, Nplt)
-          DO i = 1, Iplt
-            WRITE (IOPLT, 99005) (Pltout(i, j), j=1, Nplt)
-          ENDDO
-          WRITE (IOPLT, 99009) (Pltvar(j), j=1, Nplt)
-        ENDIF
-      ENDIF
- 200  IF ( readok ) GOTO 100
- 300  CLOSE (IOINP)
-      CLOSE (IOOUT)
-      CLOSE (IOSCH)
-      CLOSE (IOTHM)
-      CLOSE (IOTRN)
-      CLOSE (IOPLT)
- 400  STOP
-99001 FORMAT (//' ENTER INPUT FILE NAME WITHOUT .inp EXTENSION.'/  &
+                if( .not. Short ) write(IOOUT, 99003) Prod(j)
+                go to 120
+              end if
+            end do
+            write(IOOUT, 99004) ensert(i)
+ 120      continue
+        end if
+        if( Rkt ) then
+          call ROCKET
+        else if( Tp .or. Hp .or. Sp ) then
+          call THERMP
+        else if( Detn ) then
+          call DETON
+        else if( Shock ) then
+          call SHCK
+        end if
+        if( Nplt > 0 ) then
+          open(IOPLT, FILE=Pfile, FORM='formatted')
+          write(IOPLT, 99009) (Pltvar(j), j=1, Nplt)
+          do i = 1, Iplt
+            write(IOPLT, 99005) (Pltout(i, j), j=1, Nplt)
+          end do
+          write(IOPLT, 99009) (Pltvar(j), j=1, Nplt)
+        end if
+      end if
+ 200  if( readok ) go to 100
+ 300  close(IOINP)
+      close(IOOUT)
+      close(IOSCH)
+      close(IOTHM)
+      close(IOTRN)
+      close(IOPLT)
+ 400  stop
+99001 format (//' ENTER INPUT FILE NAME WITHOUT .inp EXTENSION.'/  &
               '   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE', / &
              ' THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY' &
              //)
-99002 FORMAT (a)
-99003 FORMAT (1X, A16, 'INSERTED')
-99004 FORMAT (/' WARNING!!!', A16, 'NOT FOUND FOR INSERTION')
-99005 FORMAT (1x, 1p, 20E12.4)
-99006 FORMAT (/' ***************************************************', &
+99002 format (a)
+99003 format (1X, A16, 'INSERTED')
+99004 format (/' WARNING!!!', A16, 'NOT FOUND FOR INSERTION')
+99005 format (1x, 1p, 20E12.4)
+99006 format (/' ***************************************************', &
               '****************************')
-99007 FORMAT (/, 9x, 'NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,', &
+99007 format (/, 9x, 'NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,', &
               ' MAY 21, 2004', /19x, 'BY  BONNIE MCBRIDE', &
               ' AND SANFORD GORDON', /5x, &
               ' REFS: NASA RP-1311, PART I, 1994', &
               ' AND NASA RP-1311, PART II, 1996')
-99008 FORMAT (/, 'OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)')
-99009 FORMAT ('#', 2x, 20A12)
-      END
+99008 format (/, 'OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)')
+99009 format ('#', 2x, 20A12)
+      end
 
-      SUBROUTINE CPHS
+      subroutine CPHS
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
@@ -256,8 +158,8 @@
       DATA cx/2*0., 1.D0, .5D0, .6666666666666667D0, .75D0, .8D0/
       DATA hcx(3)/1.D0/
       k = 1
-      IF ( Tt.GT.Tg(2) ) k = 2
-      IF ( Tt.GT.Tg(3) ) k = 3
+      if( Tt > Tg(2) ) k = 2
+      if( Tt > Tg(3) ) k = 3
       cx(2) = 1.D0/Tt
       cx(1) = cx(2)**2
       scx(3) = Tln
@@ -265,88 +167,88 @@
       hcx(2) = Tln*cx(2)
       hcx(1) = -cx(1)
       scx(1) = hcx(1)*.5D0
-      DO i = 4, 7
+      do i = 4, 7
         hcx(i) = cx(i)*Tt
         scx(i) = cx(i-1)*Tt
-      ENDDO
-      DO j = 1, Ng
+      end do
+      do j = 1, Ng
         H0(j) = 0.D0
         S(j) = 0.D0
-      ENDDO
-      DO i = 7, 4, - 1
-        DO j = 1, Ng
+      end do
+      do i = 7, 4, - 1
+        do j = 1, Ng
           S(j) = (S(j)+Coef(j, i, k))*scx(i)
           H0(j) = (H0(j)+Coef(j, i, k))*hcx(i)
-        ENDDO
-      ENDDO
-      DO i = 1, 3
-        DO j = 1, Ng
+        end do
+      end do
+      do i = 1, 3
+        do j = 1, Ng
           S(j) = S(j) + Coef(j, i, k)*scx(i)
           H0(j) = H0(j) + Coef(j, i, k)*hcx(i)
-        ENDDO
-      ENDDO
-      DO j = 1, Ng
+        end do
+      end do
+      do j = 1, Ng
         S(j) = S(j) + Coef(j, 9, k)
         H0(j) = H0(j) + Coef(j, 8, k)*cx(2)
-      ENDDO
-      IF ( .NOT.Tp.OR.Convg ) THEN
-        DO j = 1, Ng
+      end do
+      if( .not. Tp .or. Convg ) then
+        do j = 1, Ng
           Cp(j) = 0.D0
-        ENDDO
-        DO i = 7, 4, - 1
-          DO j = 1, Ng
+        end do
+        do i = 7, 4, - 1
+          do j = 1, Ng
             Cp(j) = (Cp(j)+Coef(j, i, k))*Tt
-          ENDDO
-        ENDDO
-        DO i = 1, 3
-          DO j = 1, Ng
+          end do
+        end do
+        do i = 1, 3
+          do j = 1, Ng
             Cp(j) = Cp(j) + Coef(j, i, k)*cx(i)
-          ENDDO
-        ENDDO
-      ENDIF
-      IF ( Npr.NE.0.AND.k.NE.3.AND.Ng.NE.Ngc ) THEN
-        DO ij = 1, Npr
+          end do
+        end do
+      end if
+      if( Npr /= 0 .and. k /= 3 .and. Ng /= Ngc ) then
+        do ij = 1, Npr
           j = Jcond(ij)
           jj = Jcond(ij) - Ng
           Cp(j) = 0.D0
           H0(j) = 0.D0
           S(j) = 0.D0
-          DO i = 7, 4, - 1
+          do i = 7, 4, - 1
             S(j) = (S(j)+Cft(jj, i))*scx(i)
             H0(j) = (H0(j)+Cft(jj, i))*hcx(i)
             Cp(j) = (Cp(j)+Cft(jj, i))*Tt
-          ENDDO
-          DO i = 1, 3
+          end do
+          do i = 1, 3
             S(j) = S(j) + Cft(jj, i)*scx(i)
             H0(j) = H0(j) + Cft(jj, i)*hcx(i)
             Cp(j) = Cp(j) + Cft(jj, i)*cx(i)
-          ENDDO
+          end do
           S(j) = S(j) + Cft(jj, 9)
           H0(j) = H0(j) + Cft(jj, 8)*cx(2)
-        ENDDO
-      ENDIF
-      GOTO 99999
+        end do
+      end if
+      go to 99999
       ENTRY ALLCON
-      DO jj = 1, Nc
+      do jj = 1, Nc
         j = jj + Ng
         Cp(j) = 0.D0
         H0(j) = 0.D0
         S(j) = 0.D0
-        DO i = 7, 4, - 1
+        do i = 7, 4, - 1
           S(j) = (S(j)+Cft(jj, i))*scx(i)
           H0(j) = (H0(j)+Cft(jj, i))*hcx(i)
           Cp(j) = (Cp(j)+Cft(jj, i))*Tt
-        ENDDO
-        DO i = 1, 3
+        end do
+        do i = 1, 3
           S(j) = S(j) + Cft(jj, i)*scx(i)
           H0(j) = H0(j) + Cft(jj, i)*hcx(i)
           Cp(j) = Cp(j) + Cft(jj, i)*cx(i)
-        ENDDO
+        end do
         S(j) = S(j) + Cft(jj, 9)
         H0(j) = H0(j) + Cft(jj, 8)*cx(2)
-      ENDDO
-99999 END
-      SUBROUTINE DETON
+      end do
+99999 end
+      subroutine DETON
 !***********************************************************************
 ! CHAPMAN-JOUGUET DETONATIONS.
 !***********************************************************************
@@ -356,42 +258,42 @@
       character(15):: fdv, fg1, fh1, fhs1, fm1, fmm1, fpp1, frr1, ft1, ftt1
       character(3), save:: unit
       integer, save:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt, mxx(8)
-      integer:: INDEX
+      integer:: index
       real(8), save:: a11, a12, a21, a22, alam, alfa, amm, b1, b2, cpl(Ncol), d, gam, &
              gm1(Ncol), h1(Ncol), p1, pp1, pub(Ncol), rk, rr1, rrho(Ncol), t1, &
              tem, tt1, tub(Ncol), ud, x1, x2
 
-      EQUIVALENCE (mxx(1), mp)
-      EQUIVALENCE (mxx(2), mt)
-      EQUIVALENCE (mxx(3), mgam)
-      EQUIVALENCE (mxx(4), mh)
-      EQUIVALENCE (mxx(5), mdv)
-      EQUIVALENCE (mxx(6), mson)
-      EQUIVALENCE (mxx(7), mmach)
+      equivalence(mxx(1), mp)
+      equivalence(mxx(2), mt)
+      equivalence(mxx(3), mgam)
+      equivalence(mxx(4), mh)
+      equivalence(mxx(5), mdv)
+      equivalence(mxx(6), mson)
+      equivalence(mxx(7), mmach)
       DATA ft1/'T1, K'/, fh1/'H1, CAL/G'/, fhs1/'H1, KJ/KG'/, &
            fm1/'M1, (1/n) '/, fg1/'GAMMA1'/, fpp1/'P/P1'/, ftt1/'T/T1'/, &
            fmm1/'M/M1'/, frr1/'RHO/RHO1'/, fdv/'DET VEL,M/SEC'/
       iof = 0
-      Eql = .TRUE.
-      IF ( T(1).EQ.0. ) THEN
+      Eql = .true.
+      if( T(1) == 0. ) then
         T(1) = Rtemp(1)
         Nt = 1
-      ENDIF
+      end if
  100  Tt = T(1)
       iof = iof + 1
       Oxfl = Oxf(iof)
-      CALL NEWOF
+      call NEWOF
 ! BEGIN T LOOP.
-      DO It = 1, Nt
+      do It = 1, Nt
         t1 = T(It)
 ! BEGIN P LOOP.
-        DO Ip = 1, Np
+        do Ip = 1, Np
           p1 = P(Ip)
           Tt = t1
           Pp = p1
-          CALL HCALC
-          IF ( Tt.EQ.0. ) RETURN
-          IF ( Detdbg ) CALL OUT1
+          call HCALC
+          if( Tt == 0. ) return
+          if( Detdbg ) call OUT1
           h1(Npt) = Hsub0*R
           tub(Npt) = t1
           pub(Npt) = p1
@@ -402,36 +304,36 @@
           Pp = pp1*p1
 ! CALCULATE ENTHALPY FOR INITIAL ESTIMATE OF T2(TT AFTER EQLBRM)
           Hsub0 = h1(Npt)/R + .75*t1*pp1/Wmix
-          Tp = .FALSE.
-          Hp = .TRUE.
-          CALL EQLBRM
+          Tp = .false.
+          Hp = .true.
+          call EQLBRM
           Hsub0 = h1(Npt)/R
-          Hp = .FALSE.
-          IF ( Tt.NE.0. ) THEN
+          Hp = .false.
+          if( Tt /= 0. ) then
             gam = Gammas(Npt)
             tt1 = Tt/t1
             ii = 0
             tem = tt1 - .75*pp1/(Cpr(Npt)*Wmix)
             amm = Wm(Npt)/Wmix
-            IF ( Detdbg ) WRITE (IOOUT, 99001) Tt
+            if( Detdbg ) write(IOOUT, 99001) Tt
 ! LOOP FOR IMPROVING T2/T1 AND P2/P1 INITIAL ESTIMATE.
-            DO ii = 1, 3
+            do ii = 1, 3
               alfa = amm/tt1
               pp1 = (1.+gam)*(1.+(1.-4.*gam*alfa/(1.+gam)**2)**.5) &
                     /(2.*gam*alfa)
               rk = pp1*alfa
               tt1 = tem + .5*pp1*gam*(rk*rk-1.)/(Wmix*Cpr(Npt)*rk)
-              IF ( Detdbg ) WRITE (IOOUT, 99002) ii, pp1, tt1
-            ENDDO
-            Tp = .TRUE.
+              if( Detdbg ) write(IOOUT, 99002) ii, pp1, tt1
+            end do
+            Tp = .true.
             Tt = t1*tt1
             rr1 = pp1*amm/tt1
 ! BEGIN MAIN ITERATION LOOP.
  110        itr = itr + 1
             Pp = p1*pp1
-            CALL EQLBRM
-            IF ( Npt.EQ.0 ) GOTO 200
-            IF ( Tt.NE.0. ) THEN
+            call EQLBRM
+            if( Npt == 0 ) go to 200
+            if( Tt /= 0. ) then
               gam = Gammas(Npt)
               amm = Wm(Npt)/Wmix
               rr1 = pp1*amm/tt1
@@ -448,158 +350,158 @@
               x2 = (a11*b2-a21*b1)/d
               alam = 1.
               tem = x1
-              IF ( tem.LT.0. ) tem = -tem
-              IF ( x2.GT.tem ) tem = x2
-              IF ( -x2.GT.tem ) tem = -x2
-              IF ( tem.GT.0.4054652 ) alam = .4054652/tem
+              if( tem < 0. ) tem = -tem
+              if( x2 > tem ) tem = x2
+              if( -x2 > tem ) tem = -x2
+              if( tem > 0.4054652 ) alam = .4054652/tem
               pp1 = pp1*EXP(x1*alam)
               tt1 = tt1*EXP(x2*alam)
               Tt = t1*tt1
               ud = rr1*(Rr*gam*Tt/Wm(Npt))**.5
-              IF ( Detdbg ) WRITE (IOOUT, 99003) itr, pp1, tt1, rr1, x1, x2
+              if( Detdbg ) write(IOOUT, 99003) itr, pp1, tt1, rr1, x1, x2
 ! CONVERGENCE TEST
-              IF ( itr.LT.8.AND.tem.GT.0.5E-04 ) GOTO 110
-              IF ( itr.LT.8 ) THEN
+              if( itr < 8 .and. tem > 0.5E-04 ) go to 110
+              if( itr < 8 ) then
                 rrho(Npt) = rr1
-                IF ( cpl(Npt).EQ.0. ) THEN
+                if( cpl(Npt) == 0. ) then
                   gm1(Npt) = 0.
                   Vmoc(Npt) = 0.
-                ELSE
+                else
                   gm1(Npt) = cpl(Npt)/(cpl(Npt)-R/Wmix)
                   Vmoc(Npt) = ud/(Rr*gm1(Npt)*t1/Wmix)**.5
-                ENDIF
-              ELSE
-                WRITE (IOOUT, 99004)
+                end if
+              else
+                write(IOOUT, 99004)
                 Npt = Npt - 1
                 Tt = 0.
-              ENDIF
-              IF ( Trnspt ) CALL TRANP
+              end if
+              if( Trnspt ) call TRANP
               Isv = 0
-              IF ( Ip.NE.Np.OR.It.NE.Nt.AND.Tt.NE.0. ) THEN
+              if( Ip /= Np .or. It /= Nt .and. Tt /= 0. ) then
                 Isv = Npt
-                IF ( Npt.NE.Ncol ) GOTO 120
-              ENDIF
-            ENDIF
+                if( Npt /= Ncol ) go to 120
+              end if
+            end if
 ! OUTPUT
-            WRITE (IOOUT, 99005)
-            CALL OUT1
+            write(IOOUT, 99005)
+            call OUT1
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
-            DO i = 1, 8
+            do i = 1, 8
               mxx(i) = 0
-            ENDDO
-            DO i = 1, Nplt
-              IF ( INDEX(Pltvar(i)(2:), '1').NE.0 ) THEN
-                IF ( Pltvar(i)(:3).EQ.'son' ) THEN
+            end do
+            do i = 1, Nplt
+              if( index(Pltvar(i)(2:), '1') /= 0 ) then
+                if( Pltvar(i)(:3) == 'son' ) then
                   mson = i
-                ELSEIF ( Pltvar(i)(:3).EQ.'gam' ) THEN
+                else if( Pltvar(i)(:3) == 'gam' ) then
                   mgam = i
-                ELSEIF ( Pltvar(i)(:1).EQ.'h' ) THEN
+                else if( Pltvar(i)(:1) == 'h' ) then
                   mh = i
-                ELSEIF ( Pltvar(i)(:1).EQ.'t' ) THEN
+                else if( Pltvar(i)(:1) == 't' ) then
                   mt = i
-                ELSEIF ( Pltvar(i)(:1).EQ.'p' ) THEN
+                else if( Pltvar(i)(:1) == 'p' ) then
                   mp = i
-                ENDIF
-              ELSEIF ( INDEX(Pltvar(i), 'vel').NE.0 ) THEN
+                end if
+              else if( index(Pltvar(i), 'vel') /= 0 ) then
                 mdv = i
-              ELSEIF ( INDEX(Pltvar(i), 'mach').NE.0 ) THEN
+              else if( index(Pltvar(i), 'mach') /= 0 ) then
                 mmach = i
-              ENDIF
-            ENDDO
-            WRITE (IOOUT, 99006)
+              end if
+            end do
+            write(IOOUT, 99006)
             Fmt(4) = '13'
             Fmt(5) = ' '
             Fmt(7) = '4,'
-            DO i = 1, Npt
-              IF ( Siunit ) THEN
+            do i = 1, Npt
+              if( Siunit ) then
                 V(i) = pub(i)
                 unit = 'BAR'
-              ELSE
+              else
                 V(i) = pub(i)/1.01325D0
                 unit = 'ATM'
-              ENDIF
-              IF ( mp.GT.0 ) Pltout(i+Iplt, mp) = V(i)
-            ENDDO
-            WRITE (IOOUT, Fmt) 'P1, '//unit//'        ', (V(j), j=1, Npt)
+              end if
+              if( mp > 0 ) Pltout(i+Iplt, mp) = V(i)
+            end do
+            write(IOOUT, Fmt) 'P1, '//unit//'        ', (V(j), j=1, Npt)
             Fmt(7) = '2,'
-            WRITE (IOOUT, Fmt) ft1, (tub(j), j=1, Npt)
-            IF ( .NOT.Siunit ) WRITE (IOOUT, Fmt) fh1, (h1(j), j=1, Npt)
-            IF ( Siunit ) WRITE (IOOUT, Fmt) fhs1, (h1(j), j=1, Npt)
-            DO i = 1, Npt
+            write(IOOUT, Fmt) ft1, (tub(j), j=1, Npt)
+            if( .not. Siunit ) write(IOOUT, Fmt) fh1, (h1(j), j=1, Npt)
+            if( Siunit ) write(IOOUT, Fmt) fhs1, (h1(j), j=1, Npt)
+            do i = 1, Npt
               V(i) = Wmix
               Sonvel(i) = (Rr*gm1(i)*tub(i)/Wmix)**.5
-            ENDDO
+            end do
             Fmt(7) = '3,'
-            WRITE (IOOUT, Fmt) fm1, (V(j), j=1, Npt)
+            write(IOOUT, Fmt) fm1, (V(j), j=1, Npt)
             Fmt(7) = '4,'
-            WRITE (IOOUT, Fmt) fg1, (gm1(j), j=1, Npt)
+            write(IOOUT, Fmt) fg1, (gm1(j), j=1, Npt)
             Fmt(7) = '1,'
-            WRITE (IOOUT, Fmt) 'SON VEL1,M/SEC ', (Sonvel(j), j=1, Npt)
-            IF ( Nplt.GT.0 ) THEN
-              DO i = 1, Npt
-                IF ( mt.GT.0 ) Pltout(i+Iplt, mt) = tub(i)
-                IF ( mgam.GT.0 ) Pltout(i+Iplt, mgam) = gm1(i)
-                IF ( mh.GT.0 ) Pltout(i+Iplt, mh) = h1(i)
-                IF ( mson.GT.0 ) Pltout(i+Iplt, mson) = Sonvel(i)
-              ENDDO
-            ENDIF
-            WRITE (IOOUT, 99007)
+            write(IOOUT, Fmt) 'SON VEL1,M/SEC ', (Sonvel(j), j=1, Npt)
+            if( Nplt > 0 ) then
+              do i = 1, Npt
+                if( mt > 0 ) Pltout(i+Iplt, mt) = tub(i)
+                if( mgam > 0 ) Pltout(i+Iplt, mgam) = gm1(i)
+                if( mh > 0 ) Pltout(i+Iplt, mh) = h1(i)
+                if( mson > 0 ) Pltout(i+Iplt, mson) = Sonvel(i)
+              end do
+            end if
+            write(IOOUT, 99007)
             Fmt(4) = Fmt(6)
-            CALL OUT2
-            IF ( Trnspt ) CALL OUT4
-            WRITE (IOOUT, 99008)
+            call OUT2
+            if( Trnspt ) call OUT4
+            write(IOOUT, 99008)
             Fmt(7) = '3,'
-            DO i = 1, Npt
+            do i = 1, Npt
               V(i) = Ppp(i)/pub(i)
               Pcp(i) = Ttt(i)/tub(i)
               Sonvel(i) = Sonvel(i)*rrho(i)
-              IF ( mmach.GT.0 ) Pltout(i+Iplt, mmach) = Vmoc(i)
-              IF ( mdv.GT.0 ) Pltout(i+Iplt, mdv) = Sonvel(i)
-            ENDDO
-            WRITE (IOOUT, Fmt) fpp1, (V(j), j=1, Npt)
-            WRITE (IOOUT, Fmt) ftt1, (Pcp(j), j=1, Npt)
-            DO i = 1, Npt
+              if( mmach > 0 ) Pltout(i+Iplt, mmach) = Vmoc(i)
+              if( mdv > 0 ) Pltout(i+Iplt, mdv) = Sonvel(i)
+            end do
+            write(IOOUT, Fmt) fpp1, (V(j), j=1, Npt)
+            write(IOOUT, Fmt) ftt1, (Pcp(j), j=1, Npt)
+            do i = 1, Npt
               V(i) = Wm(i)/Wmix
-            ENDDO
+            end do
             Fmt(7) = '4,'
-            WRITE (IOOUT, Fmt) fmm1, (V(j), j=1, Npt)
-            WRITE (IOOUT, Fmt) frr1, (rrho(j), j=1, Npt)
-            WRITE (IOOUT, Fmt) 'DET MACH NUMBER', (Vmoc(j), j=1, Npt)
+            write(IOOUT, Fmt) fmm1, (V(j), j=1, Npt)
+            write(IOOUT, Fmt) frr1, (rrho(j), j=1, Npt)
+            write(IOOUT, Fmt) 'DET MACH NUMBER', (Vmoc(j), j=1, Npt)
             Fmt(7) = '1,'
-            WRITE (IOOUT, Fmt) fdv, (Sonvel(j), j=1, Npt)
-            Eql = .TRUE.
-            CALL OUT3
+            write(IOOUT, Fmt) fdv, (Sonvel(j), j=1, Npt)
+            Eql = .true.
+            call OUT3
             Iplt = MIN(Iplt+Npt, 500)
-            IF ( Isv.EQ.0.AND.iof.EQ.Nof ) GOTO 200
-            IF ( Np.EQ.1.AND.Nt.EQ.1 ) GOTO 100
-            WRITE (IOOUT, 99009)
+            if( Isv == 0 .and. iof == Nof ) go to 200
+            if( Np == 1 .and. Nt == 1 ) go to 100
+            write(IOOUT, 99009)
             Npt = 0
  120        Npt = Npt + 1
-            IF ( Isv.EQ.1 ) Isv = -1
-            CALL SETEN
-          ENDIF
-        ENDDO
-      ENDDO
+            if( Isv == 1 ) Isv = -1
+            call SETEN
+          end if
+        end do
+      end do
 !     Iplt = MIN(Iplt+Npt, 500)
       Iplt = MIN(Iplt+Npt-1, 500)
-      IF ( iof.LT.Nof ) GOTO 100
- 200  Tp = .FALSE.
-      RETURN
-99001 FORMAT (/' T EST.=', F8.2/11X, 'P/P1', 17X, 'T/T1')
-99002 FORMAT (I5, 2E20.8)
-99003 FORMAT (/' ITER =', I2, 5X, 'P/P1 =', E15.8, /7X, 'T/T1 =', E15.8, 5X, &
+      if( iof < Nof ) go to 100
+ 200  Tp = .false.
+      return
+99001 format (/' T EST.=', F8.2/11X, 'P/P1', 17X, 'T/T1')
+99002 format (I5, 2E20.8)
+99003 format (/' ITER =', I2, 5X, 'P/P1 =', E15.8, /7X, 'T/T1 =', E15.8, 5X, &
               'RHO/RHO1 =', E15.8, /7X, 'DEL LN P/P1 =', E15.8, 5X, &
               'DEL LN T/T1 =', E15.8)
-99004 FORMAT (/ &
+99004 format (/ &
               ' CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)' &
               )
-99005 FORMAT (//, 21X, 'DETONATION PROPERTIES OF AN IDEAL REACTING GAS')
-99006 FORMAT (/' UNBURNED GAS'/)
-99007 FORMAT (/' BURNED GAS'/)
-99008 FORMAT (/' DETONATION PARAMETERS'/)
-99009 FORMAT (///)
-      END
-      SUBROUTINE EFMT(Fone, Aa, Vx)
+99005 format (//, 21X, 'DETONATION PROPERTIES OF AN IDEAL REACTING GAS')
+99006 format (/' UNBURNED GAS'/)
+99007 format (/' BURNED GAS'/)
+99008 format (/' DETONATION PARAMETERS'/)
+99009 format (///)
+      end
+      subroutine EFMT(Fone, Aa, Vx)
 !***********************************************************************
 ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
 !***********************************************************************
@@ -614,7 +516,7 @@
       integer, save:: i, j, j1, ne(Ncol)
       integer:: IABS
       real(8), save:: ee, fe, w(Ncol)
-      real(8):: DABS, DLOG10
+      real(8):: dabs, dlog10
 
       DATA frmt/'(1H ', ',A15', ',', '9X,', '13(F', '6.4,', 'I2,', '1X))'/
       DATA fmix/'I3,', '6.4,', 'I2,', '9X,', '5.3,'/
@@ -622,29 +524,29 @@
       frmt(7) = fmix(3)
       j1 = 1
       frmt(4) = '1x,'
-      IF ( Fone.EQ.'9X,' ) THEN
+      if( Fone == '9X,' ) then
         j1 = 2
         frmt(4) = fmix(4)
-      ENDIF
-      DO i = j1, Npt
-        IF ( Vx(i).NE.0. ) THEN
-          ee = DLOG10(DABS(Vx(i)))
+      end if
+      do i = j1, Npt
+        if( Vx(i) /= 0. ) then
+          ee = dlog10(dabs(Vx(i)))
           ne(i) = ee
           fe = ne(i)
-          IF ( ee.LT.-.2181E-05.AND.fe.NE.ee ) ne(i) = ne(i) - 1
-          IF ( IABS(ne(i)).GE.10 ) THEN
+          if( ee < -.2181E-05 .and. fe /= ee ) ne(i) = ne(i) - 1
+          if( IABS(ne(i)) >= 10 ) then
             frmt(6) = fmix(5)
             frmt(7) = fmix(1)
-          ENDIF
+          end if
           w(i) = Vx(i)/10.**ne(i)
-        ELSE
+        else
           w(i) = 0.
           ne(i) = 0.
-        ENDIF
-      ENDDO
-      WRITE (IOOUT, frmt) Aa, (w(j), ne(j), j=j1, Npt)
-      END
-      SUBROUTINE EQLBRM
+        end if
+      end do
+      write(IOOUT, frmt) Aa, (w(j), ne(j), j=j1, Npt)
+      end
+      subroutine EQLBRM
 !***********************************************************************
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
@@ -663,7 +565,7 @@
              gap, gasfrc, pie, pisave(maxMat-2), siz9, sizeg, &
              sum, sum1, szgj, tem, tmelt, tsize, ween, xi, xln, xsize, xx(maxMat)
       real(8):: smalno, smnol
-      real(8):: DABS, DEXP, DLOG, DMAX1
+      real(8):: dabs, dexp, dlog, dmax1
 
       DATA smalno/1.E-6/, smnol/ - 13.815511/
       ixsing = 0
@@ -673,806 +575,806 @@
       maxitn = 50
       ncvg = 0
       lncvg = 3*Nlm
-      reduce = .FALSE.
+      reduce = .false.
       siz9 = Size - 9.2103404D0
       tsize = Size
       xsize = Size + 6.90775528D0
-      IF ( Trace.NE.0. ) THEN
+      if( Trace /= 0. ) then
         maxitn = maxitn + Ngc/2
-        xsize = -DLOG(Trace)
-        IF ( xsize.LT.Size ) xsize = Size + .1
-      ENDIF
-      IF ( xsize.GT.80. ) xsize = 80.D0
+        xsize = -dlog(Trace)
+        if( xsize < Size ) xsize = Size + .1
+      end if
+      if( xsize > 80. ) xsize = 80.D0
       esize = MIN(80.D0, xsize+6.90775528D0)
       jcons = 0
       pie = 0.
-      i2many = .FALSE.
-      Pderiv = .FALSE.
-      Convg = .FALSE.
+      i2many = .false.
+      Pderiv = .false.
+      Convg = .false.
       numb = 0
-      cpcalc = .TRUE.
-      IF ( Tp ) cpcalc = .FALSE.
-      IF ( Tt.NE.0.D0 ) THEN
-        IF ( Npr.EQ.0.OR.(Tt.NE.T(1).AND..NOT.Tp) ) GOTO 400
+      cpcalc = .true.
+      if( Tp ) cpcalc = .false.
+      if( Tt /= 0.D0 ) then
+        if( Npr == 0 .or. (Tt /= T(1) .and. .not. Tp) ) go to 400
         k = 1
-      ELSE
+      else
         Tt = 3800.D0
-        IF ( Npr.EQ.0 ) GOTO 400
+        if( Npr == 0 ) go to 400
         k = 1
-      ENDIF
+      end if
  100  j = Jcond(k)
       jc = j - Ng
       kg = -Ifz(jc)
-      DO i = 1, 9
+      do i = 1, 9
         kg = kg + 1
         kc = jc + kg
-        IF ( Tt.LE.Temp(2, kc) ) THEN
-          IF ( kg.NE.0 ) THEN
+        if( Tt <= Temp(2, kc) ) then
+          if( kg /= 0 ) then
             Jcond(k) = j + kg
             En(j+kg, Npt) = En(j, Npt)
             En(j, Npt) = 0.
-            IF ( Prod(j).NE.Prod(j+kg).AND..NOT.Short )  &
-                 WRITE (IOOUT, 99023) Prod(j), Prod(j+kg)
-          ENDIF
-          GOTO 300
-        ELSEIF ( kc.GE.Nc.OR.Ifz(kc+1).LE.Ifz(kc) ) THEN
-          GOTO 200
-        ENDIF
-      ENDDO
- 200  IF ( .NOT.Tp ) THEN
+            if( Prod(j) /= Prod(j+kg) .and. .not. Short )  &
+                 write(IOOUT, 99023) Prod(j), Prod(j+kg)
+          end if
+          go to 300
+        else if( kc >= Nc .or. Ifz(kc+1) <= Ifz(kc) ) then
+          go to 200
+        end if
+      end do
+ 200  if( .not. Tp ) then
         Tt = Temp(2, kc) - 10.D0
         k = 1
-        GOTO 100
-      ENDIF
-      WRITE (IOOUT, 99028) Prod(j)
+        go to 100
+      end if
+      write(IOOUT, 99028) Prod(j)
       En(j, Npt) = 0.D0
       Enln(j) = 0.D0
       Deln(j) = 0.D0
-      DO i = k, Npr
+      do i = k, Npr
         Jcond(i) = Jcond(i+1)
-      ENDDO
+      end do
       Npr = Npr - 1
  300  k = k + 1
-      IF ( k.LE.Npr ) GOTO 100
- 400  Tln = DLOG(Tt)
-      IF ( Vol ) Pp = Rr*Enn*Tt/Vv
-      CALL CPHS
-      Tm = DLOG(Pp/Enn)
+      if( k <= Npr ) go to 100
+ 400  Tln = dlog(Tt)
+      if( Vol ) Pp = Rr*Enn*Tt/Vv
+      call CPHS
+      Tm = dlog(Pp/Enn)
       le = Nlm
-      IF ( Lsave.NE.0.AND.Nlm.NE.Lsave ) THEN
+      if( Lsave /= 0 .and. Nlm /= Lsave ) then
         tem = EXP(-tsize)
-        DO i = Lsave + 1, Nlm
-          DO j = 1, Ng
-            IF ( A(i, j).NE.0. ) THEN
+        do i = Lsave + 1, Nlm
+          do j = 1, Ng
+            if( A(i, j) /= 0. ) then
               En(j, Npt) = tem
               Enln(j) = -tsize
-            ENDIF
-          ENDDO
-        ENDDO
-      ENDIF
+            end if
+          end do
+        end do
+      end if
       ls = Nlm
       lelim = 0
       lz = ls
-      IF ( Ions ) lz = ls - 1
-      IF ( Npt.EQ.1.AND..NOT.Shock.AND..NOT.Short ) WRITE (IOOUT, 99001) &
+      if( Ions ) lz = ls - 1
+      if( Npt == 1 .and. .not. Shock .and. .not. Short ) write(IOOUT, 99001) &
            (Elmt(i), i=1, Nlm)
-      IF ( Debug(Npt) ) THEN
-        DO i = 1, Nlm
+      if( Debug(Npt) ) then
+        do i = 1, Nlm
           cmp(i) = Elmt(i)
-        ENDDO
-      ENDIF
+        end do
+      end if
 ! BEGIN ITERATION
- 500  IF ( cpcalc ) THEN
+ 500  if( cpcalc ) then
         Cpsum = 0.D0
-        DO j = 1, Ng
+        do j = 1, Ng
           Cpsum = Cpsum + En(j, Npt)*Cp(j)
-        ENDDO
-        IF ( Npr.NE.0 ) THEN
-          DO k = 1, Npr
+        end do
+        if( Npr /= 0 ) then
+          do k = 1, Npr
             j = Jcond(k)
             Cpsum = Cpsum + En(j, Npt)*Cp(j)
-          ENDDO
-          cpcalc = .FALSE.
-        ENDIF
-      ENDIF
+          end do
+          cpcalc = .false.
+        end if
+      end if
       numb = numb + 1
-      CALL MATRIX
+      call MATRIX
       iq2 = Iq1 + 1
-      IF ( Convg ) Imat = Imat - 1
-      IF ( Debug(Npt) ) THEN
-        IF ( .NOT.Convg ) THEN
-          WRITE (IOOUT, 99004) numb
-        ELSE
-          IF ( .NOT.Pderiv ) WRITE (IOOUT, 99002)
-          IF ( Pderiv ) WRITE (IOOUT, 99003)
-        ENDIF
+      if( Convg ) Imat = Imat - 1
+      if( Debug(Npt) ) then
+        if( .not. Convg ) then
+          write(IOOUT, 99004) numb
+        else
+          if( .not. Pderiv ) write(IOOUT, 99002)
+          if( Pderiv ) write(IOOUT, 99003)
+        end if
         kmat = Imat + 1
-        DO i = 1, Imat
-          WRITE (IOOUT, 99006) (G(i, k), k=1, kmat)
-        ENDDO
-      ENDIF
+        do i = 1, Imat
+          write(IOOUT, 99006) (G(i, k), k=1, kmat)
+        end do
+      end if
       Msing = 0
-      CALL GAUSS
-      IF ( Msing.EQ.0 ) THEN
-        IF ( Debug(Npt) ) THEN
-          WRITE (IOOUT, 99005) (cmp(k), k=1, le)
-          WRITE (IOOUT, 99006) (X(i), i=1, Imat)
-        ENDIF
-        IF ( .NOT.Convg ) THEN
+      call GAUSS
+      if( Msing == 0 ) then
+        if( Debug(Npt) ) then
+          write(IOOUT, 99005) (cmp(k), k=1, le)
+          write(IOOUT, 99006) (X(i), i=1, Imat)
+        end if
+        if( .not. Convg ) then
 ! OBTAIN CORRECTIONS TO THE ESTIMATES
-          IF ( Vol ) X(iq2) = X(Iq1)
-          IF ( Tp ) X(iq2) = 0.
+          if( Vol ) X(iq2) = X(Iq1)
+          if( Tp ) X(iq2) = 0.
           dlnt = X(iq2)
           sum = X(Iq1)
-          IF ( Vol ) THEN
+          if( Vol ) then
             X(Iq1) = 0.
             sum = -dlnt
-          ENDIF
-          DO 520 j = 1, Ng
-            IF ( lelim.NE.0 ) THEN
+          end if
+          do 520 j = 1, Ng
+            if( lelim /= 0 ) then
               Deln(j) = 0.
-              DO i = lelim, ls
-                IF ( A(i, j).NE.0. ) GOTO 520
-              ENDDO
-            ENDIF
+              do i = lelim, ls
+                if( A(i, j) /= 0. ) go to 520
+              end do
+            end if
             Deln(j) = -Mu(j) + H0(j)*dlnt + sum
-            DO k = 1, Nlm
+            do k = 1, Nlm
               Deln(j) = Deln(j) + A(k, j)*X(k)
-            ENDDO
-            IF ( pie.NE.0. ) Deln(j) = Deln(j) + A(ls, j)*pie
- 520      CONTINUE
-          IF ( Npr.NE.0 ) THEN
-            DO k = 1, Npr
+            end do
+            if( pie /= 0. ) Deln(j) = Deln(j) + A(ls, j)*pie
+ 520      continue
+          if( Npr /= 0 ) then
+            do k = 1, Npr
               j = Jcond(k)
               kk = Nlm + k
               Deln(j) = X(kk)
-            ENDDO
-          ENDIF
+            end do
+          end if
 ! CALCULATE CONTROL FACTOR, AMBDA
           ambda = 1.D0
           ambda1 = 1.D0
           ilamb = 0
           ilamb1 = 0
-          sum = DMAX1(DABS(X(Iq1)), DABS(dlnt))
+          sum = dmax1(dabs(X(Iq1)), dabs(dlnt))
           sum = sum*5.
-          DO j = 1, Ng
-            IF ( Deln(j).GT.0. ) THEN
-              IF ( (Enln(j)-Ennl+Size).LE.0. ) THEN
-                sum1 = DABS(Deln(j)-X(Iq1))
-                IF ( sum1.GE.siz9 ) THEN
-                  sum1 = DABS(-9.2103404D0-Enln(j)+Ennl)/sum1
-                  IF ( sum1.LT.ambda1 ) THEN
+          do j = 1, Ng
+            if( Deln(j) > 0. ) then
+              if( (Enln(j)-Ennl+Size) <= 0. ) then
+                sum1 = dabs(Deln(j)-X(Iq1))
+                if( sum1 >= siz9 ) then
+                  sum1 = dabs(-9.2103404D0-Enln(j)+Ennl)/sum1
+                  if( sum1 < ambda1 ) then
                     ambda1 = sum1
                     ilamb1 = j
-                  ENDIF
-                ENDIF
-              ELSEIF ( Deln(j).GT.sum ) THEN
+                  end if
+                end if
+              else if( Deln(j) > sum ) then
                 sum = Deln(j)
                 ilamb = j
-              ENDIF
-            ENDIF
-          ENDDO
-          IF ( sum.GT.2.D0 ) ambda = 2.D0/sum
-          IF ( ambda1.LE.ambda ) THEN
+              end if
+            end if
+          end do
+          if( sum > 2.D0 ) ambda = 2.D0/sum
+          if( ambda1 <= ambda ) then
             ambda = ambda1
             ilamb = ilamb1
-          ENDIF
-          IF ( Debug(Npt) ) THEN
+          end if
+          if( Debug(Npt) ) then
 ! INTERMEDIATE OUTPUT
-            WRITE (IOOUT, 99011) Tt, Enn, Ennl, Pp, Tm, ambda
-            IF ( ambda.NE.1.D0 ) THEN
+            write(IOOUT, 99011) Tt, Enn, Ennl, Pp, Tm, ambda
+            if( ambda /= 1.D0 ) then
               amb = 'ENN'
-              IF ( DABS(X(iq2)).GT.DABS(X(Iq1)) ) amb = 'TEMP'
-              IF ( ilamb.NE.0 ) amb = Prod(ilamb)
-              WRITE (IOOUT, 99012) amb
-            ENDIF
-            IF ( Vol ) WRITE (IOOUT, 99013) Vv*.001D0
-            WRITE (IOOUT, 99014)
-            DO j = 1, Ngc
-              WRITE (IOOUT, 99015) Prod(j), En(j, Npt), Enln(j), Deln(j), &
+              if( dabs(X(iq2)) > dabs(X(Iq1)) ) amb = 'TEMP'
+              if( ilamb /= 0 ) amb = Prod(ilamb)
+              write(IOOUT, 99012) amb
+            end if
+            if( Vol ) write(IOOUT, 99013) Vv*.001D0
+            write(IOOUT, 99014)
+            do j = 1, Ngc
+              write(IOOUT, 99015) Prod(j), En(j, Npt), Enln(j), Deln(j), &
                              H0(j), S(j), H0(j) - S(j), Mu(j)
-            ENDDO
-          ENDIF
+            end do
+          end if
 ! APPLY CORRECTIONS TO ESTIMATES
           Totn(Npt) = 0.D0
-          DO j = 1, Ng
+          do j = 1, Ng
             Enln(j) = Enln(j) + ambda*Deln(j)
-          ENDDO
-          DO 540 j = 1, Ng
+          end do
+          do 540 j = 1, Ng
             En(j, Npt) = 0.
-            IF ( lelim.NE.0 ) THEN
-              DO i = lelim, ls
-                IF ( A(i, j).NE.0. ) GOTO 540
-              ENDDO
-            ENDIF
-            IF ( (Enln(j)-Ennl+tsize).GT.0. ) THEN
-              En(j, Npt) = DEXP(Enln(j))
+            if( lelim /= 0 ) then
+              do i = lelim, ls
+                if( A(i, j) /= 0. ) go to 540
+              end do
+            end if
+            if( (Enln(j)-Ennl+tsize) > 0. ) then
+              En(j, Npt) = dexp(Enln(j))
               Totn(Npt) = Totn(Npt) + En(j, Npt)
-            ENDIF
- 540      CONTINUE
-          IF ( Ions.AND.Elmt(Nlm).EQ.'E' ) THEN
-            DO j = 1, Ng
-              IF ( A(ls, j).NE.0..AND.En(j, Npt).EQ.0. ) THEN
-                IF ( (Enln(j)-Ennl+esize).GT.0. ) THEN
-                  En(j, Npt) = DEXP(Enln(j))
+            end if
+ 540      continue
+          if( Ions .and. Elmt(Nlm) == 'E' ) then
+            do j = 1, Ng
+              if( A(ls, j) /= 0. .and. En(j, Npt) == 0. ) then
+                if( (Enln(j)-Ennl+esize) > 0. ) then
+                  En(j, Npt) = dexp(Enln(j))
                   Totn(Npt) = Totn(Npt) + En(j, Npt)
-                ENDIF
-              ENDIF
-            ENDDO
-          ENDIF
+                end if
+              end if
+            end do
+          end if
           Sumn = Totn(Npt)
-          IF ( Npr.NE.0 ) THEN
-            DO k = 1, Npr
+          if( Npr /= 0 ) then
+            do k = 1, Npr
               j = Jcond(k)
               En(j, Npt) = En(j, Npt) + ambda*Deln(j)
               Totn(Npt) = Totn(Npt) + En(j, Npt)
-            ENDDO
-          ENDIF
-          IF ( .NOT.Tp ) THEN
+            end do
+          end if
+          if( .not. Tp ) then
             Tln = Tln + ambda*dlnt
-            Tt = DEXP(Tln)
-            cpcalc = .TRUE.
-            CALL CPHS
-          ENDIF
-          IF ( Vol ) THEN
+            Tt = dexp(Tln)
+            cpcalc = .true.
+            call CPHS
+          end if
+          if( Vol ) then
             Enn = Sumn
-            Ennl = DLOG(Enn)
-            IF ( Vol ) Pp = Rr*Tt*Enn/Vv
-          ELSE
+            Ennl = dlog(Enn)
+            if( Vol ) Pp = Rr*Tt*Enn/Vv
+          else
             Ennl = Ennl + ambda*X(Iq1)
-            Enn = DEXP(Ennl)
-          ENDIF
-          Tm = DLOG(Pp/Enn)
-          IF ( Elmt(Nlm).EQ.'E' ) THEN
+            Enn = dexp(Ennl)
+          end if
+          Tm = dlog(Pp/Enn)
+          if( Elmt(Nlm) == 'E' ) then
 ! CHECK ON REMOVING IONS
-            DO j = 1, Ngc
-              IF ( A(Nlm, j).NE.0. ) THEN
-                IF ( En(j, Npt).GT.0. ) GOTO 560
-              ENDIF
-            ENDDO
+            do j = 1, Ngc
+              if( A(Nlm, j) /= 0. ) then
+                if( En(j, Npt) > 0. ) go to 560
+              end if
+            end do
             pie = X(Nlm)
             lelim = Nlm
             Nlm = Nlm - 1
-            GOTO 500
-          ENDIF
+            go to 500
+          end if
 ! TEST FOR CONVERGENCE
- 560      IF ( numb.GT.maxitn ) THEN
-            WRITE (IOOUT, 99019) maxitn, Npt
-            IF ( Nc.EQ.0.OR.i2many ) GOTO 1500
-            i2many = .TRUE.
-            IF ( .NOT.Hp.OR.Npt.NE.1.OR.Tt.GT.100. ) THEN
-              IF ( Npr.NE.1.OR.Enn.GT.1.E-4 ) GOTO 1500
+ 560      if( numb > maxitn ) then
+            write(IOOUT, 99019) maxitn, Npt
+            if( Nc == 0 .or. i2many ) go to 1500
+            i2many = .true.
+            if( .not. Hp .or. Npt /= 1 .or. Tt > 100. ) then
+              if( Npr /= 1 .or. Enn > 1.E-4 ) go to 1500
 ! HIGH TEMPERATURE, INCLUDED CONDENSED CONDITION
-              WRITE (IOOUT, 99020)
+              write(IOOUT, 99020)
               Enn = .1
               Ennl = -2.3025851
               Sumn = Enn
               xi = Ng
               xi = Enn/xi
-              xln = DLOG(xi)
-              DO j = 1, Ng
+              xln = dlog(xi)
+              do j = 1, Ng
                 En(j, Npt) = xi
                 Enln(j) = xln
-              ENDDO
+              end do
               j = Jcond(1)
               k = 1
-              GOTO 1000
-            ELSE
-              WRITE (IOOUT, 99008)
-              GOTO 1500
-            ENDIF
-          ELSE
+              go to 1000
+            else
+              write(IOOUT, 99008)
+              go to 1500
+            end if
+          else
             sum = (X(Iq1)*Enn/Totn(Npt))
-            IF ( DABS(sum).GT.0.5E-5 ) GOTO 500
-            DO j = 1, Ng
-              IF ( DABS(Deln(j))*En(j, Npt)/Totn(Npt).GT.0.5D-5 ) &
-                   GOTO 500
-            ENDDO
-            IF ( DABS(dlnt).GT.1.D-04 ) GOTO 500
-            IF ( Npr.NE.0 ) THEN
-              DO k = 1, Npr
+            if( dabs(sum) > 0.5E-5 ) go to 500
+            do j = 1, Ng
+              if( dabs(Deln(j))*En(j, Npt)/Totn(Npt) > 0.5D-5 ) &
+                   go to 500
+            end do
+            if( dabs(dlnt) > 1.D-04 ) go to 500
+            if( Npr /= 0 ) then
+              do k = 1, Npr
                 j = Jcond(k)
-                IF ( DABS(Deln(j)/Totn(Npt)).GT.0.5D-5 ) GOTO 500
-                IF ( En(j, Npt).LT.0. ) GOTO 700
-              ENDDO
-            ENDIF
+                if( dabs(Deln(j)/Totn(Npt)) > 0.5D-5 ) go to 500
+                if( En(j, Npt) < 0. ) go to 700
+              end do
+            end if
             le = Nlm
-            DO i = 1, Nlm
-              IF ( DABS(B0(i)).GE.1.D-06 ) THEN
+            do i = 1, Nlm
+              if( dabs(B0(i)) >= 1.D-06 ) then
                 sum = 0.
-                DO j = 1, Ngc
+                do j = 1, Ngc
                   sum = sum + En(j, Npt)*A(i, j)
-                ENDDO
-                IF ( DABS(B0(i)-sum).GT.Bcheck ) GOTO 500
-              ENDIF
-            ENDDO
-            IF ( Trace.NE.0. ) THEN
+                end do
+                if( dabs(B0(i)-sum) > Bcheck ) go to 500
+              end if
+            end do
+            if( Trace /= 0. ) then
               tsize = xsize
               tem = 1.
-              IF ( numb.NE.1 ) THEN
+              if( numb /= 1 ) then
                 lk = lz
-                IF ( Nlm.LT.lz ) lk = Nlm
-                DO i = 1, lk
-                  IF ( i.NE.lsing ) THEN
+                if( Nlm < lz ) lk = Nlm
+                do i = 1, lk
+                  if( i /= lsing ) then
                     tem = 0.
-                    IF ( X(i).NE.0. ) THEN
-                      tem = DABS((pisave(i)-X(i))/X(i))
-                      IF ( tem.GT..001 ) GOTO 565
-                    ENDIF
-                  ENDIF
-                ENDDO
-              ENDIF
- 565          DO i = 1, Nlm
+                    if( X(i) /= 0. ) then
+                      tem = dabs((pisave(i)-X(i))/X(i))
+                      if( tem > .001 ) go to 565
+                    end if
+                  end if
+                end do
+              end if
+ 565          do i = 1, Nlm
                 pisave(i) = X(i)
-              ENDDO
-              IF ( tem.GT..001 ) GOTO 500
-              IF ( Ions ) THEN
+              end do
+              if( tem > .001 ) go to 500
+              if( Ions ) then
 ! CHECK ON ELECTRON BALANCE
                 iter = 1
-                IF ( pie.NE.0. ) THEN
+                if( pie /= 0. ) then
                   le = Nlm + 1
                   X(le) = pie
-                ENDIF
+                end if
  566            sum1 = 0.
                 sum = 0.
                 pie = X(le)
-                DO j = 1, Ng
-                  IF ( A(ls, j).NE.0. ) THEN
+                do j = 1, Ng
+                  if( A(ls, j) /= 0. ) then
                     En(j, Npt) = 0.
                     tem = 0.
-                    IF ( Enln(j).GT.-87. ) tem = DEXP(Enln(j))
-                    IF ( (Enln(j)-Ennl+tsize).GT.0..AND.Elmt(Nlm) &
-                         .EQ.'E' ) THEN
+                    if( Enln(j) > -87. ) tem = dexp(Enln(j))
+                    if( (Enln(j)-Ennl+tsize) > 0. .and. Elmt(Nlm) &
+                          == 'E' ) then
                       pie = 0.
                       En(j, Npt) = tem
-                    ENDIF
+                    end if
                     aa = A(ls, j)*tem
                     sum = sum + aa
                     sum1 = sum1 + aa*A(ls, j)
-                  ENDIF
-                ENDDO
-                IF ( sum1.NE.0. ) THEN
+                  end if
+                end do
+                if( sum1 /= 0. ) then
                   dpie = -sum/sum1
-                  DO j = 1, Ng
-                    IF ( A(ls, j).NE.0. ) Enln(j) = Enln(j) + A(ls, j) &
+                  do j = 1, Ng
+                    if( A(ls, j) /= 0. ) Enln(j) = Enln(j) + A(ls, j) &
                          *dpie
-                  ENDDO
-                  IF ( Debug(Npt) ) WRITE (IOOUT, 99016) iter, dpie
-                  IF ( DABS(dpie).GT..0001 ) THEN
+                  end do
+                  if( Debug(Npt) ) write(IOOUT, 99016) iter, dpie
+                  if( dabs(dpie) > .0001 ) then
                     X(le) = X(le) + dpie
                     iter = iter + 1
-                    IF ( iter.LE.80 ) GOTO 566
-                    WRITE (IOOUT, 99017)
-                    GOTO 1500
-                  ELSEIF ( Elmt(Nlm).EQ.'E'.AND.pie.NE.0. ) THEN
+                    if( iter <= 80 ) go to 566
+                    write(IOOUT, 99017)
+                    go to 1500
+                  else if( Elmt(Nlm) == 'E' .and. pie /= 0. ) then
                     Nlm = Nlm - 1
-                    newcom = .TRUE.
-                  ENDIF
-                ENDIF
-              ENDIF
-            ENDIF
-          ENDIF
-        ELSEIF ( .NOT.Pderiv ) THEN
+                    newcom = .true.
+                  end if
+                end if
+              end if
+            end if
+          end if
+        else if( .not. Pderiv ) then
 ! TEMPERATURE DERIVATIVES--CONVG=T, PDERIV=F
           Dlvtp(Npt) = 1. - X(Iq1)
           Cpr(Npt) = G(iq2, iq2)
-          DO j = 1, Iq1
+          do j = 1, Iq1
             Cpr(Npt) = Cpr(Npt) - G(iq2, j)*X(j)
-          ENDDO
+          end do
 ! PRESSURE DERIVATIVE--CONVG=T, PDERIV=T
-          Pderiv = .TRUE.
-          GOTO 500
-        ELSE
+          Pderiv = .true.
+          go to 500
+        else
           Dlvpt(Npt) = -1. + X(Iq1)
-          IF ( Jliq.EQ.0 ) THEN
+          if( Jliq == 0 ) then
             Gammas(Npt) = -1./(Dlvpt(Npt)+(Dlvtp(Npt)**2)*Enn/Cpr(Npt))
-          ELSE
+          else
             En(Jsol, Npt) = ensol
             Hsum(Npt) = Hsum(Npt) + En(Jliq, Npt)*(H0(Jliq)-H0(Jsol))
             Gammas(Npt) = -1./Dlvpt(Npt)
             Npr = Npr + 1
             Jcond(Npr) = Jliq
-          ENDIF
-          GOTO 1400
-        ENDIF
+          end if
+          go to 1400
+        end if
 ! SINGULAR MATRIX
-      ELSE
-        IF ( Convg ) THEN
-          WRITE (IOOUT, 99007)
+      else
+        if( Convg ) then
+          write(IOOUT, 99007)
           Dlvpt(Npt) = -1.
           Dlvtp(Npt) = 1.
           Cpr(Npt) = Cpsum
           Gammas(Npt) = -1./(Dlvpt(Npt)+(Dlvtp(Npt)**2)*Enn/Cpr(Npt))
-          GOTO 1400
-        ELSE
-          WRITE (IOOUT, 99009) numb, Msing
+          go to 1400
+        else
+          write(IOOUT, 99009) numb, Msing
           lsing = Msing
           ixsing = ixsing + 1
-          IF ( ixsing.LE.8 ) THEN
+          if( ixsing <= 8 ) then
             xsize = 80.
             tsize = xsize
-            IF ( Msing.GT.Nlm.AND.numb.LT.1.AND.Npr.GT.1.AND. &
-                 jdelg.GT.0 ) THEN
+            if( Msing > Nlm .and. numb < 1 .and. Npr > 1 .and.  &
+                 jdelg > 0 ) then
               ween = 1000.
               j = 0
-              DO 570 i = 1, Npr
+              do 570 i = 1, Npr
                 jcondi = Jcond(i)
-                IF ( jcondi.NE.jdelg ) THEN
-                  DO ll = 1, Nlm
-                    IF ( A(ll, jdelg).NE.0.AND.A(ll, jcondi).NE.0. ) THEN
-                      IF ( En(jcondi, Npt).LE.ween ) THEN
+                if( jcondi /= jdelg ) then
+                  do ll = 1, Nlm
+                    if( A(ll, jdelg) /= 0 .and. A(ll, jcondi) /= 0. ) then
+                      if( En(jcondi, Npt) <= ween ) then
                         ween = En(jcondi, Npt)
                         j = jcondi
                         k = i
-                      ENDIF
-                      GOTO 570
-                    ENDIF
-                  ENDDO
-                ENDIF
- 570          CONTINUE
-              IF ( j.GT.0 ) THEN
-                WRITE (IOOUT, 99020)
-                GOTO 1000
-              ENDIF
-            ELSEIF ( .NOT.Hp.OR.Npt.NE.1.OR.Nc.EQ.0.OR.Tt.GT.100. ) THEN
-              IF ( ixsing.GE.3 ) THEN
-                IF ( Msing.LT.Iq1 ) THEN
-                  IF ( reduce.AND.Msing.LE.Nlm ) THEN
-                    IF ( Nlm.LT.lelim ) GOTO 1500
-                    WRITE (IOOUT, 99010) Npt, Elmt(Nlm)
+                      end if
+                      go to 570
+                    end if
+                  end do
+                end if
+ 570          continue
+              if( j > 0 ) then
+                write(IOOUT, 99020)
+                go to 1000
+              end if
+            else if( .not. Hp .or. Npt /= 1 .or. Nc == 0 .or. Tt > 100. ) then
+              if( ixsing >= 3 ) then
+                if( Msing < Iq1 ) then
+                  if( reduce .and. Msing <= Nlm ) then
+                    if( Nlm < lelim ) go to 1500
+                    write(IOOUT, 99010) Npt, Elmt(Nlm)
                     Nlm = Nlm - 1
-                    GOTO 500
-                  ELSEIF ( Msing.LE.Nlm ) THEN
+                    go to 500
+                  else if( Msing <= Nlm ) then
 ! FIND NEW COMPONENTS
-                    IF ( .NOT.Ions ) GOTO 1100
-                    IF ( Elmt(Nlm).NE.'E' ) GOTO 1100
-                    DO j = 1, Ng
-                      IF ( A(Nlm, j).NE.0. ) En(j, Npt) = 0.D0
-                    ENDDO
+                    if( .not. Ions ) go to 1100
+                    if( Elmt(Nlm) /= 'E' ) go to 1100
+                    do j = 1, Ng
+                      if( A(Nlm, j) /= 0. ) En(j, Npt) = 0.D0
+                    end do
                     pie = X(Nlm)
                     Nlm = Nlm - 1
-                    IF ( Msing.GT.Nlm ) GOTO 500
-                    GOTO 1100
-                  ELSE
+                    if( Msing > Nlm ) go to 500
+                    go to 1100
+                  else
 ! REMOVE CONDENSED SPECIES TO CORRECT SINGULARITY
                     k = Msing - Nlm
                     j = Jcond(k)
-                    IF ( j.NE.jcons ) THEN
+                    if( j /= jcons ) then
                       jcons = j
-                      GOTO 1000
-                    ENDIF
-                  ENDIF
-                ENDIF
-              ENDIF
-              DO 575 jj = 1, Ng
-                IF ( Ions ) THEN
-                  IF ( Elmt(Nlm).NE.'E' ) THEN
-                    IF ( A(ls, jj).NE.0. ) GOTO 575
-                  ENDIF
-                ENDIF
-                IF ( En(jj, Npt).EQ.0. ) THEN
+                      go to 1000
+                    end if
+                  end if
+                end if
+              end if
+              do 575 jj = 1, Ng
+                if( Ions ) then
+                  if( Elmt(Nlm) /= 'E' ) then
+                    if( A(ls, jj) /= 0. ) go to 575
+                  end if
+                end if
+                if( En(jj, Npt) == 0. ) then
                   En(jj, Npt) = smalno
                   Enln(jj) = smnol
-                ENDIF
- 575          CONTINUE
-              GOTO 500
-            ELSE
-              WRITE (IOOUT, 99008)
-            ENDIF
-          ENDIF
-        ENDIF
-        GOTO 1500
-      ENDIF
+                end if
+ 575          continue
+              go to 500
+            else
+              write(IOOUT, 99008)
+            end if
+          end if
+        end if
+        go to 1500
+      end if
 ! CALCULATE ENTROPY, CHECK ON DELTA S FOR SP PROBLEMS
  600  Ssum(Npt) = 0.
-      DO j = 1, Ng
+      do j = 1, Ng
         Ssum(Npt) = Ssum(Npt) + En(j, Npt)*(S(j)-Enln(j)-Tm)
-      ENDDO
-      IF ( Npr.GT.0 ) THEN
-        DO k = 1, Npr
+      end do
+      if( Npr > 0 ) then
+        do k = 1, Npr
           j = Jcond(k)
           Ssum(Npt) = Ssum(Npt) + En(j, Npt)*S(j)
-        ENDDO
-      ENDIF
-      IF ( .NOT.Sp ) THEN
-        Convg = .TRUE.
-      ELSE
+        end do
+      end if
+      if( .not. Sp ) then
+        Convg = .true.
+      else
         tem = Ssum(Npt) - S0
-        IF ( DABS(tem).GT..0005 ) GOTO 500
-        IF ( Debug(Npt) ) WRITE (IOOUT, 99018) tem
-        Convg = .TRUE.
-      ENDIF
+        if( dabs(tem) > .0005 ) go to 500
+        if( Debug(Npt) ) write(IOOUT, 99018) tem
+        Convg = .true.
+      end if
 ! CONVERGENCE TESTS ARE SATISFIED, TEST CONDENSED SPECIES.
  700  ncvg = ncvg + 1
-      IF ( ncvg.GT.lncvg ) THEN
+      if( ncvg > lncvg ) then
 ! ERROR, SET TT=0
-        WRITE (IOOUT, 99034) lncvg
-        GOTO 1500
-      ELSE
-        IF ( .NOT.Shock ) THEN
-          DO il = 1, le
+        write(IOOUT, 99034) lncvg
+        go to 1500
+      else
+        if( .not. Shock ) then
+          do il = 1, le
             xx(il) = X(il)
-          ENDDO
-          IF ( .NOT.Short ) THEN
-            IF ( newcom ) WRITE (IOOUT, 99021) (cmp(k), k=1, le)
-            WRITE (IOOUT, 99022) Npt, numb, Tt, (xx(il), il=1, le)
-          ENDIF
-          IF ( .NOT.Tp.AND.Npr.EQ.0.AND.Tt.LE.Tg(1)*.2D0 ) THEN
-            WRITE (IOOUT, 99008)
-            GOTO 1500
-          ENDIF
-          newcom = .FALSE.
-        ENDIF
-        IF ( Npr.NE.0 ) THEN
+          end do
+          if( .not. Short ) then
+            if( newcom ) write(IOOUT, 99021) (cmp(k), k=1, le)
+            write(IOOUT, 99022) Npt, numb, Tt, (xx(il), il=1, le)
+          end if
+          if( .not. Tp .and. Npr == 0 .and. Tt <= Tg(1)*.2D0 ) then
+            write(IOOUT, 99008)
+            go to 1500
+          end if
+          newcom = .false.
+        end if
+        if( Npr /= 0 ) then
           bigneg = 0.
           jneg = 0
-          DO k = 1, Npr
+          do k = 1, Npr
             j = Jcond(k)
-            IF ( En(j, Npt)*Cp(j).LE.bigneg ) THEN
+            if( En(j, Npt)*Cp(j) <= bigneg ) then
               bigneg = En(j, Npt)*Cp(j)
               jneg = j
               kneg = k
-            ENDIF
-          ENDDO
-          IF ( jneg.NE.0 ) THEN
+            end if
+          end do
+          if( jneg /= 0 ) then
             j = jneg
             k = kneg
-            IF ( j.EQ.Jsol.OR.j.EQ.Jliq ) THEN
+            if( j == Jsol .or. j == Jliq ) then
               Jsol = 0
               Jliq = 0
-            ENDIF
-            GOTO 1000
-          ENDIF
-        ENDIF
-        IF ( Ngc.NE.Ng.OR.Tp ) THEN
+            end if
+            go to 1000
+          end if
+        end if
+        if( Ngc /= Ng .or. Tp ) then
           Ng = Ngc
-          CALL CPHS
+          call CPHS
           Ng = Ngp1 - 1
-          cpcalc = .TRUE.
-          IF ( Ngc.EQ.Ng ) GOTO 750
-          CALL ALLCON
-          IF ( Npr.NE.0.AND..NOT.Tp ) THEN
+          cpcalc = .true.
+          if( Ngc == Ng ) go to 750
+          call ALLCON
+          if( Npr /= 0 .and. .not. Tp ) then
             gap = 50.
-            DO 710 ipr = 1, Npr
+            do 710 ipr = 1, Npr
               j = Jcond(ipr)
-              IF ( j.NE.Jsol.AND.j.NE.Jliq ) THEN
+              if( j /= Jsol .and. j /= Jliq ) then
                 inc = j - Ng
                 kg = -Ifz(inc)
-                DO iz = 1, 20
+                do iz = 1, 20
                   kg = kg + 1
                   kc = inc + kg
-                  IF ( Tt.LE.Temp(2, kc) ) THEN
-                    IF ( kg.NE.0 ) THEN
+                  if( Tt <= Temp(2, kc) ) then
+                    if( kg /= 0 ) then
                       jkg = j + kg
-                      IF ( IABS(kg).GT.1.OR.Prod(j).EQ.Prod(jkg) ) &
-                           GOTO 740
-                      IF ( jkg.EQ.jsw ) GOTO 720
-                      IF ( Tt.LT.Temp(1, inc)-gap.OR.Tt.GT.Temp(2, inc) &
-                           +gap ) GOTO 740
-                      GOTO 720
-                    ENDIF
-                    GOTO 710
-                  ELSEIF ( Ifz(kc+1).LE.Ifz(kc) ) THEN
-                    GOTO 710
-                  ENDIF
-                ENDDO
-                IF ( Tt.GT.Temp(2, kc)*1.2D0 ) GOTO 1000
-              ENDIF
- 710        CONTINUE
-          ENDIF
+                      if( IABS(kg) > 1 .or. Prod(j) == Prod(jkg) ) &
+                           go to 740
+                      if( jkg == jsw ) go to 720
+                      if( Tt < Temp(1, inc)-gap .or. Tt > Temp(2, inc) &
+                           +gap ) go to 740
+                      go to 720
+                    end if
+                    go to 710
+                  else if( Ifz(kc+1) <= Ifz(kc) ) then
+                    go to 710
+                  end if
+                end do
+                if( Tt > Temp(2, kc)*1.2D0 ) go to 1000
+              end if
+ 710        continue
+          end if
           sizeg = 0.
           szgj = 0.
-          DO inc = 1, Nc
+          do inc = 1, Nc
             j = inc + Ng
-            IF ( Debug(Npt) ) WRITE (IOOUT, 99024) Prod(j), Temp(1, inc), &
+            if( Debug(Npt) ) write(IOOUT, 99024) Prod(j), Temp(1, inc), &
                                      Temp(2, inc), En(j, Npt)
-            IF ( En(j, Npt).LE.0. ) THEN
-              IF ( Tt.GT.Temp(1, inc).OR.Temp(1, inc).EQ.Tg(1) ) THEN
-                IF ( Tt.LE.Temp(2, inc) ) THEN
+            if( En(j, Npt) <= 0. ) then
+              if( Tt > Temp(1, inc) .or. Temp(1, inc) == Tg(1) ) then
+                if( Tt <= Temp(2, inc) ) then
                   sum = 0.
-                  DO i = 1, Nlm
+                  do i = 1, Nlm
                     sum = sum + A(i, j)*X(i)
-                  ENDDO
+                  end do
                   delg = (H0(j)-S(j)-sum)/Mw(j)
-                  IF ( delg.LT.sizeg.AND.delg.LT.0. ) THEN
-                    IF ( j.NE.jcons ) THEN
+                  if( delg < sizeg .and. delg < 0. ) then
+                    if( j /= jcons ) then
                       sizeg = delg
                       jdelg = j
-                    ELSE
+                    else
                       szgj = delg
-                    ENDIF
+                    end if
                     ipr = ipr - 1
-                  ENDIF
-                  IF ( Debug(Npt) ) WRITE (IOOUT, 99025) delg, sizeg
-                ENDIF
-              ENDIF
-            ENDIF
-          ENDDO
-          IF ( sizeg.EQ.0..AND.szgj.EQ.0. ) GOTO 750
-          IF ( sizeg.NE.0. ) THEN
+                  end if
+                  if( Debug(Npt) ) write(IOOUT, 99025) delg, sizeg
+                end if
+              end if
+            end if
+          end do
+          if( sizeg == 0. .and. szgj == 0. ) go to 750
+          if( sizeg /= 0. ) then
             j = jdelg
-            GOTO 800
-          ELSE
-            WRITE (IOOUT, 99026) Prod(jcons)
-            GOTO 1500
-          ENDIF
+            go to 800
+          else
+            write(IOOUT, 99026) Prod(jcons)
+            go to 1500
+          end if
  720      kk = MAX(0, kg)
           tmelt = Temp(kk+1, inc)
           Tt = tmelt
-          Tln = DLOG(Tt)
+          Tln = dlog(Tt)
           Jsol = MIN(j, jkg)
           Jliq = Jsol + 1
           En(jkg, Npt) = .5D0*En(j, Npt)
           En(j, Npt) = En(jkg, Npt)
           j = jkg
-          GOTO 800
+          go to 800
 ! WRONG PHASE INCLUDED FOR T INTERVAL, SWITCH EN
  740      En(jkg, Npt) = En(j, Npt)
           Jcond(ipr) = jkg
           En(j, Npt) = 0.
           jsw = j
-          IF ( Prod(j).NE.Prod(jkg).AND..NOT.Short ) WRITE (IOOUT, 99023) &
+          if( Prod(j) /= Prod(jkg) .and. .not. Short ) write(IOOUT, 99023) &
                Prod(j), Prod(jkg)
           j = jkg
-          GOTO 900
-        ENDIF
+          go to 900
+        end if
 ! CONVERGED WITH NO CONDENSED CHANGES.  IF BOTH SOLID & LIQ PRESENT, 
 ! TEMPORARILY REMOVE LIQ TO PREVENT SINGULAR DERIVATIVE MATRIX.
  750    Sumn = Enn
-        IF ( Jsol.NE.0 ) THEN
+        if( Jsol /= 0 ) then
           ensol = En(Jsol, Npt)
           En(Jsol, Npt) = En(Jsol, Npt) + En(Jliq, Npt)
           Dlvtp(Npt) = 0.
           Cpr(Npt) = 0.
           Gammas(Npt) = 0.
-          Pderiv = .TRUE.
-          DO k = 1, Npr
-            IF ( Jcond(k).EQ.Jliq ) GOTO 760
-          ENDDO
- 760      DO i = k, Npr
+          Pderiv = .true.
+          do k = 1, Npr
+            if( Jcond(k) == Jliq ) go to 760
+          end do
+ 760      do i = k, Npr
             Jcond(i) = Jcond(i+1)
-          ENDDO
+          end do
           Npr = Npr - 1
-        ENDIF
-        GOTO 500
-      ENDIF
+        end if
+        go to 500
+      end if
 ! ADD CONDENSED SPECIES
  800  Npr = Npr + 1
       i = Npr
-      DO ix = 2, Npr
+      do ix = 2, Npr
         Jcond(i) = Jcond(i-1)
         i = i - 1
-      ENDDO
+      end do
       Jcond(1) = j
-      IF ( .NOT.Short ) WRITE (IOOUT, 99027) Prod(j)
+      if( .not. Short ) write(IOOUT, 99027) Prod(j)
  900  inc = j - Ng
-      Convg = .FALSE.
-      IF ( Tp ) cpcalc = .FALSE.
+      Convg = .false.
+      if( Tp ) cpcalc = .false.
       numb = -1
-      GOTO 500
+      go to 500
 ! REMOVE CONDENSED SPECIES
  1000 En(j, Npt) = 0.D0
       Deln(j) = 0.D0
       Enln(j) = 0.D0
-      DO i = k, Npr
+      do i = k, Npr
         Jcond(i) = Jcond(i+1)
-      ENDDO
-      IF ( .NOT.Short ) WRITE (IOOUT, 99028) Prod(j)
+      end do
+      if( .not. Short ) write(IOOUT, 99028) Prod(j)
       Npr = Npr - 1
-      DO i = 1, Nlm
-        IF ( cmp(i).EQ.Prod(j) ) THEN
+      do i = 1, Nlm
+        if( cmp(i) == Prod(j) ) then
           numb = -1
-          Convg = .FALSE.
-          IF ( Tp ) cpcalc = .FALSE.
-          GOTO 1100
-        ENDIF
-      ENDDO
-      GOTO 900
- 1100 newcom = .FALSE.
+          Convg = .false.
+          if( Tp ) cpcalc = .false.
+          go to 1100
+        end if
+      end do
+      go to 900
+ 1100 newcom = .false.
       nn = Nlm
-      IF ( Elmt(Nlm).EQ.'E' ) nn = Nlm - 1
+      if( Elmt(Nlm) == 'E' ) nn = Nlm - 1
 ! FIND ORDER OF SPECIES FOR COMPONENTS - BIGGEST TO SMALLEST
       njc = 0
-      DO lc = 1, nn
+      do lc = 1, nn
         lcs(lc) = 0
-      ENDDO
+      end do
  1200 bigen = -1.D-35
-      DO j = 1, Ng
-        IF ( En(j, Npt).GT.bigen ) THEN
-          IF ( .NOT.Ions.OR.A(ls, j).EQ.0. ) THEN
+      do j = 1, Ng
+        if( En(j, Npt) > bigen ) then
+          if( .not. Ions .or. A(ls, j) == 0. ) then
             bigen = En(j, Npt)
             jbx = j
-          ENDIF
-        ENDIF
-      ENDDO
-      IF ( bigen.GT.0. ) THEN
-        DO 1250 lc = 1, nn
-          IF ( jbx.EQ.0 ) jbx = Jx(lc)
-          IF ( A(lc, jbx).GT.smalno ) THEN
-            IF ( njc.NE.0 ) THEN
-              DO 1205 i = 1, njc
+          end if
+        end if
+      end do
+      if( bigen > 0. ) then
+        do 1250 lc = 1, nn
+          if( jbx == 0 ) jbx = Jx(lc)
+          if( A(lc, jbx) > smalno ) then
+            if( njc /= 0 ) then
+              do 1205 i = 1, njc
                 l = lcs(i)
-                IF ( l.EQ.lc ) GOTO 1250
-                IF ( l.EQ.0 ) GOTO 1210
+                if( l == lc ) go to 1250
+                if( l == 0 ) go to 1210
                 j = Jcm(l)
-                DO l = 1, nn
-                  IF ( A(l, jbx).NE.A(l, j) ) GOTO 1205
-                ENDDO
-                GOTO 1250
- 1205         CONTINUE
-            ENDIF
- 1210       DO i = 1, nn
-              IF ( i.NE.lc ) THEN
+                do l = 1, nn
+                  if( A(l, jbx) /= A(l, j) ) go to 1205
+                end do
+                go to 1250
+ 1205         continue
+            end if
+ 1210       do i = 1, nn
+              if( i /= lc ) then
                 jex = Jx(i)
-                IF ( DABS(A(lc, jbx)*A(i, jex)-A(lc, jex)*A(i, jbx)) &
-                     .LE.smalno ) GOTO 1250
-              ENDIF
-            ENDDO
+                if( dabs(A(lc, jbx)*A(i, jex)-A(lc, jex)*A(i, jbx)) &
+                      <= smalno ) go to 1250
+              end if
+            end do
             njc = njc + 1
-            IF ( jbx.NE.Jcm(lc) ) newcom = .TRUE.
+            if( jbx /= Jcm(lc) ) newcom = .true.
             Jcm(lc) = jbx
             lcs(njc) = lc
-            GOTO 1300
-          ENDIF
- 1250   CONTINUE
+            go to 1300
+          end if
+ 1250   continue
  1300   En(jbx, Npt) = -En(jbx, Npt)
-        IF ( njc.LT.nn ) GOTO 1200
-      ENDIF
-      DO j = 1, Ng
-        En(j, Npt) = DABS(En(j, Npt))
-      ENDDO
-      IF ( newcom ) THEN
+        if( njc < nn ) go to 1200
+      end if
+      do j = 1, Ng
+        En(j, Npt) = dabs(En(j, Npt))
+      end do
+      if( newcom ) then
 ! SWITCH COMPONENTS
-        DO lc = 1, nn
+        do lc = 1, nn
           jb = Jcm(lc)
-          IF ( A(lc, jb).EQ.0. ) THEN
+          if( A(lc, jb) == 0. ) then
             jb = Jx(lc)
             Jcm(lc) = jb
-          ENDIF
+          end if
           tem = A(lc, jb)
-          IF ( tem.NE.0. ) THEN
+          if( tem /= 0. ) then
             pisave(lc) = H0(jb) - S(jb)
-            IF ( jb.LE.Ng ) pisave(lc) = pisave(lc) + Enln(jb) + Tm
+            if( jb <= Ng ) pisave(lc) = pisave(lc) + Enln(jb) + Tm
             cmp(lc) = Prod(jb)
 ! CALCULATE NEW COEFFICIENTS
-            IF ( tem.NE.1. ) THEN
+            if( tem /= 1. ) then
               B0(lc) = B0(lc)/tem
               B0p(lc, 1) = B0p(lc, 1)/tem
               B0p(lc, 2) = B0p(lc, 2)/tem
-              DO j = 1, Nspx
+              do j = 1, Nspx
                 A(lc, j) = A(lc, j)/tem
-              ENDDO
-            ENDIF
-            DO i = 1, nn
-              IF ( A(i, jb).NE.0..AND.i.NE.lc ) THEN
+              end do
+            end if
+            do i = 1, nn
+              if( A(i, jb) /= 0. .and. i /= lc ) then
                 tem = A(i, jb)
-                DO j = 1, Nspx
+                do j = 1, Nspx
                   A(i, j) = A(i, j) - A(lc, j)*tem
-                  IF ( DABS(A(i, j)).LT.1.E-5 ) A(i, j) = 0.
-                ENDDO
+                  if( dabs(A(i, j)) < 1.E-5 ) A(i, j) = 0.
+                end do
                 B0(i) = B0(i) - B0(lc)*tem
                 B0p(i, 1) = B0p(i, 1) - B0p(lc, 1)*tem
                 B0p(i, 2) = B0p(i, 2) - B0p(lc, 2)*tem
-              ENDIF
-            ENDDO
-          ENDIF
-        ENDDO
-        IF ( Debug(Npt) ) THEN
-          WRITE (IOOUT, 99029)
-          WRITE (IOOUT, 99030) (cmp(k), k=1, nn)
-        ENDIF
-      ENDIF
-      IF ( Msing.NE.0 ) THEN
+              end if
+            end do
+          end if
+        end do
+        if( Debug(Npt) ) then
+          write(IOOUT, 99029)
+          write(IOOUT, 99030) (cmp(k), k=1, nn)
+        end if
+      end if
+      if( Msing /= 0 ) then
 ! SWITCH ORDER OF MSING AND NLM COMPONENTS
-        reduce = .TRUE.
+        reduce = .true.
         lelim = Nlm
         lsing = Nlm
-        IF ( Msing.NE.Nlm ) THEN
-          DO j = 1, Nspx
+        if( Msing /= Nlm ) then
+          do j = 1, Nspx
             aa = A(Msing, j)
             A(Msing, j) = A(Nlm, j)
             A(Nlm, j) = aa
-          ENDDO
+          end do
           ja = Jcm(Msing)
           Jcm(Msing) = Jcm(Nlm)
           Jcm(Nlm) = ja
@@ -1494,106 +1396,106 @@
           aa = pisave(Msing)
           pisave(Msing) = pisave(Nlm)
           pisave(Nlm) = aa
-          DO i = 1, 2
+          do i = 1, 2
             aa = B0p(Msing, i)
             B0p(Msing, i) = B0p(Nlm, i)
             B0p(Nlm, i) = aa
-          ENDDO
-        ENDIF
-      ELSEIF ( .NOT.newcom.AND.Trace.EQ.0. ) THEN
-        GOTO 600
-      ENDIF
+          end do
+        end if
+      else if( .not. newcom .and. Trace == 0. ) then
+        go to 600
+      end if
       Msing = 0
       tsize = xsize
-      GOTO 500
+      go to 500
  1400 Ttt(Npt) = Tt
       Ppp(Npt) = Pp
       Vlm(Npt) = Rr*Enn*Tt/Pp
       Hsum(Npt) = Hsum(Npt)*Tt
       Wm(Npt) = 1./Enn
       gasfrc = Enn/Totn(Npt)
-      IF ( gasfrc.LT..0001 ) WRITE (IOOUT, 99031) Npt, gasfrc
-      IF ( Trace.NE.0. ) THEN
-        DO 1450 j = 1, Ng
-          IF ( lelim.NE.0 ) THEN
-            DO i = lelim, ls
-              IF ( A(i, j).NE.0. ) GOTO 1450
-            ENDDO
-          ENDIF
-          IF ( Enln(j).GT.-87. ) En(j, Npt) = DEXP(Enln(j))
- 1450   CONTINUE
-      ENDIF
-      IF ( Debug(Npt) ) WRITE (IOOUT, 99032) Npt, Pp, Tt, Hsum(Npt), &
+      if( gasfrc < .0001 ) write(IOOUT, 99031) Npt, gasfrc
+      if( Trace /= 0. ) then
+        do 1450 j = 1, Ng
+          if( lelim /= 0 ) then
+            do i = lelim, ls
+              if( A(i, j) /= 0. ) go to 1450
+            end do
+          end if
+          if( Enln(j) > -87. ) En(j, Npt) = dexp(Enln(j))
+ 1450   continue
+      end if
+      if( Debug(Npt) ) write(IOOUT, 99032) Npt, Pp, Tt, Hsum(Npt), &
                             Ssum(Npt), Wm(Npt), Cpr(Npt), Dlvpt(Npt), &
                                   Dlvtp(Npt), Gammas(Npt), Vlm(Npt)
-      IF ( Tt.GE.Tg(1).AND.Tt.LE.Tg(4) ) GOTO 1600
-      IF ( Shock ) GOTO 1600
-      WRITE (IOOUT, 99033) Tt, Npt
-      IF ( Tt.GE.Tg(1)*.8D0.AND.Tt.LE.Tg(4)*1.1D0 ) GOTO 1600
+      if( Tt >= Tg(1) .and. Tt <= Tg(4) ) go to 1600
+      if( Shock ) go to 1600
+      write(IOOUT, 99033) Tt, Npt
+      if( Tt >= Tg(1)*.8D0 .and. Tt <= Tg(4)*1.1D0 ) go to 1600
       Npt = Npt + 1
  1500 Tt = 0.
       Npt = Npt - 1
-      WRITE (IOOUT, 99035) Npt
+      write(IOOUT, 99035) Npt
  1600 Lsave = Nlm
       Nlm = ls
-      IF ( Npr.GT.0 ) Gonly = .FALSE.
-      RETURN
-99001 FORMAT (/' POINT ITN', 6X, 'T', 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))
-99002 FORMAT (/' T DERIV MATRIX')
-99003 FORMAT (/' P DERIV MATRIX')
-99004 FORMAT (/' ITERATION', I3, 6X, 'MATRIX ')
-99005 FORMAT (/' SOLUTION VECTOR', /, 6x, 5A15/8X, 5A15)
-99006 FORMAT (3X, 5E15.6)
-99007 FORMAT (/' DERIVATIVE MATRIX SINGULAR (EQLBRM)')
-99008 FORMAT (/' LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA', &
+      if( Npr > 0 ) Gonly = .false.
+      return
+99001 format (/' POINT ITN', 6X, 'T', 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))
+99002 format (/' T DERIV MATRIX')
+99003 format (/' P DERIV MATRIX')
+99004 format (/' ITERATION', I3, 6X, 'MATRIX ')
+99005 format (/' SOLUTION VECTOR', /, 6x, 5A15/8X, 5A15)
+99006 format (3X, 5E15.6)
+99007 format (/' DERIVATIVE MATRIX SINGULAR (EQLBRM)')
+99008 format (/' LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA', &
               'VE BEEN INSERTED,', &
               /' RESTART WITH insert DATASET (EQLBRM)')
-99009 FORMAT (/' SINGULAR MATRIX, ITERATION', I3, '  VARIABLE', I3, &
+99009 format (/' SINGULAR MATRIX, ITERATION', I3, '  VARIABLE', I3, &
               '(EQLBRM)')
-99010 FORMAT (/' WARNING!! POINT', I3, &
+99010 format (/' WARNING!! POINT', I3, &
               ' USES A REDUCED SET OF COMPONENTS', / &
              ' SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.', &
              / &
          ' IT MAY BE NECESSARY TO RERUN WITH INSERTED CONDENSED SPECIES', &
          /' CONTAINING COMPONENT ', A8, '(EQLBRM)')
-99011 FORMAT (/' T=', E15.8, ' ENN=', E15.8, ' ENNL=', E15.8, ' PP=', E15.8, &
+99011 format (/' T=', E15.8, ' ENN=', E15.8, ' ENNL=', E15.8, ' PP=', E15.8, &
               /' LN P/N=', E15.8, ' AMBDA=', E15.8)
-99012 FORMAT (/' AMBDA SET BY ', A16)
-99013 FORMAT (' VOLUME=', E15.8, 'CC/G')
-99014 FORMAT (/24X, 'Nj', 12X, 'LN Nj', 8X, 'DEL LN Nj', 6X, 'H0j/RT', /, 41X, &
+99012 format (/' AMBDA SET BY ', A16)
+99013 format (' VOLUME=', E15.8, 'CC/G')
+99014 format (/24X, 'Nj', 12X, 'LN Nj', 8X, 'DEL LN Nj', 6X, 'H0j/RT', /, 41X, &
               'S0j/R', 10X, ' G0j/RT', 8X, ' Gj/RT')
-99015 FORMAT (1X, A16, 4E15.6, /35x, 3E15.6)
-99016 FORMAT (/' ELECTRON BALANCE ITER NO. =', I4, '  DELTA PI =', E14.7)
-99017 FORMAT (/' DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)')
-99018 FORMAT (/' DELTA S/R =', E15.8)
-99019 FORMAT (/, I4, ' ITERATIONS DID NOT SATISFY CONVERGENCE', /, 15x, &
+99015 format (1X, A16, 4E15.6, /35x, 3E15.6)
+99016 format (/' ELECTRON BALANCE ITER NO. =', I4, '  DELTA PI =', E14.7)
+99017 format (/' DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)')
+99018 format (/' DELTA S/R =', E15.8)
+99019 format (/, I4, ' ITERATIONS DID NOT SATISFY CONVERGENCE', /, 15x, &
               ' REQUIREMENTS FOR THE POINT', I5, ' (EQLBRM)')
-99020 FORMAT (/' TRY REMOVING CONDENSED SPECIES (EQLBRM)')
-99021 FORMAT (/' POINT ITN', 6X, 'T', 10X, 4A12/(18X, 5A12))
-99022 FORMAT (I4, I5, 5F12.3, /(12X, 5F12.3))
-99023 FORMAT (' PHASE CHANGE, REPLACE ', A16, 'WITH ', A16)
-99024 FORMAT (/1X, A15, 2F10.3, 3X, E15.7)
-99025 FORMAT (' [G0j-SUM(Aij*PIi)]/Mj =', E15.7, 9X, 'MAX NEG DELTA G =', &
+99020 format (/' TRY REMOVING CONDENSED SPECIES (EQLBRM)')
+99021 format (/' POINT ITN', 6X, 'T', 10X, 4A12/(18X, 5A12))
+99022 format (I4, I5, 5F12.3, /(12X, 5F12.3))
+99023 format (' PHASE CHANGE, REPLACE ', A16, 'WITH ', A16)
+99024 format (/1X, A15, 2F10.3, 3X, E15.7)
+99025 format (' [G0j-SUM(Aij*PIi)]/Mj =', E15.7, 9X, 'MAX NEG DELTA G =', &
               E15.7)
-99026 FORMAT (/' REINSERTION OF ', A16, ' LIKELY TO CAUSE SINGULARITY, ', &
+99026 format (/' REINSERTION OF ', A16, ' LIKELY TO CAUSE SINGULARITY, ', &
               '(EQLBRM)')
-99027 FORMAT (' ADD ', A16)
-99028 FORMAT (' REMOVE ', A16)
-99029 FORMAT (/' NEW COMPONENTS')
-99030 FORMAT (/2x, 6A12)
-99031 FORMAT (/' WARNING!  RESULTS MAY BE WRONG FOR POINT', I3, ' DUE TO', &
+99027 format (' ADD ', A16)
+99028 format (' REMOVE ', A16)
+99029 format (/' NEW COMPONENTS')
+99030 format (/2x, 6A12)
+99031 format (/' WARNING!  RESULTS MAY BE WRONG FOR POINT', I3, ' DUE TO', &
               /' LOW MOLE FRACTION OF GASES (', E15.8, ') (EQLBRM)')
-99032 FORMAT (/' POINT=', I3, 3X, 'P=', E13.6, 3X, 'T=', E13.6, /3X, 'H/R=', &
+99032 format (/' POINT=', I3, 3X, 'P=', E13.6, 3X, 'T=', E13.6, /3X, 'H/R=', &
               E13.6, 3X, 'S/R=', E13.6, /3X, 'M=', E13.6, 3X, 'CP/R=', E13.6, 3X, &
               'DLVPT=', E13.6, /3X, 'DLVTP=', E13.6, 3X, 'GAMMA(S)=', E13.6, 3X, &
               'V=', E13.6)
-99033 FORMAT (' THE TEMPERATURE=', E12.4, ' IS OUT OF RANGE FOR POINT', I5, &
+99033 format (' THE TEMPERATURE=', E12.4, ' IS OUT OF RANGE FOR POINT', I5, &
               '(EQLBRM)')
-99034 FORMAT (/, I3, ' CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED', &
+99034 format (/, I3, ' CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED', &
               ' SPECIES (EQLBRM)')
-99035 FORMAT (/' CALCULATIONS STOPPED AFTER POINT', I3, '(EQLBRM)')
-      END
-      SUBROUTINE FROZEN
+99035 format (/' CALCULATIONS STOPPED AFTER POINT', I3, '(EQLBRM)')
+      end
+      subroutine FROZEN
 !***********************************************************************
 ! CALCULATE PROPERTIES WITH FROZEN COMPOSITION AT ASSIGNED ENTROPY
 ! AND PRESSURE.  CALLED FROM ROCKET.
@@ -1602,38 +1504,38 @@
       implicit none
 ! LOCAL VARIABLES
       integer, save:: i, inc, iter, j, k, nnn
-      real(8):: DABS, DEXP, DLOG
+      real(8):: dabs, dexp, dlog
       real(8), save:: dlnt, dlpm
 
-      Convg = .FALSE.
-      Tln = DLOG(Tt)
-      dlpm = DLOG(Pp*Wm(Nfz))
+      Convg = .false.
+      Tln = dlog(Tt)
+      dlpm = dlog(Pp*Wm(Nfz))
       nnn = Npt
       Npt = Nfz
-      DO j = 1, Ng
-        IF ( En(j, Nfz).NE.0.D0 ) Deln(j) = -(DLOG(En(j, Nfz))+dlpm)
-      ENDDO
-      DO iter = 1, 8
+      do j = 1, Ng
+        if( En(j, Nfz) /= 0.D0 ) Deln(j) = -(dlog(En(j, Nfz))+dlpm)
+      end do
+      do iter = 1, 8
         Ssum(nnn) = 0.D0
         Cpsum = 0.D0
-        CALL CPHS
-        DO j = 1, Ng
+        call CPHS
+        do j = 1, Ng
           Cpsum = Cpsum + En(j, Nfz)*Cp(j)
           Ssum(nnn) = Ssum(nnn) + En(j, Nfz)*(S(j)+Deln(j))
-        ENDDO
-        IF ( Npr.NE.0 ) THEN
-          DO k = 1, Npr
+        end do
+        if( Npr /= 0 ) then
+          do k = 1, Npr
             j = Jcond(k)
             Cpsum = Cpsum + En(j, Nfz)*Cp(j)
             Ssum(nnn) = Ssum(nnn) + En(j, Nfz)*S(j)
-          ENDDO
-        ENDIF
-        IF ( Convg ) THEN
+          end do
+        end if
+        if( Convg ) then
           Npt = nnn
           Hsum(Npt) = 0.D0
-          DO j = 1, Ngc
+          do j = 1, Ngc
             Hsum(Npt) = Hsum(Npt) + En(j, Nfz)*H0(j)
-          ENDDO
+          end do
           Hsum(Npt) = Hsum(Npt)*Tt
           Ttt(Npt) = Tt
           Gammas(Npt) = Cpsum/(Cpsum-1./Wm(Nfz))
@@ -1644,31 +1546,31 @@
           Totn(Npt) = Totn(Nfz)
           Ppp(Npt) = Pp
           Cpr(Npt) = Cpsum
-          IF ( Tt.GE.(Tg(1)*.8D0) ) THEN
-            DO i = Ngp1, Ngc
-              IF ( En(i, Nfz).NE.0. ) THEN
+          if( Tt >= (Tg(1)*.8D0) ) then
+            do i = Ngp1, Ngc
+              if( En(i, Nfz) /= 0. ) then
                 inc = i - Ng
-                IF ( Tt.LT.(Temp(1, inc)-50.).OR.Tt.GT.(Temp(2, inc)+50.) &
-                     ) GOTO 100
-              ENDIF
-            ENDDO
-            GOTO 200
-          ENDIF
-          GOTO 100
-        ELSE
+                if( Tt < (Temp(1, inc)-50.) .or. Tt > (Temp(2, inc)+50.) &
+                     ) go to 100
+              end if
+            end do
+            go to 200
+          end if
+          go to 100
+        else
           dlnt = (Ssum(Nfz)-Ssum(nnn))/Cpsum
           Tln = Tln + dlnt
-          IF ( DABS(dlnt).LT.0.5D-4 ) Convg = .TRUE.
-          Tt = DEXP(Tln)
-        ENDIF
-      ENDDO
-      WRITE (IOOUT, 99001)
+          if( dabs(dlnt) < 0.5D-4 ) Convg = .true.
+          Tt = dexp(Tln)
+        end if
+      end do
+      write(IOOUT, 99001)
  100  Tt = 0.
       Npt = Npt - 1
- 200  RETURN
-99001 FORMAT (/' FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)')
-      END
-      SUBROUTINE GAUSS
+ 200  return
+99001 format (/' FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)')
+      end
+      subroutine GAUSS
 !***********************************************************************
 ! SOLVE ANY LINEAR SET OF UP TO maxMat EQUATIONS
 ! NUMBER OF EQUATIONS = IMAT
@@ -1679,92 +1581,92 @@
       integer, save:: i, imatp1, j, k, nn, nnp1
       real(8):: bigno
       real(8), save:: coefx(50), tmp
-      real(8):: DABS, DMAX1
+      real(8):: dabs, dmax1
 
       DATA bigno/1.E+25/
 ! BEGIN ELIMINATION OF NNTH VARIABLE
       imatp1 = Imat + 1
-      DO nn = 1, Imat
-        IF ( nn.NE.Imat ) THEN
+      do nn = 1, Imat
+        if( nn /= Imat ) then
 ! SEARCH FOR MAXIMUM COEFFICIENT IN EACH ROW
           nnp1 = nn + 1
-          DO i = nn, Imat
+          do i = nn, Imat
             coefx(i) = bigno
-            IF ( G(i, nn).NE.0. ) THEN
+            if( G(i, nn) /= 0. ) then
               coefx(i) = 0.
-              DO j = nnp1, imatp1
-                coefx(i) = DMAX1(coefx(i), DABS(G(i, j)))
-              ENDDO
-              tmp = DABS(G(i, nn))
-              IF ( bigno*tmp.GT.coefx(i) ) THEN
+              do j = nnp1, imatp1
+                coefx(i) = dmax1(coefx(i), dabs(G(i, j)))
+              end do
+              tmp = dabs(G(i, nn))
+              if( bigno*tmp > coefx(i) ) then
                 coefx(i) = coefx(i)/tmp
-              ELSE
+              else
                 coefx(i) = bigno
-              ENDIF
-            ENDIF
-          ENDDO
+              end if
+            end if
+          end do
 ! LOCATE ROW WITH SMALLEST MAXIMUM COEFFICIENT
           tmp = bigno
           i = 0
-          DO j = nn, Imat
-            IF ( coefx(j).LT.tmp ) THEN
+          do j = nn, Imat
+            if( coefx(j) < tmp ) then
               tmp = coefx(j)
               i = j
-            ENDIF
-          ENDDO
-          IF ( i.EQ.0 ) THEN
+            end if
+          end do
+          if( i == 0 ) then
             Msing = nn
-            GOTO 99999
+            go to 99999
 ! INDEX I LOCATES EQUATION TO BE USED FOR ELIMINATING THE NTH
 ! VARIABLE FROM THE REMAINING EQUATIONS
 ! INTERCHANGE EQUATIONS I AND NN
-          ELSEIF ( nn.NE.i ) THEN
-            DO j = nn, imatp1
+          else if( nn /= i ) then
+            do j = nn, imatp1
               tmp = G(i, j)
               G(i, j) = G(nn, j)
               G(nn, j) = tmp
-            ENDDO
-          ENDIF
-        ELSEIF ( G(nn, nn).EQ.0 ) THEN
+            end do
+          end if
+        else if( G(nn, nn) == 0 ) then
           Msing = nn
-          GOTO 99999
-        ENDIF
+          go to 99999
+        end if
 ! DIVIDE NTH ROW BY NTH DIAGONAL ELEMENT AND ELIMINATE THE NTH
 ! VARIABLE FROM THE REMAINING EQUATIONS
         k = nn + 1
         tmp = G(nn, nn)
-        IF ( tmp.EQ.0. ) THEN
+        if( tmp == 0. ) then
           Msing = nn
-          GOTO 99999
-        ELSE
-          DO j = k, imatp1
+          go to 99999
+        else
+          do j = k, imatp1
             G(nn, j) = G(nn, j)/tmp
-          ENDDO
-          IF ( k.NE.imatp1 ) THEN
-            DO i = k, Imat
+          end do
+          if( k /= imatp1 ) then
+            do i = k, Imat
 !DIR$ IVDEP
-              DO j = k, imatp1
+              do j = k, imatp1
                 G(i, j) = G(i, j) - G(i, nn)*G(nn, j)
-              ENDDO
-            ENDDO
-          ENDIF
-        ENDIF
-      ENDDO
+              end do
+            end do
+          end if
+        end if
+      end do
 ! BACKSOLVE FOR THE VARIABLES
       k = Imat
  100  j = k + 1
       X(k) = 0.0D0
       tmp = 0.0
-      IF ( Imat.GE.j ) THEN
-        DO i = j, Imat
+      if( Imat >= j ) then
+        do i = j, Imat
           tmp = tmp + G(k, i)*X(i)
-        ENDDO
-      ENDIF
+        end do
+      end if
       X(k) = G(k, imatp1) - tmp
       k = k - 1
-      IF ( k.NE.0 ) GOTO 100
-99999 END
-      SUBROUTINE HCALC
+      if( k /= 0 ) go to 100
+99999 end
+      subroutine HCALC
 !***********************************************************************
 ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
 ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
@@ -1777,11 +1679,11 @@
       character(15), save:: sub
       integer, save:: i, icf, ifaz, itot, j, k, l, m, n, nall, nint, ntgas, ntot
       real(8), save:: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), tsave
-      real(8):: DLOG
+      real(8):: dlog
 
       tsave = Tt
       Tm = 0.
-      IF ( Pp.GT.0. ) Tm = DLOG(Pp*Wmix)
+      if( Pp > 0. ) Tm = dlog(Pp*Wmix)
       Ssum(Npt) = 0.
       Hpp(1) = 0.
       Hpp(2) = 0.
@@ -1792,84 +1694,84 @@
 ! IF OXIDANT, K=1
 ! IF FUEL, K=2
       Nspr = Nspx
-      DO n = 1, Nreac
+      do n = 1, Nreac
         k = 2
-        IF ( Fox(n)(:1).EQ.'O'.OR.Fox(n)(:1).EQ.'o' ) k = 1
-        IF ( Tt.EQ.0. ) Tt = Rtemp(n)
+        if( Fox(n)(:1) == 'O' .or. Fox(n)(:1) == 'o' ) k = 1
+        if( Tt == 0. ) Tt = Rtemp(n)
         j = Jray(n)
-        IF ( j.EQ.0 ) THEN
+        if( j == 0 ) then
 ! SEARCH FOR REACTANT IN STORED THERMO SPECIES. STORE INDEX IN JRAY(N).
           ifaz = 0
-          DO j = 1, Ngc
-            IF ( Rname(n).EQ.Prod(j).OR.'*'//Rname(n).EQ.Prod(j) ) THEN
+          do j = 1, Ngc
+            if( Rname(n) == Prod(j) .or. '*'//Rname(n) == Prod(j) ) then
               Jray(n) = j
-              IF ( j.GT.Ng ) THEN
-                WRITE (IOOUT, 99001)
-                GOTO 20
-              ENDIF
-              GOTO 50
-            ENDIF
-          ENDDO
+              if( j > Ng ) then
+                write(IOOUT, 99001)
+                go to 20
+              end if
+              go to 50
+            end if
+          end do
 ! SEARCH THERMO.LIB FOR SPECIES.
-          REWIND IOTHM
-          READ (IOTHM) Tg, ntgas, ntot, nall
+          rewind IOTHM
+          read(IOTHM) Tg, ntgas, ntot, nall
           Nspr = Nspr + 1
-          DO itot = 1, nall
-            IF ( itot.LE.ntot ) THEN
+          do itot = 1, nall
+            if( itot <= ntot ) then
               icf = 3
-              IF ( itot.GT.ntgas ) icf = 1
-              READ (IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j=1, 5), ifaz, &
+              if( itot > ntgas ) icf = 1
+              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j=1, 5), ifaz, &
                            t1, t2, Mw(Nspr), ((thermo(l, m), l=1, 9), m=1, icf)
-            ELSE
-              READ (IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j=1, 5), ifaz, &
+            else
+              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j=1, 5), ifaz, &
                            t1, t2, Mw(Nspr), er
-              IF ( nint.NE.0 ) THEN
-                READ (IOTHM) ((thermo(i, j), i=1, 9), j=1, nint)
+              if( nint /= 0 ) then
+                read(IOTHM) ((thermo(i, j), i=1, 9), j=1, nint)
                 icf = nint
-              ENDIF
-            ENDIF
-            IF ( sub.EQ.Rname(n).OR.sub.EQ.'*'//Rname(n) ) THEN
-              IF ( ifaz.LE.0.AND.nint.GT.0 ) THEN
-                DO j = 1, 5
-                  IF ( bb(j).EQ.0. ) GOTO 2
+              end if
+            end if
+            if( sub == Rname(n) .or. sub == '*'//Rname(n) ) then
+              if( ifaz <= 0 .and. nint > 0 ) then
+                do j = 1, 5
+                  if( bb(j) == 0. ) go to 2
                   Nfla(n) = j
                   Ratom(n, j) = el(j)
                   Rnum(n, j) = bb(j)
-                ENDDO
+                end do
  2              Jray(n) = Nspr
                 j = Nspr
-                DO l = 1, icf
-                  DO m = 1, 9
+                do l = 1, icf
+                  do m = 1, 9
                     Coef(j, m, l) = thermo(m, l)
-                  ENDDO
-                ENDDO
-                GOTO 50
-              ELSE
-                IF ( ifaz.GT.0 ) WRITE (IOOUT, 99001)
-                IF ( nint.EQ.0 ) WRITE (IOOUT, 99002) Rname(n)
-                GOTO 20
-              ENDIF
-            ENDIF
-          ENDDO
+                  end do
+                end do
+                go to 50
+              else
+                if( ifaz > 0 ) write(IOOUT, 99001)
+                if( nint == 0 ) write(IOOUT, 99002) Rname(n)
+                go to 20
+              end if
+            end if
+          end do
           Nspr = Nspr - 1
-          WRITE (IOOUT, 99003) Rname(n)
+          write(IOOUT, 99003) Rname(n)
           Energy(n) = ' '
  20       Tt = 0.
           Cpmix = 0.
-          GOTO 100
-        ENDIF
+          go to 100
+        end if
 ! CALCULATE EN FOR REACTANT AND CALCULATE PROPERTIES.
- 50     IF ( Moles ) enj = Pecwt(n)/Wp(k)
-        IF ( .NOT.Moles ) enj = Pecwt(n)/Rmw(n)
+ 50     if( Moles ) enj = Pecwt(n)/Wp(k)
+        if( .not. Moles ) enj = Pecwt(n)/Rmw(n)
         enj = enj/tem
-        IF ( k.EQ.1 ) enj = enj*Oxfl
-        Tln = DLOG(Tt)
+        if( k == 1 ) enj = enj*Oxfl
+        Tln = dlog(Tt)
         En(j, Npt) = enj
         l = 1
-        IF ( ifaz.LE.0 ) THEN
-          IF ( Tt.GT.Tg(2) ) l = 2
-          IF ( Tt.GT.Tg(3).AND.ifaz.LT.0 ) l = 3
-        ENDIF
+        if( ifaz <= 0 ) then
+          if( Tt > Tg(2) ) l = 2
+          if( Tt > Tg(3) .and. ifaz < 0 ) l = 3
+        end if
         S(j) = ((((Coef(j, 7, l)/4.)*Tt+Coef(j, 6, l)/3.)*Tt+Coef(j, 5, l)/2.) &
                *Tt+Coef(j, 4, l))*Tt - (Coef(j, 1, l)*.5D0/Tt+Coef(j, 2, l)) &
                /Tt + Coef(j, 3, l)*Tln + Coef(j, 9, l)
@@ -1880,24 +1782,24 @@
         Cp(j) = (((Coef(j, 7, l)*Tt+Coef(j, 6, l))*Tt+Coef(j, 5, l)) &
                 *Tt+Coef(j, 4, l))*Tt + (Coef(j, 1, l)/Tt+Coef(j, 2, l)) &
                 /Tt + Coef(j, 3, l)
-        IF ( H0(j).GT.-.01.AND.H0(j).LT..01 ) H0(j) = 0.
+        if( H0(j) > -.01 .and. H0(j) < .01 ) H0(j) = 0.
 ! ADD CONTRIBUTION TO CP, H, AND S OF TOTAL REACTANT.
         Cpmix = Cpmix + Cp(j)*enj
 ! FOR CONDENSED SPECIES:  SJ = S(J)
-        sj = S(j) - DLOG(enj) - Tm
+        sj = S(j) - dlog(enj) - Tm
         Ssum(Npt) = Ssum(Npt) + enj*sj
         er = H0(j)*enj*Tt
         Hsub0 = Hsub0 + er
         Hpp(k) = Hpp(k) + er
-      ENDDO
-      IF ( tsave.NE.0. ) Tt = tsave
- 100  RETURN
-99001 FORMAT (/' REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)')
-99002 FORMAT (/' COEFFICIENTS FOR ', A15, ' ARE NOT AVAILABLE (HCALC)')
-99003 FORMAT (/' ERROR IN DATA FOR ', A15, ' CHECK NAME AND TEMPERATURE', &
+      end do
+      if( tsave /= 0. ) Tt = tsave
+ 100  return
+99001 format (/' REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)')
+99002 format (/' COEFFICIENTS FOR ', A15, ' ARE NOT AVAILABLE (HCALC)')
+99003 format (/' ERROR IN DATA FOR ', A15, ' CHECK NAME AND TEMPERATURE', &
               ' RANGE IN', /, ' thermo.inp (HCALC)')
-      END
-      SUBROUTINE INFREE(Readok, Cin, Ncin, Lcin, Dpin)
+      end
+      subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
 !***********************************************************************
 ! FREE-FORM READ FOR CEA.  READS AND DECIPHERS DATA FOR ONE DATASET.
 !
@@ -1946,82 +1848,82 @@
       ch1(1) = ' '
       nch1 = 1
 ! READ CHARACTERS, ONE AT A TIME
-      READ (IOINP, 99001, END=500, ERR=500) ch1
+      read(IOINP, 99001, END=500, ERR=500) ch1
 ! FIND FIRST AND LAST NON-BLANK CHARACTER
-      DO i = 132, 1, - 1
+      do i = 132, 1, - 1
         nch1 = i
-        IF ( ch1(i).NE.' '.AND.ch1(i).NE.'	' ) GOTO 200
-      ENDDO
- 200  DO i = 1, nch1
+        if( ch1(i) /= ' ' .and. ch1(i) /= '	' ) go to 200
+      end do
+ 200  do i = 1, nch1
         ich1 = i
-        IF ( ch1(i).NE.' '.AND.ch1(i).NE.'	' ) GOTO 300
-      ENDDO
- 300  IF ( nch1.EQ.1.OR.ch1(ich1).EQ.'#'.OR.ch1(ich1).EQ.'!' ) THEN
-        WRITE (IOOUT, 99002) (ch1(i), i=1, nch1)
-        GOTO 100
-      ENDIF
+        if( ch1(i) /= ' ' .and. ch1(i) /= '	' ) go to 300
+      end do
+ 300  if( nch1 == 1 .or. ch1(ich1) == '#' .or. ch1(ich1) == '!' ) then
+        write(IOOUT, 99002) (ch1(i), i=1, nch1)
+        go to 100
+      end if
       w1 = ch1(ich1)//ch1(ich1+1)//ch1(ich1+2)//ch1(ich1+3)
 ! IS STRING A KEYWORD SIGNALLING START OR END OF DATASET?
-      IF ( w1.EQ.'ther'.OR.w1.EQ.'tran'.OR.w1.EQ.'prob'.OR. &
-           w1.EQ.'reac'.OR.w1.EQ.'outp'.OR.w1.EQ.'omit'.OR. &
-           w1.EQ.'only'.OR.w1.EQ.'inse'.OR.w1(1:3).EQ.'end' ) THEN
-        IF ( Ncin.EQ.1 ) THEN
+      if( w1 == 'ther' .or. w1 == 'tran' .or. w1 == 'prob' .or.  &
+           w1 == 'reac' .or. w1 == 'outp' .or. w1 == 'omit' .or.  &
+           w1 == 'only' .or. w1 == 'inse' .or. w1(1:3) == 'end' ) then
+        if( Ncin == 1 ) then
           Cin(Ncin) = w1
-          IF ( w1(1:3).EQ.'end'.OR.w1.EQ.'ther'.OR.w1.EQ.'tran' ) THEN
-            WRITE (IOOUT, 99002) (ch1(i), i=1, nch1)
-            RETURN
-          ENDIF
+          if( w1(1:3) == 'end' .or. w1 == 'ther' .or. w1 == 'tran' ) then
+            write(IOOUT, 99002) (ch1(i), i=1, nch1)
+            return
+          end if
           ich1 = ich1 + 4
           nx = 4
           Lcin(1) = -4
-        ELSE
+        else
 ! KEYWORD READ FOR NEXT DATASET. END PROCESSING
           BACKSPACE IOINP
-          IF ( nx.EQ.0 ) Ncin = Ncin - 1
-          RETURN
-        ENDIF
-      ELSEIF ( Ncin.EQ.1 ) THEN
-        WRITE (IOOUT, 99003)
-        GOTO 500
-      ENDIF
-      WRITE (IOOUT, 99002) (ch1(i), i=1, nch1)
-      DO 400 i = ich1, nch1
+          if( nx == 0 ) Ncin = Ncin - 1
+          return
+        end if
+      else if( Ncin == 1 ) then
+        write(IOOUT, 99003)
+        go to 500
+      end if
+      write(IOOUT, 99002) (ch1(i), i=1, nch1)
+      do 400 i = ich1, nch1
         cx = ch1(i)
 ! LOOK FOR DELIMITER STRINGS
-        IF ( cx.EQ.','.AND.(Lcin(Ncin).GT.0.OR.nx.EQ.0) ) cx = ' '
-        IF ( cx.EQ.'='.AND.(Lcin(Ncin).LT.0.OR.nx.EQ.0) ) cx = ' '
-        IF ( cx.NE.' '.AND.cx.NE.'	' ) THEN
+        if( cx == ',' .and. (Lcin(Ncin) > 0 .or. nx == 0) ) cx = ' '
+        if( cx == '=' .and. (Lcin(Ncin) < 0 .or. nx == 0) ) cx = ' '
+        if( cx /= ' ' .and. cx /= '	' ) then
 ! LOOK FOR CHARACTER STRINGS
           nx = nx + 1
-          IF ( Ncin.GT.1 ) THEN
+          if( Ncin > 1 ) then
             cnum(nx:nx) = cx
-            IF ( nx.LE.15 ) Cin(Ncin) = cnum
-            IF ( nx.EQ.1 ) THEN
+            if( nx <= 15 ) Cin(Ncin) = cnum
+            if( nx == 1 ) then
 ! IS THIS A NUMERIC?
-              DO j = 1, 13
-                IF ( ch1(i).EQ.nums(j) ) THEN
+              do j = 1, 13
+                if( ch1(i) == nums(j) ) then
                   Lcin(Ncin) = kcin
-                  GOTO 310
-                ENDIF
-              ENDDO
+                  go to 310
+                end if
+              end do
               Lcin(Ncin) = -1
               kcin = Ncin
-            ELSEIF ( Lcin(Ncin).LT.0 ) THEN
+            else if( Lcin(Ncin) < 0 ) then
               Lcin(Ncin) = -nx
-            ENDIF
+            end if
  310        nb = 1
-          ENDIF
-          IF ( i.LT.nch1.OR.Lcin(Ncin).LT.0 ) GOTO 400
-        ENDIF
-        IF ( nb.EQ.1..AND.nx.GT.0 ) THEN
-          IF ( Ncin.GT.0.AND.Lcin(Ncin).GT.0 ) THEN
+          end if
+          if( i < nch1 .or. Lcin(Ncin) < 0 ) go to 400
+        end if
+        if( nb == 1. .and. nx > 0 ) then
+          if( Ncin > 0 .and. Lcin(Ncin) > 0 ) then
 ! CONVERT NUMERIC CHARACTER STRINGS TO real(8) VARIABLES (DPIN)
             fmtl(2) = numg(MIN(24, nx))
 ! INTERNAL READ TO CONVERT TO NUMERIC
-            READ (cnum, fmtl, ERR=320) Dpin(Ncin)
-          ENDIF
-          GOTO 340
- 320      IF ( Cin(Ncin-1)(:4).NE.'case' ) WRITE (IOOUT, 99004) Cin(i)
+            read(cnum, fmtl, ERR=320) Dpin(Ncin)
+          end if
+          go to 340
+ 320      if( Cin(Ncin-1)(:4) /= 'case' ) write(IOOUT, 99004) Cin(i)
           Lcin(Ncin) = 0
  340      Ncin = Ncin + 1
           Cin(Ncin) = ' '
@@ -2029,23 +1931,23 @@
           Dpin(Ncin) = 0.D0
           nx = 0
           cnum = ' '
-        ENDIF
+        end if
         nb = nb + 1
- 400  CONTINUE
-      IF ( nx.GT.0 ) THEN
+ 400  continue
+      if( nx > 0 ) then
         Ncin = Ncin + 1
         Lcin(Ncin) = 0
         Dpin(Ncin) = 0.D0
-      ENDIF
-      GOTO 100
- 500  Readok = .FALSE.
-      RETURN
-99001 FORMAT (132A1)
-99002 FORMAT (1x, 80A1)
-99003 FORMAT (/' FATAL ERROR IN INPUT FORMAT (INFREE)')
-99004 FORMAT (/' WARNING!!  UNACCEPTABLE NUMBER ', A15, ' (INFREE)')
-      END
-      SUBROUTINE INPUT(Readok, Caseok, Ensert)
+      end if
+      go to 100
+ 500  Readok = .false.
+      return
+99001 format (132A1)
+99002 format (1x, 80A1)
+99003 format (/' FATAL ERROR IN INPUT format (INFREE)')
+99004 format (/' WARNING!!  UNACCEPTABLE NUMBER ', A15, ' (INFREE)')
+      end
+      subroutine INPUT(Readok, Caseok, Ensert)
 !***********************************************************************
 ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
 !***********************************************************************
@@ -2063,212 +1965,212 @@
       character(26):: lc, uc
       logical, save:: eqrats, incd, phi, pltdat, reacts, refl
       integer, save:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
-      integer:: INDEX
+      integer:: index
       real(8), save:: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
-      real(8):: DABS, DMIN1, DSQRT
+      real(8):: dabs, dmin1, dsqrt
 
       DATA uc/'ABCDEFGHIJKLMNOPQRSTUVWXYZ'/
       DATA lc/'abcdefghijklmnopqrstuvwxyz'/
-      WRITE (IOOUT, 99001)
-      Caseok = .TRUE.
+      write(IOOUT, 99001)
+      Caseok = .true.
       Nonly = 0
       Nomit = 0
       Nsert = 0
-      reacts = .FALSE.
+      reacts = .false.
       Trace = 0
-      Short = .FALSE.
-      Massf = .FALSE.
-      DO i = 1, Ncol
-        Debug(i) = .FALSE.
-      ENDDO
+      Short = .false.
+      Massf = .false.
+      do i = 1, Ncol
+        Debug(i) = .false.
+      end do
       Nplt = 0
-      Siunit = .TRUE.
-      pltdat = .FALSE.
+      Siunit = .true.
+      pltdat = .false.
 ! CALL INFREE TO READ DATASET
- 100  CALL INFREE(Readok, cin, ncin, lcin, dpin)
-      IF ( .NOT.Readok ) GOTO 400
+ 100  call INFREE(Readok, cin, ncin, lcin, dpin)
+      if( .not. Readok ) go to 400
       code = cin(1)
-      IF ( code.NE.'    ' ) THEN
+      if( code /= '    ' ) then
 ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
-        IF ( code.EQ.'only' ) THEN
+        if( code == 'only' ) then
           Nonly = MIN(maxNgc, ncin-1)
-          DO i = 1, Nonly
+          do i = 1, Nonly
             Prod(i) = cin(i+1)
-          ENDDO
+          end do
 ! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
-        ELSEIF ( code.EQ.'inse' ) THEN
+        else if( code == 'inse' ) then
           Nsert = MIN(20, ncin-1)
-          DO i = 1, Nsert
+          do i = 1, Nsert
             Ensert(i) = cin(i+1)
-          ENDDO
+          end do
 ! STORE PRODUCT NAMES FROM 'OMIT' DATASET
-        ELSEIF ( code.EQ.'omit' ) THEN
+        else if( code == 'omit' ) then
 ! CHECK OMIT DATASET
           Nomit = MIN(maxNgc, ncin-1)
-          DO i = 1, Nomit
+          do i = 1, Nomit
             Omit(i) = cin(i+1)
-          ENDDO
+          end do
 ! KEYWORD 'THER' READ
-! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
-        ELSEIF ( code.EQ.'ther' ) THEN
-          Newr = .TRUE.
-          REWIND IOTHM
-          CALL UTHERM(Readok)
-          IF ( .NOT.Readok ) THEN
-            WRITE (IOOUT, 99025)
-            GOTO 400
-          ENDIF
+! CALL UTHERM TO CONVERT formatTED THERMODYNAMIC DATA
+        else if( code == 'ther' ) then
+          Newr = .true.
+          rewind IOTHM
+          call UTHERM(Readok)
+          if( .not. Readok ) then
+            write(IOOUT, 99025)
+            go to 400
+          end if
 ! KEYWORD 'TRAN' READ
-! CALL UTRAN TO CONVERT FORMATTED TRANSPORT PROPERTIES
-        ELSEIF ( code.EQ.'tran' ) THEN
-          CALL UTRAN(Readok)
-          IF ( .NOT.Readok ) THEN
-            WRITE (IOOUT, 99025)
-            GOTO 400
-          ENDIF
+! CALL UTRAN TO CONVERT formatTED TRANSPORT PROPERTIES
+        else if( code == 'tran' ) then
+          call UTRAN(Readok)
+          if( .not. Readok ) then
+            write(IOOUT, 99025)
+            go to 400
+          end if
 ! PROCESS 'OUTP' DATASET.
-        ELSEIF ( code.EQ.'outp' ) THEN
-          DO 120 i = 2, ncin
-            IF ( lcin(i).LT.0 ) THEN
+        else if( code == 'outp' ) then
+          do 120 i = 2, ncin
+            if( lcin(i) < 0 ) then
               cx2 = cin(i)(1:2)
               cx3 = cin(i)(1:3)
               cx4 = cin(i)(1:4)
-              IF ( cx3.EQ.'cal' ) THEN
-                Siunit = .FALSE.
-              ELSEIF ( cx4.EQ.'tran'.OR.cx3.EQ.'trn' ) THEN
-                Trnspt = .TRUE.
-              ELSEIF ( cx4.EQ.'trac' ) THEN
+              if( cx3 == 'cal' ) then
+                Siunit = .false.
+              else if( cx4 == 'tran' .or. cx3 == 'trn' ) then
+                Trnspt = .true.
+              else if( cx4 == 'trac' ) then
                 Trace = dpin(i+1)
-              ELSEIF ( cin(i)(:5).EQ.'short' ) THEN
-                Short = .TRUE.
-              ELSEIF ( cin(i)(:5).EQ.'massf' ) THEN
-                Massf = .TRUE.
-              ELSEIF ( cx3.EQ.'deb'.OR.cx3.EQ.'dbg' ) THEN
-                DO j = i + 1, ncin
-                  IF ( lcin(j).NE.i ) GOTO 120
+              else if( cin(i)(:5) == 'short' ) then
+                Short = .true.
+              else if( cin(i)(:5) == 'massf' ) then
+                Massf = .true.
+              else if( cx3 == 'deb' .or. cx3 == 'dbg' ) then
+                do j = i + 1, ncin
+                  if( lcin(j) /= i ) go to 120
                   k = dpin(j)
-                  IF ( k.LE.Ncol ) Debug(k) = .TRUE.
+                  if( k <= Ncol ) Debug(k) = .true.
                   lcin(j) = 0
-                ENDDO
-              ELSEIF ( cx2.EQ.'si' ) THEN
-                Siunit = .TRUE.
-              ELSEIF ( pltdat.AND.Nplt.LT.20 ) THEN
+                end do
+              else if( cx2 == 'si' ) then
+                Siunit = .true.
+              else if( pltdat .and. Nplt < 20 ) then
                 Nplt = Nplt + 1
                 Pltvar(Nplt) = cin(i)
-              ELSEIF ( cx2.EQ.'pl' ) THEN
-                pltdat = .TRUE.
-              ELSE
-                WRITE (IOOUT, 99002) cin(i)
-              ENDIF
-            ENDIF
- 120      CONTINUE
+              else if( cx2 == 'pl' ) then
+                pltdat = .true.
+              else
+                write(IOOUT, 99002) cin(i)
+              end if
+            end if
+ 120      continue
 ! SORT AND STORE DATA FROM 'REAC' DATASET.
-        ELSEIF ( code.EQ.'reac' ) THEN
-          reacts = .TRUE.
-          Moles = .FALSE.
+        else if( code == 'reac' ) then
+          reacts = .true.
+          Moles = .false.
           Nreac = 0
-          DO i = 1, maxR
+          do i = 1, maxR
             Pecwt(i) = -1.
-          ENDDO
+          end do
           i = 1
  140      i = i + 1
-          IF ( i.LE.ncin ) THEN
-            IF ( lcin(i).NE.0 ) THEN
-              IF ( lcin(i).GT.0 ) THEN
-                WRITE (IOOUT, 99003) cin(i)
-                GOTO 140
-              ENDIF
+          if( i <= ncin ) then
+            if( lcin(i) /= 0 ) then
+              if( lcin(i) > 0 ) then
+                write(IOOUT, 99003) cin(i)
+                go to 140
+              end if
               cx15 = cin(i)
               cx1 = cx15(:1)
               cx2 = cx15(:2)
               cx3 = cx15(:3)
               cx4 = cx15(:4)
 ! NEW REACTANT
-              IF ( cx2.NE.'na'.AND.cx2.NE.'ox'.AND.cx2.NE.'fu' ) THEN
+              if( cx2 /= 'na' .and. cx2 /= 'ox' .and. cx2 /= 'fu' ) then
 ! LOOK FOR PERCENTS
-                IF ( cx1.EQ.'m'.OR.cx1.EQ.'w' ) THEN
-                  IF ( lcin(i+1).GT.0 ) THEN
+                if( cx1 == 'm' .or. cx1 == 'w' ) then
+                  if( lcin(i+1) > 0 ) then
                     i = i + 1
                     Pecwt(Nreac) = dpin(i)
-                  ELSE
-                    Caseok = .FALSE.
-                    WRITE (IOOUT, 99004)
-                  ENDIF
-                  IF ( cx1.EQ.'m'.AND.Nreac.EQ.1 ) Moles = .TRUE.
-                  IF ( cx1.EQ.'m'.AND..NOT.Moles.OR.cx1.EQ.'w'.AND. &
-                       Moles ) THEN
-                    Caseok = .FALSE.
-                    WRITE (IOOUT, 99005)
-                  ENDIF
-                  GOTO 140
-                ENDIF
+                  else
+                    Caseok = .false.
+                    write(IOOUT, 99004)
+                  end if
+                  if( cx1 == 'm' .and. Nreac == 1 ) Moles = .true.
+                  if( cx1 == 'm' .and. .not. Moles .or. cx1 == 'w' .and.  &
+                       Moles ) then
+                    Caseok = .false.
+                    write(IOOUT, 99005)
+                  end if
+                  go to 140
+                end if
 ! LOOK FOR TEMPERATURES
-                IF ( cx1.EQ.'t' ) THEN
-                  IF ( lcin(i+1).GT.0 ) THEN
+                if( cx1 == 't' ) then
+                  if( lcin(i+1) > 0 ) then
                     i = i + 1
                     Rtemp(Nreac) = dpin(i)
-                    IF ( lcin(i-1).LT.1 ) THEN
-                      IF ( INDEX(cx15, 'r').GT.0 ) Rtemp(Nreac) &
+                    if( lcin(i-1) < 1 ) then
+                      if( index(cx15, 'r') > 0 ) Rtemp(Nreac) &
                            = Rtemp(Nreac)/1.8D0
-                      IF ( INDEX(cx15, 'c').GT.0 ) Rtemp(Nreac) &
+                      if( index(cx15, 'c') > 0 ) Rtemp(Nreac) &
                            = Rtemp(Nreac) + 273.15D0
-                      IF ( INDEX(cx15, 'f').GT.0 ) Rtemp(Nreac) &
+                      if( index(cx15, 'f') > 0 ) Rtemp(Nreac) &
                            = (Rtemp(Nreac)-32.D0)/1.8D0 + 273.15D0
-                    ENDIF
-                  ELSE
-                    WRITE (IOOUT, 99006)
-                    Caseok = .FALSE.
-                  ENDIF
-                  GOTO 140
-                ENDIF
+                    end if
+                  else
+                    write(IOOUT, 99006)
+                    Caseok = .false.
+                  end if
+                  go to 140
+                end if
 ! LOOK FOR ENTHALPY
-                IF ( cx1.EQ.'h'.OR.cx1.EQ.'u' ) THEN
+                if( cx1 == 'h' .or. cx1 == 'u' ) then
                   Energy(Nreac) = cx15
-                  IF ( lcin(i+1).GT.0 ) THEN
+                  if( lcin(i+1) > 0 ) then
                     i = i + 1
                     Enth(Nreac) = dpin(i)*1000.D0/Rr
-                    IF ( INDEX(cin(i-1), 'c').GT.0 ) Enth(Nreac) &
+                    if( index(cin(i-1), 'c') > 0 ) Enth(Nreac) &
                          = Enth(Nreac)*4.184D0
-                    IF ( INDEX(cin(i-1), 'k').GT.0 ) Enth(Nreac) &
+                    if( index(cin(i-1), 'k') > 0 ) Enth(Nreac) &
                          = Enth(Nreac)*1000.D0
-                  ENDIF
-                  GOTO 140
-                ENDIF
+                  end if
+                  go to 140
+                end if
 ! LOOK FOR DENSITY
-                IF ( cx3.EQ.'rho'.OR.cx3.EQ.'den' ) THEN
-                  IF ( lcin(i+1).GT.0 ) THEN
+                if( cx3 == 'rho' .or. cx3 == 'den' ) then
+                  if( lcin(i+1) > 0 ) then
                     i = i + 1
                     Dens(Nreac) = dpin(i)
-                    IF ( INDEX(cx15, 'kg').GT.0 ) Dens(Nreac) &
+                    if( index(cx15, 'kg') > 0 ) Dens(Nreac) &
                          = Dens(Nreac)/1000.D0
-                  ENDIF
-                  GOTO 140
-                ENDIF
+                  end if
+                  go to 140
+                end if
 ! CHECK FOR CHEMICAL SYMBOLS IN EXPLODED FORMULA
-                IF ( (lcin(i).EQ.-1.OR.lcin(i).EQ.-2).AND.INDEX(uc, cx1) &
-                     .GT.0 ) THEN
+                if( (lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) &
+                      > 0 ) then
                   Energy(Nreac) = ' '
                   ifrmla = ifrmla + 1
                   Nfla(Nreac) = ifrmla
-                  IF ( lcin(i).EQ.-2 ) THEN
-                    ix = INDEX(lc, cx2(2:2))
-                    IF ( ix.GT.0 ) cx2(2:2) = uc(ix:ix)
-                  ENDIF
+                  if( lcin(i) == -2 ) then
+                    ix = index(lc, cx2(2:2))
+                    if( ix > 0 ) cx2(2:2) = uc(ix:ix)
+                  end if
                   Ratom(Nreac, ifrmla) = cx2
-                  IF ( lcin(i+1).EQ.i ) THEN
+                  if( lcin(i+1) == i ) then
                     Rnum(Nreac, ifrmla) = dpin(i+1)
-                  ELSE
+                  else
                     Rnum(Nreac, ifrmla) = 1.
-                  ENDIF
+                  end if
                   i = i + 1
-                  GOTO 140
-                ENDIF
-                WRITE (IOOUT, 99007) cin(i)
-              ELSE
+                  go to 140
+                end if
+                write(IOOUT, 99007) cin(i)
+              else
                 Nreac = MIN(Nreac+1, maxR)
                 Fox(Nreac) = cx15
                 i = i + 1
-                IF ( lcin(i).LT.0 ) Rname(Nreac) = cin(i)
+                if( lcin(i) < 0 ) Rname(Nreac) = cin(i)
                 ifrmla = 0
                 Nfla(Nreac) = 0
                 Energy(Nreac) = 'lib'
@@ -2278,20 +2180,20 @@
                 Rnum(Nreac, 1) = 0.
                 Rmw(Nreac) = 0.
                 Rtemp(Nreac) = 0.
-              ENDIF
-            ENDIF
-            GOTO 140
-          ENDIF
+              end if
+            end if
+            go to 140
+          end if
 ! SORT AND STORE INPUT FROM 'PROB' DATASET
-        ELSEIF ( code.EQ.'prob' ) THEN
+        else if( code == 'prob' ) then
           Case = ' '
-          DO i = 1, maxPv
+          do i = 1, maxPv
             P(i) = 0.
             V(i) = 0.
-          ENDDO
-          DO i = 1, maxT
+          end do
+          do i = 1, maxT
             T(i) = 0.
-          ENDDO
+          end do
           P(1) = 1.
           Trace = 0.
           Lsave = 0
@@ -2299,18 +2201,18 @@
           S0 = 0.
           hr = 1.D30
           ur = 1.D30
-          Tp = .FALSE.
-          Hp = .FALSE.
-          Sp = .FALSE.
-          Rkt = .FALSE.
-          Shock = .FALSE.
-          Detn = .FALSE.
-          Vol = .FALSE.
-          Ions = .FALSE.
-          Eql = .FALSE.
-          Froz = .FALSE.
-          Fac = .FALSE.
-          Debugf = .FALSE.
+          Tp = .false.
+          Hp = .false.
+          Sp = .false.
+          Rkt = .false.
+          Shock = .false.
+          Detn = .false.
+          Vol = .false.
+          Ions = .false.
+          Eql = .false.
+          Froz = .false.
+          Fac = .false.
+          Debugf = .false.
           Acat = 0.
           Ma = 0.
           Nfz = 1
@@ -2318,404 +2220,404 @@
           Nsup = 0
           Npp = 0
           Tcest = 3800.
-          DO i = 1, Ncol
+          do i = 1, Ncol
             Pcp(i) = 0.
             Pcp(i+Ncol) = 0.
             Supar(i) = 0.
             Subar(i) = 0.
             Mach1(i) = 0.
             U1(i) = 0.
-          ENDDO
+          end do
           Gamma1 = 0.
-          phi = .FALSE.
-          eqrats = .FALSE.
-          incd = .FALSE.
-          refl = .FALSE.
-          Shkdbg = .FALSE.
-          Incdeq = .FALSE.
-          Incdfz = .FALSE.
-          Refleq = .FALSE.
-          Reflfz = .FALSE.
+          phi = .false.
+          eqrats = .false.
+          incd = .false.
+          refl = .false.
+          Shkdbg = .false.
+          Incdeq = .false.
+          Incdfz = .false.
+          Refleq = .false.
+          Reflfz = .false.
           Np = 0
           Nt = 1
-          Trnspt = .FALSE.
+          Trnspt = .false.
 ! PROCESS LITERAL VARIABLES IN 'PROB' DATASET THAT DO NOT HAVE
 ! ASSOCIATED NUMERICAL DATA.
-          DO 160 i = 2, ncin
-            IF ( lcin(i).LT.0 ) THEN
-              DO j = i + 1, ncin
-                IF ( lcin(j).EQ.i ) GOTO 160
-              ENDDO
+          do 160 i = 2, ncin
+            if( lcin(i) < 0 ) then
+              do j = i + 1, ncin
+                if( lcin(j) == i ) go to 160
+              end do
               cx15 = cin(i)
               cx2 = cx15(:2)
               cx3 = cx15(:3)
               cx4 = cx15(:4)
-              IF ( cx4.EQ.'case' ) THEN
+              if( cx4 == 'case' ) then
                 Case = cin(i+1)
                 lcin(i+1) = 0
-              ELSEIF ( cx2.EQ.'tp'.OR.cx2.EQ.'pt' ) THEN
-                Tp = .TRUE.
-              ELSEIF ( cx2.EQ.'hp'.OR.cx2.EQ.'ph' ) THEN
-                Hp = .TRUE.
-              ELSEIF ( cx2.EQ.'sp'.OR.cx2.EQ.'ps' ) THEN
-                Sp = .TRUE.
-              ELSEIF ( cx2.EQ.'sv'.OR.cx2.EQ.'vs' ) THEN
-                Sp = .TRUE.
-                Vol = .TRUE.
-              ELSEIF ( cx2.EQ.'uv'.OR.cx2.EQ.'vu' ) THEN
-                Hp = .TRUE.
-                Vol = .TRUE.
-              ELSEIF ( cx2.EQ.'tv'.OR.cx2.EQ.'vt' ) THEN
-                Tp = .TRUE.
-                Vol = .TRUE.
-              ELSEIF ( cx2.EQ.'ro'.OR.cx3.EQ.'rkt' ) THEN
-                Rkt = .TRUE.
-              ELSEIF ( cx3.EQ.'dbg'.OR.cx3.EQ.'deb' ) THEN
-                Debugf = .TRUE.
-                Shkdbg = .TRUE.
-                Detdbg = .TRUE.
-              ELSEIF ( cx3.EQ.'fac' ) THEN
-                Rkt = .TRUE.
-                Eql = .TRUE.
-                Fac = .TRUE.
-                Froz = .FALSE.
-              ELSEIF ( cx2.EQ.'eq' ) THEN
-                Eql = .TRUE.
-              ELSEIF ( cx2.EQ.'fr'.OR.cx2.EQ.'fz' ) THEN
-                Froz = .TRUE.
-              ELSEIF ( cx2.EQ.'sh' ) THEN
-                Shock = .TRUE.
-              ELSEIF ( cx3.EQ.'inc' ) THEN
-                Shock = .TRUE.
-                incd = .TRUE.
-                IF ( INDEX(cx15, 'eq').GT.0 ) Eql = .TRUE.
-                IF ( INDEX(cx15, 'fr').GT.0 ) Froz = .TRUE.
-                IF ( INDEX(cx15, 'fz').GT.0 ) Froz = .TRUE.
-              ELSEIF ( cx3.EQ.'ref' ) THEN
-                Shock = .TRUE.
-                refl = .TRUE.
-                IF ( INDEX(cx15, 'eq').GT.0 ) Eql = .TRUE.
-                IF ( INDEX(cx15, 'fr').GT.0 ) Froz = .TRUE.
-                IF ( INDEX(cx15, 'fz').GT.0 ) Froz = .TRUE.
-              ELSEIF ( cx3.EQ.'det' ) THEN
-                Detn = .TRUE.
-              ELSEIF ( cx4.EQ.'ions' ) THEN
-                Ions = .TRUE.
-              ELSE
-                WRITE (IOOUT, 99002) cx15
-              ENDIF
+              else if( cx2 == 'tp' .or. cx2 == 'pt' ) then
+                Tp = .true.
+              else if( cx2 == 'hp' .or. cx2 == 'ph' ) then
+                Hp = .true.
+              else if( cx2 == 'sp' .or. cx2 == 'ps' ) then
+                Sp = .true.
+              else if( cx2 == 'sv' .or. cx2 == 'vs' ) then
+                Sp = .true.
+                Vol = .true.
+              else if( cx2 == 'uv' .or. cx2 == 'vu' ) then
+                Hp = .true.
+                Vol = .true.
+              else if( cx2 == 'tv' .or. cx2 == 'vt' ) then
+                Tp = .true.
+                Vol = .true.
+              else if( cx2 == 'ro' .or. cx3 == 'rkt' ) then
+                Rkt = .true.
+              else if( cx3 == 'dbg' .or. cx3 == 'deb' ) then
+                Debugf = .true.
+                Shkdbg = .true.
+                Detdbg = .true.
+              else if( cx3 == 'fac' ) then
+                Rkt = .true.
+                Eql = .true.
+                Fac = .true.
+                Froz = .false.
+              else if( cx2 == 'eq' ) then
+                Eql = .true.
+              else if( cx2 == 'fr' .or. cx2 == 'fz' ) then
+                Froz = .true.
+              else if( cx2 == 'sh' ) then
+                Shock = .true.
+              else if( cx3 == 'inc' ) then
+                Shock = .true.
+                incd = .true.
+                if( index(cx15, 'eq') > 0 ) Eql = .true.
+                if( index(cx15, 'fr') > 0 ) Froz = .true.
+                if( index(cx15, 'fz') > 0 ) Froz = .true.
+              else if( cx3 == 'ref' ) then
+                Shock = .true.
+                refl = .true.
+                if( index(cx15, 'eq') > 0 ) Eql = .true.
+                if( index(cx15, 'fr') > 0 ) Froz = .true.
+                if( index(cx15, 'fz') > 0 ) Froz = .true.
+              else if( cx3 == 'det' ) then
+                Detn = .true.
+              else if( cx4 == 'ions' ) then
+                Ions = .true.
+              else
+                write(IOOUT, 99002) cx15
+              end if
               lcin(i) = 0
-            ENDIF
- 160      CONTINUE
+            end if
+ 160      continue
           iv = 2
           Nof = 0
-          GOTO 200
-        ELSEIF ( code(1:3).EQ.'end' ) THEN
-          IF ( Shock ) THEN
-            IF ( incd.AND.Froz ) Incdfz = .TRUE.
-            IF ( incd.AND.Eql ) Incdeq = .TRUE.
-            IF ( refl.AND.Froz ) Reflfz = .TRUE.
-            IF ( refl.AND.Eql ) Refleq = .TRUE.
-          ENDIF
-          Hsub0 = DMIN1(hr, ur)
+          go to 200
+        else if( code(1:3) == 'end' ) then
+          if( Shock ) then
+            if( incd .and. Froz ) Incdfz = .true.
+            if( incd .and. Eql ) Incdeq = .true.
+            if( refl .and. Froz ) Reflfz = .true.
+            if( refl .and. Eql ) Refleq = .true.
+          end if
+          Hsub0 = dmin1(hr, ur)
           Size = 0.
-          IF ( hr.GT..9D30 ) hr = 0.D0
-          IF ( ur.GT..9D30 ) ur = 0.D0
-          IF ( Trnspt ) Viscns = .3125*DSQRT(1.E5*Boltz/(Pi*Avgdr))
-          IF ( Siunit ) R = Rr/1000.
-          IF ( Detn.OR.Shock ) Newr = .TRUE.
-          IF ( .NOT.Short ) THEN
-            WRITE (IOOUT, 99008) Tp, (Hp.AND..NOT.Vol), Sp, (Tp.AND.Vol), &
-                            (Hp.AND.Vol), (Sp.AND.Vol), Detn, Shock, refl, &
+          if( hr > .9D30 ) hr = 0.D0
+          if( ur > .9D30 ) ur = 0.D0
+          if( Trnspt ) Viscns = .3125*dsqrt(1.E5*Boltz/(Pi*Avgdr))
+          if( Siunit ) R = Rr/1000.
+          if( Detn .or. Shock ) Newr = .true.
+          if( .not. Short ) then
+            write(IOOUT, 99008) Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), &
+                            (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
                             incd, Rkt, Froz, Eql, Ions, Siunit, Debugf, Shkdbg, &
                             Detdbg, Trnspt
-            IF ( T(1).GT.0. ) WRITE (IOOUT, 99009) (T(jj), jj=1, Nt)
-            WRITE (IOOUT, 99010) Trace, S0, hr, ur
-            IF ( Np.GT.0.AND.Vol ) WRITE (IOOUT, 99011) &
+            if( T(1) > 0. ) write(IOOUT, 99009) (T(jj), jj=1, Nt)
+            write(IOOUT, 99010) Trace, S0, hr, ur
+            if( Np > 0 .and. Vol ) write(IOOUT, 99011) &
                  (V(jj)*1.D-05, jj=1, Np)
-          ENDIF
-          IF ( Rkt ) THEN
-            IF ( Nt.EQ.0 ) Hp = .TRUE.
-            IF ( .NOT.Short ) THEN
-              WRITE (IOOUT, 99012) (P(jj), jj=1, Np)
-              WRITE (IOOUT, 99013) (Pcp(jj), jj=1, Npp)
-              WRITE (IOOUT, 99014) (Subar(i), i=1, Nsub)
-              WRITE (IOOUT, 99015) (Supar(i), i=1, Nsup)
-              WRITE (IOOUT, 99016) Nfz, Ma, Acat
-            ENDIF
-          ELSE
-            IF ( .NOT.Vol.AND..NOT.Short ) WRITE (IOOUT, 99017) &
+          end if
+          if( Rkt ) then
+            if( Nt == 0 ) Hp = .true.
+            if( .not. Short ) then
+              write(IOOUT, 99012) (P(jj), jj=1, Np)
+              write(IOOUT, 99013) (Pcp(jj), jj=1, Npp)
+              write(IOOUT, 99014) (Subar(i), i=1, Nsub)
+              write(IOOUT, 99015) (Supar(i), i=1, Nsup)
+              write(IOOUT, 99016) Nfz, Ma, Acat
+            end if
+          else
+            if( .not. Vol .and. .not. Short ) write(IOOUT, 99017) &
                  (P(jj), jj=1, Np)
-          ENDIF
-          IF ( reacts ) CALL REACT
-          IF ( Nreac.EQ.0.OR.Nlm.LE.0 ) THEN
-            WRITE (IOOUT, 99018)
-            Caseok = .FALSE.
-            WRITE (IOOUT, 99025)
-            GOTO 400
-          ENDIF
-          IF ( Nof.EQ.0 ) THEN
+          end if
+          if( reacts ) call REACT
+          if( Nreac == 0 .or. Nlm <= 0 ) then
+            write(IOOUT, 99018)
+            Caseok = .false.
+            write(IOOUT, 99025)
+            go to 400
+          end if
+          if( Nof == 0 ) then
             Nof = 1
             Oxf(1) = 0.
-            IF ( Wp(2).GT.0. ) THEN
+            if( Wp(2) > 0. ) then
               Oxf(1) = Wp(1)/Wp(2)
-            ELSE
-              Caseok = .FALSE.
-              WRITE (IOOUT, 99004)
-              WRITE (IOOUT, 99025)
-              GOTO 400
-            ENDIF
-          ELSEIF ( phi.OR.eqrats ) THEN
-            DO i = 1, Nof
+            else
+              Caseok = .false.
+              write(IOOUT, 99004)
+              write(IOOUT, 99025)
+              go to 400
+            end if
+          else if( phi .or. eqrats ) then
+            do i = 1, Nof
               eratio = Oxf(i)
-              IF ( eqrats ) THEN
+              if( eqrats ) then
                 xyz = -eratio*Vmin(2) - Vpls(2)
                 denmtr = eratio*Vmin(1) + Vpls(1)
-              ELSE
+              else
                 xyz = -Vmin(2) - Vpls(2)
                 denmtr = eratio*(Vmin(1)+Vpls(1))
-              ENDIF
-              IF ( DABS(denmtr).LT.1.D-30 ) THEN
-                Caseok = .FALSE.
-                WRITE (IOOUT, 99019) eratio
-                WRITE (IOOUT, 99025)
-                GOTO 400
-              ENDIF
+              end if
+              if( dabs(denmtr) < 1.D-30 ) then
+                Caseok = .false.
+                write(IOOUT, 99019) eratio
+                write(IOOUT, 99025)
+                go to 400
+              end if
               Oxf(i) = xyz/denmtr
-            ENDDO
-          ENDIF
-          IF ( .NOT.Sp.AND..NOT.Tp.AND..NOT.Hp.AND..NOT.Rkt.AND. &
-               .NOT.Detn.AND..NOT.Shock ) THEN
-            Caseok = .FALSE.
-            WRITE (IOOUT, 99020)
-          ELSEIF ( Tp.AND.T(1).LE.0. ) THEN
-            Caseok = .FALSE.
-            WRITE (IOOUT, 99021)
-          ELSEIF ( Np.LE.0 ) THEN
-            Caseok = .FALSE.
-            WRITE (IOOUT, 99022)
-          ENDIF
-          IF ( .NOT.(Caseok.AND.Nlm.GT.0) ) WRITE (IOOUT, 99025)
-          GOTO 400
-        ELSE
-          WRITE (IOOUT, 99023)
-        ENDIF
-      ENDIF
-      GOTO 100
+            end do
+          end if
+          if( .not. Sp .and. .not. Tp .and. .not. Hp .and. .not. Rkt .and.  &
+               .not. Detn .and. .not. Shock ) then
+            Caseok = .false.
+            write(IOOUT, 99020)
+          else if( Tp .and. T(1) <= 0. ) then
+            Caseok = .false.
+            write(IOOUT, 99021)
+          else if( Np <= 0 ) then
+            Caseok = .false.
+            write(IOOUT, 99022)
+          end if
+          if( .not. (Caseok .and. Nlm > 0) ) write(IOOUT, 99025)
+          go to 400
+        else
+          write(IOOUT, 99023)
+        end if
+      end if
+      go to 100
 ! PROCESS NUMERICAL DATA FOLLOWING 'PROB' LITERALS
  200  in = 0
       nmix = 0
       ii = iv
-      DO i = ii, ncin
+      do i = ii, ncin
         iv = i
-        IF ( lcin(i).NE.0 ) THEN
-          IF ( lcin(i).LT.0 ) THEN
-            IF ( in.GT.0 ) GOTO 300
+        if( lcin(i) /= 0 ) then
+          if( lcin(i) < 0 ) then
+            if( in > 0 ) go to 300
             in = i
-          ELSE
-            IF ( lcin(i).NE.in ) GOTO 300
+          else
+            if( lcin(i) /= in ) go to 300
             nmix = nmix + 1
             mix(nmix) = dpin(i)
             lcin(i) = 0
-          ENDIF
-        ENDIF
-      ENDDO
- 300  IF ( nmix.LE.0 ) THEN
-        IF ( iv.LT.ncin ) GOTO 200
-        GOTO 100
-      ENDIF
+          end if
+        end if
+      end do
+ 300  if( nmix <= 0 ) then
+        if( iv < ncin ) go to 200
+        go to 100
+      end if
       cx15 = cin(in)
       cx1 = cx15(:1)
       cx2 = cx15(:2)
       cx3 = cx15(:3)
       cx4 = cx15(:4)
-      IF ( cx1.EQ.'t' ) THEN
+      if( cx1 == 't' ) then
         Nt = nmix
-        IF ( nmix.GT.maxMix ) THEN
+        if( nmix > maxMix ) then
           Nt = maxMix
-          WRITE (IOOUT, 99024) 't', Nt
-        ENDIF
-        DO i = 1, Nt
-          IF ( cx4.NE.'tces' ) THEN
+          write(IOOUT, 99024) 't', Nt
+        end if
+        do i = 1, Nt
+          if( cx4 /= 'tces' ) then
             T(i) = mix(i)
-            IF ( lcin(in).LT.-1 ) THEN
-              IF ( INDEX(cx15, 'r').GT.0 ) T(i) = T(i)/1.8D0
-              IF ( INDEX(cx15, 'c').GT.0 ) T(i) = T(i) + 273.15D0
-              IF ( INDEX(cx15, 'f').GT.0 ) T(i) = (T(i)-32.D0) &
+            if( lcin(in) < -1 ) then
+              if( index(cx15, 'r') > 0 ) T(i) = T(i)/1.8D0
+              if( index(cx15, 'c') > 0 ) T(i) = T(i) + 273.15D0
+              if( index(cx15, 'f') > 0 ) T(i) = (T(i)-32.D0) &
                    /1.8D0 + 273.15D0
-            ENDIF
-          ENDIF
-        ENDDO
-      ELSEIF ( (cx2.EQ.'pc'.OR.cx2.EQ.'pi').AND.INDEX(cx15(3:15), 'p') &
-               .GT.0.AND.INDEX(cx15, 'psi').EQ.0 ) THEN
+            end if
+          end if
+        end do
+      else if( (cx2 == 'pc' .or. cx2 == 'pi') .and. index(cx15(3:15), 'p') &
+                > 0 .and. index(cx15, 'psi') == 0 ) then
         Npp = nmix
-        IF ( nmix.GT.2*Ncol ) THEN
+        if( nmix > 2*Ncol ) then
           Npp = 2*Ncol
-          WRITE (IOOUT, 99024) 'pcp', Npp
-        ENDIF
-        DO i = 1, Npp
+          write(IOOUT, 99024) 'pcp', Npp
+        end if
+        do i = 1, Npp
           Pcp(i) = mix(i)
-        ENDDO
-      ELSEIF ( cx1.EQ.'p'.AND.cx3.NE.'phi' ) THEN
+        end do
+      else if( cx1 == 'p' .and. cx3 /= 'phi' ) then
         Np = nmix
-        IF ( nmix.GT.maxPv ) THEN
+        if( nmix > maxPv ) then
           Np = maxPv
-          WRITE (IOOUT, 99024) 'p', Np
-        ENDIF
-        DO 350 i = 1, Np
+          write(IOOUT, 99024) 'p', Np
+        end if
+        do 350 i = 1, Np
           P(i) = mix(i)
-          IF ( INDEX(cx15, 'psi').NE.0 ) THEN
+          if( index(cx15, 'psi') /= 0 ) then
             P(i) = P(i)/14.696006D0
-          ELSEIF ( INDEX(cx15, 'mmh').NE.0 ) THEN
+          else if( index(cx15, 'mmh') /= 0 ) then
             P(i) = P(i)/760.D0
-          ELSEIF ( INDEX(cx15, 'atm').EQ.0 ) THEN
-            GOTO 350
-          ENDIF
+          else if( index(cx15, 'atm') == 0 ) then
+            go to 350
+          end if
           P(i) = P(i)*1.01325D0
- 350    CONTINUE
-      ELSEIF ( cx3.EQ.'rho' ) THEN
+ 350    continue
+      else if( cx3 == 'rho' ) then
         xyz = 1.D02
-        IF ( INDEX(cx15, 'kg').NE.0 ) xyz = 1.D05
+        if( index(cx15, 'kg') /= 0 ) xyz = 1.D05
         Np = nmix
-        IF ( nmix.GT.maxPv ) THEN
+        if( nmix > maxPv ) then
           Np = maxPv
-          WRITE (IOOUT, 99024) 'rho', Np
-        ENDIF
-        DO i = 1, Np
+          write(IOOUT, 99024) 'rho', Np
+        end if
+        do i = 1, Np
           V(i) = xyz/mix(i)
-        ENDDO
-      ELSEIF ( cx1.EQ.'v' ) THEN
+        end do
+      else if( cx1 == 'v' ) then
         xyz = 1.D02
-        IF ( INDEX(cx15, 'kg').NE.0 ) xyz = 1.D05
+        if( index(cx15, 'kg') /= 0 ) xyz = 1.D05
         Np = nmix
-        IF ( nmix.GT.maxPv ) THEN
+        if( nmix > maxPv ) then
           Np = maxPv
-          WRITE (IOOUT, 99024) 'v', Np
-        ENDIF
-        DO i = 1, Np
+          write(IOOUT, 99024) 'v', Np
+        end if
+        do i = 1, Np
           V(i) = mix(i)*xyz
-        ENDDO
-      ELSEIF ( cx3.EQ.'nfz'.OR.cx3.EQ.'nfr' ) THEN
+        end do
+      else if( cx3 == 'nfz' .or. cx3 == 'nfr' ) then
         Nfz = mix(1)
-        Froz = .TRUE.
-      ELSEIF ( cx4.EQ.'tces' ) THEN
+        Froz = .true.
+      else if( cx4 == 'tces' ) then
         Tcest = mix(1)
-      ELSEIF ( cx4.EQ.'trac' ) THEN
+      else if( cx4 == 'trac' ) then
         Trace = mix(1)
-      ELSEIF ( cx3.EQ.'s/r' ) THEN
+      else if( cx3 == 's/r' ) then
         S0 = mix(1)
-      ELSEIF ( cx3.EQ.'u/r'.OR.cx2.EQ.'ur' ) THEN
+      else if( cx3 == 'u/r' .or. cx2 == 'ur' ) then
         ur = mix(1)
-      ELSEIF ( cx3.EQ.'h/r'.OR.cx2.EQ.'hr' ) THEN
+      else if( cx3 == 'h/r' .or. cx2 == 'hr' ) then
         hr = mix(1)
-      ELSEIF ( cx2.EQ.'u1' ) THEN
+      else if( cx2 == 'u1' ) then
         Nsk = nmix
-        IF ( nmix.GT.Ncol ) THEN
+        if( nmix > Ncol ) then
           Nsk = Ncol
-          WRITE (IOOUT, 99024) 'u1', Nsk
-        ENDIF
-        DO i = 1, Nsk
+          write(IOOUT, 99024) 'u1', Nsk
+        end if
+        do i = 1, Nsk
           U1(i) = mix(i)
-        ENDDO
-      ELSEIF ( cx4.EQ.'mach' ) THEN
+        end do
+      else if( cx4 == 'mach' ) then
         Nsk = nmix
-        IF ( nmix.GT.Ncol ) THEN
+        if( nmix > Ncol ) then
           Nsk = Ncol
-          WRITE (IOOUT, 99024) 'mach1', Nsk
-        ENDIF
-        DO i = 1, Nsk
+          write(IOOUT, 99024) 'mach1', Nsk
+        end if
+        do i = 1, Nsk
           Mach1(i) = mix(i)
-        ENDDO
-      ELSEIF ( cx3.EQ.'sub' ) THEN
+        end do
+      else if( cx3 == 'sub' ) then
         Nsub = nmix
-        IF ( nmix.GT.13 ) THEN
+        if( nmix > 13 ) then
           Nsub = 13
-          WRITE (IOOUT, 99024) 'subar', Nsub
-        ENDIF
-        DO i = 1, Nsub
+          write(IOOUT, 99024) 'subar', Nsub
+        end if
+        do i = 1, Nsub
           Subar(i) = mix(i)
-        ENDDO
-      ELSEIF ( cx3.EQ.'sup' ) THEN
+        end do
+      else if( cx3 == 'sup' ) then
         Nsup = nmix
-        IF ( nmix.GT.13 ) THEN
+        if( nmix > 13 ) then
           Nsup = 13
-          WRITE (IOOUT, 99024) 'supar', Nsup
-        ENDIF
-        DO i = 1, Nsup
+          write(IOOUT, 99024) 'supar', Nsup
+        end if
+        do i = 1, Nsup
           Supar(i) = mix(i)
-        ENDDO
-      ELSEIF ( cx2.EQ.'ac' ) THEN
+        end do
+      else if( cx2 == 'ac' ) then
         Acat = mix(1)
-      ELSEIF ( cx4.EQ.'mdot'.OR.cx2.EQ.'ma' ) THEN
+      else if( cx4 == 'mdot' .or. cx2 == 'ma' ) then
         Ma = mix(1)
-      ELSEIF ( cx4.EQ.'case' ) THEN
+      else if( cx4 == 'case' ) then
         Case = cin(in+1)
         lcin(in+1) = 0
-      ELSEIF ( Nof.EQ.0.AND. &
-               (cx3.EQ.'phi'.OR.cx3.EQ.'o/f'.OR.cx3.EQ.'f/a'.OR. &
-               cx2.EQ.'%f'.OR.cx1.EQ.'r') ) THEN
+      else if( Nof == 0 .and.  &
+               (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or.  &
+               cx2 == '%f' .or. cx1 == 'r') ) then
         Nof = nmix
-        IF ( nmix.GT.maxMix ) THEN
+        if( nmix > maxMix ) then
           Nof = maxMix
-          WRITE (IOOUT, 99024) 'o/f', Nof
-        ENDIF
-        DO k = 1, Nof
+          write(IOOUT, 99024) 'o/f', Nof
+        end if
+        do k = 1, Nof
           Oxf(k) = mix(k)
-        ENDDO
-        IF ( cx3.EQ.'phi' ) THEN
-          phi = .TRUE.
-        ELSEIF ( cx1.EQ.'r' ) THEN
-          eqrats = .TRUE.
-        ELSEIF ( cx3.EQ.'f/a' ) THEN
-          DO k = 1, Nof
-            IF ( Oxf(k).GT.0. ) Oxf(k) = 1./Oxf(k)
-          ENDDO
-        ELSEIF ( cx4.EQ.'%fue' ) THEN
-          DO k = 1, Nof
-            IF ( Oxf(k).GT.0. ) Oxf(k) = (100.-Oxf(k))/Oxf(k)
-          ENDDO
-        ENDIF
-      ELSE
-        WRITE (IOOUT, 99002) cx15
-      ENDIF
-      IF ( iv.GE.ncin ) GOTO 100
-      GOTO 200
- 400  RETURN
-99001 FORMAT (/, /)
-99002 FORMAT ('  WARNING!!  DID NOT RECOGNIZE ', A15, ' (INPUT)'/)
-99003 FORMAT (/' WARNING!!  LITERAL EXPECTED FOR ', A15, '(INPUT)')
-99004 FORMAT (/' REACTANT AMOUNT MISSING (INPUT)')
-99005 FORMAT (/' MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)')
-99006 FORMAT (/' REACTANT TEMPERATURE MISSING (INPUT) ')
-99007 FORMAT (/' WARNING!! ', A15, ' NOT RECOGNIZED (INPUT)')
-99008 FORMAT (/' OPTIONS: TP=', L1, '  HP=', L1, '  SP=', L1, '  TV=', L1, &
+        end do
+        if( cx3 == 'phi' ) then
+          phi = .true.
+        else if( cx1 == 'r' ) then
+          eqrats = .true.
+        else if( cx3 == 'f/a' ) then
+          do k = 1, Nof
+            if( Oxf(k) > 0. ) Oxf(k) = 1./Oxf(k)
+          end do
+        else if( cx4 == '%fue' ) then
+          do k = 1, Nof
+            if( Oxf(k) > 0. ) Oxf(k) = (100.-Oxf(k))/Oxf(k)
+          end do
+        end if
+      else
+        write(IOOUT, 99002) cx15
+      end if
+      if( iv >= ncin ) go to 100
+      go to 200
+ 400  return
+99001 format (/, /)
+99002 format ('  WARNING!!  DID NOT RECOGNIZE ', A15, ' (INPUT)'/)
+99003 format (/' WARNING!!  LITERAL EXPECTED FOR ', A15, '(INPUT)')
+99004 format (/' REACTANT AMOUNT MISSING (INPUT)')
+99005 format (/' MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)')
+99006 format (/' REACTANT TEMPERATURE MISSING (INPUT) ')
+99007 format (/' WARNING!! ', A15, ' NOT RECOGNIZED (INPUT)')
+99008 format (/' OPTIONS: TP=', L1, '  HP=', L1, '  SP=', L1, '  TV=', L1, &
               '  UV=', L1, '  SV=', L1, '  DETN=', L1, '  SHOCK=', L1, &
               '  REFL=', L1, '  INCD=', L1, /' RKT=', L1, '  FROZ=', L1, &
               '  EQL=', L1, '  IONS=', L1, '  SIUNIT=', L1, '  DEBUGF=', L1, &
               '  SHKDBG=', L1, '  DETDBG=', L1, '  TRNSPT=', L1)
-99009 FORMAT (/' T,K =', 7F11.4)
-99010 FORMAT (/1p, ' TRACE=', E9.2, '  S/R=', E13.6, '  H/R=', E13.6, '  U/R=', &
+99009 format (/' T,K =', 7F11.4)
+99010 format (/1p, ' TRACE=', E9.2, '  S/R=', E13.6, '  H/R=', E13.6, '  U/R=', &
               E13.6)
-99011 FORMAT (/' SPECIFIC VOLUME,M**3/KG =', 1p, (4E14.7))
-99012 FORMAT (/' Pc,BAR =', 7F13.6)
-99013 FORMAT (/' Pc/P =', 9F11.4)
-99014 FORMAT (/' SUBSONIC AREA RATIOS =', (5F11.4))
-99015 FORMAT (/' SUPERSONIC AREA RATIOS =', (5F11.4))
-99016 FORMAT (/' NFZ=', i3, 1p, '  Mdot/Ac=', e13.6, '  Ac/At=', e13.6)
-99017 FORMAT (/' P,BAR =', 7F13.6)
-99018 FORMAT (/' ERROR IN REACTANTS DATASET (INPUT)')
-99019 FORMAT (/' UNABLE TO PROCESS EQUIVALENCE RATIO =', E11.4, '(INPUT)')
-99020 FORMAT (/' TYPE OF PROBLEM NOT SPECIFIED (INPUT)')
-99021 FORMAT (/' ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob', &
+99011 format (/' SPECIFIC VOLUME,M**3/KG =', 1p, (4E14.7))
+99012 format (/' Pc,BAR =', 7F13.6)
+99013 format (/' Pc/P =', 9F11.4)
+99014 format (/' SUBSONIC AREA RATIOS =', (5F11.4))
+99015 format (/' SUPERSONIC AREA RATIOS =', (5F11.4))
+99016 format (/' NFZ=', i3, 1p, '  Mdot/Ac=', e13.6, '  Ac/At=', e13.6)
+99017 format (/' P,BAR =', 7F13.6)
+99018 format (/' ERROR IN REACTANTS DATASET (INPUT)')
+99019 format (/' UNABLE TO PROCESS EQUIVALENCE RATIO =', E11.4, '(INPUT)')
+99020 format (/' TYPE OF PROBLEM NOT SPECIFIED (INPUT)')
+99021 format (/' ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob', &
               ' DATASET (INPUT)')
-99022 FORMAT (/' ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob', &
+99022 format (/' ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob', &
               ' DATASET (INPUT)')
-99023 FORMAT (/' WARNING!!  A KEYWORD IS MISSING (INPUT)')
-99024 FORMAT (/' NOTE!! MAXIMUM NUMBER OF ASSIGNED ', A5, ' VALUES IS', I3, &
+99023 format (/' WARNING!!  A KEYWORD IS MISSING (INPUT)')
+99024 format (/' NOTE!! MAXIMUM NUMBER OF ASSIGNED ', A5, ' VALUES IS', I3, &
               ' (INPUT)', /)
-99025 FORMAT (/' FATAL ERROR IN DATASET (INPUT)')
-      END
-      SUBROUTINE MATRIX
+99025 format (/' FATAL ERROR IN DATASET (INPUT)')
+      end
+      subroutine MATRIX
 !***********************************************************************
 ! SET UP ITERATION OR DERIVATIVE MATRIX.
 !***********************************************************************
@@ -2730,133 +2632,133 @@
       iq2 = Iq1 + 1
       iq3 = iq2 + 1
       kmat = iq3
-      IF ( .NOT.Convg.AND.Tp ) kmat = iq2
+      if( .not. Convg .and. Tp ) kmat = iq2
       Imat = kmat - 1
 ! CLEAR MATRIX STORAGES TO ZERO
-      DO i = 1, Imat
-        DO k = 1, kmat
+      do i = 1, Imat
+        do k = 1, kmat
           G(i, k) = 0.0D0
-        ENDDO
-      ENDDO
+        end do
+      end do
       G(iq2, Iq1) = 0.D0
       sss = 0.D0
       Hsum(Npt) = 0.D0
 ! BEGIN SET-UP OF ITERATION OR DERIVATIVE MATRIX
-      DO j = 1, Ng
+      do j = 1, Ng
         Mu(j) = H0(j) - S(j) + Enln(j) + Tm
-        IF ( En(j, Npt).NE.0.D0 ) THEN
+        if( En(j, Npt) /= 0.D0 ) then
           h = H0(j)*En(j, Npt)
           f = Mu(j)*En(j, Npt)
           ss = h - f
           term1 = h
-          IF ( kmat.EQ.iq2 ) term1 = f
-          DO i = 1, Nlm
-            IF ( A(i, j).NE.0. ) THEN
+          if( kmat == iq2 ) term1 = f
+          do i = 1, Nlm
+            if( A(i, j) /= 0. ) then
               term = A(i, j)*En(j, Npt)
-              DO k = i, Nlm
+              do k = i, Nlm
                 G(i, k) = G(i, k) + A(k, j)*term
-              ENDDO
+              end do
               G(i, Iq1) = G(i, Iq1) + term
               G(i, iq2) = G(i, iq2) + A(i, j)*term1
-              IF ( .NOT.(Convg.OR.Tp) ) THEN
+              if( .not. (Convg .or. Tp) ) then
                 G(i, iq3) = G(i, iq3) + A(i, j)*f
-                IF ( Sp ) G(iq2, i) = G(iq2, i) + A(i, j)*ss
-              ENDIF
-            ENDIF
-          ENDDO
-          IF ( kmat.NE.iq2 ) THEN
-            IF ( Convg.OR.Hp ) THEN
+                if( Sp ) G(iq2, i) = G(iq2, i) + A(i, j)*ss
+              end if
+            end if
+          end do
+          if( kmat /= iq2 ) then
+            if( Convg .or. Hp ) then
               G(iq2, iq2) = G(iq2, iq2) + H0(j)*h
-              IF ( .NOT.Convg ) THEN
+              if( .not. Convg ) then
                 G(iq2, iq3) = G(iq2, iq3) + H0(j)*f
                 G(Iq1, iq3) = G(Iq1, iq3) + f
-              ENDIF
-            ELSE
+              end if
+            else
               G(iq2, Iq1) = G(iq2, Iq1) + ss
               G(iq2, iq2) = G(iq2, iq2) + H0(j)*ss
               G(iq2, iq3) = G(iq2, iq3) + Mu(j)*ss
               G(Iq1, iq3) = G(Iq1, iq3) + f
-            ENDIF
-          ENDIF
+            end if
+          end if
           G(Iq1, iq2) = G(Iq1, iq2) + term1
-        ENDIF
-      ENDDO
+        end if
+      end do
 ! CONDENSED SPECIES
-      IF ( Npr.NE.0 ) THEN
-        DO k = 1, Npr
+      if( Npr /= 0 ) then
+        do k = 1, Npr
           j = Jcond(k)
           kk = Nlm + k
           Mu(j) = H0(j) - S(j)
-          DO i = 1, Nlm
+          do i = 1, Nlm
             G(i, kk) = A(i, j)
             G(i, kmat) = G(i, kmat) - A(i, j)*En(j, Npt)
-          ENDDO
+          end do
           G(kk, iq2) = H0(j)
           G(kk, kmat) = Mu(j)
           Hsum(Npt) = Hsum(Npt) + H0(j)*En(j, Npt)
-          IF ( Sp ) THEN
+          if( Sp ) then
             sss = sss + S(j)*En(j, Npt)
             G(iq2, kk) = S(j)
-          ENDIF
-        ENDDO
-      ENDIF
+          end if
+        end do
+      end if
       sss = sss + G(iq2, Iq1)
       Hsum(Npt) = Hsum(Npt) + G(Iq1, iq2)
       G(Iq1, Iq1) = Sumn - Enn
 ! REFLECT SYMMETRIC PORTIONS OF THE MATRIX
       isym = Iq1
-      IF ( Hp.OR.Convg ) isym = iq2
-      DO i = 1, isym
+      if( Hp .or. Convg ) isym = iq2
+      do i = 1, isym
 !DIR$ IVDEP
-        DO j = i, isym
+        do j = i, isym
           G(j, i) = G(i, j)
-        ENDDO
-      ENDDO
+        end do
+      end do
 ! COMPLETE THE RIGHT HAND SIDE
-      IF ( .NOT.Convg ) THEN
-        DO i = 1, Nlm
+      if( .not. Convg ) then
+        do i = 1, Nlm
           G(i, kmat) = G(i, kmat) + B0(i) - G(i, Iq1)
-        ENDDO
+        end do
         G(Iq1, kmat) = G(Iq1, kmat) + Enn - Sumn
 ! COMPLETE ENERGY ROW AND TEMPERATURE COLUMN
-        IF ( kmat.NE.iq2 ) THEN
-          IF ( Sp ) energyl = S0 + Enn - Sumn - sss
-          IF ( Hp ) energyl = Hsub0/Tt - Hsum(Npt)
+        if( kmat /= iq2 ) then
+          if( Sp ) energyl = S0 + Enn - Sumn - sss
+          if( Hp ) energyl = Hsub0/Tt - Hsum(Npt)
           G(iq2, iq3) = G(iq2, iq3) + energyl
           G(iq2, iq2) = G(iq2, iq2) + Cpsum
-        ENDIF
-      ELSE
-        IF ( Pderiv ) THEN
-! PDERIV = .TRUE.-- SET UP MATRIX TO SOLVE FOR DLVPT
+        end if
+      else
+        if( Pderiv ) then
+! PDERIV = .true.-- SET UP MATRIX TO SOLVE FOR DLVPT
           G(Iq1, iq2) = Enn
-          DO i = 1, iq
+          do i = 1, iq
             G(i, iq2) = G(i, Iq1)
-          ENDDO
-        ENDIF
+          end do
+        end if
         G(iq2, iq2) = G(iq2, iq2) + Cpsum
-      ENDIF
-      IF ( Vol.AND..NOT.Convg ) THEN
+      end if
+      if( Vol .and. .not. Convg ) then
 ! CONSTANT VOLUME MATRIX
-        IF ( kmat.EQ.iq2 ) THEN
-          DO i = 1, iq
+        if( kmat == iq2 ) then
+          do i = 1, iq
             G(i, Iq1) = G(i, iq2)
-          ENDDO
-        ELSE
+          end do
+        else
 !DIR$ IVDEP
-          DO i = 1, iq
+          do i = 1, iq
             G(Iq1, i) = G(iq2, i) - G(Iq1, i)
             G(i, Iq1) = G(i, iq2) - G(i, Iq1)
             G(i, iq2) = G(i, iq3)
-          ENDDO
+          end do
           G(Iq1, Iq1) = G(iq2, iq2) - G(Iq1, iq2) - G(iq2, Iq1)
           G(Iq1, iq2) = G(iq2, iq3) - G(Iq1, iq3)
-          IF ( Hp ) G(Iq1, iq2) = G(Iq1, iq2) + Enn
-        ENDIF
+          if( Hp ) G(Iq1, iq2) = G(Iq1, iq2) + Enn
+        end if
         kmat = Imat
         Imat = Imat - 1
-      ENDIF
-      END
-      SUBROUTINE NEWOF
+      end if
+      end
+      subroutine NEWOF
 !***********************************************************************
 ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
 !***********************************************************************
@@ -2865,68 +2767,68 @@
 ! LOCAL VARIABLES
       integer, save:: i, j
       real(8), save:: assval, bigb, bratio, dbi, smalb, tem, v1, v2
-      real(8):: DABS, DLOG
+      real(8):: dabs, dlog
 
-      IF ( .NOT.Short ) WRITE (IOOUT, 99001) Oxfl
+      if( .not. Short ) write(IOOUT, 99001) Oxfl
       Eqrat = 0.
       tem = Oxfl + 1.
       v2 = (Oxfl*Vmin(1)+Vmin(2))/tem
       v1 = (Oxfl*Vpls(1)+Vpls(2))/tem
-      IF ( v2.NE.0. ) Eqrat = DABS(v1/v2)
-      DO i = 1, Nlm
+      if( v2 /= 0. ) Eqrat = dabs(v1/v2)
+      do i = 1, Nlm
         B0(i) = (Oxfl*B0p(i, 1)+B0p(i, 2))/tem
-        dbi = DABS(B0(i))
-        IF ( i.EQ.1 ) THEN
+        dbi = dabs(B0(i))
+        if( i == 1 ) then
           bigb = dbi
           smalb = dbi
-        ELSEIF ( dbi.NE.0. ) THEN
-          IF ( dbi.LT.smalb ) smalb = dbi
-          IF ( dbi.GT.bigb ) bigb = dbi
-        ENDIF
-      ENDDO
+        else if( dbi /= 0. ) then
+          if( dbi < smalb ) smalb = dbi
+          if( dbi > bigb ) bigb = dbi
+        end if
+      end do
       Bcheck = bigb*.000001D0
 ! CALCUALTE MOLECULAR WEIGHT OF TOTAL REACTANT, WMIX.
-      IF ( Am(1).NE.0.0.AND.Am(2).NE.0.0 ) THEN
+      if( Am(1) /= 0.0 .and. Am(2) /= 0.0 ) then
         Wmix = (Oxfl+1.)*Am(1)*Am(2)/(Am(1)+Oxfl*Am(2))
-      ELSE
+      else
         Wmix = Am(2)
-        IF ( Am(2).EQ.0.0 ) Wmix = Am(1)
-      ENDIF
+        if( Am(2) == 0.0 ) Wmix = Am(1)
+      end if
       Npt = 1
 ! IF ASSIGNED U OR H NOT GIVEN IN PROB DATA, INITIAL HSUB0 = 1.D30
-      IF ( Size.EQ.0. ) assval = Hsub0
-      IF ( assval.GE.1.D30 ) Hsub0 = (Oxfl*Hpp(1)+Hpp(2))/tem
+      if( Size == 0. ) assval = Hsub0
+      if( assval >= 1.D30 ) Hsub0 = (Oxfl*Hpp(1)+Hpp(2))/tem
 ! NOTE THAT "BRATIO" IS "BRATIO" IN SEC 3.2 IN RP-1311.
       bratio = smalb/bigb
       Size = 18.420681D0
-      IF ( bratio.LT.1.D-5 ) Size = DLOG(1000.D0/bratio)
+      if( bratio < 1.D-5 ) Size = dlog(1000.D0/bratio)
       Jsol = 0
       Jliq = 0
-      IF ( .NOT.Short ) THEN
-        WRITE (IOOUT, 99002)
-        IF ( Vol ) WRITE (IOOUT, 99003)
-        IF ( .NOT.Vol ) WRITE (IOOUT, 99004)
-        WRITE (IOOUT, 99005) Hpp(2), Hpp(1), Hsub0
-        WRITE (IOOUT, 99006)
-      ENDIF
-      DO i = 1, Nlm
+      if( .not. Short ) then
+        write(IOOUT, 99002)
+        if( Vol ) write(IOOUT, 99003)
+        if( .not. Vol ) write(IOOUT, 99004)
+        write(IOOUT, 99005) Hpp(2), Hpp(1), Hsub0
+        write(IOOUT, 99006)
+      end if
+      do i = 1, Nlm
         j = Jcm(i)
-        IF ( .NOT.Short ) WRITE (IOOUT, 99007) Prod(j), B0p(i, 2), B0p(i, 1), &
+        if( .not. Short ) write(IOOUT, 99007) Prod(j), B0p(i, 2), B0p(i, 1), &
                                  B0(i)
-      ENDDO
-      RETURN
-99001 FORMAT (/' O/F = ', F10.6)
-99002 FORMAT (/, 23X, 'EFFECTIVE FUEL', 5X, 'EFFECTIVE OXIDANT', 8X, &
+      end do
+      return
+99001 format (/' O/F = ', F10.6)
+99002 format (/, 23X, 'EFFECTIVE FUEL', 5X, 'EFFECTIVE OXIDANT', 8X, &
               'MIXTURE')
-99003 FORMAT (' INTERNAL ENERGY', 11X, 'u(2)/R', 14X, 'u(1)/R', 14X, 'u0/R')
-99004 FORMAT (' ENTHALPY', 18X, 'h(2)/R', 14X, 'h(1)/R', 15X, 'h0/R')
-99005 FORMAT (' (KG-MOL)(K)/KG', 4X, E18.8, 2E20.8)
-99006 FORMAT (/' KG-FORM.WT./KG', 13X, 'bi(2)', 15X, 'bi(1)', 15X, 'b0i')
-99007 FORMAT (1X, A16, 3E20.8)
-      END
-      SUBROUTINE OUT1
+99003 format (' INTERNAL ENERGY', 11X, 'u(2)/R', 14X, 'u(1)/R', 14X, 'u0/R')
+99004 format (' ENTHALPY', 18X, 'h(2)/R', 14X, 'h(1)/R', 15X, 'h0/R')
+99005 format (' (KG-MOL)(K)/KG', 4X, E18.8, 2E20.8)
+99006 format (/' KG-FORM.WT./KG', 13X, 'bi(2)', 15X, 'bi(1)', 15X, 'b0i')
+99007 format (1X, A16, 3E20.8)
+      end
+      subroutine OUT1
 !***********************************************************************
-! OUT1 WRITES REACTANT AND FUEL-OXIDANT RATIO INFORMATION.
+! OUT1 WRITES REACTANT AND FUEL-OXIDANT RATIO INformatION.
 ! ENTRY OUT2 WRITES THERMODYNAMIC PROPERTIES.
 ! ENTRY OUT3 WRITES MOLE FRACTIONS.
 ! ENTRY OUT4 WRITES TRANSPORT PROPERTIES.
@@ -2941,150 +2843,150 @@
       integer, save:: i, im, ione, j, k, kin, m, mcond, mcondf, mcp, mdvp, mdvt, meq, mfa, &
               mg, mgam, mh, mie, mm, mmw, mof, mp, mpf, mph, mpn, mpnf, mrho, ms, &
               mson, mt, mvis, mxx(24), n, notuse
-      integer:: INDEX
+      integer:: index
       logical, save:: kok
       real(8), save:: pfactor, pfuel, phi, rho, tem, tra, vnum
 
-      EQUIVALENCE (mxx(1), mp)
-      EQUIVALENCE (mxx(2), mt)
-      EQUIVALENCE (mxx(3), mrho)
-      EQUIVALENCE (mxx(4), mh)
-      EQUIVALENCE (mxx(5), mie)
-      EQUIVALENCE (mxx(6), mg)
-      EQUIVALENCE (mxx(7), ms)
-      EQUIVALENCE (mxx(8), mm)
-      EQUIVALENCE (mxx(9), mcp)
-      EQUIVALENCE (mxx(10), mgam)
-      EQUIVALENCE (mxx(11), mson)
-      EQUIVALENCE (mxx(12), mcond)
-      EQUIVALENCE (mxx(13), mvis)
-      EQUIVALENCE (mxx(14), mpn)
-      EQUIVALENCE (mxx(15), mpf)
-      EQUIVALENCE (mxx(16), mof)
-      EQUIVALENCE (mxx(17), mph)
-      EQUIVALENCE (mxx(18), meq)
-      EQUIVALENCE (mxx(19), mfa)
-      EQUIVALENCE (mxx(20), mmw)
-      EQUIVALENCE (mxx(21), mdvt)
-      EQUIVALENCE (mxx(22), mdvp)
-      EQUIVALENCE (mxx(23), mcondf)
-      EQUIVALENCE (mxx(24), mpnf)
-      WRITE (IOOUT, 99001) Case
-      IF ( Moles ) THEN
-        WRITE (IOOUT, 99002) '   MOLES   '
-        IF ( .NOT.Siunit ) WRITE (IOOUT, 99003)
-        IF ( Siunit ) WRITE (IOOUT, 99004)
-      ELSE
-        WRITE (IOOUT, 99002) 'WT FRACTION'
-        IF ( .NOT.Siunit ) WRITE (IOOUT, 99005)
-        IF ( Siunit ) WRITE (IOOUT, 99006)
-      ENDIF
-      DO n = 1, Nreac
-        WRITE (IOOUT, 99007) Fox(n), Rname(n), Pecwt(n), Enth(n)*R, Rtemp(n)
-      ENDDO
+      equivalence(mxx(1), mp)
+      equivalence(mxx(2), mt)
+      equivalence(mxx(3), mrho)
+      equivalence(mxx(4), mh)
+      equivalence(mxx(5), mie)
+      equivalence(mxx(6), mg)
+      equivalence(mxx(7), ms)
+      equivalence(mxx(8), mm)
+      equivalence(mxx(9), mcp)
+      equivalence(mxx(10), mgam)
+      equivalence(mxx(11), mson)
+      equivalence(mxx(12), mcond)
+      equivalence(mxx(13), mvis)
+      equivalence(mxx(14), mpn)
+      equivalence(mxx(15), mpf)
+      equivalence(mxx(16), mof)
+      equivalence(mxx(17), mph)
+      equivalence(mxx(18), meq)
+      equivalence(mxx(19), mfa)
+      equivalence(mxx(20), mmw)
+      equivalence(mxx(21), mdvt)
+      equivalence(mxx(22), mdvp)
+      equivalence(mxx(23), mcondf)
+      equivalence(mxx(24), mpnf)
+      write(IOOUT, 99001) Case
+      if( Moles ) then
+        write(IOOUT, 99002) '   MOLES   '
+        if( .not. Siunit ) write(IOOUT, 99003)
+        if( Siunit ) write(IOOUT, 99004)
+      else
+        write(IOOUT, 99002) 'WT FRACTION'
+        if( .not. Siunit ) write(IOOUT, 99005)
+        if( Siunit ) write(IOOUT, 99006)
+      end if
+      do n = 1, Nreac
+        write(IOOUT, 99007) Fox(n), Rname(n), Pecwt(n), Enth(n)*R, Rtemp(n)
+      end do
       phi = 0.
       tem = (Vpls(1)+Vmin(1))*Oxfl
-      IF ( ABS(tem).GE.1.D-3 ) phi = -(Vmin(2)+Vpls(2))/tem
-      IF ( Fox(1).EQ.'NAME' ) THEN
+      if( ABS(tem) >= 1.D-3 ) phi = -(Vmin(2)+Vpls(2))/tem
+      if( Fox(1) == 'NAME' ) then
         pfuel = 0.
-      ELSE
+      else
         pfuel = 100.D0/(1.D0+Oxfl)
-      ENDIF
-      IF ( Rh(1).NE.0..OR.Rh(2).NE.0. ) THEN
-        IF ( Rh(1).EQ.0..OR.Rh(2).EQ.0. ) THEN
+      end if
+      if( Rh(1) /= 0. .or. Rh(2) /= 0. ) then
+        if( Rh(1) == 0. .or. Rh(2) == 0. ) then
           rho = MAX(Rh(1), Rh(2))
-        ELSE
+        else
           rho = (Oxfl+1.)*Rh(1)*Rh(2)/(Rh(1)+Oxfl*Rh(2))
-        ENDIF
-        IF ( Siunit ) THEN
+        end if
+        if( Siunit ) then
           rho = rho*1000.D0
-          WRITE (IOOUT, 99021) rho
-        ELSE
-          WRITE (IOOUT, 99022) rho
-        ENDIF
-      ENDIF
-      WRITE (IOOUT, 99008) Oxfl, pfuel, Eqrat, phi
-      RETURN
+          write(IOOUT, 99021) rho
+        else
+          write(IOOUT, 99022) rho
+        end if
+      end if
+      write(IOOUT, 99008) Oxfl, pfuel, Eqrat, phi
+      return
 !***********************************************************************
       ENTRY OUT2
       ione = 0
-      IF ( Rkt.AND..NOT.Page1 ) THEN
+      if( Rkt .and. .not. Page1 ) then
         ione = 2
-        IF ( Iopt.NE.0 ) ione = 3
-      ENDIF
+        if( Iopt /= 0 ) ione = 3
+      end if
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
-      DO i = 1, 24
+      do i = 1, 24
         mxx(i) = 0
-      ENDDO
-      DO 100 i = 1, Nplt
-        IF ( INDEX(Pltvar(i)(2:), '1').EQ.0 ) THEN
-          IF ( INDEX(Pltvar(i)(1:), 'dlnt').NE.0 ) THEN
+      end do
+      do 100 i = 1, Nplt
+        if( index(Pltvar(i)(2:), '1') == 0 ) then
+          if( index(Pltvar(i)(1:), 'dlnt') /= 0 ) then
             mdvt = i
-          ELSEIF ( INDEX(Pltvar(i)(1:), 'dlnp').NE.0 ) THEN
+          else if( index(Pltvar(i)(1:), 'dlnp') /= 0 ) then
             mdvp = i
-          ELSEIF ( Pltvar(i)(:4).EQ.'pran' ) THEN
-            IF ( INDEX(Pltvar(i)(3:), 'fz').NE.0 .OR. &
-                 INDEX(Pltvar(i)(3:), 'fr').NE.0 ) THEN
+          else if( Pltvar(i)(:4) == 'pran' ) then
+            if( index(Pltvar(i)(3:), 'fz') /= 0  .or.  &
+                 index(Pltvar(i)(3:), 'fr') /= 0 ) then
               mpnf = i
-            ELSE
+            else
               mpn = i
-            ENDIF
-          ELSEIF ( Pltvar(i)(:4).EQ.'cond' ) THEN
-            IF ( INDEX(Pltvar(i)(3:), 'fz').NE.0 .OR. &
-                 INDEX(Pltvar(i)(3:), 'fr').NE.0 ) THEN
+            end if
+          else if( Pltvar(i)(:4) == 'cond' ) then
+            if( index(Pltvar(i)(3:), 'fz') /= 0  .or.  &
+                 index(Pltvar(i)(3:), 'fr') /= 0 ) then
               mcondf = i
-            ELSE
+            else
               mcond = i
-            ENDIF
-          ELSEIF ( Pltvar(i)(:3).EQ.'phi' ) THEN
+            end if
+          else if( Pltvar(i)(:3) == 'phi' ) then
             mph = i
-          ELSEIF ( Pltvar(i)(:2).EQ.'p ' ) THEN
+          else if( Pltvar(i)(:2) == 'p ' ) then
             mp = i
-          ELSEIF ( Pltvar(i)(:1).EQ.'t' ) THEN
+          else if( Pltvar(i)(:1) == 't' ) then
             mt = i
-          ELSEIF ( Pltvar(i)(:3).EQ.'rho' ) THEN
+          else if( Pltvar(i)(:3) == 'rho' ) then
             mrho = i
-          ELSEIF ( Pltvar(i)(:1).EQ.'h' ) THEN
+          else if( Pltvar(i)(:1) == 'h' ) then
             mh = i
-          ELSEIF ( Pltvar(i)(:1).EQ.'u' ) THEN
+          else if( Pltvar(i)(:1) == 'u' ) then
             mie = i
-          ELSEIF ( Pltvar(i)(:3).EQ.'gam' ) THEN
+          else if( Pltvar(i)(:3) == 'gam' ) then
             mgam = i
-          ELSEIF ( Pltvar(i)(:3).EQ.'son' ) THEN
+          else if( Pltvar(i)(:3) == 'son' ) then
             mson = i
-          ELSEIF ( Pltvar(i)(:2).EQ.'g ' ) THEN
+          else if( Pltvar(i)(:2) == 'g ' ) then
             mg = i
-          ELSEIF ( Pltvar(i)(:2).EQ.'s ' ) THEN
+          else if( Pltvar(i)(:2) == 's ' ) then
             ms = i
-          ELSEIF ( Pltvar(i)(:1).EQ.'m'.AND.Pltvar(i)(:2).NE.'ma' ) THEN
-            IF ( .NOT.Gonly.AND.Pltvar(i)(:2).EQ.'mw' ) THEN
+          else if( Pltvar(i)(:1) == 'm' .and. Pltvar(i)(:2) /= 'ma' ) then
+            if( .not. Gonly .and. Pltvar(i)(:2) == 'mw' ) then
               mmw = i
-            ELSE
+            else
               mm = i
-            ENDIF
-          ELSEIF ( Pltvar(i)(:2).EQ.'cp' ) THEN
+            end if
+          else if( Pltvar(i)(:2) == 'cp' ) then
             mcp = i
-          ELSEIF ( Pltvar(i)(:3).EQ.'vis' ) THEN
+          else if( Pltvar(i)(:3) == 'vis' ) then
             mvis = i
-          ELSEIF ( Pltvar(i)(:3).EQ.'o/f' ) THEN
+          else if( Pltvar(i)(:3) == 'o/f' ) then
             mof = i
-          ELSEIF ( Pltvar(i)(:2).EQ.'%f' ) THEN
+          else if( Pltvar(i)(:2) == '%f' ) then
             mpf = i
-          ELSEIF ( Pltvar(i)(:3).EQ.'f/a' ) THEN
+          else if( Pltvar(i)(:3) == 'f/a' ) then
             mfa = i
-          ELSEIF ( Pltvar(i)(:1).EQ.'r' ) THEN
+          else if( Pltvar(i)(:1) == 'r' ) then
             meq = i
-          ENDIF
-        ENDIF
- 100  CONTINUE
-      DO i = Iplt + 1, Iplt + Npt
-        IF ( mof.GT.0 ) Pltout(i, mof) = Oxfl
-        IF ( mpf.GT.0 ) Pltout(i, mpf) = pfuel
-        IF ( mph.GT.0 ) Pltout(i, mph) = phi
-        IF ( mfa.GT.0 ) Pltout(i, mfa) = 1.D0/Oxfl
-        IF ( meq.GT.0 ) Pltout(i, meq) = Eqrat
-      ENDDO
-      IF ( Siunit ) THEN
+          end if
+        end if
+ 100  continue
+      do i = Iplt + 1, Iplt + Npt
+        if( mof > 0 ) Pltout(i, mof) = Oxfl
+        if( mpf > 0 ) Pltout(i, mpf) = pfuel
+        if( mph > 0 ) Pltout(i, mph) = phi
+        if( mfa > 0 ) Pltout(i, mfa) = 1.D0/Oxfl
+        if( meq > 0 ) Pltout(i, meq) = Eqrat
+      end do
+      if( Siunit ) then
         pfactor = 1.D0
         fp = 'P, BAR'
         vnum = 1.D05
@@ -3094,7 +2996,7 @@
         fgi = 'G, KJ/KG'
         fs = 'S, KJ/(KG)(K)'
         fc = 'Cp, KJ/(KG)(K)'
-      ELSE
+      else
         pfactor = 1.D0/1.01325D0
         fp = 'P, ATM'
         vnum = 100.D0
@@ -3104,233 +3006,233 @@
         fgi = 'G, CAL/G'
         fs = 'S, CAL/(G)(K)'
         fc = 'Cp, CAL/(G)(K)'
-      ENDIF
+      end if
       Fmt(4) = Fmt(6)
 ! PRESSURE
-      CALL VARFMT(Ppp)
-      DO i = 1, Npt
+      call VARFMT(Ppp)
+      do i = 1, Npt
         X(i) = Ppp(i)*pfactor
-        IF ( Nplt.NE.0.AND.i.GT.ione ) THEN
-          IF ( mp.GT.0 ) Pltout(i+Iplt-ione, mp) = X(i)
-          IF ( mt.GT.0 ) Pltout(i+Iplt-ione, mt) = Ttt(i)
-        ENDIF
-      ENDDO
-      WRITE (IOOUT, Fmt) fp, (X(j), j=1, Npt)
+        if( Nplt /= 0 .and. i > ione ) then
+          if( mp > 0 ) Pltout(i+Iplt-ione, mp) = X(i)
+          if( mt > 0 ) Pltout(i+Iplt-ione, mt) = Ttt(i)
+        end if
+      end do
+      write(IOOUT, Fmt) fp, (X(j), j=1, Npt)
 ! TEMPERATURE
       Fmt(4) = '13'
       Fmt(5) = ' '
       Fmt(7) = '2,'
-      WRITE (IOOUT, Fmt) 'T, K            ', (Ttt(j), j=1, Npt)
+      write(IOOUT, Fmt) 'T, K            ', (Ttt(j), j=1, Npt)
 ! DENSITY
-      DO i = 1, Npt
-        IF ( Vlm(i).NE.0. ) X(i) = vnum/Vlm(i)
-        IF ( Nplt.NE.0.AND.i.GT.ione.AND.mrho.GT.0 ) &
+      do i = 1, Npt
+        if( Vlm(i) /= 0. ) X(i) = vnum/Vlm(i)
+        if( Nplt /= 0 .and. i > ione .and. mrho > 0 ) &
              Pltout(i+Iplt-ione, mrho) = X(i)
-      ENDDO
-      CALL EFMT(Fmt(4), frh, X)
+      end do
+      call EFMT(Fmt(4), frh, X)
 ! ENTHALPY
-      DO i = 1, Npt
+      do i = 1, Npt
         X(i) = Hsum(i)*R
-        IF ( Nplt.NE.0.AND.i.GT.ione.AND.mh.GT.0 ) &
+        if( Nplt /= 0 .and. i > ione .and. mh > 0 ) &
              Pltout(i+Iplt-ione, mh) = X(i)
-      ENDDO
+      end do
       Fmt(4) = Fmt(6)
-      CALL VARFMT(X)
-      WRITE (IOOUT, Fmt) fh, (X(j), j=1, Npt)
+      call VARFMT(X)
+      write(IOOUT, Fmt) fh, (X(j), j=1, Npt)
 ! INTERNAL ENERGY
-      DO i = 1, Npt
+      do i = 1, Npt
         X(i) = (Hsum(i)-Ppp(i)*Vlm(i)/Rr)*R
-        IF ( Nplt.NE.0.AND.i.GT.ione.AND.mie.GT.0 ) &
+        if( Nplt /= 0 .and. i > ione .and. mie > 0 ) &
              Pltout(i+Iplt-ione, mie) = X(i)
-      ENDDO
-      CALL VARFMT(X)
-      WRITE (IOOUT, Fmt) fu, (X(j), j=1, Npt)
+      end do
+      call VARFMT(X)
+      write(IOOUT, Fmt) fu, (X(j), j=1, Npt)
 ! GIBBS ENERGY
-      DO i = 1, Npt
+      do i = 1, Npt
         X(i) = (Hsum(i)-Ttt(i)*Ssum(i))*R
-        IF ( Nplt.NE.0.AND.i.GT.ione ) THEN
-          IF ( mg.GT.0 ) Pltout(i+Iplt-ione, mg) = X(i)
-          IF ( mm.GT.0 ) Pltout(i+Iplt-ione, mm) = Wm(i)
-          IF ( mmw.GT.0 ) Pltout(i+Iplt-ione, mmw) = 1.D0/Totn(i)
-          IF ( ms.GT.0 ) Pltout(i+Iplt-ione, ms) = Ssum(i)*R
-          IF ( mcp.GT.0 ) Pltout(i+Iplt-ione, mcp) = Cpr(i)*R
-          IF ( mgam.GT.0 ) Pltout(i+Iplt-ione, mgam) = Gammas(i)
-          IF ( mdvt.GT.0 ) Pltout(i+Iplt-ione, mdvt) = Dlvtp(i)
-          IF ( mdvp.GT.0 ) Pltout(i+Iplt-ione, mdvp) = Dlvpt(i)
-        ENDIF
-      ENDDO
-      CALL VARFMT(X)
-      WRITE (IOOUT, Fmt) fgi, (X(j), j=1, Npt)
+        if( Nplt /= 0 .and. i > ione ) then
+          if( mg > 0 ) Pltout(i+Iplt-ione, mg) = X(i)
+          if( mm > 0 ) Pltout(i+Iplt-ione, mm) = Wm(i)
+          if( mmw > 0 ) Pltout(i+Iplt-ione, mmw) = 1.D0/Totn(i)
+          if( ms > 0 ) Pltout(i+Iplt-ione, ms) = Ssum(i)*R
+          if( mcp > 0 ) Pltout(i+Iplt-ione, mcp) = Cpr(i)*R
+          if( mgam > 0 ) Pltout(i+Iplt-ione, mgam) = Gammas(i)
+          if( mdvt > 0 ) Pltout(i+Iplt-ione, mdvt) = Dlvtp(i)
+          if( mdvp > 0 ) Pltout(i+Iplt-ione, mdvp) = Dlvpt(i)
+        end if
+      end do
+      call VARFMT(X)
+      write(IOOUT, Fmt) fgi, (X(j), j=1, Npt)
 ! ENTROPY
       Fmt(4) = '13'
       Fmt(5) = ' '
       Fmt(7) = '4,'
-      WRITE (IOOUT, Fmt) fs, (Ssum(j)*R, j=1, Npt)
-      WRITE (IOOUT, 99009)
+      write(IOOUT, Fmt) fs, (Ssum(j)*R, j=1, Npt)
+      write(IOOUT, 99009)
 ! MOLECULAR WEIGHT
       Fmt(7) = '3,'
-      WRITE (IOOUT, Fmt) 'M, (1/n)        ', (Wm(j), j=1, Npt)
-      IF ( .NOT.Gonly ) WRITE (IOOUT, Fmt) 'MW, MOL WT      ', &
+      write(IOOUT, Fmt) 'M, (1/n)        ', (Wm(j), j=1, Npt)
+      if( .not. Gonly ) write(IOOUT, Fmt) 'MW, MOL WT      ', &
                                       (1.D0/Totn(j), j=1, Npt)
 ! (DLV/DLP)T
       Fmt(7) = '5,'
-      IF ( Eql ) WRITE (IOOUT, Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j=1, Npt)
+      if( Eql ) write(IOOUT, Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j=1, Npt)
 ! (DLV/DLT)P
       Fmt(7) = '4,'
-      IF ( Eql ) WRITE (IOOUT, Fmt) '(dLV/dLT)p      ', (Dlvtp(j), j=1, Npt)
+      if( Eql ) write(IOOUT, Fmt) '(dLV/dLT)p      ', (Dlvtp(j), j=1, Npt)
 ! HEAT CAPACITY
-      WRITE (IOOUT, Fmt) fc, (Cpr(j)*R, j=1, Npt)
+      write(IOOUT, Fmt) fc, (Cpr(j)*R, j=1, Npt)
 ! GAMMA(S)
       Fmt(7) = '4,'
-      WRITE (IOOUT, Fmt) 'GAMMAs          ', (Gammas(j), j=1, Npt)
+      write(IOOUT, Fmt) 'GAMMAs          ', (Gammas(j), j=1, Npt)
 ! SONIC VELOCITY
       Fmt(7) = '1,'
-      DO i = 1, Npt
+      do i = 1, Npt
         Sonvel(i) = (Rr*Gammas(i)*Ttt(i)/Wm(i))**.5
-        IF ( Nplt.NE.0.AND.i.GT.ione.AND.mson.GT.0 ) &
+        if( Nplt /= 0 .and. i > ione .and. mson > 0 ) &
              Pltout(i+Iplt-ione, mson) = Sonvel(i)
-      ENDDO
-      WRITE (IOOUT, Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j=1, Npt)
-      RETURN
+      end do
+      write(IOOUT, Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j=1, Npt)
+      return
 !***********************************************************************
       ENTRY OUT3
       tra = 5.D-6
-      IF ( Trace.NE.0. ) tra = Trace
+      if( Trace /= 0. ) tra = Trace
 ! MASS OR MOLE FRACTIONS 
-      IF ( Massf ) THEN
+      if( Massf ) then
         mamo = 'MASS'
-      ELSE
+      else
         mamo = 'MOLE'
-      ENDIF
-      IF ( Eql ) THEN
-        WRITE (IOOUT, 99010) mamo
+      end if
+      if( Eql ) then
+        write(IOOUT, 99010) mamo
         notuse = 0
-        DO k = 1, Ngc
-          kok = .TRUE.
-          IF ( k.GT.Ng.AND.k.LT.Ngc.AND.Prod(k).EQ.Prod(k+1) ) THEN
-            kok = .FALSE.
+        do k = 1, Ngc
+          kok = .true.
+          if( k > Ng .and. k < Ngc .and. Prod(k) == Prod(k+1) ) then
+            kok = .false.
             im = 0
-            GOTO 120
-          ENDIF
-          DO m = 1, Nplt
+            go to 120
+          end if
+          do m = 1, Nplt
             im = 0
-            IF ( Pltvar(m).EQ.Prod(k).OR.'*'//Pltvar(m).EQ.Prod(k) ) &
-                 THEN
+            if( Pltvar(m) == Prod(k) .or. '*'//Pltvar(m) == Prod(k) ) &
+                 then
               im = m
-              GOTO 120
-            ENDIF
-          ENDDO
+              go to 120
+            end if
+          end do
  120      kin = 0
-          DO i = 1, Npt
-            IF ( Massf ) THEN
+          do i = 1, Npt
+            if( Massf ) then
               tem = Mw(k)
-            ELSE
+            else
               tem = 1.D0/Totn(i)
-            ENDIF
-            IF ( k.LE.Ng ) THEN
+            end if
+            if( k <= Ng ) then
               X(i) = En(k, i)*tem
-            ELSE
-              IF ( Prod(k).NE.Prod(k-1) ) X(i) = 0.D0
-              IF ( En(k, i).GT.0.D0 ) X(i) = En(k, i)*tem
-            ENDIF
-            IF ( Nplt.NE.0.AND.i.GT.ione.AND.im.GT.0 ) &
+            else
+              if( Prod(k) /= Prod(k-1) ) X(i) = 0.D0
+              if( En(k, i) > 0.D0 ) X(i) = En(k, i)*tem
+            end if
+            if( Nplt /= 0 .and. i > ione .and. im > 0 ) &
                  Pltout(i+Iplt-ione, im) = X(i)
-            IF ( kok.AND.X(i).GE.tra ) kin = 1
-          ENDDO
-          IF ( kin.EQ.1 ) THEN
-            IF ( Trace.EQ.0. ) THEN
-              WRITE (IOOUT, 99011) Prod(k), (X(i), i=1, Npt)
-            ELSE
-              CALL EFMT(Fmt(4), Prod(k), X)
-            ENDIF
-            IF ( Prod(k).EQ.Omit(notuse) ) notuse = notuse - 1
-          ELSEIF ( Prod(k).NE.Prod(k-1) ) THEN
+            if( kok .and. X(i) >= tra ) kin = 1
+          end do
+          if( kin == 1 ) then
+            if( Trace == 0. ) then
+              write(IOOUT, 99011) Prod(k), (X(i), i=1, Npt)
+            else
+              call EFMT(Fmt(4), Prod(k), X)
+            end if
+            if( Prod(k) == Omit(notuse) ) notuse = notuse - 1
+          else if( Prod(k) /= Prod(k-1) ) then
             notuse = notuse + 1
             Omit(notuse) = Prod(k)
-          ENDIF
-        ENDDO
-      ENDIF
-      WRITE (IOOUT, 99012) Tg(4)
-      IF ( .NOT.Short ) THEN
-        WRITE (IOOUT, 99013) mamo, tra
-        WRITE (IOOUT, 99014) (Omit(i), i=1, notuse)
-      ENDIF
-      IF ( .NOT.Moles ) WRITE (IOOUT, 99015)
-      GOTO 200
+          end if
+        end do
+      end if
+      write(IOOUT, 99012) Tg(4)
+      if( .not. Short ) then
+        write(IOOUT, 99013) mamo, tra
+        write(IOOUT, 99014) (Omit(i), i=1, notuse)
+      end if
+      if( .not. Moles ) write(IOOUT, 99015)
+      go to 200
 !***********************************************************************
       ENTRY OUT4
-      WRITE (IOOUT, 99009)
-      WRITE (IOOUT, 99016)
-      IF ( Siunit ) THEN
-        WRITE (IOOUT, 99018)
-      ELSE
-        WRITE (IOOUT, 99017)
-      ENDIF
+      write(IOOUT, 99009)
+      write(IOOUT, 99016)
+      if( Siunit ) then
+        write(IOOUT, 99018)
+      else
+        write(IOOUT, 99017)
+      end if
 ! TRANSPORT PROPERTIES
       Fmt(4) = Fmt(6)
-      IF ( Nplt.GT.0 ) THEN
-        DO i = 1, Npt
-          IF ( i.GT.ione ) THEN
-            IF ( mvis.GT.0 ) Pltout(i+Iplt-ione, mvis) = Vis(i)
-            IF ( mcond.GT.0 ) Pltout(i+Iplt-ione, mcond) = Coneql(i)
-            IF ( mpn.GT.0 ) Pltout(i+Iplt-ione, mpn) = Preql(i)
-            IF ( mcondf.GT.0 ) Pltout(i+Iplt-ione, mcondf) = Confro(i)
-            IF ( mpnf.GT.0 ) Pltout(i+Iplt-ione, mpnf) = Prfro(i)
-          ENDIF
-        ENDDO
-      ENDIF
-      CALL VARFMT(Vis)
-      WRITE (IOOUT, Fmt) 'VISC,MILLIPOISE', (Vis(j), j=1, Npt)
+      if( Nplt > 0 ) then
+        do i = 1, Npt
+          if( i > ione ) then
+            if( mvis > 0 ) Pltout(i+Iplt-ione, mvis) = Vis(i)
+            if( mcond > 0 ) Pltout(i+Iplt-ione, mcond) = Coneql(i)
+            if( mpn > 0 ) Pltout(i+Iplt-ione, mpn) = Preql(i)
+            if( mcondf > 0 ) Pltout(i+Iplt-ione, mcondf) = Confro(i)
+            if( mpnf > 0 ) Pltout(i+Iplt-ione, mpnf) = Prfro(i)
+          end if
+        end do
+      end if
+      call VARFMT(Vis)
+      write(IOOUT, Fmt) 'VISC,MILLIPOISE', (Vis(j), j=1, Npt)
       Fmt(4) = '13'
       Fmt(5) = ' '
       Fmt(7) = '4,'
-      IF ( Eql ) THEN
-        WRITE (IOOUT, 99019)
+      if( Eql ) then
+        write(IOOUT, 99019)
 ! SPECIFIC HEAT
-        WRITE (IOOUT, Fmt) fc, (Cpeql(j), j=1, Npt)
+        write(IOOUT, Fmt) fc, (Cpeql(j), j=1, Npt)
 ! CONDUCTIVITY
-        WRITE (IOOUT, Fmt) 'CONDUCTIVITY    ', (Coneql(j), j=1, Npt)
+        write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Coneql(j), j=1, Npt)
 ! PRANDTL NUMBER
-        WRITE (IOOUT, Fmt) 'PRANDTL NUMBER  ', (Preql(j), j=1, Npt)
-      ENDIF
-      WRITE (IOOUT, 99020)
+        write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Preql(j), j=1, Npt)
+      end if
+      write(IOOUT, 99020)
 ! SPECIFIC HEAT
-      WRITE (IOOUT, Fmt) fc, (Cpfro(j), j=1, Npt)
+      write(IOOUT, Fmt) fc, (Cpfro(j), j=1, Npt)
 ! CONDUCTIVITY
-      WRITE (IOOUT, Fmt) 'CONDUCTIVITY    ', (Confro(j), j=1, Npt)
+      write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Confro(j), j=1, Npt)
 ! PRANDTL NUMBER
-      WRITE (IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j=1, Npt)
- 200  RETURN
-99001 FORMAT (' CASE = ', a15)
-99002 FORMAT (/13X, 'REACTANT', 20x, a11, '      ENERGY', 6x, 'TEMP')
-99003 FORMAT (57X, ' CAL/MOL ', 6x, 'K')
-99004 FORMAT (57X, 'KJ/KG-MOL', 6x, 'K')
-99005 FORMAT (42X, '(SEE NOTE)      CAL/MOL       K  ')
-99006 FORMAT (42X, '(SEE NOTE)     KJ/KG-MOL      K  ')
-99007 FORMAT (1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)
-99008 FORMAT (/' O/F=', F11.5, 2X, '%FUEL=', F10.6, 2X, 'R,EQ.RATIO=', F9.6, 2X, &
+      write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j=1, Npt)
+ 200  return
+99001 format (' CASE = ', a15)
+99002 format (/13X, 'REACTANT', 20x, a11, '      ENERGY', 6x, 'TEMP')
+99003 format (57X, ' CAL/MOL ', 6x, 'K')
+99004 format (57X, 'KJ/KG-MOL', 6x, 'K')
+99005 format (42X, '(SEE NOTE)      CAL/MOL       K  ')
+99006 format (42X, '(SEE NOTE)     KJ/KG-MOL      K  ')
+99007 format (1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)
+99008 format (/' O/F=', F11.5, 2X, '%FUEL=', F10.6, 2X, 'R,EQ.RATIO=', F9.6, 2X, &
               'PHI,EQ.RATIO=', F9.6)
-99009 FORMAT ()
-99010 FORMAT (/1x, A4, ' FRACTIONS'/)
-99011 FORMAT (1x, A15, F9.5, 12F9.5)
-99012 FORMAT (/'  * THERMODYNAMIC PROPERTIES FITTED TO', F7.0, 'K')
-99013 FORMAT (/'    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ', A4, &
+99009 format ()
+99010 format (/1x, A4, ' FRACTIONS'/)
+99011 format (1x, A15, F9.5, 12F9.5)
+99012 format (/'  * THERMODYNAMIC PROPERTIES FITTED TO', F7.0, 'K')
+99013 format (/'    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ', A4, &
               ' FRACTIONS', /'    WERE LESS THAN', 1PE13.6, &
               ' FOR ALL ASSIGNED CONDITIONS'/)
-99014 FORMAT (5(1x, A15))
-99015 FORMAT (/' NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF', &
+99014 format (5(1x, A15))
+99015 format (/' NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF', &
               ' OXIDANT IN TOTAL OXIDANTS')
-99016 FORMAT (' TRANSPORT PROPERTIES (GASES ONLY)')
-99017 FORMAT ('   CONDUCTIVITY IN UNITS OF MILLICALORIES/(CM)(K)(SEC)'/)
-99018 FORMAT ('   CONDUCTIVITY IN UNITS OF MILLIWATTS/(CM)(K)'/)
-99019 FORMAT (/'  WITH EQUILIBRIUM REACTIONS'/)
-99020 FORMAT (/'  WITH FROZEN REACTIONS'/)
-99021 FORMAT (/' REACTANT DENSITY=', F8.2, ' KG/CU M')
-99022 FORMAT (/' REACTANT DENSITY=', F8.4, ' G/CC')
-      END
-      SUBROUTINE REACT
+99016 format (' TRANSPORT PROPERTIES (GASES ONLY)')
+99017 format ('   CONDUCTIVITY IN UNITS OF MILLICALORIES/(CM)(K)(SEC)'/)
+99018 format ('   CONDUCTIVITY IN UNITS OF MILLIWATTS/(CM)(K)'/)
+99019 format (/'  WITH EQUILIBRIUM REACTIONS'/)
+99020 format (/'  WITH FROZEN REACTIONS'/)
+99021 format (/' REACTANT DENSITY=', F8.2, ' KG/CU M')
+99022 format (/' REACTANT DENSITY=', F8.4, ' G/CC')
+      end
+      subroutine REACT
 !***********************************************************************
-! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
+! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
 !***********************************************************************
       use cea
       implicit none
@@ -3342,71 +3244,71 @@
       logical, save:: fuel, rcoefs, wdone(2)
       logical:: hok
       real(8), save:: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, t1, t2
-      real(8):: DABS, DLOG, t1save, t2save
+      real(8):: dabs, dlog, t1save, t2save
 
-      DO k = 1, 2
-        wdone(k) = .FALSE.
+      do k = 1, 2
+        wdone(k) = .false.
         Wp(k) = 0.
         Hpp(k) = 0.
         Vpls(k) = 0.
         Vmin(k) = 0.
         Am(k) = 0.
         Rh(k) = 0.
-        DO j = 1, maxEl
+        do j = 1, maxEl
           Elmt(j) = ' '
           B0p(j, k) = 0.
-        ENDDO
-      ENDDO
-      DO i = 1, maxEl
+        end do
+      end do
+      do i = 1, maxEl
         dat(i) = 0.
-      ENDDO
+      end do
 ! IF OXIDANT, KR = 1
 ! IF FUEL, KR = 2
-      DO n = 1, Nreac
+      do n = 1, Nreac
         hok = .false.
         t1save = 20000.d0
         t2save = 0.d0
-        rcoefs = .TRUE.
-        IF ( Energy(n).EQ.'lib'.OR.Rnum(n, 1).EQ.0. ) THEN
+        rcoefs = .true.
+        if( Energy(n) == 'lib' .or. Rnum(n, 1) == 0. ) then
           Tt = Rtemp(n)
-          REWIND IOTHM
-          READ (IOTHM) Tg, ntgas, ntot, nall
-          DO 20 itot = 1, nall
-            IF ( itot.LE.ntot ) THEN
+          rewind IOTHM
+          read(IOTHM) Tg, ntgas, ntot, nall
+          do 20 itot = 1, nall
+            if( itot <= ntot ) then
               icf = 3
-              IF ( itot.GT.ntgas ) icf = 1
-              READ (IOTHM) sub, nint, date, (el(j), bb(j), j=1, 5), ifaz, t1, t2, &
+              if( itot > ntgas ) icf = 1
+              read(IOTHM) sub, nint, date, (el(j), bb(j), j=1, 5), ifaz, t1, t2, &
                            rm, ((rcf(i, j), i=1, 9), j=1, icf)
-            ELSE
-              READ (IOTHM) sub, nint, date, (el(j), bb(j), j=1, 5), ifaz, t1, t2, &
+            else
+              read(IOTHM) sub, nint, date, (el(j), bb(j), j=1, 5), ifaz, t1, t2, &
                            rm, eform
-              IF ( nint.GT.0 ) READ (IOTHM) ((rcf(i, j), i=1, 9), j=1, nint)
-            ENDIF
-            IF ( sub.EQ.Rname(n).OR.sub.EQ.'*'//Rname(n) ) THEN
-              IF ( nint.EQ.0 ) THEN
-                rcoefs = .FALSE.
+              if( nint > 0 ) read(IOTHM) ((rcf(i, j), i=1, 9), j=1, nint)
+            end if
+            if( sub == Rname(n) .or. sub == '*'//Rname(n) ) then
+              if( nint == 0 ) then
+                rcoefs = .false.
                 hok = .true.
                 Enth(n) = eform*1000.D0/Rr
-                IF ( Tt.EQ.0 ) THEN
+                if( Tt == 0 ) then
                   Tt = t1
                   Rtemp(n) = t1
-                ELSE
-                  dift = DABS(Tt-t1)
-                  IF ( dift.GT.01d0 ) THEN
-                    IF ( dift.GT.10.d0 ) THEN
-                      WRITE (IOOUT, 99001) Rname(n), t1, Tt
+                else
+                  dift = dabs(Tt-t1)
+                  if( dift > 01d0 ) then
+                    if( dift > 10.d0 ) then
+                      write(IOOUT, 99001) Rname(n), t1, Tt
                       Nlm = 0
                       hok = .false.
-                      GOTO 200
-                    ELSE
-                      WRITE (IOOUT, 99002) Rname(n), t1, Tt
+                      go to 200
+                    else
+                      write(IOOUT, 99002) Rname(n), t1, Tt
                       Tt = t1
                       Rtemp(n) = t1
-                    ENDIF
-                  ENDIF
-                ENDIF
-              ELSE
-                if (ifaz.LE.0 ) then
+                    end if
+                  end if
+                end if
+              else
+                if (ifaz <= 0 ) then
                   t1save = min(t1save, .8d0*tg(1))
                   t2save = max(t2save, 1.2d0*t2)
                 else  
@@ -3414,188 +3316,188 @@
                   t2save = max(t2save, t2+.001d0)
                 endif
                 if ( t1save .lt.Tt .and. t2save.gt.Tt ) hok = .true.
-              ENDIF
-              DO j = 1, 5
-                IF ( bb(j).EQ.0. ) GOTO 5
+              end if
+              do j = 1, 5
+                if( bb(j) == 0. ) go to 5
                 Nfla(n) = j
                 Ratom(n, j) = el(j)
                 Rnum(n, j) = bb(j)
-              ENDDO
- 5            IF ( Tt.EQ.0. ) THEN
-                IF ( .NOT.Hp ) GOTO 50
-                WRITE (IOOUT, 99004) n
+              end do
+ 5            if( Tt == 0. ) then
+                if( .not. Hp ) go to 50
+                write(IOOUT, 99004) n
                 Nlm = 0
-                GOTO 200
-              ENDIF
-              IF ( rcoefs.and.hok ) THEN
-                Tln = DLOG(Tt)
+                go to 200
+              end if
+              if( rcoefs.and.hok ) then
+                Tln = dlog(Tt)
                 l = 1
-                IF ( ifaz.LE.0 ) THEN
-                  IF ( Tt.GT.Tg(2) ) l = 2
-                  IF ( Tt.GT.Tg(3) ) l = 3
-                ENDIF
+                if( ifaz <= 0 ) then
+                  if( Tt > Tg(2) ) l = 2
+                  if( Tt > Tg(3) ) l = 3
+                end if
                 Enth(n) = (((((rcf(7, l)/5.D0)*Tt+rcf(6, l)/4.D0)*Tt+rcf(5 &
                           , l)/3.D0)*Tt+rcf(4, l)/2.D0)*Tt+rcf(3, l)) &
                           *Tt - rcf(1, l)/Tt + rcf(2, l)*Tln + rcf(8, l)
-                IF ( Vol.AND.ifaz.LE.0 ) Enth(n) = Enth(n) - Tt
-              ENDIF
-              if (hok) GOTO 50
-            ENDIF
- 20       CONTINUE
+                if( Vol .and. ifaz <= 0 ) Enth(n) = Enth(n) - Tt
+              end if
+              if (hok) go to 50
+            end if
+ 20       continue
           if (.not.hok) then
-            WRITE (IOOUT, 99010) Tt, Rname(n), t1save, t2save
+            write(IOOUT, 99010) Tt, Rname(n), t1save, t2save
             Energy(n) = ' '
             Nlm = 0
             goto 200
           endif
-        ENDIF
+        end if
  50     ifrmla = Nfla(n)
-        IF ( Fox(n)(:1).EQ.'f' ) THEN
-          fuel = .TRUE.
+        if( Fox(n)(:1) == 'f' ) then
+          fuel = .true.
           kr = 2
           Fox(n) = 'FUEL'
-        ELSEIF ( Fox(n)(:4).EQ.'name' ) THEN
-          fuel = .TRUE.
+        else if( Fox(n)(:4) == 'name' ) then
+          fuel = .true.
           kr = 2
           Fox(n) = 'NAME'
-        ELSE
+        else
           kr = 1
           Fox(n) = 'OXIDANT'
-        ENDIF
-        DO j = 1, maxEl
+        end if
+        do j = 1, maxEl
           dat(j) = 0.
-        ENDDO
+        end do
 ! STORE ATOMIC SYMBOLS IN ELMT ARRAY.
 ! CALCULATE MOLECULAR WEIGHT.
 ! TEMPORARILY STORE ATOMIC VALENCE IN X.
         rm = 0.D0
-        DO 100 jj = 1, ifrmla
-          DO j = 1, maxEl
+        do 100 jj = 1, ifrmla
+          do j = 1, maxEl
             nj = j
-            IF ( Elmt(j).EQ.' ' ) GOTO 60
-            IF ( Ratom(n, jj).EQ.Elmt(j) ) GOTO 80
-          ENDDO
+            if( Elmt(j) == ' ' ) go to 60
+            if( Ratom(n, jj) == Elmt(j) ) go to 80
+          end do
  60       Nlm = nj
           Elmt(j) = Ratom(n, jj)
- 80       DO kk = 1, 100
-            IF ( Symbol(kk).EQ.Ratom(n, jj) ) THEN
+ 80       do kk = 1, 100
+            if( Symbol(kk) == Ratom(n, jj) ) then
               rm = rm + Rnum(n, jj)*Atmwt(kk)
               Atwt(j) = Atmwt(kk)
               X(j) = Valnce(kk)
               dat(j) = dat(j) + Rnum(n, jj)
-              GOTO 100
-            ENDIF
-          ENDDO
-          WRITE (IOOUT, 99005) Ratom(n, jj)
+              go to 100
+            end if
+          end do
+          write(IOOUT, 99005) Ratom(n, jj)
           Nlm = 0
-          GOTO 200
- 100    CONTINUE
-        IF ( Pecwt(n).LT.0. ) THEN
+          go to 200
+ 100    continue
+        if( Pecwt(n) < 0. ) then
           Pecwt(n) = 0.
-          IF ( .NOT.Moles.AND..NOT.wdone(kr) ) THEN
-            wdone(kr) = .TRUE.
+          if( .not. Moles .and. .not. wdone(kr) ) then
+            wdone(kr) = .true.
             Pecwt(n) = 100.
-            WRITE (IOOUT, 99006) n
-          ELSE
-            WRITE (IOOUT, 99007) n
+            write(IOOUT, 99006) n
+          else
+            write(IOOUT, 99007) n
             Nlm = 0
-            GOTO 200
-          ENDIF
-        ENDIF
+            go to 200
+          end if
+        end if
 ! ADD CONTRIBUTIONS TO WP(K), HPP(K), AM(K), AND B0P(I, K)
-        IF ( Pecwt(n).GT.0. ) wdone(kr) = .TRUE.
+        if( Pecwt(n) > 0. ) wdone(kr) = .true.
         pcwt = Pecwt(n)
-        IF ( Moles ) pcwt = pcwt*rm
+        if( Moles ) pcwt = pcwt*rm
         Wp(kr) = Wp(kr) + pcwt
-        IF ( rm.LE.0.D0 ) THEN
+        if( rm <= 0.D0 ) then
           Nlm = 0
-          GOTO 200
-        ELSE
+          go to 200
+        else
           Hpp(kr) = Hpp(kr) + Enth(n)*pcwt/rm
           Am(kr) = Am(kr) + pcwt/rm
-          IF ( Dens(n).NE.0. ) THEN
+          if( Dens(n) /= 0. ) then
             Rh(kr) = Rh(kr) + pcwt/Dens(n)
-          ELSE
+          else
             Rh(1) = 0.
             Rh(2) = 0.
-          ENDIF
-          DO j = 1, Nlm
+          end if
+          do j = 1, Nlm
             B0p(j, kr) = dat(j)*pcwt/rm + B0p(j, kr)
-          ENDDO
+          end do
           Rmw(n) = rm
-        ENDIF
-      ENDDO
-      IF ( .NOT.fuel ) THEN
+        end if
+      end do
+      if( .not. fuel ) then
 ! 100 PERCENT OXIDANT, SWITCH INDICES
-        DO n = 1, Nreac
+        do n = 1, Nreac
           Fox(n) = ' '
-        ENDDO
+        end do
         Wp(2) = Wp(1)
         Wp(1) = 0.
         Hpp(2) = Hpp(1)
         Am(2) = Am(1)
         Am(1) = 0.
-        DO j = 1, Nlm
+        do j = 1, Nlm
           B0p(j, 2) = B0p(j, 1)
-        ENDDO
-      ENDIF
-      IF ( Nlm.NE.0 ) THEN
+        end do
+      end if
+      if( Nlm /= 0 ) then
 ! NORMALIZE HPP(KKR), AM(KR), B0P(I, KR), AND PECWT(N).
 ! CALCULATE V+(KR), AND V-(KR)
-        DO kr = 1, 2
-          IF ( Wp(kr).NE.0. ) THEN
+        do kr = 1, 2
+          if( Wp(kr) /= 0. ) then
             Hpp(kr) = Hpp(kr)/Wp(kr)
             Am(kr) = Wp(kr)/Am(kr)
-            IF ( Rh(kr).NE.0. ) Rh(kr) = Wp(kr)/Rh(kr)
-            DO j = 1, Nlm
+            if( Rh(kr) /= 0. ) Rh(kr) = Wp(kr)/Rh(kr)
+            do j = 1, Nlm
               B0p(j, kr) = B0p(j, kr)/Wp(kr)
-              IF ( X(j).LT.0. ) Vmin(kr) = Vmin(kr) + B0p(j, kr)*X(j)
-              IF ( X(j).GT.0. ) Vpls(kr) = Vpls(kr) + B0p(j, kr)*X(j)
-            ENDDO
-            IF ( .NOT.Moles ) THEN
-              DO n = 1, Nreac
-                IF ( Fox(n)(:1).NE.'O'.OR.kr.NE.2 ) THEN
-                  IF ( Fox(n)(:1).EQ.'O'.OR.kr.NE.1 ) Pecwt(n) &
+              if( X(j) < 0. ) Vmin(kr) = Vmin(kr) + B0p(j, kr)*X(j)
+              if( X(j) > 0. ) Vpls(kr) = Vpls(kr) + B0p(j, kr)*X(j)
+            end do
+            if( .not. Moles ) then
+              do n = 1, Nreac
+                if( Fox(n)(:1) /= 'O' .or. kr /= 2 ) then
+                  if( Fox(n)(:1) == 'O' .or. kr /= 1 ) Pecwt(n) &
                        = Pecwt(n)/Wp(kr)
-                ENDIF
-              ENDDO
-            ENDIF
-          ENDIF
-        ENDDO
-        IF ( .NOT.Short ) THEN
-          IF ( Moles ) THEN
-            WRITE (IOOUT, 99008) ' MOLES '
-          ELSE
-            WRITE (IOOUT, 99008) 'WT.FRAC'
-          ENDIF
-          DO n = 1, Nreac
-            WRITE (IOOUT, 99009) Fox(n), Rname(n), Pecwt(n), Enth(n), &
+                end if
+              end do
+            end if
+          end if
+        end do
+        if( .not. Short ) then
+          if( Moles ) then
+            write(IOOUT, 99008) ' MOLES '
+          else
+            write(IOOUT, 99008) 'WT.FRAC'
+          end if
+          do n = 1, Nreac
+            write(IOOUT, 99009) Fox(n), Rname(n), Pecwt(n), Enth(n), &
                  Rtemp(n), Dens(n), (Ratom(n, i), Rnum(n, i), i=1, Nfla(n)) 
-          ENDDO
-        ENDIF
-      ENDIF
- 200  RETURN
-99001 FORMAT (/' REACTANT ', A15, 'HAS BEEN DEFINED FOR THE TEMPERATURE', &
+          end do
+        end if
+      end if
+ 200  return
+99001 format (/' REACTANT ', A15, 'HAS BEEN DEFINED FOR THE TEMPERATURE', &
         F8.2, 'K ONLY.'/' YOUR TEMPERATURE ASSIGNMENT', F8.2, &
         ' IS MORE THAN 10 K FROM THIS VALUE. (REACT)')
-99002 FORMAT (/' NOTE! REACTANT ', A15, 'HAS BEEN DEFINED FOR ', &
+99002 format (/' NOTE! REACTANT ', A15, 'HAS BEEN DEFINED FOR ', &
         'TEMPERATURE', F8.2, 'K ONLY.'/' YOUR TEMPERATURE ASSIGNMENT', &
         F8.2, ' IS NOT = BUT <10 K FROM THIS VALUE. (REACT)')
-99003 FORMAT (/' NOTE: ', A15, ' IS EITHER NOT IN thermo.lib OR THE', &
+99003 format (/' NOTE: ', A15, ' IS EITHER NOT IN thermo.lib OR THE', &
               ' TEMPERATURE ', /, &
               ' IS OUT OF RANGE FOR THIS SPECIES (REACT)')
-99004 FORMAT (/' TEMPERATURE MISSING FOR REACTANT NO.', I2, '(REACT)')
-99005 FORMAT (/1x, a2, ' NOT FOUND IN BLOCKDATA (REACT)')
-99006 FORMAT (/' WARNING!!  AMOUNT MISSING FOR REACTANT', I3, '.', &
+99004 format (/' TEMPERATURE MISSING FOR REACTANT NO.', I2, '(REACT)')
+99005 format (/1x, a2, ' NOT FOUND IN BLOCKDATA (REACT)')
+99006 format (/' WARNING!!  AMOUNT MISSING FOR REACTANT', I3, '.', &
               /' PROGRAM SETS WEIGHT PERCENT = 100. (REACT)')
-99007 FORMAT (/' AMOUNT MISSING FOR REACTANT NO.', I2, '(REACT)')
-99008 FORMAT (/4x, 'REACTANT', 10x, A7, 3X, '(ENERGY/R),K', 3X, &
+99007 format (/' AMOUNT MISSING FOR REACTANT NO.', I2, '(REACT)')
+99008 format (/4x, 'REACTANT', 10x, A7, 3X, '(ENERGY/R),K', 3X, &
               'TEMP,K  DENSITY'/, 8x, 'EXPLODED FORMULA')
-99009 FORMAT (1x, a1, ': ', a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))
-99010 FORMAT (/' YOUR ASSIGNED TEMPERATURE', F8.2, 'K FOR ', A15, /, &
+99009 format (1x, a1, ': ', a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))
+99010 format (/' YOUR ASSIGNED TEMPERATURE', F8.2, 'K FOR ', A15, /, &
        'IS OUTSIDE ITS TEMPERATURE RANGE', F8.2, ' TO', F9.2, 'K (REACT)')
-      END
-      SUBROUTINE RKTOUT
+      end
+      subroutine RKTOUT
 !***********************************************************************
 ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
 !***********************************************************************
@@ -3606,217 +3508,217 @@
       character(15), save:: fi, fiv, fr, z(4)
       integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, &
               misp, mivac, mmach, mppf, mppj, mxx(8), nex
-      integer:: INDEX
+      integer:: index
       real(8), save:: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
-      EQUIVALENCE (mxx(1), mppf)
-      EQUIVALENCE (mxx(2), mppj)
-      EQUIVALENCE (mxx(3), mmach)
-      EQUIVALENCE (mxx(4), mae)
-      EQUIVALENCE (mxx(5), mcf)
-      EQUIVALENCE (mxx(6), mivac)
-      EQUIVALENCE (mxx(7), misp)
+      equivalence(mxx(1), mppf)
+      equivalence(mxx(2), mppj)
+      equivalence(mxx(3), mmach)
+      equivalence(mxx(4), mae)
+      equivalence(mxx(5), mcf)
+      equivalence(mxx(6), mivac)
+      equivalence(mxx(7), misp)
       DATA exit/11*'EXIT'/
-      IF ( .NOT.Eql ) THEN
-        WRITE (IOOUT, 99004)
-        IF ( Nfz.GT.1 ) WRITE (IOOUT, 99005) Nfz
-      ELSE
-        WRITE (IOOUT, 99001)
-        IF ( Iopt.NE.0 ) WRITE (IOOUT, 99002)
-        IF ( Iopt.EQ.0 ) WRITE (IOOUT, 99003)
-      ENDIF
-      IF ( Ttt(1).EQ.T(It) ) WRITE (IOOUT, 99006)
+      if( .not. Eql ) then
+        write(IOOUT, 99004)
+        if( Nfz > 1 ) write(IOOUT, 99005) Nfz
+      else
+        write(IOOUT, 99001)
+        if( Iopt /= 0 ) write(IOOUT, 99002)
+        if( Iopt == 0 ) write(IOOUT, 99003)
+      end if
+      if( Ttt(1) == T(It) ) write(IOOUT, 99006)
       tem = Ppp(1)*14.696006D0/1.01325D0
-      WRITE (IOOUT, 99009) 'Pin', tem
+      write(IOOUT, 99009) 'Pin', tem
       i23 = 2
-      IF ( Iopt.GT.0 ) THEN
-        IF ( Iopt.EQ.1 ) WRITE (IOOUT, 99007) Subar(1), App(2)
-        IF ( Iopt.EQ.2 ) WRITE (IOOUT, 99008) Ma, App(2)
+      if( Iopt > 0 ) then
+        if( Iopt == 1 ) write(IOOUT, 99007) Subar(1), App(2)
+        if( Iopt == 2 ) write(IOOUT, 99008) Ma, App(2)
         i23 = 3
-      ENDIF
-      CALL OUT1
+      end if
+      call OUT1
       Fmt(4) = Fmt(6)
       nex = Npt - 2
-      IF ( Page1 ) THEN
+      if( Page1 ) then
         ione = 0
         i46 = 4
         i57 = 5
         i68 = 6
         i79 = 7
-      ELSE
+      else
         ione = i23
-      ENDIF
+      end if
 ! PRESSURE RATIOS
-      IF ( Iopt.EQ.0 ) THEN
-        WRITE (IOOUT, 99011) (exit(i), i=1, nex)
-        CALL VARFMT(App)
-        WRITE (IOOUT, Fmt) 'Pinf/P         ', (App(j), j=1, Npt)
-      ELSE
+      if( Iopt == 0 ) then
+        write(IOOUT, 99011) (exit(i), i=1, nex)
+        call VARFMT(App)
+        write(IOOUT, Fmt) 'Pinf/P         ', (App(j), j=1, Npt)
+      else
         nex = nex - 1
-        WRITE (IOOUT, 99010) (exit(i), i=1, nex)
+        write(IOOUT, 99010) (exit(i), i=1, nex)
         X(1) = 1.D0
-        DO i = 2, Npt
+        do i = 2, Npt
           X(i) = Ppp(1)/Ppp(i)
-        ENDDO
-        CALL VARFMT(X)
-        WRITE (IOOUT, Fmt) 'Pinj/P         ', (X(i), i=1, Npt)
-      ENDIF
-      CALL OUT2
-      DO i = 1, 8
+        end do
+        call VARFMT(X)
+        write(IOOUT, Fmt) 'Pinj/P         ', (X(i), i=1, Npt)
+      end if
+      call OUT2
+      do i = 1, 8
         mxx(i) = 0
-      ENDDO
-      DO 100 i = 1, Nplt
-        ixfz = INDEX(Pltvar(i)(2:), 'fz')
-        ixfr = INDEX(Pltvar(i)(2:), 'fr')
-        IF ( ixfz.NE.0.OR.ixfr.NE.0 ) THEN
-          IF ( Eql ) GOTO 100
-        ELSEIF ( .NOT.Eql ) THEN
-          GOTO 100
-        ENDIF
-        IF ( Pltvar(i)(:4).EQ.'pi/p'.OR.Pltvar(i)(:3).EQ.'pip' ) THEN
-          IF ( Iopt.EQ.0 ) mppf = i
-          IF ( Iopt.NE.0 ) mppj = i
-        ELSEIF ( Pltvar(i)(:4).EQ.'mach' ) THEN
+      end do
+      do 100 i = 1, Nplt
+        ixfz = index(Pltvar(i)(2:), 'fz')
+        ixfr = index(Pltvar(i)(2:), 'fr')
+        if( ixfz /= 0 .or. ixfr /= 0 ) then
+          if( Eql ) go to 100
+        else if( .not. Eql ) then
+          go to 100
+        end if
+        if( Pltvar(i)(:4) == 'pi/p' .or. Pltvar(i)(:3) == 'pip' ) then
+          if( Iopt == 0 ) mppf = i
+          if( Iopt /= 0 ) mppj = i
+        else if( Pltvar(i)(:4) == 'mach' ) then
           mmach = i
-        ELSEIF ( Pltvar(i)(:2).EQ.'ae' ) THEN
+        else if( Pltvar(i)(:2) == 'ae' ) then
           mae = i
-        ELSEIF ( Pltvar(i)(:2).EQ.'cf' ) THEN
+        else if( Pltvar(i)(:2) == 'cf' ) then
           mcf = i
-        ELSEIF ( Pltvar(i)(:4).EQ.'ivac' ) THEN
+        else if( Pltvar(i)(:4) == 'ivac' ) then
           mivac = i
-        ELSEIF ( Pltvar(i)(:3).EQ.'isp' ) THEN
+        else if( Pltvar(i)(:3) == 'isp' ) then
           misp = i
-        ENDIF
- 100  CONTINUE
-      IF ( Siunit ) THEN
+        end if
+ 100  continue
+      if( Siunit ) then
         agv = 1.
         gc = 1.
         fr = 'CSTAR, M/SEC'
         fiv = 'Ivac, M/SEC'
         fi = 'Isp, M/SEC'
-      ELSE
+      else
         gc = 32.174
         agv = 9.80665
         fr = 'CSTAR, FT/SEC'
         fiv = 'Ivac,LB-SEC/LB'
         fi = 'Isp, LB-SEC/LB'
-      ENDIF
-      DO k = 2, Npt
+      end if
+      do k = 2, Npt
         Spim(k) = (2.*Rr*(Hsum(1)-Hsum(k)))**.5/agv
 ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
         aw = Rr*Ttt(k)/(Ppp(k)*Wm(k)*Spim(k)*agv**2)
-        IF ( k.EQ.i23 ) THEN
-          IF ( Iopt.EQ.0 ) Cstr = gc*Ppp(1)*aw
-          IF ( Iopt.NE.0 ) Cstr = gc*Ppp(1)/App(2)*aw
-        ENDIF
+        if( k == i23 ) then
+          if( Iopt == 0 ) Cstr = gc*Ppp(1)*aw
+          if( Iopt /= 0 ) Cstr = gc*Ppp(1)/App(2)*aw
+        end if
         vaci(k) = Spim(k) + Ppp(k)*aw
         Vmoc(k) = 0.
-        IF ( Sonvel(k).NE.0. ) Vmoc(k) = Spim(k)*agv/Sonvel(k)
-      ENDDO
+        if( Sonvel(k) /= 0. ) Vmoc(k) = Spim(k)*agv/Sonvel(k)
+      end do
 ! MACH NUMBER
       Vmoc(1) = 0.
-      IF ( Gammas(i23).EQ.0. ) Vmoc(i23) = 0.
+      if( Gammas(i23) == 0. ) Vmoc(i23) = 0.
       Fmt(7) = '3,'
-      WRITE (IOOUT, Fmt) 'MACH NUMBER    ', (Vmoc(j), j=1, Npt)
-      IF ( Trnspt ) CALL OUT4
-      WRITE (IOOUT, 99013)
+      write(IOOUT, Fmt) 'MACH NUMBER    ', (Vmoc(j), j=1, Npt)
+      if( Trnspt ) call OUT4
+      write(IOOUT, 99013)
 ! AREA RATIO
       Fmt(4) = '9x,'
       Fmt(i46) = '9x,'
-      CALL VARFMT(Aeat)
+      call VARFMT(Aeat)
       Fmt(5) = ' '
       Fmt(i57) = ' '
-      WRITE (IOOUT, Fmt) 'Ae/At          ', (Aeat(j), j=2, Npt)
+      write(IOOUT, Fmt) 'Ae/At          ', (Aeat(j), j=2, Npt)
 ! C*
       Fmt(i57) = '13'
       Fmt(i68) = Fmt(i68+2)
       Fmt(i79) = '1,'
-      WRITE (IOOUT, Fmt) fr, (Cstr, j=2, Npt)
+      write(IOOUT, Fmt) fr, (Cstr, j=2, Npt)
 ! CF - THRUST COEFICIENT
       Fmt(i79) = '4,'
-      DO i = 2, Npt
+      do i = 2, Npt
         X(i) = gc*Spim(i)/Cstr
-      ENDDO
-      WRITE (IOOUT, Fmt) 'CF             ', (X(j), j=2, Npt)
+      end do
+      write(IOOUT, Fmt) 'CF             ', (X(j), j=2, Npt)
 ! VACUUM IMPULSE
       Fmt(i57) = '13'
       Fmt(i79) = '1,'
-      WRITE (IOOUT, Fmt) fiv, (vaci(j), j=2, Npt)
+      write(IOOUT, Fmt) fiv, (vaci(j), j=2, Npt)
 ! SPECIFIC IMPULSE
-      WRITE (IOOUT, Fmt) fi, (Spim(j), j=2, Npt)
-      IF ( Nplt.GT.0 ) THEN
+      write(IOOUT, Fmt) fi, (Spim(j), j=2, Npt)
+      if( Nplt > 0 ) then
         Spim(1) = 0
         Aeat(1) = 0
         Vmoc(1) = 0
         vaci(1) = 0
         X(1) = 0
         Spim(1) = 0
-        DO i = ione + 1, Npt
-          IF ( mppj.GT.0 ) Pltout(i+Iplt-ione, mppj) = Ppp(1)/Ppp(i)
-          IF ( mppf.GT.0 ) Pltout(i+Iplt-ione, mppf) = App(i)
-          IF ( mmach.GT.0 ) Pltout(i+Iplt-ione, mmach) = Vmoc(i)
-          IF ( mae.GT.0 ) Pltout(i+Iplt-ione, mae) = Aeat(i)
-          IF ( mcf.GT.0 ) Pltout(i+Iplt-ione, mcf) = X(i)
-          IF ( mivac.GT.0 ) Pltout(i+Iplt-ione, mivac) = vaci(i)
-          IF ( misp.GT.0 ) Pltout(i+Iplt-ione, misp) = Spim(i)
-        ENDDO
-      ENDIF
-      WRITE (IOOUT, 99012)
+        do i = ione + 1, Npt
+          if( mppj > 0 ) Pltout(i+Iplt-ione, mppj) = Ppp(1)/Ppp(i)
+          if( mppf > 0 ) Pltout(i+Iplt-ione, mppf) = App(i)
+          if( mmach > 0 ) Pltout(i+Iplt-ione, mmach) = Vmoc(i)
+          if( mae > 0 ) Pltout(i+Iplt-ione, mae) = Aeat(i)
+          if( mcf > 0 ) Pltout(i+Iplt-ione, mcf) = X(i)
+          if( mivac > 0 ) Pltout(i+Iplt-ione, mivac) = vaci(i)
+          if( misp > 0 ) Pltout(i+Iplt-ione, misp) = Spim(i)
+        end do
+      end if
+      write(IOOUT, 99012)
       Fmt(4) = ' '
       Fmt(5) = '13'
       Fmt(7) = '5,'
-      IF ( Iopt.NE.0 ) THEN
+      if( Iopt /= 0 ) then
         Fmt(i46) = Fmt(8)
         Fmt(i57) = Fmt(9)
-      ENDIF
-      IF ( .NOT.Eql ) THEN
-        IF ( Massf ) THEN
-          WRITE (IOOUT, 99014) 'MASS'
-        ELSE
-          WRITE (IOOUT, 99014) 'MOLE'
+      end if
+      if( .not. Eql ) then
+        if( Massf ) then
+          write(IOOUT, 99014) 'MASS'
+        else
+          write(IOOUT, 99014) 'MOLE'
           ww = 1.D0/Totn(Nfz)
-        ENDIF
+        end if
 ! MOLE (OR MASS) FRACTIONS - FROZEN
         tra = 5.E-6
-        IF ( Trace.NE.0. ) tra = Trace
+        if( Trace /= 0. ) tra = Trace
         line = 0
-        DO k = 1, Ngc
-          IF ( Massf ) ww = Mw(k)
+        do k = 1, Ngc
+          if( Massf ) ww = Mw(k)
           X(line+1) = En(k, Nfz)*ww
-          IF ( X(line+1).GE.tra ) THEN
+          if( X(line+1) >= tra ) then
             line = line + 1
             z(line) = Prod(k)
-          ENDIF
-          IF ( line.EQ.3.OR.k.EQ.Ngc ) THEN
-            IF ( line.EQ.0 ) GOTO 200
-            WRITE (IOOUT, 99015) (z(ln), X(ln), ln=1, line)
+          end if
+          if( line == 3 .or. k == Ngc ) then
+            if( line == 0 ) go to 200
+            write(IOOUT, 99015) (z(ln), X(ln), ln=1, line)
             line = 0
-          ENDIF
-        ENDDO
-      ENDIF
- 200  CALL OUT3
-      RETURN
-99001 FORMAT (/////13x, ' THEORETICAL ROCKET PERFORMANCE ASSUMING', &
+          end if
+        end do
+      end if
+ 200  call OUT3
+      return
+99001 format (/////13x, ' THEORETICAL ROCKET PERFORMANCE ASSUMING', &
               ' EQUILIBRIUM')
-99002 FORMAT (/11x, ' COMPOSITION DURING EXPANSION FROM FINITE AREA', &
+99002 format (/11x, ' COMPOSITION DURING EXPANSION FROM FINITE AREA', &
               ' COMBUSTOR')
-99003 FORMAT (/10x, ' COMPOSITION DURING EXPANSION FROM INFINITE AREA', &
+99003 format (/10x, ' COMPOSITION DURING EXPANSION FROM INFINITE AREA', &
               ' COMBUSTOR')
-99004 FORMAT (/////10x, ' THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN' &
+99004 format (/////10x, ' THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN' &
               , ' COMPOSITION')
-99005 FORMAT (33X, 'AFTER POINT', I2)
-99006 FORMAT (25X, 'AT AN ASSIGNED TEMPERATURE  ')
-99007 FORMAT (' Ac/At =', F8.4, 6x, 'Pinj/Pinf =', F10.6)
-99008 FORMAT (' MDOT/Ac =', F10.3, ' (KG/S)/M**2', 6x, 'Pinj/Pinf =', F10.6)
-99009 FORMAT (/1x, A3, ' =', F8.1, ' PSIA')
-99010 FORMAT (/, 17X, 'INJECTOR  COMB END  THROAT', 10(5X, A4))
-99011 FORMAT (/17X, 'CHAMBER   THROAT', 11(5X, A4))
-99012 FORMAT ()
-99013 FORMAT (/' PERFORMANCE PARAMETERS'/)
-99014 FORMAT (1x, A4, ' FRACTIONS'/)
-99015 FORMAT (1X, 3(A15, F8.5, 3X))
-      END
-      SUBROUTINE ROCKET
+99005 format (33X, 'AFTER POINT', I2)
+99006 format (25X, 'AT AN ASSIGNED TEMPERATURE  ')
+99007 format (' Ac/At =', F8.4, 6x, 'Pinj/Pinf =', F10.6)
+99008 format (' MDOT/Ac =', F10.3, ' (KG/S)/M**2', 6x, 'Pinj/Pinf =', F10.6)
+99009 format (/1x, A3, ' =', F8.1, ' PSIA')
+99010 format (/, 17X, 'INJECTOR  COMB END  THROAT', 10(5X, A4))
+99011 format (/17X, 'CHAMBER   THROAT', 11(5X, A4))
+99012 format ()
+99013 format (/' PERFORMANCE PARAMETERS'/)
+99014 format (1x, A4, ' FRACTIONS'/)
+99015 format (1X, 3(A15, F8.5, 3X))
+      end
+      subroutine ROCKET
 !***********************************************************************
 ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
 !***********************************************************************
@@ -3830,7 +3732,7 @@
       real(8), save:: acatsv, aeatl, appl, aratio, asq, check, cprf, dd, dh, &
              dlnp, dlnpe, dlt, dp, eln, mat, msq, p1, pcpa, pcplt, pinf, pinj, &
              pinjas, pjrat, ppa, pr, pracat, prat, pratsv, pvg, test, tmelt, usq
-      real(8):: DABS, DLOG, DMAX1, DSQRT
+      real(8):: dabs, dlog, dmax1, dsqrt
 
       DATA a1l/-1.26505/, b1/1.0257/, c1/-1.2318/, pa/1.E05/
       iplte = Iplt
@@ -3843,40 +3745,40 @@
       i12 = 1
       nipp = 1
       nptth = 2
-      IF ( Fac ) THEN
-        Eql = .TRUE.
+      if( Fac ) then
+        Eql = .true.
         Npp = Npp + 1
-        IF ( Acat.NE.0. ) THEN
+        if( Acat /= 0. ) then
           Iopt = 1
-        ELSEIF ( Ma.NE.0. ) THEN
+        else if( Ma /= 0. ) then
           Iopt = 2
-        ELSE
-          WRITE (IOOUT, 99001)
+        else
+          write(IOOUT, 99001)
           Tt = 0.
-          GOTO 1400
-        ENDIF
+          go to 1400
+        end if
         i01 = 1
         i12 = 2
         nipp = 2
         nptth = 3
-        DO i = Nsub, 1, - 1
+        do i = Nsub, 1, - 1
           Subar(i+1) = Subar(i)
-        ENDDO
+        end do
         Nsub = Nsub + 1
-        IF ( Iopt.NE.1 ) THEN
-          IF ( Acat.EQ.0. ) Acat = 2.
-        ENDIF
+        if( Iopt /= 1 ) then
+          if( Acat == 0. ) Acat = 2.
+        end if
         Subar(1) = Acat
-      ELSEIF ( .NOT.Eql.AND.Nfz.GT.1.AND.Nsub.GT.0 ) THEN
+      else if( .not. Eql .and. Nfz > 1 .and. Nsub > 0 ) then
         Nsub = 0
-        WRITE (IOOUT, 99023)
-      ENDIF
+        write(IOOUT, 99023)
+      end if
       nn = nn + Nsub + Nsup
-      IF ( Nfz.GT.2.AND.nn.GT.Ncol-2 ) THEN
-        WRITE (IOOUT, 99002) Ncol - 2
+      if( Nfz > 2 .and. nn > Ncol-2 ) then
+        write(IOOUT, 99002) Ncol - 2
         Nfz = 1
-        Froz = .FALSE.
-      ENDIF
+        Froz = .false.
+      end if
       seql = Eql
       iof = 0
       Tt = Tcest
@@ -3886,22 +3788,22 @@
  100  It = 1
       iof = iof + 1
       Oxfl = Oxf(iof)
-      IF ( T(1).NE.0. ) THEN
-        Tp = .TRUE.
-      ELSE
-        Hp = .TRUE.
-      ENDIF
-      Sp = .FALSE.
-      CALL NEWOF
-      IF ( T(1).NE.0. ) Tt = T(1)
+      if( T(1) /= 0. ) then
+        Tp = .true.
+      else
+        Hp = .true.
+      end if
+      Sp = .false.
+      call NEWOF
+      if( T(1) /= 0. ) Tt = T(1)
 ! LOOP FOR CHAMBER PRESSURES
- 200  DO Ip = 1, Np
+ 200  do Ip = 1, Np
         itnum = 0
-        Area = .FALSE.
-        IF ( T(1).EQ.0. ) Hp = .TRUE.
-        IF ( T(1).NE.0. ) Tp = .TRUE.
-        Sp = .FALSE.
-        Eql = .TRUE.
+        Area = .false.
+        if( T(1) == 0. ) Hp = .true.
+        if( T(1) /= 0. ) Tp = .true.
+        Sp = .false.
+        Eql = .true.
         isub = 1
         Isup = 1
         Pp = P(Ip)
@@ -3910,76 +3812,76 @@
         itrot = 3
         isupsv = 1
         niter = 1
-        Page1 = .TRUE.
+        Page1 = .true.
         iplt1 = iplte
         Iplt = iplte
-        done = .FALSE.
+        done = .false.
 ! LOOP FOR OUTPUT COLUMNS
  250    nar = Npt
-        IF ( Eql ) THEN
-          CALL EQLBRM
-          IF ( Npt.EQ.Nfz ) cprf = Cpsum
-        ELSE
-          CALL FROZEN
-        ENDIF
+        if( Eql ) then
+          call EQLBRM
+          if( Npt == Nfz ) cprf = Cpsum
+        else
+          call FROZEN
+        end if
 ! TT = 0 IF NO CONVERGENCE
-        IF ( Tt.NE.0. ) THEN
+        if( Tt /= 0. ) then
 ! TEST FOR FINITE AREA COMBUSTOR
-          IF ( .NOT.Fac ) GOTO 400
+          if( .not. Fac ) go to 400
           pinjas = P(Ip)*pa
           pinj = pinjas
-          IF ( Npt.LE.2 ) THEN
-            IF ( Npt.EQ.1.AND.Trnspt ) CALL TRANP
-            IF ( Npt.EQ.2 ) pinf = Ppp(2)
-          ENDIF
-          IF ( Npt.NE.1 ) GOTO 400
+          if( Npt <= 2 ) then
+            if( Npt == 1 .and. Trnspt ) call TRANP
+            if( Npt == 2 ) pinf = Ppp(2)
+          end if
+          if( Npt /= 1 ) go to 400
 ! INITIAL ESTIMATE FOR PC (AND ACAT IF NOT ASSIGNED)
-          DO i = 1, 4
+          do i = 1, 4
             prat = (b1+c1*Acat)/(1.+a1l*Acat)
             ppa = pinj*prat
-            IF ( Iopt.EQ.1 ) GOTO 260
+            if( Iopt == 1 ) go to 260
             Acat = ppa/(Ma*2350.)
-            IF ( Acat.GE.1. ) THEN
+            if( Acat >= 1. ) then
               pratsv = prat
-              IF ( Debugf ) THEN
-                IF ( i.LE.1 ) WRITE (IOOUT, 99004)
-                WRITE (IOOUT, 99005) i, ppa, Acat
-              ENDIF
-            ELSE
-              WRITE (IOOUT, 99003) Ma
+              if( Debugf ) then
+                if( i <= 1 ) write(IOOUT, 99004)
+                write(IOOUT, 99005) i, ppa, Acat
+              end if
+            else
+              write(IOOUT, 99003) Ma
               Tt = 0.
-              GOTO 1400
-            ENDIF
-          ENDDO
+              go to 1400
+            end if
+          end do
           Subar(1) = Acat
  260      Pp = ppa/pa
           App(1) = Pp/Ppp(1)
-          GOTO 1100
-        ELSE
-          IF ( Npt.LT.1 ) GOTO 1400
-          IF ( .NOT.Area ) GOTO 600
+          go to 1100
+        else
+          if( Npt < 1 ) go to 1400
+          if( .not. Area ) go to 600
           Npt = nar - 1
           Isup = Nsup + 2
           Isv = 0
           itnum = 0
-          GOTO 950
-        ENDIF
- 300    Hp = .TRUE.
-        Sp = .FALSE.
+          go to 950
+        end if
+ 300    Hp = .true.
+        Sp = .false.
         niter = niter + 1
         Isv = 0
         Npt = 2
         ipp = 2
-        CALL SETEN
-        GOTO 250
- 350    done = .TRUE.
+        call SETEN
+        go to 250
+ 350    done = .true.
         App(1) = Ppp(2)/Ppp(1)
-        Area = .FALSE.
-        IF ( Nsub.GT.1 ) isub = 2
+        Area = .false.
+        if( Nsub > 1 ) isub = 2
         Isv = 4
         Npt = 2
         ipp = MIN(4, Npp)
-        CALL SETEN
+        call SETEN
         Cpr(2) = Cpr(4)
         Dlvpt(2) = Dlvpt(4)
         Dlvtp(2) = Dlvtp(4)
@@ -3992,212 +3894,212 @@
         Ttt(2) = Ttt(4)
         Vlm(2) = Vlm(4)
         Wm(2) = Wm(4)
-        IF ( .NOT.Short ) WRITE (IOOUT, 99009)
-        GOTO 600
+        if( .not. Short ) write(IOOUT, 99009)
+        go to 600
 ! INITIALIZE FOR THROAT
- 400    IF ( ipp.GT.nipp ) THEN
+ 400    if( ipp > nipp ) then
           usq = 2.*(Hsum(1)-Hsum(Npt))*Rr
-          IF ( ipp.GT.nptth ) GOTO 600
+          if( ipp > nptth ) go to 600
 ! THROAT
-          IF ( .NOT.thi ) THEN
+          if( .not. thi ) then
             Vv = Vlm(nptth)
             pvg = Pp*Vv*Gammas(nptth)
-            IF ( pvg.EQ.0. ) THEN
-              WRITE (IOOUT, 99010)
-              GOTO 550
-            ELSE
+            if( pvg == 0. ) then
+              write(IOOUT, 99010)
+              go to 550
+            else
               msq = usq/pvg
-              IF ( Debug(1).OR.Debug(2) ) WRITE (IOOUT, 99011) usq, pvg
-              dh = DABS(msq-1.D0)
-              IF ( dh.LE.0.4D-4 ) GOTO 550
-              IF ( itrot.GT.0 ) THEN
+              if( Debug(1) .or. Debug(2) ) write(IOOUT, 99011) usq, pvg
+              dh = dabs(msq-1.D0)
+              if( dh <= 0.4D-4 ) go to 550
+              if( itrot > 0 ) then
                 p1 = Pp
-                IF ( Jsol.NE.0 ) THEN
+                if( Jsol /= 0 ) then
                   tmelt = Tt
                   Pp = Pp*(1.D0+msq*Gammas(nptth))/(Gammas(nptth)+1.D0)
-                ELSEIF ( tmelt.EQ.0. ) THEN
+                else if( tmelt == 0. ) then
                   Pp = Pp*(1.D0+msq*Gammas(nptth))/(Gammas(nptth)+1.D0)
-                ELSE
-                  WRITE (IOOUT, 99012)
-                  dlt = DLOG(tmelt/Tt)
+                else
+                  write(IOOUT, 99012)
+                  dlt = dlog(tmelt/Tt)
                   dd = dlt*Cpr(nptth)/(Enn*Dlvtp(nptth))
                   Pp = Pp*EXP(dd)
                   App(nptth) = P(Ip)/Pp
-                  IF ( Fac ) App(nptth) = pinf/Pp
-                  IF ( Eql.AND..NOT.Short ) WRITE (IOOUT, 99013)  &
+                  if( Fac ) App(nptth) = pinf/Pp
+                  if( Eql .and. .not. Short ) write(IOOUT, 99013)  &
                                   App(nptth)
-                  thi = .TRUE.
-                  GOTO 250
-                ENDIF
-                GOTO 500
-              ELSEIF ( itrot.LT.0 ) THEN
-                IF ( itrot.LT.-19 ) THEN
-                  WRITE (IOOUT, 99010)
-                  GOTO 550
-                ELSE
-                  IF ( Npr.NE.npr1 ) GOTO 550
+                  thi = .true.
+                  go to 250
+                end if
+                go to 500
+              else if( itrot < 0 ) then
+                if( itrot < -19 ) then
+                  write(IOOUT, 99010)
+                  go to 550
+                else
+                  if( Npr /= npr1 ) go to 550
                   Pp = Pp - dp
-                  GOTO 500
-                ENDIF
-              ELSEIF ( Npr.EQ.npr1 ) THEN
-                WRITE (IOOUT, 99010)
-                GOTO 550
-              ELSE
-                dp = DABS(Pp-p1)/20.
-                Pp = DMAX1(Pp, p1)
-                WRITE (IOOUT, 99012)
+                  go to 500
+                end if
+              else if( Npr == npr1 ) then
+                write(IOOUT, 99010)
+                go to 550
+              else
+                dp = dabs(Pp-p1)/20.
+                Pp = dmax1(Pp, p1)
+                write(IOOUT, 99012)
                 Pp = Pp - dp
-                GOTO 500
-              ENDIF
-            ENDIF
-          ELSE
+                go to 500
+              end if
+            end if
+          else
             Gammas(nptth) = 0.
-            GOTO 550
-          ENDIF
-        ELSE
-          IF ( .NOT.Fac.AND.Trnspt ) CALL TRANP
-          IF ( Npt.EQ.Nfz ) Eql = seql
-          Tp = .FALSE.
-          Hp = .FALSE.
-          Sp = .TRUE.
+            go to 550
+          end if
+        else
+          if( .not. Fac .and. Trnspt ) call TRANP
+          if( Npt == Nfz ) Eql = seql
+          Tp = .false.
+          Hp = .false.
+          Sp = .true.
           S0 = Ssum(i12)
-        ENDIF
+        end if
  450    tmelt = 0.
         itrot = 3
-        thi = .FALSE.
+        thi = .false.
         App(nptth) = ((Gammas(i12)+1.)/2.) &
                      **(Gammas(i12)/(Gammas(i12)-1.))
-        IF ( Eql.AND..NOT.Short ) WRITE (IOOUT, 99013) App(nptth)
+        if( Eql .and. .not. Short ) write(IOOUT, 99013) App(nptth)
         Pp = pinf/App(nptth)
         Isv = -i12
-        GOTO 1200
+        go to 1200
  500    npr1 = Npr
         App(nptth) = P(Ip)/Pp
-        IF ( Fac ) App(nptth) = pinf/Pp
-        IF ( Eql.AND..NOT.Short ) WRITE (IOOUT, 99013) App(nptth)
+        if( Fac ) App(nptth) = pinf/Pp
+        if( Eql .and. .not. Short ) write(IOOUT, 99013) App(nptth)
         itrot = itrot - 1
-        GOTO 250
+        go to 250
  550    Awt = Enn*Tt/(Pp*usq**.5)
-        pcplt = DLOG(App(nptth))
+        pcplt = dlog(App(nptth))
  600    Isv = 0
         Aeat(Npt) = Enn*Ttt(Npt)/(Pp*usq**.5*Awt)
-        IF ( Tt.EQ.0. ) GOTO 1150
-        IF ( Area ) GOTO 750
-        IF ( Trnspt.AND.(.NOT.Fac.OR.done.OR.Npt.GT.2) ) CALL TRANP
-        IF ( Npt.EQ.Nfz ) Eql = seql
-        IF ( Fac ) THEN
-          IF ( Npt.EQ.nptth ) THEN
-            Area = .TRUE.
-            GOTO 750
-          ELSEIF ( Npt.EQ.2.AND.done ) THEN
+        if( Tt == 0. ) go to 1150
+        if( Area ) go to 750
+        if( Trnspt .and. (.not. Fac .or. done .or. Npt > 2) ) call TRANP
+        if( Npt == Nfz ) Eql = seql
+        if( Fac ) then
+          if( Npt == nptth ) then
+            Area = .true.
+            go to 750
+          else if( Npt == 2 .and. done ) then
             Npt = 3
 !  The following statement was corrected 1/30/2004.  Only fac parameters 
 !    after combustion were affected--generally extra or missing points.
-!  (remove) IF ( ipp.LE.Npp ) ipp = ipp - 1
-            IF ( ipp.LT.Npp.OR.npp.EQ.4 ) ipp = ipp - 1
-          ENDIF
-        ENDIF
- 650    IF ( ipp.LT.Npp ) GOTO 1100
- 700    IF ( Nsub.EQ.i01.AND.Nsup.EQ.0 ) GOTO 1150
-        Area = .TRUE.
+!  (remove) if( ipp <= Npp ) ipp = ipp - 1
+            if( ipp < Npp .or. npp == 4 ) ipp = ipp - 1
+          end if
+        end if
+ 650    if( ipp < Npp ) go to 1100
+ 700    if( Nsub == i01 .and. Nsup == 0 ) go to 1150
+        Area = .true.
 ! PCP ESTIMATES FOR AREA RATIOS
- 750    IF ( itnum.EQ.0 ) THEN
+ 750    if( itnum == 0 ) then
           dlnp = 1.
           itnum = 1
           aratio = Subar(isub)
-          IF ( (.NOT.Fac.OR.done).AND.Nsub.LE.i01 ) aratio = Supar(Isup)
-          IF ( .NOT.Eql.AND.Nfz.GE.3 ) THEN
-            IF ( aratio.LE.Aeat(Nfz) ) THEN
-              WRITE (IOOUT, 99014) Nfz
-              GOTO 1050
-            ENDIF
-          ENDIF
-          IF (aratio .LT. 1.d0 ) THEN
-            WRITE (IOOUT, 99025) 
-            GOTO 1050
-          ENDIF
-          eln = DLOG(aratio)
-          IF ( Fac ) THEN
-            IF ( .NOT.done ) GOTO 800
-          ENDIF
-          IF ( Nsub.LE.i01 ) THEN
-            IF ( Nfz.EQ.ipp ) isupsv = Isup
-            IF ( Supar(Isup).LT.2. ) THEN
-              appl = DSQRT(eln*(1.535d0+3.294d0*eln)) + pcplt
-              GOTO 1100
-            ELSE
-              IF ( Isup.GT.isup1.AND.Supar(Isup-1).GE.2. ) GOTO 850
+          if( (.not. Fac .or. done) .and. Nsub <= i01 ) aratio = Supar(Isup)
+          if( .not. Eql .and. Nfz >= 3 ) then
+            if( aratio <= Aeat(Nfz) ) then
+              write(IOOUT, 99014) Nfz
+              go to 1050
+            end if
+          end if
+          if(aratio  <  1.d0 ) then
+            write(IOOUT, 99025) 
+            go to 1050
+          end if
+          eln = dlog(aratio)
+          if( Fac ) then
+            if( .not. done ) go to 800
+          end if
+          if( Nsub <= i01 ) then
+            if( Nfz == ipp ) isupsv = Isup
+            if( Supar(Isup) < 2. ) then
+              appl = dsqrt(eln*(1.535d0+3.294d0*eln)) + pcplt
+              go to 1100
+            else
+              if( Isup > isup1 .and. Supar(Isup-1) >= 2. ) go to 850
               appl = Gammas(nptth) + eln*1.4
-              GOTO 1100
-            ENDIF
-          ENDIF
+              go to 1100
+            end if
+          end if
 ! TEST FOR CONVERGENCE ON AREA RATIO.
-        ELSEIF ( Gammas(Npt).GT.0. ) THEN
+        else if( Gammas(Npt) > 0. ) then
           check = .00004
-          IF ( Debug(Npt) ) WRITE (IOOUT, 99016) itnum, aratio, Aeat(Npt), &
+          if( Debug(Npt) ) write(IOOUT, 99016) itnum, aratio, Aeat(Npt), &
                                    App(Npt), dlnp
-          IF ( DABS(Aeat(Npt)-aratio)/aratio.LE.check ) GOTO 900
-          IF ( ABS(dlnp).LT..00004 ) GOTO 900
-          aeatl = DLOG(Aeat(Npt))
+          if( dabs(Aeat(Npt)-aratio)/aratio <= check ) go to 900
+          if( ABS(dlnp) < .00004 ) go to 900
+          aeatl = dlog(Aeat(Npt))
           itnum = itnum + 1
-          IF ( itnum.GT.10 ) THEN
-            WRITE (IOOUT, 99017) aratio
-            GOTO 900
-          ELSE
+          if( itnum > 10 ) then
+            write(IOOUT, 99017) aratio
+            go to 900
+          else
 ! IMPROVED PCP ESTIMATES.
             asq = Gammas(Npt)*Enn*Rr*Tt
             dlnpe = Gammas(Npt)*usq/(usq-asq)
-            GOTO 850
-          ENDIF
-        ELSE
-          WRITE (IOOUT, 99015)
+            go to 850
+          end if
+        else
+          write(IOOUT, 99015)
           Npt = Npt - 1
-          IF ( Nsub.LE.0 ) isup1 = 100
-          IF ( Nsub.LT.0. ) Nsup = Isup - 1
-          IF ( Nsub.GT.0 ) Nsub = isub - 1
-          GOTO 1000
-        ENDIF
+          if( Nsub <= 0 ) isup1 = 100
+          if( Nsub < 0. ) Nsup = Isup - 1
+          if( Nsub > 0 ) Nsub = isub - 1
+          go to 1000
+        end if
  800    appl = pcplt/(Subar(isub)+(10.587*eln**2+9.454)*eln)
-        IF ( aratio.LT.1.09 ) appl = .9*appl
-        IF ( aratio.GT.10. ) appl = appl/aratio
-        IF ( isub.GT.1.OR.Npt.EQ.Ncol ) GOTO 1100
-        GOTO 1200
+        if( aratio < 1.09 ) appl = .9*appl
+        if( aratio > 10. ) appl = appl/aratio
+        if( isub > 1 .or. Npt == Ncol ) go to 1100
+        go to 1200
  850    dlnp = dlnpe*eln - dlnpe*aeatl
         appl = appl + dlnp
-        IF ( itnum.EQ.1 ) GOTO 1100
-        IF ( appl.LT.0. ) appl = .000001
+        if( itnum == 1 ) go to 1100
+        if( appl < 0. ) appl = .000001
         App(Npt) = EXP(appl)
         Pp = pinf/App(Npt)
-        GOTO 250
+        go to 250
 ! CONVERGENCE HAS BEEN REACHED FOR ASSIGNED AREA RATIO
  900    Aeat(Npt) = aratio
-        IF ( Fac ) THEN
-          IF ( .NOT.done ) THEN
-            IF ( Iopt.EQ.1 ) THEN
+        if( Fac ) then
+          if( .not. done ) then
+            if( Iopt == 1 ) then
 ! OPTION 1 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
 ! PRESSURE AND CONTRACTION RATIO. IMPROVED ESTIMATE FOR PC
-              Area = .FALSE.
+              Area = .false.
               itnum = 0
               ppa = Ppp(Npt)*pa
               pinj = ppa + 1.D05*usq/Vlm(Npt)
               test = (pinj-pinjas)/pinjas
               pcpa = pinf*pa
-              IF ( Debugf ) THEN
-                WRITE (IOOUT, 99006)
-                WRITE (IOOUT, 99007) niter, test, pinjas, pinj, pcpa, ppa, &
+              if( Debugf ) then
+                write(IOOUT, 99006)
+                write(IOOUT, 99007) niter, test, pinjas, pinj, pcpa, ppa, &
                                 acatsv, Acat
-              ENDIF
-              IF ( ABS(test).LT.0.00002 ) GOTO 350
+              end if
+              if( ABS(test) < 0.00002 ) go to 350
               prat = pinjas/pinj
               Pp = pinf*prat
-              GOTO 300
-            ELSEIF ( Iopt.EQ.2 ) THEN
+              go to 300
+            else if( Iopt == 2 ) then
 ! OPTION 2 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
 ! PRESSURE AND MASS FLOW PER UNIT AREA. IMPROVED ESTIMATE FOR PC
 ! AND ACAT
               acatsv = Acat
               pratsv = prat
-              Area = .FALSE.
+              Area = .false.
               itnum = 0
               ppa = Ppp(4)*pa
               pinj = ppa + 1.D05*usq/Vlm(4)
@@ -4206,15 +4108,15 @@
               prat = (b1+c1*Acat)/(1.+a1l*Acat)
               test = (pinj-pinjas)/pinjas
               pcpa = pinf*pa
-              IF ( Debugf ) THEN
-                WRITE (IOOUT, 99006)
-                WRITE (IOOUT, 99007) niter, test, pinjas, pinj, pcpa, ppa, &
+              if( Debugf ) then
+                write(IOOUT, 99006)
+                write(IOOUT, 99007) niter, test, pinjas, pinj, pcpa, ppa, &
                                 acatsv, Acat
-              ENDIF
-              IF ( ABS(test).LT.0.00002 ) GOTO 350
+              end if
+              if( ABS(test) < 0.00002 ) go to 350
               pjrat = pinj/pinjas
               Pp = pinf
-              DO i = 1, 2
+              do i = 1, 2
                 pracat = pratsv/prat
                 pr = pjrat*pracat
                 Pp = Pp/pr
@@ -4224,189 +4126,189 @@
                 pratsv = prat
                 pjrat = 1.
                 prat = (b1+c1*Acat)/(1.+a1l*Acat)
-                IF ( Debugf ) WRITE (IOOUT, 99008) pcpa, Acat, pjrat, pracat
-              ENDDO
-              GOTO 300
-            ENDIF
-          ENDIF
-        ENDIF
- 950    IF ( Trnspt ) CALL TRANP
-        IF ( Npt.EQ.Nfz ) Eql = seql
+                if( Debugf ) write(IOOUT, 99008) pcpa, Acat, pjrat, pracat
+              end do
+              go to 300
+            end if
+          end if
+        end if
+ 950    if( Trnspt ) call TRANP
+        if( Npt == Nfz ) Eql = seql
  1000   itnum = 0
-        IF ( Nsub.GT.i01 ) THEN
+        if( Nsub > i01 ) then
           isub = isub + 1
-          IF ( isub.LE.Nsub ) GOTO 750
+          if( isub <= Nsub ) go to 750
           isub = 1
           Nsub = -Nsub
-          IF ( Isup.LE.Nsup ) GOTO 750
-          Area = .FALSE.
-          GOTO 1150
-        ENDIF
+          if( Isup <= Nsup ) go to 750
+          Area = .false.
+          go to 1150
+        end if
  1050   Isup = Isup + 1
         itnum = 0
-        IF ( Isup.LE.Nsup ) GOTO 750
+        if( Isup <= Nsup ) go to 750
         Isup = isupsv
-        Area = .FALSE.
-        GOTO 1150
+        Area = .false.
+        go to 1150
 ! TEST FOR OUTPUT -- SCHEDULES COMPLETE OR NPT=Ncol
  1100   Isv = Npt
-        IF ( Npt.NE.Ncol ) GOTO 1200
- 1150   IF ( .NOT.Eql ) THEN
-          IF ( Nfz.LE.1 ) THEN
+        if( Npt /= Ncol ) go to 1200
+ 1150   if( .not. Eql ) then
+          if( Nfz <= 1 ) then
             Cpr(Nfz) = cprf
             Gammas(Nfz) = cprf/(cprf-1./Wm(Nfz))
-          ENDIF
-        ENDIF
-        CALL RKTOUT
+          end if
+        end if
+        call RKTOUT
         Iplt = Iplt + Npt
-        IF ( .NOT.Page1 ) THEN
+        if( .not. Page1 ) then
           Iplt = Iplt - 2
-          IF ( Iopt.NE.0 ) Iplt = Iplt - 1
+          if( Iopt /= 0 ) Iplt = Iplt - 1
           Iplt = MIN(Iplt, 500)
-        ELSE
-          Page1 = .FALSE.
-        ENDIF
+        else
+          Page1 = .false.
+        end if
         iplte = MAX(iplte, Iplt)
         dlnp = 1.
-        IF ( Tt.EQ.0. ) Area = .FALSE.
-        IF ( .NOT.Eql.AND.Tt.EQ.0. ) WRITE (IOOUT, 99018)
-        IF ( Isv.EQ.0 ) THEN
+        if( Tt == 0. ) Area = .false.
+        if( .not. Eql .and. Tt == 0. ) write(IOOUT, 99018)
+        if( Isv == 0 ) then
 ! PCP, SUBAR, AND SUPAR SCHEDULES COMPLETED
-          IF ( Nsub.LT.0 ) Nsub = -Nsub
-          IF ( .NOT.Froz.OR..NOT.Eql ) GOTO 1300
+          if( Nsub < 0 ) Nsub = -Nsub
+          if( .not. Froz .or. .not. Eql ) go to 1300
 ! SET UP FOR FROZEN.
-          IF ( Eql ) Iplt = iplt1
-          Eql = .FALSE.
-          Page1 = .TRUE.
-          CALL SETEN
+          if( Eql ) Iplt = iplt1
+          Eql = .false.
+          Page1 = .true.
+          call SETEN
           Tt = Ttt(Nfz)
           ipp = Nfz
-          IF ( Nfz.EQ.Npt ) GOTO 1150
+          if( Nfz == Npt ) go to 1150
           Npt = Nfz
           Enn = 1./Wm(Nfz)
-          IF ( Nfz.EQ.1 ) GOTO 450
-          IF ( Nsub.GT.0 ) THEN
+          if( Nfz == 1 ) go to 450
+          if( Nsub > 0 ) then
             Nsub = -Nsub
-            WRITE (IOOUT, 99023)
-          ENDIF
-          IF ( App(Nfz).LT.App(nptth) ) THEN
-            WRITE (IOOUT, 99024)
-          ELSE
-            IF ( Nfz.LT.Npp ) GOTO 1200
-            GOTO 700
-          ENDIF
-          GOTO 1300
-        ELSE
-          IF ( Eql ) WRITE (IOOUT, 99019)
+            write(IOOUT, 99023)
+          end if
+          if( App(Nfz) < App(nptth) ) then
+            write(IOOUT, 99024)
+          else
+            if( Nfz < Npp ) go to 1200
+            go to 700
+          end if
+          go to 1300
+        else
+          if( Eql ) write(IOOUT, 99019)
           Npt = nptth
-        ENDIF
+        end if
 ! SET INDICES AND ESTIMATES FOR NEXT POINT.
  1200   Npt = Npt + 1
-        IF ( Eql.OR.(Isv.EQ.-i12.AND..NOT.seql) ) THEN
+        if( Eql .or. (Isv == -i12 .and. .not. seql) ) then
 ! THE FOLLOWING STATEMENT WAS ADDED TO TAKE CARE OF A SITUATION
 ! WHERE EQLBRM WENT SINGULAR WHEN STARTING FROM ESTIMATES WHERE
 ! BOTH SOLID AND LIQUID WERE INCLUDED.  JULY 27, 1990.
-          IF ( Jliq.NE.0.AND.Isv.GT.0 ) Isv = 0
-          CALL SETEN
-        ENDIF
+          if( Jliq /= 0 .and. Isv > 0 ) Isv = 0
+          call SETEN
+        end if
  1250   ipp = ipp + 1
-        IF ( Npt.GT.nptth ) THEN
-          IF ( Area ) THEN
+        if( Npt > nptth ) then
+          if( Area ) then
             App(Npt) = EXP(appl)
-          ELSE
+          else
             App(Npt) = Pcp(ipp-nptth)
-            IF ( Fac ) App(Npt) = App(Npt)*pinf/Ppp(1)
-            IF ( .NOT.Eql.AND.App(Npt).LT.App(Nfz) ) THEN
-              WRITE (IOOUT, 99020) Nfz
-              GOTO 1250
-            ENDIF
-          ENDIF
+            if( Fac ) App(Npt) = App(Npt)*pinf/Ppp(1)
+            if( .not. Eql .and. App(Npt) < App(Nfz) ) then
+              write(IOOUT, 99020) Nfz
+              go to 1250
+            end if
+          end if
           Pp = pinf/App(Npt)
-          IF ( Fac ) THEN
-            IF ( Area ) THEN
-              IF ( isub.LE.Nsub.AND.isub.GT.i01.AND.aratio.GE.Aeat(2) ) &
-                   THEN
-                WRITE (IOOUT, 99021) aratio, Aeat(2)
+          if( Fac ) then
+            if( Area ) then
+              if( isub <= Nsub .and. isub > i01 .and. aratio >= Aeat(2) ) &
+                   then
+                write(IOOUT, 99021) aratio, Aeat(2)
                 Npt = Npt - 1
-                GOTO 1000
-              ENDIF
-            ELSEIF ( Npt.GT.nptth.AND.Pcp(ipp-3).LT.Ppp(1)/Ppp(2) ) THEN
-              WRITE (IOOUT, 99022) Pcp(ipp-3), Ppp(1)/Ppp(2)
+                go to 1000
+              end if
+            else if( Npt > nptth .and. Pcp(ipp-3) < Ppp(1)/Ppp(2) ) then
+              write(IOOUT, 99022) Pcp(ipp-3), Ppp(1)/Ppp(2)
               Npt = Npt - 1
-              GOTO 650
-            ENDIF
-          ENDIF
-        ENDIF
-        GOTO 250
+              go to 650
+            end if
+          end if
+        end if
+        go to 250
  1300   Npt = 1
 ! CHECK FOR COMPLETED SCHEDULES -
 ! 1) CHAMBER PRESSURES(IP = NP)
 ! 2) CHAMBER TEMPERATURES(IT = NT)
 ! 3) O/F VALUES(IOF = NOF)
-        IF ( Ip.EQ.Np.AND.It.EQ.Nt.AND.iof.EQ.Nof ) GOTO 1400
-        WRITE (IOOUT, 99019)
-        CALL SETEN
+        if( Ip == Np .and. It == Nt .and. iof == Nof ) go to 1400
+        write(IOOUT, 99019)
+        call SETEN
         Tt = Ttt(i12)
-      ENDDO
-      IF ( It.LT.Nt ) THEN
+      end do
+      if( It < Nt ) then
         It = It + 1
         Tt = T(It)
-        GOTO 200
-      ELSEIF ( iof.LT.Nof ) THEN
-        GOTO 100
-      ENDIF
+        go to 200
+      else if( iof < Nof ) then
+        go to 100
+      end if
  1400 Iplt = MAX(Iplt, iplte)
-      RETURN
-99001 FORMAT (/' FATAL ERROR!! EITHER mdot OR ac/at MISSING ', &
+      return
+99001 format (/' FATAL ERROR!! EITHER mdot OR ac/at MISSING ', &
               'FOR fac PROBLEM (ROCKET)')
-99002 FORMAT (/' WARNING!!  nfz NOT ALLOWED TO BE > 2 IF THE TOTAL', /, &
+99002 format (/' WARNING!!  nfz NOT ALLOWED TO BE > 2 IF THE TOTAL', /, &
               ' NUMBER OF POINTS IS >', i3, ' (ROCKET)')
-99003 FORMAT (/' INPUT VALUE OF mdot/a =', F12.3, ' IS TOO LARGE.'/ &
+99003 format (/' INPUT VALUE OF mdot/a =', F12.3, ' IS TOO LARGE.'/ &
               ' GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)')
-99004 FORMAT (/'  ITERATION', 9X, 'PC', 7X, 'CONTRACTION RATIO')
-99005 FORMAT (5X, I2, 7X, F12.2, 3X, F12.6)
-99006 FORMAT (' ITER', 3X, 'TEST', 3X, 'ASSIGNED PINJ', 1x, 'CALC PINJ', 5X, &
+99004 format (/'  ITERATION', 9X, 'PC', 7X, 'CONTRACTION RATIO')
+99005 format (5X, I2, 7X, F12.2, 3X, F12.6)
+99006 format (' ITER', 3X, 'TEST', 3X, 'ASSIGNED PINJ', 1x, 'CALC PINJ', 5X, &
               'PC', 7X, 'P AT ACAT', 3X, 'PREV ACAT', 2X, 'ACAT')
-99007 FORMAT (I3, F10.6, 1x, 4F12.2, 2F9.5)
-99008 FORMAT (' NEW PC = ', F10.2, 2X, 'NEW ACAT = ', F9.6, 2X, 'PJRAT =', &
+99007 format (I3, F10.6, 1x, 4F12.2, 2F9.5)
+99008 format (' NEW PC = ', F10.2, 2X, 'NEW ACAT = ', F9.6, 2X, 'PJRAT =', &
               F10.7, ' PRACAT =', F10.7)
-99009 FORMAT (' END OF CHAMBER ITERATIONS')
-99010 FORMAT (/' WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)')
-99011 FORMAT (/' USQ=', E15.8, 5X, 'PVG=', E15.8)
-99012 FORMAT (/' WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)')
-99013 FORMAT (' Pinf/Pt =', F9.6)
-99014 FORMAT (/, ' WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED', &
+99009 format (' END OF CHAMBER ITERATIONS')
+99010 format (/' WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)')
+99011 format (/' USQ=', E15.8, 5X, 'PVG=', E15.8)
+99012 format (/' WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)')
+99013 format (' Pinf/Pt =', F9.6)
+99014 format (/, ' WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED', &
               ' WHERE THE ASSIGNED', /, ' SUPERSONIC AREA RATIOS WERE ', &
               'LESS THAN THE VALUE AT POINT nfz =', I3, ' (ROCKET)')
-99015 FORMAT (/' WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ', &
+99015 format (/' WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ', &
               'BECAUSE GAMMAs', /, ' CALCULATION IMPOSSIBLE. (ROCKET)')
-99016 FORMAT (/' ITER=', I2, 2X, 'ASSIGNED AE/AT=', F14.7, 3X, 'AE/AT=', F14.7, &
+99016 format (/' ITER=', I2, 2X, 'ASSIGNED AE/AT=', F14.7, 3X, 'AE/AT=', F14.7, &
               /, 2X, 'PC/P=', F14.7, 2X, 'DELTA LN PCP=', F14.7)
-99017 FORMAT (/' WARNING!!  DID NOT CONVERGE FOR AREA RATIO =', F10.5, &
+99017 format (/' WARNING!!  DID NOT CONVERGE FOR AREA RATIO =', F10.5, &
               ' (ROCKET)')
-99018 FORMAT (/' WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ', &
+99018 format (/' WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ', &
               'POINT IS MORE', /, ' THAN 50 K BELOW THE TEMPERATURE', &
               ' RANGE OF A CONDENSED SPECIES (ROCKET)')
-99019 FORMAT (////)
-99020 FORMAT (/, ' WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED', &
+99019 format (////)
+99020 format (/, ' WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED', &
               ' WHERE THE ASSIGNED', /, &
               ' PRESSURE RATIOS WERE LESS THAN ', &
               'THE VALUE AT POINT nfz =', I3, ' (ROCKET)')
-99021 FORMAT (/' WARNING!!  ASSIGNED subae/at =', f10.5, ' IS NOT ', &
+99021 format (/' WARNING!!  ASSIGNED subae/at =', f10.5, ' IS NOT ', &
               'PERMITTED TO BE GREATER'/' THAN ac/at =', f9.5, &
               '.  POINT OMITTED (ROCKET)')
-99022 FORMAT (/' WARNING!!  ASSIGNED pip =', F10.5, &
+99022 format (/' WARNING!!  ASSIGNED pip =', F10.5, &
               ' IS NOT PERMITTED'/' TO BE LESS THAN  Pinj/Pc =', f9.5, &
               '. POINT OMITTED', ' (ROCKET)')
-99023 FORMAT (/' WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ', /, &
+99023 format (/' WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ', /, &
              ' RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)' &
              )
-99024 FORMAT (/' WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ', &
+99024 format (/' WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ', &
               'PRESSURE RATIO FOR nfz GREATER'/' THAN 1. FROZEN ', &
               'PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)')
-99025 FORMAT (/' AN ASSIGNED AREA RATIO IS < 1 (ROCKET)' )
-      END
-      SUBROUTINE SEARCH
+99025 format (/' AN ASSIGNED AREA RATIO IS < 1 (ROCKET)' )
+      end
+      subroutine SEARCH
 !***********************************************************************
 ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
 !***********************************************************************
@@ -4423,17 +4325,17 @@
 
       Nc = 0
       ne = 0
-      DO i = 1, Nlm
+      do i = 1, Nlm
         Jx(i) = 0
-      ENDDO
-      DO j = 1, maxNgc
+      end do
+      do j = 1, maxNgc
         S(j) = 0.
         H0(j) = 0.
         Deln(j) = 0.
-        DO i = 1, Nlm
+        do i = 1, Nlm
           A(i, j) = 0.
-        ENDDO
-      ENDDO
+        end do
+      end do
 ! READ TEMPERATURE RANGES FOR COEFFICIENTS OF GASEOUS SPECIES.
 ! SOME DEFINITIONS:
 !   NTGAS = NUMBER OF GASEOUS SPECIES IN THERMO.LIB.
@@ -4443,209 +4345,209 @@
 !   NC =    NUMBER OF CONDENSED INTERVALS WITH STORED COEFFICIENTS.
 !   NGC =    NG + NC
 !   THDATE = DATE READ FROM THERMO.INP FILE
-      REWIND IOTHM
-      READ (IOTHM) Tg, ntgas, ntot, nall, Thdate
+      rewind IOTHM
+      read(IOTHM) Tg, ntgas, ntot, nall, Thdate
       Ngc = 1
       Nc = 1
 ! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
-      DO 200 itot = 1, ntot
-        IF ( itot.GT.ntgas ) THEN
-          READ (IOTHM) sub, nint, date(Ngc), (el(j), b(j), j=1, 5), Ifz(Nc), &
+      do 200 itot = 1, ntot
+        if( itot > ntgas ) then
+          read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j=1, 5), Ifz(Nc), &
                        Temp(1, Nc), Temp(2, Nc), Mw(Ngc), (Cft(Nc, k), k=1, 9)
-        ELSE
-          READ (IOTHM) sub, nint, date(Ngc), (el(j), b(j), j=1, 5), ifaz, t1, t2, &
+        else
+          read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j=1, 5), ifaz, t1, t2, &
                        Mw(Ngc), thermo
-        ENDIF
-        IF ( Nonly.NE.0 ) THEN
+        end if
+        if( Nonly /= 0 ) then
           i = 1
- 20       IF ( Prod(i).NE.sub.AND.'*'//Prod(i).NE.sub ) THEN
+ 20       if( Prod(i) /= sub .and. '*'//Prod(i) /= sub ) then
             i = i + 1
-            IF ( i.LE.Nonly ) GOTO 20
-            GOTO 200
-          ELSE
-            IF ( sub.EQ.Prod(Ngc-1) ) THEN
+            if( i <= Nonly ) go to 20
+            go to 200
+          else
+            if( sub == Prod(Ngc-1) ) then
               Nonly = Nonly + 1
-              DO k = Nonly, i + 1, - 1
+              do k = Nonly, i + 1, - 1
                 Prod(k) = Prod(k-1)
-              ENDDO
-            ELSE
+              end do
+            else
               Prod(i) = Prod(Ngc)
-            ENDIF
+            end if
             Prod(Ngc) = sub
-          ENDIF
-        ELSEIF ( Nomit.NE.0 ) THEN
-          DO i = 1, Nomit
-            IF ( Omit(i).EQ.sub.OR.'*'//Omit(i).EQ.sub ) GOTO 200
-          ENDDO
-        ENDIF
-        DO 50 k = 1, 5
-          IF ( b(k).EQ.0. ) GOTO 100
-          DO i = 1, Nlm
-            IF ( Elmt(i).EQ.el(k) ) THEN
+          end if
+        else if( Nomit /= 0 ) then
+          do i = 1, Nomit
+            if( Omit(i) == sub .or. '*'//Omit(i) == sub ) go to 200
+          end do
+        end if
+        do 50 k = 1, 5
+          if( b(k) == 0. ) go to 100
+          do i = 1, Nlm
+            if( Elmt(i) == el(k) ) then
               A(i, Ngc) = b(k)
-              GOTO 50
-            ENDIF
-          ENDDO
-          DO j = 1, Nlm
+              go to 50
+            end if
+          end do
+          do j = 1, Nlm
             A(j, Ngc) = 0.
-          ENDDO
-          GOTO 200
- 50     CONTINUE
+          end do
+          go to 200
+ 50     continue
  100    Prod(Ngc) = sub
-        IF ( itot.GT.ntgas ) THEN
+        if( itot > ntgas ) then
           Nc = Nc + 1
-          IF ( Nc.GT.maxNc ) GOTO 400
-        ELSE
+          if( Nc > maxNc ) go to 400
+        else
           Ng = Ngc
-          IF ( Ng.GT.maxNg ) GOTO 400
-          DO i = 1, 3
-            DO j = 1, 9
+          if( Ng > maxNg ) go to 400
+          do i = 1, 3
+            do j = 1, 9
               Coef(Ng, j, i) = thermo(j, i)
-            ENDDO
-          ENDDO
+            end do
+          end do
 ! IF SPECIES IS AN ATOMIC GAS, STORE INDEX IN JX
-          IF ( b(2).EQ.0..AND.b(1).EQ.1. ) THEN
-            DO i = 1, Nlm
-              IF ( Elmt(i).EQ.el(1) ) THEN
+          if( b(2) == 0. .and. b(1) == 1. ) then
+            do i = 1, Nlm
+              if( Elmt(i) == el(1) ) then
                 ne = ne + 1
                 Jx(i) = Ngc
                 Jcm(i) = Ngc
-                GOTO 150
-              ENDIF
-            ENDDO
-          ENDIF
-        ENDIF
+                go to 150
+              end if
+            end do
+          end if
+        end if
  150    Ngc = Ngc + 1
-        IF ( Ngc.GT.maxNgc ) GOTO 400
- 200  CONTINUE
+        if( Ngc > maxNgc ) go to 400
+ 200  continue
 ! FINISHED READING THERMO DATA FROM I/O UNIT IOTHM.
       Ifz(Nc) = 0
       Nc = Nc - 1
       Ngc = Ngc - 1
       Ngp1 = Ng + 1
-      IF ( Ngc.LT.Nonly ) THEN
-        DO k = Ngc + 1, Nonly
-          WRITE (IOOUT, 99001) Prod(k)
-        ENDDO
-      ENDIF
+      if( Ngc < Nonly ) then
+        do k = Ngc + 1, Nonly
+          write(IOOUT, 99001) Prod(k)
+        end do
+      end if
 ! FIND MISSING ELEMENTS (IF ANY) FOR COMPONENTS
       Nspx = Ngc
-      IF ( ne.LT.Nlm ) THEN
-        DO i = 1, Nlm
-          IF ( Nspx.GT.maxNgc ) GOTO 400
-          IF ( Jx(i).EQ.0 ) THEN
+      if( ne < Nlm ) then
+        do i = 1, Nlm
+          if( Nspx > maxNgc ) go to 400
+          if( Jx(i) == 0 ) then
             Nspx = Nspx + 1
-            DO k = 1, Nlm
+            do k = 1, Nlm
               A(k, Nspx) = 0.
-            ENDDO
+            end do
             A(i, Nspx) = 1.
             Prod(Nspx) = Elmt(i)
-            DO k = 1, 100
-              IF ( Elmt(i).EQ.Symbol(k) ) THEN
+            do k = 1, 100
+              if( Elmt(i) == Symbol(k) ) then
                 Mw(Nspx) = Atmwt(k)
                 Atwt(i) = Atmwt(k)
                 Cp(Nspx) = 2.5D0
-                GOTO 210
-              ENDIF
-            ENDDO
+                go to 210
+              end if
+            end do
  210        Jx(i) = Nspx
             Jcm(i) = Nspx
-          ENDIF
-        ENDDO
-      ENDIF
+          end if
+        end do
+      end if
 ! ARE ALL ELEMENTS IN PRODUCT SPECIES?
-      DO 300 i = 1, Nlm
-        DO j = 1, Ngc
-          IF ( A(i, j).NE.0. ) GOTO 300
+      do 300 i = 1, Nlm
+        do j = 1, Ngc
+          if( A(i, j) /= 0. ) go to 300
           ii = i
-        ENDDO
-        WRITE (IOOUT, 99002) Elmt(ii)
+        end do
+        write(IOOUT, 99002) Elmt(ii)
         Ngc = 0
-        GOTO 600
- 300  CONTINUE
+        go to 600
+ 300  continue
 ! WRITE POSSIBLE PRODUCT LIST
-      IF ( .NOT.Short ) THEN
-        WRITE (IOOUT, 99003) Thdate
-        DO i = 1, Ngc, 3
+      if( .not. Short ) then
+        write(IOOUT, 99003) Thdate
+        do i = 1, Ngc, 3
           i5 = i + 2
-          IF ( Ngc.LT.i5 ) i5 = Ngc
-          WRITE (IOOUT, 99004) (date(j), Prod(j), j=i, i5)
-        ENDDO
-      ENDIF
-      GOTO 600
- 400  WRITE (IOOUT, 99005)
+          if( Ngc < i5 ) i5 = Ngc
+          write(IOOUT, 99004) (date(j), Prod(j), j=i, i5)
+        end do
+      end if
+      go to 600
+ 400  write(IOOUT, 99005)
       Ngc = 0
-      GOTO 600
+      go to 600
 ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
       ENTRY READTR
-      REWIND IOTRN
-      REWIND IOSCH
+      rewind IOTRN
+      rewind IOSCH
       Ntape = 0
       npure = 0
       lineb = 1
-      IF ( .NOT.Short ) WRITE (IOOUT, 99006)
-      READ (IOTRN) nrec
-      DO ir = 1, nrec
-        READ (IOTRN) spece, trdata
+      if( .not. Short ) write(IOOUT, 99006)
+      read(IOTRN) nrec
+      do ir = 1, nrec
+        read(IOTRN) spece, trdata
         k = 1
- 450    DO j = 1, Ng
-          IF ( spece(k).EQ.Prod(j).OR.'*'//spece(k).EQ.Prod(j) ) THEN
+ 450    do j = 1, Ng
+          if( spece(k) == Prod(j) .or. '*'//spece(k) == Prod(j) ) then
             jj(k) = j
-            IF ( k.EQ.2 ) THEN
+            if( k == 2 ) then
 ! STORE NAMES FOR BINARIES IN BIN ARRAY.
-              DO k = 1, 2
+              do k = 1, 2
                 bin(k, lineb) = spece(k)
-              ENDDO
+              end do
               lineb = lineb + 1
-              GOTO 500
-            ELSE
+              go to 500
+            else
               jj(2) = j
-              IF ( spece(2).EQ.' ' ) THEN
+              if( spece(2) == ' ' ) then
 ! WRITE NAMES FOR PURE SPECIES.
                 npure = npure + 1
                 pure(npure) = spece(1)
-                GOTO 500
-              ELSE
+                go to 500
+              else
                 k = 2
-                GOTO 450
-              ENDIF
-            ENDIF
-          ENDIF
-        ENDDO
-        GOTO 550
- 500    WRITE (IOSCH) jj, trdata
+                go to 450
+              end if
+            end if
+          end if
+        end do
+        go to 550
+ 500    write(IOSCH) jj, trdata
         Ntape = Ntape + 1
- 550    IF ( npure.NE.0.AND.(npure.GE.6.OR.ir.GE.nrec) ) THEN
-          IF ( .NOT.Short ) WRITE (IOOUT, 99007) (pure(jk), jk=1, npure)
+ 550    if( npure /= 0 .and. (npure >= 6 .or. ir >= nrec) ) then
+          if( .not. Short ) write(IOOUT, 99007) (pure(jk), jk=1, npure)
           npure = 0
-        ENDIF
-      ENDDO
+        end if
+      end do
       lineb = lineb - 1
-      IF ( .NOT.Short ) THEN
-        WRITE (IOOUT, 99008)
-        DO j = 1, lineb
-          WRITE (IOOUT, 99009) (bin(i, j), i=1, 2)
-        ENDDO
-      ENDIF
-      WRITE (IOOUT, 99010)
- 600  RETURN
-99001 FORMAT (/' WARNING!!  ', A15, ' NOT A PRODUCT IN thermo.lib FILE ', &
+      if( .not. Short ) then
+        write(IOOUT, 99008)
+        do j = 1, lineb
+          write(IOOUT, 99009) (bin(i, j), i=1, 2)
+        end do
+      end if
+      write(IOOUT, 99010)
+ 600  return
+99001 format (/' WARNING!!  ', A15, ' NOT A PRODUCT IN thermo.lib FILE ', &
               '(SEARCH)')
-99002 FORMAT (/' PRODUCT SPECIES CONTAINING THE ELEMENT', A3, ' MISSING', &
+99002 format (/' PRODUCT SPECIES CONTAINING THE ELEMENT', A3, ' MISSING', &
               //, 13x, 'FATAL ERROR (SEARCH)')
-99003 FORMAT (/2x, 'SPECIES BEING CONSIDERED IN THIS SYSTEM', &
+99003 format (/2x, 'SPECIES BEING CONSIDERED IN THIS SYSTEM', &
               /' (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)', &
               /'  LAST thermo.inp UPDATE: ', A10, /)
-99004 FORMAT (3(2X, A6, 2X, A15))
-99005 FORMAT (/' INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,', &
+99004 format (3(2X, A6, 2X, A15))
+99005 format (/' INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,', &
               /'   PART 2, PAGE 39. (SEARCH)')
-99006 FORMAT (/' SPECIES WITH TRANSPORT PROPERTIES'//8X, 'PURE SPECIES'/)
-99007 FORMAT (4(2x, A16))
-99008 FORMAT (/'     BINARY INTERACTIONS'/)
-99009 FORMAT (5X, 2A16)
-99010 FORMAT ()
-      END
-      SUBROUTINE SETEN
+99006 format (/' SPECIES WITH TRANSPORT PROPERTIES'//8X, 'PURE SPECIES'/)
+99007 format (4(2x, A16))
+99008 format (/'     BINARY INTERACTIONS'/)
+99009 format (5X, 2A16)
+99010 format ()
+      end
+      subroutine SETEN
 !***********************************************************************
 ! USE COMPOSITIONS FROM PREVIOUS POINT AS INITIAL ESTIMATES FOR
 ! CURRENT POINT NPT.  IF -
@@ -4659,26 +4561,26 @@
 ! LOCAL VARIABLES
       integer, save:: j, lsav
       real(8), save:: tsave
-      real(8):: DEXP
+      real(8):: dexp
 
-      IF ( Isv.LT.0 ) THEN
+      if( Isv < 0 ) then
 ! FIRST T--SAVE COMPOSITIONS FOR FUTURE POINTS WITH THIS T
         Isv = -Isv
         tsave = Ttt(Isv)
         Ensave = Enn
         Enlsav = Ennl
         lsav = Lsave
-        DO j = 1, Ng
+        do j = 1, Ng
           Sln(j) = Enln(j)
-        ENDDO
-        DO j = 1, Ng
+        end do
+        do j = 1, Ng
           En(j, Npt) = En(j, Isv)
-        ENDDO
+        end do
         Npr = 0
-        DO j = Ngp1, Ngc
+        do j = Ngp1, Ngc
           Sln(j) = En(j, Isv)
           En(j, Npt) = Sln(j)
-          IF ( Jliq.EQ.j ) THEN
+          if( Jliq == j ) then
             En(Jsol, Npt) = En(Jsol, Isv) + En(Jliq, Isv)
             En(Jliq, Npt) = 0.
             Jsol = 0
@@ -4686,12 +4588,12 @@
             tsave = tsave - 5.
             Tt = tsave
             Sln(j) = 0.
-          ELSEIF ( En(j, Npt).GT.0. ) THEN
+          else if( En(j, Npt) > 0. ) then
             Npr = Npr + 1
             Jcond(Npr) = j
-          ENDIF
-        ENDDO
-      ELSEIF ( Isv.EQ.0 ) THEN
+          end if
+        end do
+      else if( Isv == 0 ) then
 ! NEXT POINT FIRST T IN SCHEDULE, USE PREVIOUS COMPOSITIONS FOR THIS T
         Jsol = 0
         Jliq = 0
@@ -4699,30 +4601,30 @@
         Ennl = Enlsav
         Lsave = lsav
         Npr = 0
-        DO j = Ngp1, Ngc
+        do j = Ngp1, Ngc
           En(j, Npt) = Sln(j)
-          IF ( En(j, Npt).GT.0.D0 ) THEN
+          if( En(j, Npt) > 0.D0 ) then
             Npr = Npr + 1
             Jcond(Npr) = j
-          ENDIF
-        ENDDO
-        DO j = 1, Ng
+          end if
+        end do
+        do j = 1, Ng
           En(j, Npt) = 0.
           Enln(j) = Sln(j)
-          IF ( Sln(j).NE.0. ) THEN
-            IF ( (Enln(j)-Ennl+18.5).GT.0. ) En(j, Npt) = DEXP(Enln(j))
-          ENDIF
-        ENDDO
-        IF ( .NOT.Tp ) Tt = tsave
+          if( Sln(j) /= 0. ) then
+            if( (Enln(j)-Ennl+18.5) > 0. ) En(j, Npt) = dexp(Enln(j))
+          end if
+        end do
+        if( .not. Tp ) Tt = tsave
         Sumn = Enn
-      ELSEIF ( Isv.GT.0 ) THEN
+      else if( Isv > 0 ) then
 ! USE COMPOSITIONS FROM PREVIOUS POINT
-        DO j = 1, Ngc
+        do j = 1, Ngc
           En(j, Npt) = En(j, Isv)
-        ENDDO
-      ENDIF
-      END
-      SUBROUTINE SHCK
+        end do
+      end if
+      end
+      subroutine SHCK
 !***********************************************************************
 ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
 !***********************************************************************
@@ -4735,97 +4637,97 @@
       real(8), save:: ax, axx, b2, cormax, gg, hs, m2m1(Ncol), mis(13), mu12rt, p1, p21, &
              p21l, p2p1(Ncol), pmn, rho12, rho52, rrho(Ncol), sg(78), t1, t21, &
              t21l, t2t1(Ncol), ttmax, u1u2(Ncol), uis(13), utwo(Ncol), uu, wmx, ww
-      real(8):: DABS, DEXP, DLOG, DMIN1
+      real(8):: dabs, dexp, dlog, dmin1
 
-      IF ( Trace.EQ.0. ) Trace = 5.E-9
-      Tp = .TRUE.
+      if( Trace == 0. ) Trace = 5.E-9
+      Tp = .true.
       Cpmix = 0.
-      srefl = .FALSE.
-      IF ( .NOT.Short ) THEN
-        WRITE (IOOUT, 99001)
-        WRITE (IOOUT, 99002) Incdeq, Refleq, Incdfz, Reflfz
-      ENDIF
-      IF ( Refleq.OR.Reflfz ) srefl = .TRUE.
+      srefl = .false.
+      if( .not. Short ) then
+        write(IOOUT, 99001)
+        write(IOOUT, 99002) Incdeq, Refleq, Incdfz, Reflfz
+      end if
+      if( Refleq .or. Reflfz ) srefl = .true.
       seql = Incdeq
-      IF ( T(1).EQ.0. ) T(1) = Rtemp(1)
-      DO i = 1, Nsk
+      if( T(1) == 0. ) T(1) = Rtemp(1)
+      do i = 1, Nsk
         uis(i) = U1(i)
         mis(i) = Mach1(i)
-        IF ( Mach1(i).EQ.0.0.AND.U1(i).EQ.0.0 ) GOTO 100
-      ENDDO
- 100  IF ( Nsk.GT.Ncol ) THEN
-        WRITE (IOOUT, 99003) Ncol
+        if( Mach1(i) == 0.0 .and. U1(i) == 0.0 ) go to 100
+      end do
+ 100  if( Nsk > Ncol ) then
+        write(IOOUT, 99003) Ncol
         Nsk = Ncol
-      ENDIF
-      IF ( .NOT.Short ) THEN
-        WRITE (IOOUT, 99004) (U1(i), i=1, Nsk)
-        WRITE (IOOUT, 99005) (Mach1(i), i=1, Nsk)
-      ENDIF
+      end if
+      if( .not. Short ) then
+        write(IOOUT, 99004) (U1(i), i=1, Nsk)
+        write(IOOUT, 99005) (Mach1(i), i=1, Nsk)
+      end if
       iof = 0
  200  iof = iof + 1
       Oxfl = Oxf(iof)
-      CALL NEWOF
+      call NEWOF
       Incdeq = seql
- 300  refl = .FALSE.
+ 300  refl = .false.
       it2 = 2
       it1 = 1
       Pp = P(1)
       Tt = T(1)
-      IF ( .NOT.Incdeq ) THEN
+      if( .not. Incdeq ) then
 ! FROZEN
-        DO n = 1, Nsk
+        do n = 1, Nsk
           Dlvtp(n) = 1.
           Dlvpt(n) = -1.
-        ENDDO
-      ENDIF
-      DO Npt = 1, Nsk
+        end do
+      end if
+      do Npt = 1, Nsk
         Ppp(Npt) = P(Npt)
         Ttt(Npt) = T(Npt)
-        IF ( Npt.GT.1 ) THEN
-          IF ( Ppp(Npt).EQ.0. ) Ppp(Npt) = Ppp(Npt-1)
-          IF ( Ttt(Npt).EQ.0. ) Ttt(Npt) = Ttt(Npt-1)
+        if( Npt > 1 ) then
+          if( Ppp(Npt) == 0. ) Ppp(Npt) = Ppp(Npt-1)
+          if( Ttt(Npt) == 0. ) Ttt(Npt) = Ttt(Npt-1)
           Ssum(Npt) = Ssum(Npt-1)
           Hsum(Npt) = Hsum(Npt-1)
-          IF ( Ttt(Npt).EQ.Tt.AND.Ppp(Npt).EQ.Pp ) GOTO 350
-        ENDIF
+          if( Ttt(Npt) == Tt .and. Ppp(Npt) == Pp ) go to 350
+        end if
         Pp = Ppp(Npt)
         Tt = Ttt(Npt)
-        IF ( Tt.GE.Tg(1)*.8D0 ) THEN
-          CALL HCALC
+        if( Tt >= Tg(1)*.8D0 ) then
+          call HCALC
           Hsum(Npt) = Hsub0
-        ELSE
-          WRITE (IOOUT, 99016) Tt, Npt
-          GOTO 1000
-        ENDIF
- 350    IF ( Cpmix.NE.0. ) Gamma1 = Cpmix/(Cpmix-1./Wmix)
+        else
+          write(IOOUT, 99016) Tt, Npt
+          go to 1000
+        end if
+ 350    if( Cpmix /= 0. ) Gamma1 = Cpmix/(Cpmix-1./Wmix)
         A1 = (Rr*Gamma1*Tt/Wmix)**.5
-        IF ( U1(Npt).EQ.0. ) U1(Npt) = A1*Mach1(Npt)
-        IF ( Mach1(Npt).EQ.0. ) Mach1(Npt) = U1(Npt)/A1
+        if( U1(Npt) == 0. ) U1(Npt) = A1*Mach1(Npt)
+        if( Mach1(Npt) == 0. ) Mach1(Npt) = U1(Npt)/A1
         Wm(Npt) = Wmix
         Cpr(Npt) = Cpmix
         Gammas(Npt) = Gamma1
         Vlm(Npt) = Rr*Tt/(Wmix*Pp)
-      ENDDO
+      end do
       Npt = Nsk
 ! OUTPUT--1ST CONDITION
-      WRITE (IOOUT, 99006)
-      IF ( .NOT.Incdeq ) THEN
-        WRITE (IOOUT, 99008)
-      ELSE
-        WRITE (IOOUT, 99007)
-      ENDIF
-      Eql = .FALSE.
-      CALL OUT1
-      WRITE (IOOUT, 99009)
+      write(IOOUT, 99006)
+      if( .not. Incdeq ) then
+        write(IOOUT, 99008)
+      else
+        write(IOOUT, 99007)
+      end if
+      Eql = .false.
+      call OUT1
+      write(IOOUT, 99009)
       Fmt(4) = '13'
       Fmt(5) = ' '
       Fmt(7) = '4,'
-      WRITE (IOOUT, Fmt) 'MACH NUMBER1   ', (Mach1(j), j=1, Npt)
+      write(IOOUT, Fmt) 'MACH NUMBER1   ', (Mach1(j), j=1, Npt)
       Fmt(7) = '2,'
-      WRITE (IOOUT, Fmt) 'U1, M/SEC      ', (U1(j), j=1, Npt)
-      CALL OUT2
+      write(IOOUT, Fmt) 'U1, M/SEC      ', (U1(j), j=1, Npt)
+      call OUT2
 ! BEGIN CALCULATIONS FOR 2ND CONDITION
-      IF ( Incdeq ) Eql = .TRUE.
+      if( Incdeq ) Eql = .true.
       Npt = 1
  400  Gamma1 = Gammas(Npt)
       uu = U1(Npt)
@@ -4833,112 +4735,112 @@
       p1 = Ppp(Npt)
       t1 = Ttt(Npt)
       hs = Hsum(Npt)
-      IF ( refl ) uu = u1u2(Npt)
+      if( refl ) uu = u1u2(Npt)
       mu12rt = wmx*uu**2/(Rr*t1)
-      IF ( refl ) THEN
+      if( refl ) then
 ! REFLECTED--SUBSCRIPTS 2=1, 5=2, P52=P21
         t21 = 2.
         b2 = (-1.-mu12rt-t21)/2.
         p21 = -b2 + SQRT(b2**2-t21)
-      ELSE
+      else
         p21 = (2.*Gamma1*Mach1(Npt)**2-Gamma1+1.)/(Gamma1+1.)
 ! THE FOLLOWING IMPROVED FORMULATION FOR THE INITIAL ESTIMATE FOR THE
 ! 2ND CONDITION WAS MADE AND TESTED BY S. GORDON 7/10/89.
-        IF ( .NOT.Eql ) THEN
+        if( .not. Eql ) then
           t21 = p21*(2./Mach1(Npt)**2+Gamma1-1.)/(Gamma1+1.)
-        ELSE
+        else
           Pp = p21*p1
-          Tp = .FALSE.
-          Hp = .TRUE.
+          Tp = .false.
+          Hp = .true.
           Hsub0 = hs + uu**2/(2.*Rr)
-          CALL EQLBRM
+          call EQLBRM
           t21 = Ttt(Npt)/t1
-          Hp = .FALSE.
-          Tp = .TRUE.
-        ENDIF
-      ENDIF
-      p21l = DLOG(p21)
+          Hp = .false.
+          Tp = .true.
+        end if
+      end if
+      p21l = dlog(p21)
       ttmax = 1.05*Tg(4)/t1
-      t21 = DMIN1(t21, ttmax)
-      t21l = DLOG(t21)
+      t21 = dmin1(t21, ttmax)
+      t21l = dlog(t21)
       itr = 1
- 500  IF ( Shkdbg ) WRITE (IOOUT, 99010) itr, it2, it1, p21, it2, it1, t21, &
+ 500  if( Shkdbg ) write(IOOUT, 99010) itr, it2, it1, p21, it2, it1, t21, &
            rho52
       Tt = t21*t1
       Pp = p21*p1
-      IF ( .NOT.Eql ) THEN
+      if( .not. Eql ) then
 ! FROZEN
-        Tln = DLOG(Tt)
-        IF ( .NOT.Incdeq ) THEN
-          CALL HCALC
-          IF ( Tt.EQ.0. ) GOTO 600
+        Tln = dlog(Tt)
+        if( .not. Incdeq ) then
+          call HCALC
+          if( Tt == 0. ) go to 600
           Hsum(Npt) = Hsub0
           Cpr(Npt) = Cpmix
-        ELSE
-          CALL CPHS
+        else
+          call CPHS
           Cpr(Npt) = Cpsum
           Hsum(Npt) = 0.
-          DO j = 1, Ng
+          do j = 1, Ng
             Hsum(Npt) = Hsum(Npt) + H0(j)*En(j, Npt)
-          ENDDO
+          end do
           Hsum(Npt) = Hsum(Npt)*Tt
-        ENDIF
-      ELSE
-        CALL EQLBRM
-        IF ( Tt.EQ.0. ) GOTO 800
-      ENDIF
+        end if
+      else
+        call EQLBRM
+        if( Tt == 0. ) go to 800
+      end if
       rho12 = wmx*t21/(Wm(Npt)*p21)
       gg = rho12*mu12rt
       rho52 = 1./rho12
-      IF ( refl ) gg = -mu12rt*rho52/(rho52-1.)**2
+      if( refl ) gg = -mu12rt*rho52/(rho52-1.)**2
       G(1, 1) = -gg*Dlvpt(Npt) - p21
       G(1, 2) = -gg*Dlvtp(Npt)
       G(1, 3) = p21 - 1. + gg - mu12rt
-      IF ( refl ) G(1, 3) = p21 - 1. + gg*(rho52-1.)
+      if( refl ) G(1, 3) = p21 - 1. + gg*(rho52-1.)
       gg = gg*t1/wmx
-      IF ( .NOT.refl ) gg = gg*rho12
+      if( .not. refl ) gg = gg*rho12
       G(2, 1) = -gg*Dlvpt(Npt) + Tt*(Dlvtp(Npt)-1.)/Wm(Npt)
       G(2, 2) = -gg*Dlvtp(Npt) - Tt*Cpr(Npt)
       gg = 1. - rho12**2
-      IF ( refl ) gg = (rho52+1.)/(rho52-1.)
+      if( refl ) gg = (rho52+1.)/(rho52-1.)
       G(2, 3) = Hsum(Npt) - hs - uu**2*gg/(2.*Rr)
       X(3) = G(1, 1)*G(2, 2) - G(1, 2)*G(2, 1)
       X(1) = (G(1, 3)*G(2, 2)-G(2, 3)*G(1, 2))/X(3)
       X(2) = (G(1, 1)*G(2, 3)-G(2, 1)*G(1, 3))/X(3)
-      IF ( Shkdbg ) THEN
-        WRITE (IOOUT, 99011) G(1, 1), G(1, 2), G(1, 3)
-        WRITE (IOOUT, 99011) G(2, 1), G(2, 2), G(2, 3)
-        WRITE (IOOUT, 99012) X(1), X(2)
-        WRITE (IOOUT, 99013) Hsum(Npt), hs, uu, uu*rho12
-      ENDIF
-      ax = DABS(X(1))
-      axx = DABS(X(2))
-      IF ( axx.GT.ax ) ax = axx
-      IF ( ax.GE..00005 ) THEN
+      if( Shkdbg ) then
+        write(IOOUT, 99011) G(1, 1), G(1, 2), G(1, 3)
+        write(IOOUT, 99011) G(2, 1), G(2, 2), G(2, 3)
+        write(IOOUT, 99012) X(1), X(2)
+        write(IOOUT, 99013) Hsum(Npt), hs, uu, uu*rho12
+      end if
+      ax = dabs(X(1))
+      axx = dabs(X(2))
+      if( axx > ax ) ax = axx
+      if( ax >= .00005 ) then
         cormax = .40546511
-        IF ( itr.GT.4 ) cormax = .22314355
-        IF ( itr.GT.12 ) cormax = .09531018
-        IF ( itr.GT.20 ) cormax = .04879016
+        if( itr > 4 ) cormax = .22314355
+        if( itr > 12 ) cormax = .09531018
+        if( itr > 20 ) cormax = .04879016
         ax = ax/cormax
-        IF ( ax.GT.1. ) THEN
+        if( ax > 1. ) then
           X(1) = X(1)/ax
           X(2) = X(2)/ax
-        ENDIF
+        end if
         p21l = p21l + X(1)
         t21l = t21l + X(2)
-        p21 = DEXP(p21l)
-        t21 = DEXP(t21l)
-        IF ( Shkdbg ) WRITE (IOOUT, 99014) cormax, X(1), X(2)
-        IF ( itr.NE.1.OR.t21.LT.ttmax ) THEN
+        p21 = dexp(p21l)
+        t21 = dexp(t21l)
+        if( Shkdbg ) write(IOOUT, 99014) cormax, X(1), X(2)
+        if( itr /= 1 .or. t21 < ttmax ) then
           itr = itr + 1
-          IF ( itr.LT.61 ) GOTO 500
-          WRITE (IOOUT, 99015) U1(Npt)
-        ELSE
+          if( itr < 61 ) go to 500
+          write(IOOUT, 99015) U1(Npt)
+        else
           Tt = 0.
           Npt = Npt - 1
-          GOTO 700
-        ENDIF
-      ENDIF
+          go to 700
+        end if
+      end if
 ! CONVERGED OR TOOK 60 ITERATIONS WITHOUT CONVERGING.
 ! STORE RESULTS.
  600  rrho(Npt) = rho52
@@ -4947,101 +4849,101 @@
       t2t1(Npt) = t21
       utwo(Npt) = uu*rho12
       u1u2(Npt) = uu - utwo(Npt)
-      IF ( Tt.GE.Tg(1)*.8D0.AND.Tt.LE.Tg(4)*1.1D0 ) THEN
-        IF ( .NOT.Eql ) THEN
+      if( Tt >= Tg(1)*.8D0 .and. Tt <= Tg(4)*1.1D0 ) then
+        if( .not. Eql ) then
 ! FROZEN
           Ppp(Npt) = Pp
           Ttt(Npt) = Tt
           Gammas(Npt) = Cpr(Npt)/(Cpr(Npt)-1./wmx)
           Vlm(Npt) = Rr*Tt/(wmx*Pp)
-          IF ( Incdeq ) THEN
+          if( Incdeq ) then
             Ssum(Npt) = 0.
-            DO j = 1, Ngc
+            do j = 1, Ngc
               pmn = Pp*wmx*En(j, Npt)
-              IF ( En(j, Npt).GT.0. ) Ssum(Npt) = Ssum(Npt) + En(j, Npt) &
-                   *(S(j)-DLOG(pmn))
-            ENDDO
-          ENDIF
-        ENDIF
-        GOTO 900
-      ENDIF
- 700  WRITE (IOOUT, 99016) Tt, Npt
+              if( En(j, Npt) > 0. ) Ssum(Npt) = Ssum(Npt) + En(j, Npt) &
+                   *(S(j)-dlog(pmn))
+            end do
+          end if
+        end if
+        go to 900
+      end if
+ 700  write(IOOUT, 99016) Tt, Npt
       Tt = 0.
- 800  IF ( Npt.LT.1 ) GOTO 1000
+ 800  if( Npt < 1 ) go to 1000
       Nsk = Npt
- 900  IF ( Trnspt ) CALL TRANP
+ 900  if( Trnspt ) call TRANP
       Isv = 0
-      IF ( Npt.LT.Nsk ) Isv = Npt
-      IF ( Npt.EQ.1 ) Isv = -1
+      if( Npt < Nsk ) Isv = Npt
+      if( Npt == 1 ) Isv = -1
       Npt = Npt + 1
-      IF ( Eql ) CALL SETEN
-      IF ( Npt.LE.Nsk ) GOTO 400
+      if( Eql ) call SETEN
+      if( Npt <= Nsk ) go to 400
       Npt = Nsk
-      IF ( refl ) THEN
-        IF ( .NOT.Eql ) WRITE (IOOUT, 99020)
-        IF ( Eql ) WRITE (IOOUT, 99021)
+      if( refl ) then
+        if( .not. Eql ) write(IOOUT, 99020)
+        if( Eql ) write(IOOUT, 99021)
         cr12 = '2'
         cr52 = '5'
-      ELSE
-        IF ( .NOT.Eql ) WRITE (IOOUT, 99018)
-        IF ( Eql ) WRITE (IOOUT, 99019)
+      else
+        if( .not. Eql ) write(IOOUT, 99018)
+        if( Eql ) write(IOOUT, 99019)
         cr12 = '1'
         cr52 = '2'
-      ENDIF
+      end if
       Fmt(7) = '2,'
-      WRITE (IOOUT, Fmt) 'U'//cr52//', M/SEC      ', (utwo(j), j=1, Npt)
-      CALL OUT2
-      IF ( Trnspt ) CALL OUT4
-      WRITE (IOOUT, 99017)
+      write(IOOUT, Fmt) 'U'//cr52//', M/SEC      ', (utwo(j), j=1, Npt)
+      call OUT2
+      if( Trnspt ) call OUT4
+      write(IOOUT, 99017)
       Fmt(7) = '3,'
-      WRITE (IOOUT, Fmt) 'P'//cr52//'/P'//cr12//'           ', &
+      write(IOOUT, Fmt) 'P'//cr52//'/P'//cr12//'           ', &
                     (p2p1(j), j=1, Npt)
-      WRITE (IOOUT, Fmt) 'T'//cr52//'/T'//cr12//'           ', &
+      write(IOOUT, Fmt) 'T'//cr52//'/T'//cr12//'           ', &
                     (t2t1(j), j=1, Npt)
       Fmt(7) = '4,'
-      WRITE (IOOUT, Fmt) 'M'//cr52//'/M'//cr12//'           ', &
+      write(IOOUT, Fmt) 'M'//cr52//'/M'//cr12//'           ', &
                     (m2m1(j), j=1, Npt)
-      WRITE (IOOUT, Fmt) 'RHO'//cr52//'/RHO'//cr12//'       ', &
+      write(IOOUT, Fmt) 'RHO'//cr52//'/RHO'//cr12//'       ', &
                     (rrho(j), j=1, Npt)
       Fmt(7) = '2,'
-      IF ( .NOT.refl ) WRITE (IOOUT, Fmt) 'V2, M/SEC      ', (u1u2(j), &
+      if( .not. refl ) write(IOOUT, Fmt) 'V2, M/SEC      ', (u1u2(j), &
                      j=1, Npt)
-      IF ( refl ) WRITE (IOOUT, Fmt) 'U5+V2,M/SEC    ', (u1u2(j), j=1, Npt)
-      IF ( .NOT.Eql ) THEN
+      if( refl ) write(IOOUT, Fmt) 'U5+V2,M/SEC    ', (u1u2(j), j=1, Npt)
+      if( .not. Eql ) then
 ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
         Fmt(7) = '5,'
-        IF ( .NOT.Incdeq ) THEN
-          IF ( Massf ) THEN
-            WRITE (IOOUT, 99022) 'MASS'
-          ELSE
-            WRITE (IOOUT, 99022) 'MOLE'
+        if( .not. Incdeq ) then
+          if( Massf ) then
+            write(IOOUT, 99022) 'MASS'
+          else
+            write(IOOUT, 99022) 'MOLE'
             ww = wmx
-          ENDIF
-          DO n = 1, Nreac
+          end if
+          do n = 1, Nreac
             j = Jray(n)
-            IF ( Massf ) ww = Mw(j)
-            WRITE (IOOUT, 99023) Prod(j), (En(j, i)*ww, i=1, Npt)
-          ENDDO
-        ELSE
-          Eql = .TRUE.
-          CALL OUT3
-          Eql = .FALSE.
-        ENDIF
-      ELSE
-        CALL OUT3
-      ENDIF
+            if( Massf ) ww = Mw(j)
+            write(IOOUT, 99023) Prod(j), (En(j, i)*ww, i=1, Npt)
+          end do
+        else
+          Eql = .true.
+          call OUT3
+          Eql = .false.
+        end if
+      else
+        call OUT3
+      end if
       Iplt = MIN(Iplt+Npt, 500)
-      IF ( srefl ) THEN
-        IF ( .NOT.refl ) THEN
-          refl = .TRUE.
+      if( srefl ) then
+        if( .not. refl ) then
+          refl = .true.
           it2 = 5
           it1 = 2
-          Eql = .TRUE.
-          IF ( Reflfz ) THEN
-            Eql = .FALSE.
-            IF ( Refleq ) THEN
+          Eql = .true.
+          if( Reflfz ) then
+            Eql = .false.
+            if( Refleq ) then
               j = 0
-              DO i = 1, Npt
+              do i = 1, Npt
                 j = j + 1
                 sg(j) = u1u2(i)
                 j = j + 1
@@ -5054,14 +4956,14 @@
                 sg(j) = Hsum(i)
                 j = j + 1
                 sg(j) = Gammas(i)
-              ENDDO
-            ENDIF
-          ENDIF
+              end do
+            end if
+          end if
           Npt = 1
-          GOTO 400
-        ELSEIF ( .NOT.Eql.AND.Refleq ) THEN
+          go to 400
+        else if( .not. Eql .and. Refleq ) then
           j = 1
-          DO i = 1, Npt
+          do i = 1, Npt
             u1u2(i) = sg(j)
             Wm(i) = sg(j+1)
             Ppp(i) = sg(j+2)
@@ -5069,61 +4971,61 @@
             Hsum(i) = sg(j+4)
             Gammas(i) = sg(j+5)
             j = j + 6
-          ENDDO
-          Eql = .TRUE.
+          end do
+          Eql = .true.
           Npt = 1
-          GOTO 400
-        ENDIF
-      ENDIF
-      IF ( Incdeq.AND.Incdfz ) THEN
-        Incdeq = .FALSE.
-        Eql = .FALSE.
-        GOTO 300
-      ELSEIF ( iof.GE.Nof ) THEN
-        Tp = .FALSE.
-        DO n = 1, Nreac
+          go to 400
+        end if
+      end if
+      if( Incdeq .and. Incdfz ) then
+        Incdeq = .false.
+        Eql = .false.
+        go to 300
+      else if( iof >= Nof ) then
+        Tp = .false.
+        do n = 1, Nreac
           Rtemp(n) = T(1)
-        ENDDO
-      ELSE
-        DO i = 1, Nsk
+        end do
+      else
+        do i = 1, Nsk
           U1(i) = uis(i)
           Mach1(i) = mis(i)
-        ENDDO
-        GOTO 200
-      ENDIF
- 1000 RETURN
-99001 FORMAT (/'   *** INPUT FOR SHOCK PROBLEMS ***')
-99002 FORMAT (/' INCDEQ =', L2, '   REFLEQ =', L2, '   INCDFZ =', L2, &
+        end do
+        go to 200
+      end if
+ 1000 return
+99001 format (/'   *** INPUT FOR SHOCK PROBLEMS ***')
+99002 format (/' INCDEQ =', L2, '   REFLEQ =', L2, '   INCDFZ =', L2, &
               '    REFLFZ =', L2)
-99003 FORMAT (/' WARNING!!  ONLY ', I2, ' u1 OR mach1 VALUES ALLOWED ', &
+99003 format (/' WARNING!!  ONLY ', I2, ' u1 OR mach1 VALUES ALLOWED ', &
               '(SHCK)')
-99004 FORMAT (/1p, ' U1 =   ', 5E13.6, /(8X, 5E13.6))
-99005 FORMAT (/1p, ' MACH1 =', 5E13.6, /(8X, 5E13.6))
-99006 FORMAT (////25X, 'SHOCK WAVE PARAMETERS ASSUMING')
-99007 FORMAT (/, 16X, ' EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED', &
+99004 format (/1p, ' U1 =   ', 5E13.6, /(8X, 5E13.6))
+99005 format (/1p, ' MACH1 =', 5E13.6, /(8X, 5E13.6))
+99006 format (////25X, 'SHOCK WAVE PARAMETERS ASSUMING')
+99007 format (/, 16X, ' EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED', &
               ' CONDITIONS'//)
-99008 FORMAT (/, 17X, ' FROZEN COMPOSITION FOR INCIDENT SHOCKED', &
+99008 format (/, 17X, ' FROZEN COMPOSITION FOR INCIDENT SHOCKED', &
               ' CONDITI1ONS'//)
-99009 FORMAT (/' INITIAL GAS (1)')
-99010 FORMAT (/' ITR NO.=', I3, 3X, 'P', I1, '/P', I1, ' =', F9.4, 3X, 'T', I1, &
+99009 format (/' INITIAL GAS (1)')
+99010 format (/' ITR NO.=', I3, 3X, 'P', I1, '/P', I1, ' =', F9.4, 3X, 'T', I1, &
               '/T', I1, ' =', F9.4, '   RHO2/RHO1 =', F9.6)
-99011 FORMAT (/' G(I,J)  ', 3E15.8)
-99012 FORMAT (/' X       ', 2E15.8)
-99013 FORMAT (/' HSUM HS UU U2 ', 4E15.8)
-99014 FORMAT (/' MAX.COR.=', e13.6, ' X(1)=', e13.6, ' X(2)=', e13.6)
-99015 FORMAT (/6x, ' WARNING!!  NO CONVERGENCE FOR u1=', F8.1, &
+99011 format (/' G(I,J)  ', 3E15.8)
+99012 format (/' X       ', 2E15.8)
+99013 format (/' HSUM HS UU U2 ', 4E15.8)
+99014 format (/' MAX.COR.=', e13.6, ' X(1)=', e13.6, ' X(2)=', e13.6)
+99015 format (/6x, ' WARNING!!  NO CONVERGENCE FOR u1=', F8.1, &
               /'  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)')
-99016 FORMAT (/' TEMPERATURE=', E12.4, ' IS OUT OF EXTENDED RANGE ', &
+99016 format (/' TEMPERATURE=', E12.4, ' IS OUT OF EXTENDED RANGE ', &
               'FOR POINT', I5, ' (SHCK)')
-99017 FORMAT ()
-99018 FORMAT (/' SHOCKED GAS (2)--INCIDENT--FROZEN')
-99019 FORMAT (/' SHOCKED GAS (2)--INCIDENT--EQUILIBRIUM')
-99020 FORMAT (/' SHOCKED GAS (5)--REFLECTED--FROZEN')
-99021 FORMAT (/' SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM')
-99022 FORMAT (/1x, A4, ' FRACTIONS'/)
-99023 FORMAT (' ', A16, F8.5, 12F9.5)
-      END
-      SUBROUTINE THERMP
+99017 format ()
+99018 format (/' SHOCKED GAS (2)--INCIDENT--FROZEN')
+99019 format (/' SHOCKED GAS (2)--INCIDENT--EQUILIBRIUM')
+99020 format (/' SHOCKED GAS (5)--REFLECTED--FROZEN')
+99021 format (/' SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM')
+99022 format (/1x, A4, ' FRACTIONS'/)
+99023 format (' ', A16, F8.5, 12F9.5)
+      end
+      subroutine THERMP
 !***********************************************************************
 ! ASSIGNED THERMODYNAMIC STATES.  HP, SP, TP, UV, SV, AND TV PROBLEMS.
 !***********************************************************************
@@ -5136,72 +5038,72 @@
       Uv = transfer(Hp, Uv)
       Tv = transfer(Tp, Tv)
       Sv = transfer(Sp, Sv)
-      Eql = .TRUE.
-      DO 100 iof = 1, Nof
+      Eql = .true.
+      do 100 iof = 1, Nof
         Oxfl = Oxf(iof)
-        CALL NEWOF
+        call NEWOF
 ! SET ASSIGNED P OR VOLUME
-        DO Ip = 1, Np
+        do Ip = 1, Np
           Pp = P(Ip)
 ! SET ASSIGNED T
-          DO It = 1, Nt
+          do It = 1, Nt
             Vv = V(Ip)
             Tt = T(It)
-            CALL EQLBRM
-            IF ( Npt.EQ.0 ) GOTO 200
-            IF ( Trnspt.AND.Tt.NE.0. ) CALL TRANP
+            call EQLBRM
+            if( Npt == 0 ) go to 200
+            if( Trnspt .and. Tt /= 0. ) call TRANP
             Isv = 0
-            IF ( Ip.NE.Np.OR.It.NE.Nt.AND.Tt.NE.0. ) THEN
+            if( Ip /= Np .or. It /= Nt .and. Tt /= 0. ) then
               Isv = Npt
-              IF ( Npt.NE.Ncol ) GOTO 10
-            ENDIF
-            IF ( .NOT.Hp ) WRITE (IOOUT, 99001)
-            IF ( Hp ) WRITE (IOOUT, 99002)
-            IF ( .NOT.Vol ) THEN
-              IF ( Hp ) WRITE (IOOUT, 99006)
-              IF ( Tp ) WRITE (IOOUT, 99007)
-              IF ( Sp ) WRITE (IOOUT, 99008)
-            ELSE
-              IF ( Uv ) WRITE (IOOUT, 99003)
-              IF ( Tv ) WRITE (IOOUT, 99004)
-              IF ( Sv ) WRITE (IOOUT, 99005)
-            ENDIF
-            CALL OUT1
-            WRITE (IOOUT, 99009)
-            CALL OUT2
-            IF ( Trnspt ) CALL OUT4
-            CALL OUT3
+              if( Npt /= Ncol ) go to 10
+            end if
+            if( .not. Hp ) write(IOOUT, 99001)
+            if( Hp ) write(IOOUT, 99002)
+            if( .not. Vol ) then
+              if( Hp ) write(IOOUT, 99006)
+              if( Tp ) write(IOOUT, 99007)
+              if( Sp ) write(IOOUT, 99008)
+            else
+              if( Uv ) write(IOOUT, 99003)
+              if( Tv ) write(IOOUT, 99004)
+              if( Sv ) write(IOOUT, 99005)
+            end if
+            call OUT1
+            write(IOOUT, 99009)
+            call OUT2
+            if( Trnspt ) call OUT4
+            call OUT3
             Iplt = MIN(Iplt+Npt, 500)
-            IF ( Isv.EQ.0.AND.iof.EQ.Nof ) GOTO 200
-            WRITE (IOOUT, 99010)
+            if( Isv == 0 .and. iof == Nof ) go to 200
+            write(IOOUT, 99010)
             Npt = 0
  10         Npt = Npt + 1
-            IF ( .NOT.Tp.AND.Tt.NE.0. ) T(1) = Tt
-            IF ( Nt.EQ.1.AND.Np.EQ.1 ) GOTO 100
-            IF ( Ip.EQ.1.AND.It.EQ.1 ) Isv = -Isv
-            IF ( Nt.NE.1 ) THEN
-              IF ( It.EQ.Nt.OR.Tt.EQ.0. ) Isv = 0
-            ENDIF
-            CALL SETEN
-          ENDDO
-        ENDDO
- 100  CONTINUE
- 200  RETURN
-99001 FORMAT (////15X, 'THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED' &
+            if( .not. Tp .and. Tt /= 0. ) T(1) = Tt
+            if( Nt == 1 .and. Np == 1 ) go to 100
+            if( Ip == 1 .and. It == 1 ) Isv = -Isv
+            if( Nt /= 1 ) then
+              if( It == Nt .or. Tt == 0. ) Isv = 0
+            end if
+            call SETEN
+          end do
+        end do
+ 100  continue
+ 200  return
+99001 format (////15X, 'THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED' &
               )
-99002 FORMAT (////9X, &
+99002 format (////9X, &
            'THERMODYNAMIC EQUILIBRIUM COMBUSTION PROPERTIES AT ASSIGNED' &
            )
-99003 FORMAT (/36X, ' VOLUME'/)
-99004 FORMAT (/28X, 'TEMPERATURE AND VOLUME'/)
-99005 FORMAT (/30X, 'ENTROPY AND VOLUME'/)
-99006 FORMAT (/34X, ' PRESSURES'/)
-99007 FORMAT (/27X, 'TEMPERATURE AND PRESSURE'/)
-99008 FORMAT (/29X, 'ENTROPY AND PRESSURE'/)
-99009 FORMAT (/' THERMODYNAMIC PROPERTIES'/)
-99010 FORMAT (////)
-      END
-      SUBROUTINE TRANIN
+99003 format (/36X, ' VOLUME'/)
+99004 format (/28X, 'TEMPERATURE AND VOLUME'/)
+99005 format (/30X, 'ENTROPY AND VOLUME'/)
+99006 format (/34X, ' PRESSURES'/)
+99007 format (/27X, 'TEMPERATURE AND PRESSURE'/)
+99008 format (/29X, 'ENTROPY AND PRESSURE'/)
+99009 format (/' THERMODYNAMIC PROPERTIES'/)
+99010 format (////)
+      end
+      subroutine TRANIN
 !***********************************************************************
 ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
 !***********************************************************************
@@ -5213,270 +5115,270 @@
       real(8), save:: coeff, debye, ekt, enel, enmin, ionic, lamda, omega, prop, qc, ratio, &
              stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
              trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
-      real(8):: DABS, DEXP, DLOG, DSQRT
+      real(8):: dabs, dexp, dlog, dsqrt
 
-      IF ( .NOT.Eql ) THEN
-        IF ( .NOT.Shock ) THEN
-          IF ( .NOT.setx ) THEN
-            setx = .TRUE.
+      if( .not. Eql ) then
+        if( .not. Shock ) then
+          if( .not. setx ) then
+            setx = .true.
             Nm = nms
-            DO i = 1, Nm
+            do i = 1, Nm
               Xs(i) = xss(i)
               Wmol(i) = wmols(i)
               Ind(i) = inds(i)
-            ENDDO
-          ENDIF
-          GOTO 300
-        ELSEIF ( .NOT.Incdeq ) THEN
-          IF ( Npt.LE.1 ) THEN
+            end do
+          end if
+          go to 300
+        else if( .not. Incdeq ) then
+          if( Npt <= 1 ) then
             Nm = Nreac
-            DO i = 1, Nm
+            do i = 1, Nm
               j = Jray(i)
               Ind(i) = j
               Wmol(i) = Mw(j)
               Xs(i) = En(j, 1)*Wm(1)
-            ENDDO
-          ENDIF
-          GOTO 300
-        ENDIF
-      ENDIF
+            end do
+          end if
+          go to 300
+        end if
+      end if
 ! PICK OUT IMPORTANT SPECIES
       Nm = 0
       total = 0.D0
       enmin = 1.0D-11/Wm(Npt)
       testot = 0.999999999D0/Wm(Npt)
-      DO i = 1, Lsave
+      do i = 1, Lsave
         j = Jcm(i)
-        IF ( En(j, Npt).LE.0.D0.AND.j.LE.Ngc ) THEN
-          IF ( (Enln(j)-Ennl+25.328436D0).GT.0.D0 ) En(j, Npt) &
-               = DEXP(Enln(j))
-        ENDIF
+        if( En(j, Npt) <= 0.D0 .and. j <= Ngc ) then
+          if( (Enln(j)-Ennl+25.328436D0) > 0.D0 ) En(j, Npt) &
+               = dexp(Enln(j))
+        end if
         Nm = Nm + 1
         Ind(Nm) = j
         total = total + En(j, Npt)
-        IF ( Mw(j).LT.1.0D0 ) enel = En(j, Npt)
+        if( Mw(j) < 1.0D0 ) enel = En(j, Npt)
         En(j, Npt) = -En(j, Npt)
-      ENDDO
+      end do
       testen = 1.D0/(Ng*Wm(Npt))
       loop = 0
- 100  IF ( total.LE.testot.AND.loop.LE.Ng ) THEN
+ 100  if( total <= testot .and. loop <= Ng ) then
         loop = loop + 1
         testen = testen/10.
-        DO j = 1, Ng
-          IF ( En(j, Npt).GE.testen ) THEN
-            IF ( Nm.GE.maxTr ) THEN
-              WRITE (IOOUT, 99001) Nm, Npt
-              GOTO 200
-            ELSE
+        do j = 1, Ng
+          if( En(j, Npt) >= testen ) then
+            if( Nm >= maxTr ) then
+              write(IOOUT, 99001) Nm, Npt
+              go to 200
+            else
               total = total + En(j, Npt)
               Nm = Nm + 1
               Ind(Nm) = j
               En(j, Npt) = -En(j, Npt)
-            ENDIF
-          ENDIF
-        ENDDO
-        IF ( testen.GT.enmin ) GOTO 100
-      ENDIF
+            end if
+          end if
+        end do
+        if( testen > enmin ) go to 100
+      end if
 ! CALCULATE MOLE FRACTIONS FROM THE EN(J, NPT)
- 200  DO j = 1, Ng
-        En(j, Npt) = DABS(En(j, Npt))
-      ENDDO
-      DO i = 1, Nm
+ 200  do j = 1, Ng
+        En(j, Npt) = dabs(En(j, Npt))
+      end do
+      do i = 1, Nm
         j = Ind(i)
         Wmol(i) = Mw(j)
         Xs(i) = En(j, Npt)/total
-      ENDDO
-      IF ( Npt.EQ.Nfz ) THEN
+      end do
+      if( Npt == Nfz ) then
         nms = Nm
-        DO i = 1, Nm
+        do i = 1, Nm
           xss(i) = Xs(i)
           wmols(i) = Wmol(i)
           inds(i) = Ind(i)
-        ENDDO
-        setx = .FALSE.
-      ENDIF
+        end do
+        setx = .false.
+      end if
 ! REWRITE REACTIONS TO ELIMINATE TRACE ELEMENTS
       Nr = Nm - Lsave
-      IF ( Nr.NE.0 ) THEN
-        DO k = 1, maxTr
-          DO m = 1, maxTr
+      if( Nr /= 0 ) then
+        do k = 1, maxTr
+          do m = 1, maxTr
             Stc(k, m) = 0.0D0
-          ENDDO
-        ENDDO
+          end do
+        end do
         k = 1
-        DO i = Lsave + 1, Nm
+        do i = Lsave + 1, Nm
           Stc(k, i) = -1.0D0
           j = Ind(i)
-          DO m = 1, Lsave
+          do m = 1, Lsave
             Stc(k, m) = A(m, j)
-          ENDDO
+          end do
           k = k + 1
-        ENDDO
-        DO i = 1, Nm
-          IF ( Xs(i).LT.1.0D-10 ) THEN
+        end do
+        do i = 1, Nm
+          if( Xs(i) < 1.0D-10 ) then
             m = 1
-            change = .FALSE.
-            DO 210 j = 1, Nr
+            change = .false.
+            do 210 j = 1, Nr
               coeff = Stc(j, i)
-              IF ( ABS(coeff).GT.1.0D-05 ) THEN
-                IF ( .NOT.change ) THEN
-                  change = .TRUE.
-                  DO k = 1, Nm
+              if( ABS(coeff) > 1.0D-05 ) then
+                if( .not. change ) then
+                  change = .true.
+                  do k = 1, Nm
                     stcoef(k) = Stc(j, k)/coeff
-                  ENDDO
-                  GOTO 210
-                ELSE
-                  DO k = 1, Nm
+                  end do
+                  go to 210
+                else
+                  do k = 1, Nm
                     Stc(j, k) = (Stc(j, k)/coeff) - stcoef(k)
-                  ENDDO
-                ENDIF
-              ENDIF
-              DO k = 1, Nm
+                  end do
+                end if
+              end if
+              do k = 1, Nm
                 stcf(m, k) = Stc(j, k)
-              ENDDO
+              end do
               m = m + 1
- 210        CONTINUE
-            DO ii = 1, Nm
-              DO j = 1, Nr
+ 210        continue
+            do ii = 1, Nm
+              do j = 1, Nr
                 Stc(j, ii) = stcf(j, ii)
-              ENDDO
-            ENDDO
+              end do
+            end do
             Nr = m - 1
-          ENDIF
-        ENDDO
-      ENDIF
+          end if
+        end do
+      end if
 ! FIND TRANSPORT DATA FOR IMPORTANT INTERACTIONS
- 300  DO i = 1, Nm
+ 300  do i = 1, Nm
         Con(i) = 0.0
-        DO j = 1, Nm
+        do j = 1, Nm
           Eta(i, j) = 0.0
-        ENDDO
-      ENDDO
-      REWIND IOSCH
-      DO 400 ir = 1, Ntape
-        READ (IOSCH) jtape, trc
-        DO 350 k = 1, 2
-          DO i = 1, Nm
+        end do
+      end do
+      rewind IOSCH
+      do 400 ir = 1, Ntape
+        read(IOSCH) jtape, trc
+        do 350 k = 1, 2
+          do i = 1, Nm
             j = Ind(i)
-            IF ( j.EQ.jtape(k) ) THEN
+            if( j == jtape(k) ) then
               l = i
-              IF ( k.EQ.2 ) THEN
+              if( k == 2 ) then
                 kvc = 1
  302            kt = 1
-                IF ( trc(2, 1, kvc).NE.0.E0 ) THEN
-                  IF ( trc(2, 2, kvc).NE.0.E0 ) THEN
-                    IF ( Tt.GT.trc(2, 1, kvc) ) kt = 2
-                    IF ( trc(2, 3, kvc).NE.0. ) THEN
-                      IF ( Tt.GT.trc(2, 2, kvc) ) kt = 3
-                    ENDIF
-                  ENDIF
+                if( trc(2, 1, kvc) /= 0.E0 ) then
+                  if( trc(2, 2, kvc) /= 0.E0 ) then
+                    if( Tt > trc(2, 1, kvc) ) kt = 2
+                    if( trc(2, 3, kvc) /= 0. ) then
+                      if( Tt > trc(2, 2, kvc) ) kt = 3
+                    end if
+                  end if
                   prop = EXP(trc(6, kt, kvc) &
                          +(trc(5, kt, kvc)/Tt+trc(4, kt, kvc)) &
                          /Tt+trc(3, kt, kvc)*Tln)
-                  IF ( kvc.EQ.2 ) THEN
+                  if( kvc == 2 ) then
                     Con(l) = prop
-                    GOTO 400
-                  ELSE
+                    go to 400
+                  else
                     Eta(l, m) = prop
-                    IF ( l.NE.m ) Eta(m, l) = Eta(l, m)
-                  ENDIF
-                ELSEIF ( kvc.EQ.2 ) THEN
-                  GOTO 400
-                ENDIF
+                    if( l /= m ) Eta(m, l) = Eta(l, m)
+                  end if
+                else if( kvc == 2 ) then
+                  go to 400
+                end if
                 kvc = 2
-                GOTO 302
-              ELSE
+                go to 302
+              else
                 m = i
-                GOTO 350
-              ENDIF
-            ENDIF
-          ENDDO
-          GOTO 400
- 350    CONTINUE
- 400  CONTINUE
+                go to 350
+              end if
+            end if
+          end do
+          go to 400
+ 350    continue
+ 400  continue
 ! MAKE ESTIMATES FOR MISSING DATA
 !
 ! INCLUDES ION CROSS SECTION ESTIMATES
 ! ESTIMATES FOR  E-ION, ION-ION, E-NEUTRAL, ION-NEUTRAL
 ! DEBYE SHIELDING WITH IONIC CUTOFF DISTANCE
-      IF ( Ions ) THEN
+      if( Ions ) then
         te = Tt/1000.D0
         ekt = 4.8032D0**2/(Boltz*te)
         qc = 100.D0*(ekt**2)
         xsel = enel/total
-        IF ( xsel.LT.1.0D-12 ) xsel = 1.0D-12
+        if( xsel < 1.0D-12 ) xsel = 1.0D-12
         debye = ((22.5D0/Pi)*(Rr/Avgdr*100.D0)*(te/xsel))/ekt**3
         ionic = ((810.D0/(4.0D0*Pi))*(Rr/Avgdr*100D0)*(te/xsel)) &
                 **(2.0/3.0)/ekt**2
-        lamda = DSQRT(debye+ionic)
+        lamda = dsqrt(debye+ionic)
         lamda = MAX(lamda, 2.71828183D0)
-      ENDIF
-      DO i = 1, Nm
+      end if
+      do i = 1, Nm
         k = Ind(i)
         Cprr(i) = Cp(k)
-        IF ( .NOT.(Ions.AND.(DABS(A(Nlm, k)).EQ.1.D0).AND. &
-             (Eta(i, i).EQ.0.D0)) ) THEN
-          IF ( Eta(i, i).EQ.0.D0 ) THEN
-            omega = DLOG(50.D0*Wmol(i)**4.6/Tt**1.4)
+        if( .not. (Ions .and. (dabs(A(Nlm, k)) == 1.D0) .and.  &
+             (Eta(i, i) == 0.D0)) ) then
+          if( Eta(i, i) == 0.D0 ) then
+            omega = dlog(50.D0*Wmol(i)**4.6/Tt**1.4)
             omega = MAX(omega, 1.D0)
-            Eta(i, i) = Viscns*DSQRT(Wmol(i)*Tt)/omega
-          ENDIF
-          IF ( Con(i).EQ.0.D0 ) Con(i) = Eta(i, i) &
+            Eta(i, i) = Viscns*dsqrt(Wmol(i)*Tt)/omega
+          end if
+          if( Con(i) == 0.D0 ) Con(i) = Eta(i, i) &
                *Rr*(.00375D0+.00132D0*(Cprr(i)-2.5D0))/Wmol(i)
-        ENDIF
-      ENDDO
-      DO i = 1, Nm
-        DO 450 j = i, Nm
-          ion1 = .FALSE.
-          ion2 = .FALSE.
-          elc1 = .FALSE.
-          elc2 = .FALSE.
+        end if
+      end do
+      do i = 1, Nm
+        do 450 j = i, Nm
+          ion1 = .false.
+          ion2 = .false.
+          elc1 = .false.
+          elc2 = .false.
           omega = 0.0
-          IF ( Eta(i, j).EQ.0. ) Eta(i, j) = Eta(j, i)
-          IF ( Eta(j, i).EQ.0. ) Eta(j, i) = Eta(i, j)
-          IF ( Eta(i, j).EQ.0. ) THEN
-            IF ( Ions ) THEN
+          if( Eta(i, j) == 0. ) Eta(i, j) = Eta(j, i)
+          if( Eta(j, i) == 0. ) Eta(j, i) = Eta(i, j)
+          if( Eta(i, j) == 0. ) then
+            if( Ions ) then
 ! ESTIMATE FOR IONS
               k1 = Ind(i)
               k2 = Ind(j)
-              IF ( ABS(A(Nlm, k1)).EQ.1.0 ) ion1 = .TRUE.
-              IF ( ABS(A(Nlm, k2)).EQ.1.0 ) ion2 = .TRUE.
-              IF ( Wmol(i).LT.1.0 ) elc1 = .TRUE.
-              IF ( Wmol(j).LT.1.0 ) elc2 = .TRUE.
-              IF ( ion1.AND.ion2 ) omega = 1.36D0*qc*DLOG(lamda)
-              IF ( (ion1.AND.elc2).OR.(ion2.AND.elc1) ) &
-                   omega = 1.29D0*qc*DLOG(lamda)
-              IF ( (ion1.AND..NOT.ion2).OR.(ion2.AND..NOT.ion1) ) &
+              if( ABS(A(Nlm, k1)) == 1.0 ) ion1 = .true.
+              if( ABS(A(Nlm, k2)) == 1.0 ) ion2 = .true.
+              if( Wmol(i) < 1.0 ) elc1 = .true.
+              if( Wmol(j) < 1.0 ) elc2 = .true.
+              if( ion1 .and. ion2 ) omega = 1.36D0*qc*dlog(lamda)
+              if( (ion1 .and. elc2) .or. (ion2 .and. elc1) ) &
+                   omega = 1.29D0*qc*dlog(lamda)
+              if( (ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1) ) &
                    omega = EXP(6.776-0.4*Tln)
-              IF ( omega.NE.0. ) THEN
-                wmred = DSQRT(2.0*Tt*Wmol(i)*Wmol(j)/(Wmol(i)+Wmol(j)))
+              if( omega /= 0. ) then
+                wmred = dsqrt(2.0*Tt*Wmol(i)*Wmol(j)/(Wmol(i)+Wmol(j)))
                 Eta(i, j) = Viscns*wmred*Pi/omega
                 Eta(j, i) = Eta(i, j)
-                IF ( i.EQ.j ) THEN
+                if( i == j ) then
                   Cprr(i) = Cp(k1)
                   Con(i) = Eta(i, i) &
                            *Rr*(.00375D0+.00132D0*(Cprr(i)-2.5D0)) &
                            /Wmol(i)
-                ENDIF
-                GOTO 450
-              ENDIF
-            ENDIF
+                end if
+                go to 450
+              end if
+            end if
 ! ESTIMATE FOR UNLIKE INTERACTIONS FROM RIGID SPHERE ANALOGY
-            ratio = DSQRT(Wmol(j)/Wmol(i))
+            ratio = dsqrt(Wmol(j)/Wmol(i))
             Eta(i, j) = 5.656854D0*Eta(i, i) &
                        *SQRT(Wmol(j)/(Wmol(i)+Wmol(j)))
-            Eta(i, j) = Eta(i, j)/(1.D0+DSQRT(ratio*Eta(i, i)/Eta(j, j)))**2
+            Eta(i, j) = Eta(i, j)/(1.D0+dsqrt(ratio*Eta(i, i)/Eta(j, j)))**2
             Eta(j, i) = Eta(i, j)
-          ENDIF
- 450    CONTINUE
-      ENDDO
-      RETURN
-99001 FORMAT (/' WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES', I3, &
+          end if
+ 450    continue
+      end do
+      return
+99001 format (/' WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES', I3, &
               ' WAS USED IN ', &
               /' TRANSPORT PROPERTY CALCULATIONS FOR POINT', I3, &
               '(TRANIN))')
-      END
-      SUBROUTINE TRANP
+      end
+      subroutine TRANP
 !***********************************************************************
 ! CALCULATES GAS TRANSPORT PROPERTIES
 !
@@ -5491,22 +5393,22 @@
       real(8), save:: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
              psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
              stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
-      real(8):: DABS
+      real(8):: dabs
 
-      CALL TRANIN
+      call TRANIN
 ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
       nmm = Nm - 1
-      DO i = 1, Nm
+      do i = 1, Nm
         rtpd(i, i) = 0.D0
         phi(i, i) = 1.D0
         psi(i, i) = 1.D0
-      ENDDO
+      end do
       Confro(Npt) = 0.D0
       Vis(Npt) = 0.D0
-      DO i = 1, nmm
+      do i = 1, nmm
         i1 = i + 1
 !DIR$ IVDEP
-        DO j = i1, Nm
+        do j = i1, Nm
           sumc = 2.D0/(Eta(i, j)*(Wmol(i)+Wmol(j)))
           phi(i, j) = sumc*Wmol(j)*Eta(i, i)
           phi(j, i) = sumc*Wmol(i)*Eta(j, j)
@@ -5517,133 +5419,133 @@
           psi(j, i) = phi(j, i) &
                      *(1.D0+2.41D0*(Wmol(j)-Wmol(i))*(Wmol(j)-.142D0* &
                      Wmol(i))/sumc)
-        ENDDO
-      ENDDO
-      DO i = 1, Nm
+        end do
+      end do
+      do i = 1, Nm
         sumc = 0.D0
         sumv = 0.D0
-        DO j = 1, Nm
+        do j = 1, Nm
           sumc = sumc + psi(i, j)*Xs(j)
           sumv = sumv + phi(i, j)*Xs(j)
-        ENDDO
+        end do
         Vis(Npt) = Vis(Npt) + Eta(i, i)*Xs(i)/sumv
         Confro(Npt) = Confro(Npt) + Con(i)*Xs(i)/sumc
-      ENDDO
-      IF ( Eql.AND.Nr.GT.0 ) THEN
+      end do
+      if( Eql .and. Nr > 0 ) then
 ! CALCULATE REACTION HEAT CAPACITY AND THERMAL CONDUCTIVITY
         m = Nr + 1
-        DO i = 1, Nr
+        do i = 1, Nr
           delh(i) = 0.0D0
-          DO k = 1, Lsave
+          do k = 1, Lsave
             j = Jcm(k)
             delh(i) = Stc(i, k)*H0(j) + delh(i)
-          ENDDO
+          end do
           nlmm = Lsave + 1
-          DO k = nlmm, Nm
+          do k = nlmm, Nm
             j = Ind(k)
             delh(i) = Stc(i, k)*H0(j) + delh(i)
-          ENDDO
+          end do
           G(i, m) = delh(i)
-        ENDDO
-        DO i = 1, maxTr
-          DO j = 1, maxTr
-            IF ( DABS(Stc(i, j)).LT.1.0D-6 ) Stc(i, j) = 0.0D0
-          ENDDO
-        ENDDO
+        end do
+        do i = 1, maxTr
+          do j = 1, maxTr
+            if( dabs(Stc(i, j)) < 1.0D-6 ) Stc(i, j) = 0.0D0
+          end do
+        end do
         jj = Nm - 1
-        DO k = 1, jj
+        do k = 1, jj
           mm = k + 1
-          DO m = mm, Nm
+          do m = mm, Nm
             rtpd(k, m) = Wmol(k)*Wmol(m)/(1.1*Eta(k, m)*(Wmol(k)+Wmol(m)))
             xskm(k, m) = Xs(k)*Xs(m)
             xskm(m, k) = xskm(k, m)
             rtpd(m, k) = rtpd(k, m)
-          ENDDO
-        ENDDO
-        DO i = 1, Nr
-          DO j = i, Nr
+          end do
+        end do
+        do i = 1, Nr
+          do j = i, Nr
             G(i, j) = 0.0D0
             gmat(i, j) = 0.0D0
-          ENDDO
-        ENDDO
-        DO k = 1, jj
+          end do
+        end do
+        do k = 1, jj
           mm = k + 1
-          DO m = mm, Nm
-            IF ( Xs(k).GE.1.0D-10.AND.Xs(m).GE.1.0D-10 ) THEN
-              DO j = 1, Nr
-                IF ( (Stc(j, k).EQ.0.D0).AND.(Stc(j, m).EQ.0.D0) ) stx(j) &
+          do m = mm, Nm
+            if( Xs(k) >= 1.0D-10 .and. Xs(m) >= 1.0D-10 ) then
+              do j = 1, Nr
+                if( (Stc(j, k) == 0.D0) .and. (Stc(j, m) == 0.D0) ) stx(j) &
                      = 0.D0
-                IF ( (Stc(j, k).NE.0.D0).OR.(Stc(j, m).NE.0.D0) ) stx(j) &
+                if( (Stc(j, k) /= 0.D0) .or. (Stc(j, m) /= 0.D0) ) stx(j) &
                      = Xs(m)*Stc(j, k) - Xs(k)*Stc(j, m)
-              ENDDO
-              DO i = 1, Nr
-                DO j = i, Nr
+              end do
+              do i = 1, Nr
+                do j = i, Nr
                   stxij(i, j) = stx(i)*stx(j)/xskm(k, m)
                   G(i, j) = G(i, j) + stxij(i, j)
                   gmat(i, j) = gmat(i, j) + stxij(i, j)*rtpd(k, m)
-                ENDDO
-              ENDDO
-            ENDIF
-          ENDDO
-        ENDDO
+                end do
+              end do
+            end if
+          end do
+        end do
         m = 1 + Nr
-        DO i = 1, Nr
+        do i = 1, Nr
 !DIR$ IVDEP
-          DO j = i, Nr
+          do j = i, Nr
             G(j, i) = G(i, j)
-          ENDDO
+          end do
           G(i, m) = delh(i)
-        ENDDO
+        end do
         Imat = Nr
-        CALL GAUSS
+        call GAUSS
         cpreac = 0.D0
-        DO i = 1, Nr
+        do i = 1, Nr
           G(i, m) = delh(i)
           cpreac = cpreac + R*delh(i)*X(i)
 !DIR$ IVDEP
-          DO j = i, Nr
+          do j = i, Nr
             G(i, j) = gmat(i, j)
             G(j, i) = G(i, j)
-          ENDDO
-        ENDDO
-        CALL GAUSS
+          end do
+        end do
+        call GAUSS
         reacon = 0.D0
-        DO i = 1, Nr
+        do i = 1, Nr
           reacon = reacon + R*delh(i)*X(i)
-        ENDDO
+        end do
         reacon = .6D0*reacon
-      ELSE
+      else
         cpreac = 0.D0
         reacon = 0.D0
-      ENDIF
+      end if
 ! CALCULATE OTHER ANSWERS
       Cpfro(Npt) = 0.D0
       wtmol = 0.D0
-      DO i = 1, Nm
+      do i = 1, Nm
         Cpfro(Npt) = Cpfro(Npt) + Xs(i)*Cprr(i)
         wtmol = wtmol + Xs(i)*Wmol(i)
-      ENDDO
+      end do
       Cpfro(Npt) = Cpfro(Npt)*R/wtmol
       Confro(Npt) = Confro(Npt)/1000.D0
-      IF ( .NOT.Siunit ) Confro(Npt) = Confro(Npt)/4.184D0
+      if( .not. Siunit ) Confro(Npt) = Confro(Npt)/4.184D0
       Vis(Npt) = Vis(Npt)/1000.D0
       Prfro(Npt) = Vis(Npt)*Cpfro(Npt)/Confro(Npt)
-      IF ( Eql ) THEN
+      if( Eql ) then
         cpreac = cpreac/wtmol
         reacon = reacon/1000.D0
         Cpeql(Npt) = cpreac + Cpfro(Npt)
         Coneql(Npt) = Confro(Npt) + reacon
         Preql(Npt) = Vis(Npt)*Cpeql(Npt)/Coneql(Npt)
-      ENDIF
-      END
-      SUBROUTINE UTHERM(Readok)
+      end if
+      end
+      subroutine UTHERM(Readok)
 !***********************************************************************
-! READ THERMO DATA FROM I/O UNIT 7 IN RECORD FORMAT AND WRITE
-! UNFORMATTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
+! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
+! UNformatTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
 !
 ! USES SCRATCH I/O UNIT IOSCH.
 !
-! UTHERM IS CALLED FROM SUBROUTINE INPUT.
+! UTHERM IS CALLED FROM subroutine INPUT.
 !
 ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY AND USED BY ITSELF TO
 ! PROCESS THE THERMO DATA.
@@ -5696,11 +5598,11 @@
       character(2):: sym(5)
       character(6):: date
       integer:: i, ifaz, ifzm1, inew, int, j, k, kk, l, nall, ncoef, ngl, ns, ntl
-      integer:: INDEX
+      integer:: index
       logical:: fill(3)
       real(8):: aa, atms, cpfix, dlt, expn(8), fno(5), hform, hh, mwt, templ(9), tex, &
              tgl(4), thermo(9, 3), tinf, tl(2), ttl, tx
-      real(8):: DBLE, DLOG
+      real(8):: DBLE, dlog
 
       ngl = 0
       ns = 0
@@ -5708,37 +5610,37 @@
       ifzm1 = 0
       inew = 0
       tinf = 1.D06
-      REWIND IOSCH
-      READ (IOINP, 99001) tgl, Thdate
- 100  DO i = 1, 3
-        fill(i) = .TRUE.
-        DO j = 1, 9
+      rewind IOSCH
+      read(IOINP, 99001) tgl, Thdate
+ 100  do i = 1, 3
+        fill(i) = .true.
+        do j = 1, 9
           thermo(j, i) = 0.
-        ENDDO
-      ENDDO
+        end do
+      end do
       hform = 0.
       tl(1) = 0.
       tl(2) = 0.
-      READ (IOINP, 99002, END=300, ERR=400) name, notes
-      IF ( name(:3).EQ.'END'.OR.name(:3).EQ.'end' ) THEN
-        IF ( INDEX(name, 'ROD').EQ.0.AND.INDEX(name, 'rod').EQ.0 ) &
-             GOTO 300
+      read(IOINP, 99002, END=300, ERR=400) name, notes
+      if( name(:3) == 'END' .or. name(:3) == 'end' ) then
+        if( index(name, 'ROD') == 0 .and. index(name, 'rod') == 0 ) &
+             go to 300
         ns = nall
-        GOTO 100
-      ENDIF
-      READ (IOINP, 99003, ERR=400) ntl, date, (sym(j), fno(j), j=1, 5), &
+        go to 100
+      end if
+      read(IOINP, 99003, ERR=400) ntl, date, (sym(j), fno(j), j=1, 5), &
                        ifaz, mwt, hform
-      WRITE (IOOUT, 99004) name, date, hform, notes
+      write(IOOUT, 99004) name, date, hform, notes
 ! IF NTL=0, REACTANT WITHOUT COEFFICIENTS
-      IF ( ntl.EQ.0 ) THEN
-        IF ( ns.EQ.0 ) GOTO 300
+      if( ntl == 0 ) then
+        if( ns == 0 ) go to 300
         nall = nall + 1
-        READ (IOINP, 99005, ERR=400) tl, ncoef, expn, hh
+        read(IOINP, 99005, ERR=400) tl, ncoef, expn, hh
         thermo(1, 1) = hform
-        WRITE (IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
+        write(IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
                       thermo
-        GOTO 100
-      ELSEIF ( name.EQ.'Air' ) THEN
+        go to 100
+      else if( name == 'Air' ) then
         sym(1) = 'N'
         fno(1) = 1.56168D0
         sym(2) = 'O'
@@ -5747,91 +5649,91 @@
         fno(3) = .009365D0
         sym(4) = 'C'
         fno(4) = .000319D0
-      ELSEIF ( name.EQ.'e-' ) THEN
+      else if( name == 'e-' ) then
         mwt = 5.48579903D-04
-      ENDIF
-      DO 200 i = 1, ntl
-        READ (IOINP, 99005, ERR=400) tl, ncoef, expn, hh
-        READ (IOINP, 99006, ERR=400) templ
-        IF ( ifaz.EQ.0.AND.i.GT.3 ) GOTO 400
-        IF ( ifaz.LE.0 ) THEN
-          IF ( tl(2).GT.tgl(4)-.01D0 ) THEN
+      end if
+      do 200 i = 1, ntl
+        read(IOINP, 99005, ERR=400) tl, ncoef, expn, hh
+        read(IOINP, 99006, ERR=400) templ
+        if( ifaz == 0 .and. i > 3 ) go to 400
+        if( ifaz <= 0 ) then
+          if( tl(2) > tgl(4)-.01D0 ) then
             ifaz = -1
             namee = '*'//name
             name = namee(:15)
-          ENDIF
-          IF ( tl(1).GE.tgl(i+1) ) GOTO 200
+          end if
+          if( tl(1) >= tgl(i+1) ) go to 200
           int = i
-          fill(i) = .FALSE.
-        ELSE
+          fill(i) = .false.
+        else
           int = 1
-          IF ( i.GT.1 ) THEN
-            DO k = 1, 7
+          if( i > 1 ) then
+            do k = 1, 7
               thermo(k, 1) = 0.D0
-            ENDDO
-          ENDIF
-        ENDIF
-        DO 150 l = 1, ncoef
-          DO k = 1, 7
-            IF ( expn(l).EQ.DBLE(k-3) ) THEN
+            end do
+          end if
+        end if
+        do 150 l = 1, ncoef
+          do k = 1, 7
+            if( expn(l) == DBLE(k-3) ) then
               thermo(k, int) = templ(l)
-              GOTO 150
-            ENDIF
-          ENDDO
- 150    CONTINUE
+              go to 150
+            end if
+          end do
+ 150    continue
         thermo(8, int) = templ(8)
         thermo(9, int) = templ(9)
-        IF ( ifaz.GT.0 ) THEN
+        if( ifaz > 0 ) then
           nall = nall + 1
-          IF ( ifaz.GT.ifzm1 ) THEN
+          if( ifaz > ifzm1 ) then
             inew = inew + 1
-          ELSE
+          else
             inew = i
-          ENDIF
-          WRITE (IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), inew, tl, mwt, &
+          end if
+          write(IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), inew, tl, mwt, &
                         thermo
-        ENDIF
- 200  CONTINUE
+        end if
+ 200  continue
       ifzm1 = ifaz
-      IF ( ifaz.LE.0 ) THEN
+      if( ifaz <= 0 ) then
         inew = 0
         nall = nall + 1
-        IF ( ifaz.LE.0.AND.ns.EQ.0 ) THEN
+        if( ifaz <= 0 .and. ns == 0 ) then
           ngl = ngl + 1
-          IF ( fill(3) ) THEN
+          if( fill(3) ) then
             atms = 0.
-            DO i = 1, 5
-              IF ( sym(i).EQ.' '.OR.sym(i).EQ.'E' ) GOTO 210
+            do i = 1, 5
+              if( sym(i) == ' ' .or. sym(i) == 'E' ) go to 210
               atms = atms + fno(i)
-            ENDDO
+            end do
 ! FOR GASES WITH NO COEFFICIENTS FOR TGL(3)-TGL(4) INTERVAL, 
 ! CALCULATE ESTIMATED COEFFICIENTS. (STRAIGHT LINE FOR CP/R)
  210        aa = 2.5D0
-            IF ( atms.GT.1.9 ) aa = 4.5D0
-            IF ( atms.GT.2.1 ) aa = 3.*atms - 1.75D0
+            if( atms > 1.9 ) aa = 4.5D0
+            if( atms > 2.1 ) aa = 3.*atms - 1.75D0
             ttl = tl(2)
             tx = ttl - tinf
             cpfix = 0
             templ(8) = 0.
             templ(9) = 0.
-            dlt = DLOG(ttl)
-            DO k = 7, 1, - 1
+            dlt = dlog(ttl)
+            do k = 7, 1, - 1
               kk = k - 3
-              IF ( kk.EQ.0 ) THEN
+              if( kk == 0 ) then
                 cpfix = cpfix + thermo(k, 2)
                 templ(8) = templ(8) + thermo(k, 2)
                 templ(9) = templ(9) + thermo(k, 2)*dlt
-              ELSE
+              else
                 tex = ttl**kk
                 cpfix = cpfix + thermo(k, 2)*tex
                 templ(9) = templ(9) + thermo(k, 2)*tex/kk
-                IF ( kk.EQ.-1 ) THEN
+                if( kk == -1 ) then
                   templ(8) = templ(8) + thermo(k, 2)*dlt/ttl
-                ELSE
+                else
                   templ(8) = templ(8) + thermo(k, 2)*tex/(kk+1)
-                ENDIF
-              ENDIF
-            ENDDO
+                end if
+              end if
+            end do
             templ(2) = (cpfix-aa)/tx
             thermo(4, 3) = templ(2)
             templ(1) = cpfix - ttl*templ(2)
@@ -5840,62 +5742,62 @@
                           + ttl*(templ(8)-templ(1)-.5*templ(2)*ttl)
             thermo(9, 3) = -templ(1)*dlt + thermo(9, 2) + templ(9) &
                           - templ(2)*ttl
-          ENDIF
-        ENDIF
+          end if
+        end if
 ! WRITE COEFFICIENTS ON SCRATCH I/O UNIT IOSCH
-        WRITE (IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
+        write(IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
                       thermo
-      ENDIF
-      GOTO 100
+      end if
+      go to 100
 ! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IOSCH & ADD TO IOTHM.
- 300  REWIND IOSCH
-      IF ( ns.EQ.0 ) ns = nall
-      WRITE (IOTHM) tgl, ngl, ns, nall, Thdate
+ 300  rewind IOSCH
+      if( ns == 0 ) ns = nall
+      write(IOTHM) tgl, ngl, ns, nall, Thdate
 ! WRITE GASEOUS PRODUCTS ON IOTHM
-      IF ( ngl.NE.0 ) THEN
-        DO i = 1, ns
-          READ (IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
+      if( ngl /= 0 ) then
+        do i = 1, ns
+          read(IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
                        thermo
-          IF ( ifaz.LE.0 ) WRITE (IOTHM) name, ntl, date, &
+          if( ifaz <= 0 ) write(IOTHM) name, ntl, date, &
                                   (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
                                   thermo
-        ENDDO
-      ENDIF
-      IF ( ngl.NE.nall ) THEN
+        end do
+      end if
+      if( ngl /= nall ) then
 ! WRITE CONDENSED PRODUCTS AND REACTANTS ON IOTHM
-        REWIND IOSCH
-        DO i = 1, nall
-          READ (IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
+        rewind IOSCH
+        do i = 1, nall
+          read(IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
                        thermo
-          IF ( i.GT.ns ) THEN
-            WRITE (IOTHM) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, &
+          if( i > ns ) then
+            write(IOTHM) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, &
                           mwt, thermo(1, 1)
-            IF ( ntl.GT.0 ) WRITE (IOTHM) thermo
-          ELSEIF ( ifaz.GT.0 ) THEN
-            WRITE (IOTHM) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, &
+            if( ntl > 0 ) write(IOTHM) thermo
+          else if( ifaz > 0 ) then
+            write(IOTHM) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, &
                           mwt, (thermo(k, 1), k=1, 9)
-          ENDIF
-        ENDDO
-      ENDIF
-      RETURN
- 400  WRITE (IOOUT, 99007) name
-      Readok = .FALSE.
-      RETURN
-99001 FORMAT (4F10.3, a10)
-99002 FORMAT (a15, a65)
-99003 FORMAT (i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)
-99004 FORMAT (' ', a15, 2x, a6, e15.6, 2x, a65)
-99005 FORMAT (2F11.3, i1, 8F5.1, 2x, f15.3)
-99006 FORMAT (5D16.8/2D16.8, 16x, 2D16.8)
-99007 FORMAT (/' ERROR IN PROCESSING thermo.inp AT OR NEAR ', A15, &
+          end if
+        end do
+      end if
+      return
+ 400  write(IOOUT, 99007) name
+      Readok = .false.
+      return
+99001 format (4F10.3, a10)
+99002 format (a15, a65)
+99003 format (i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)
+99004 format (' ', a15, 2x, a6, e15.6, 2x, a65)
+99005 format (2F11.3, i1, 8F5.1, 2x, f15.3)
+99006 format (5D16.8/2D16.8, 16x, 2D16.8)
+99007 format (/' ERROR IN PROCESSING thermo.inp AT OR NEAR ', A15, &
               ' (UTHERM)')
-      END
-      SUBROUTINE UTRAN(Readok)
+      end
+      subroutine UTRAN(Readok)
 !***********************************************************************
-! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD FORMAT AND WRITE
-! UNFORMATTED ON I/O UNIT IOTRN.  USES SCRATCH I/O UNIT IOSCH.
+! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
+! UNformatTED ON I/O UNIT IOTRN.  USES SCRATCH I/O UNIT IOSCH.
 !
-! UTRAN IS CALLED FROM SUBROUTINE INPUT AFTER A RECORD WITH 'tran'
+! UTRAN IS CALLED FROM subroutine INPUT AFTER A RECORD WITH 'tran'
 ! IN COLUMNS 1-4 HAS BEEN READ.
 !
 ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY  AND USED BY ITSELF TO
@@ -5911,59 +5813,59 @@
       integer:: i, ic, in, iv, j, k, ncc, nn, ns, nv
       real(8):: cc, tc(36), tcin(6), trcoef(6, 3, 2), vvl
 
-      EQUIVALENCE (tc(1), trcoef(1, 1, 1))
+      equivalence(tc(1), trcoef(1, 1, 1))
       ns = 0
-      REWIND IOSCH
- 100  DO i = 1, 36
+      rewind IOSCH
+ 100  do i = 1, 36
         tc(i) = 0.
-      ENDDO
-      READ (IOINP, 99001) tname, vvl, nv, cc, ncc
-      IF ( tname(1).EQ.'end'.OR.tname(1).EQ.'LAST' ) THEN
-        WRITE (IOTRN) ns
-        REWIND IOSCH
-        DO i = 1, ns
-          READ (IOSCH, ERR=200) tname, trcoef
-          WRITE (IOTRN) tname, trcoef
-        ENDDO
-        GOTO 300
-      ELSE
+      end do
+      read(IOINP, 99001) tname, vvl, nv, cc, ncc
+      if( tname(1) == 'end' .or. tname(1) == 'LAST' ) then
+        write(IOTRN) ns
+        rewind IOSCH
+        do i = 1, ns
+          read(IOSCH, ERR=200) tname, trcoef
+          write(IOTRN) tname, trcoef
+        end do
+        go to 300
+      else
         ic = 0
         iv = 0
         nn = nv + ncc
-        IF ( nv.LE.3.AND.ncc.LE.3 ) THEN
-          DO in = 1, nn
-            READ (IOINP, 99002) vorc, tcin
-            IF ( vorc.EQ.'C' ) THEN
+        if( nv <= 3 .and. ncc <= 3 ) then
+          do in = 1, nn
+            read(IOINP, 99002) vorc, tcin
+            if( vorc == 'C' ) then
               k = 2
               ic = ic + 1
               j = ic
-            ELSE
+            else
               k = 1
               iv = iv + 1
               j = iv
-            ENDIF
-            IF ( j.GT.3 ) GOTO 200
-            DO i = 1, 6
+            end if
+            if( j > 3 ) go to 200
+            do i = 1, 6
               trcoef(i, j, k) = tcin(i)
-            ENDDO
-          ENDDO
+            end do
+          end do
           ns = ns + 1
-          WRITE (IOSCH) tname, trcoef
-          GOTO 100
-        ENDIF
-      ENDIF
- 200  WRITE (IOOUT, 99003) tname
-      Readok = .FALSE.
- 300  RETURN
-99001 FORMAT (2A16, 2X, A1, I1, A1, I1)
-99002 FORMAT (1X, A1, 2F9.2, 4E15.8)
-99003 FORMAT (/' ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)', /1X, &
+          write(IOSCH) tname, trcoef
+          go to 100
+        end if
+      end if
+ 200  write(IOOUT, 99003) tname
+      Readok = .false.
+ 300  return
+99001 format (2A16, 2X, A1, I1, A1, I1)
+99002 format (1X, A1, 2F9.2, 4E15.8)
+99003 format (/' ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)', /1X, &
               2A16)
-      END
-      SUBROUTINE VARFMT(Vx)
+      end
+      subroutine VARFMT(Vx)
 !***********************************************************************
-! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-FORMAT IN
-! VARIABLE FORMAT FMT.
+! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-format IN
+! VARIABLE format FMT.
 !***********************************************************************
       use cea
       implicit none
@@ -5972,17 +5874,17 @@
 ! LOCAL VARIABLES
       integer, save:: i, k
       real(8), save:: vi
-      real(8):: DABS
+      real(8):: dabs
 
-      DO i = 1, Npt
-        vi = DABS(Vx(i))
+      do i = 1, Npt
+        vi = dabs(Vx(i))
         k = 2*i + 3
         Fmt(k) = '5,'
-        IF ( vi.GE.1. ) Fmt(k) = '4,'
-        IF ( vi.GE.10. ) Fmt(k) = '3,'
-        IF ( vi.GE.100. ) Fmt(k) = '2,'
-        IF ( vi.GE.10000. ) Fmt(k) = '1,'
-        IF ( vi.GE.1000000. ) Fmt(k) = '0,'
-      ENDDO
+        if( vi >= 1. ) Fmt(k) = '4,'
+        if( vi >= 10. ) Fmt(k) = '3,'
+        if( vi >= 100. ) Fmt(k) = '2,'
+        if( vi >= 10000. ) Fmt(k) = '1,'
+        if( vi >= 1000000. ) Fmt(k) = '0,'
+      end do
       Fmt(29)(2:) = ' '
-      END
+      end
