@@ -11,12 +11,24 @@ $(RUN): $(SRC) $(INC)
 	$(FC) $(FFLAGS) -o $@ $(SRC)
 
 
-thermo.lib: $(RUN) thermo.inp
+check: check-thermo check-trans check-cea2
+	@echo
+	@echo 'Congratulations! All tests passed.'
+
+check-thermo: $(RUN) thermo.inp
 	echo thermo | ./$(RUN)
+	diff test/thermo.lib thermo.lib
+	diff test/thermo.out thermo.out
 
-
-trans.lib: $(RUN) trans.inp
+check-trans: $(RUN) trans.inp
 	echo trans | ./$(RUN)
+	diff test/trans.lib trans.lib
+	diff test/trans.out trans.out
+
+check-cea2: $(RUN) cea2.inp
+	echo cea2 | ./$(RUN)
+	diff test/cea2.out cea2.out
+	diff test/cea2.plt cea2.plt
 
 
 clean:
