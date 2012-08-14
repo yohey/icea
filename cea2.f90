@@ -16,8 +16,11 @@ program main
       real(8):: xi, xln
       real(8):: dlog
 
-      write(*, 99001)
-      read(*, 99002) prefix
+      write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
+           "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
+           " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
+           //)')
+      read(*, '(a)') prefix
       ln = index(prefix, ' ') - 1
       infile = prefix(1:ln)//'.inp'
       ofile = prefix(1:ln)//'.out'
@@ -32,9 +35,13 @@ program main
       open(IOSCH, STATUS='scratch', FORM='unformatted')
       open(IOTHM, FILE='thermo.lib', FORM='unformatted')
       open(IOTRN, FILE='trans.lib', FORM='unformatted')
-      write(IOOUT, 99006)
-      write(IOOUT, 99007)
-      write(IOOUT, 99006)
+      write(IOOUT, '(/" *******************************************************************************")')
+      write(IOOUT, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
+           " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
+           " AND SANFORD GORDON", /5x, &
+           " REFS: NASA RP-1311, PART I, 1994", &
+           " AND NASA RP-1311, PART II, 1996")')
+      write(IOOUT, '(/" *******************************************************************************")')
       readok = .true.
       Newr = .false.
  100  Iplt = 0
@@ -45,7 +52,7 @@ program main
           if( Oxf(iof) == 0. .and. B0p(1, 1) /= 0. ) then
             do i = 1, Nlm
               if( B0p(i, 1) == 0. .or. B0p(i, 2) == 0. ) then
-                write(IOOUT, 99008)
+                write(IOOUT, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
                 go to 200
               end if
             end do
@@ -93,11 +100,11 @@ program main
               if( Prod(j) == ensert(i) ) then
                 Npr = Npr + 1
                 Jcond(Npr) = j
-                if( .not. Short ) write(IOOUT, 99003) Prod(j)
+                if( .not. Short ) write(IOOUT, '(1X, A16, "INSERTED")') Prod(j)
                 go to 120
               end if
             end do
-            write(IOOUT, 99004) ensert(i)
+            write(IOOUT, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') ensert(i)
  120      continue
         end if
         if( Rkt ) then
@@ -111,11 +118,11 @@ program main
         end if
         if( Nplt > 0 ) then
           open(IOPLT, FILE=Pfile, FORM='formatted')
-          write(IOPLT, 99009) (Pltvar(j), j=1, Nplt)
+          write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j=1, Nplt)
           do i = 1, Iplt
-            write(IOPLT, 99005) (Pltout(i, j), j=1, Nplt)
+            write(IOPLT, '(1x, 1p, 20E12.4)') (Pltout(i, j), j=1, Nplt)
           end do
-          write(IOPLT, 99009) (Pltvar(j), j=1, Nplt)
+          write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j=1, Nplt)
         end if
       end if
  200  if( readok ) go to 100
@@ -126,23 +133,6 @@ program main
       close(IOTRN)
       close(IOPLT)
  400  stop
-99001 format (//' ENTER INPUT FILE NAME WITHOUT .inp EXTENSION.'/  &
-              '   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE', / &
-             ' THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY' &
-             //)
-99002 format (a)
-99003 format (1X, A16, 'INSERTED')
-99004 format (/' WARNING!!!', A16, 'NOT FOUND FOR INSERTION')
-99005 format (1x, 1p, 20E12.4)
-99006 format (/' ***************************************************', &
-              '****************************')
-99007 format (/, 9x, 'NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,', &
-              ' MAY 21, 2004', /19x, 'BY  BONNIE MCBRIDE', &
-              ' AND SANFORD GORDON', /5x, &
-              ' REFS: NASA RP-1311, PART I, 1994', &
-              ' AND NASA RP-1311, PART II, 1996')
-99008 format (/, 'OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)')
-99009 format ('#', 2x, 20A12)
 end program
 
 
@@ -326,7 +316,7 @@ subroutine DETON
             ii = 0
             tem = tt1 - .75*pp1/(Cpr(Npt)*Wmix)
             amm = Wm(Npt)/Wmix
-            if( Detdbg ) write(IOOUT, 99001) Tt
+            if( Detdbg ) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') Tt
 ! LOOP FOR IMPROVING T2/T1 AND P2/P1 INITIAL ESTIMATE.
             do ii = 1, 3
               alfa = amm/tt1
@@ -334,7 +324,7 @@ subroutine DETON
                     /(2.*gam*alfa)
               rk = pp1*alfa
               tt1 = tem + .5*pp1*gam*(rk*rk-1.)/(Wmix*Cpr(Npt)*rk)
-              if( Detdbg ) write(IOOUT, 99002) ii, pp1, tt1
+              if( Detdbg ) write(IOOUT, '(I5, 2E20.8)') ii, pp1, tt1
             end do
             Tp = .true.
             Tt = t1*tt1
@@ -369,7 +359,9 @@ subroutine DETON
               tt1 = tt1*EXP(x2*alam)
               Tt = t1*tt1
               ud = rr1*(Rr*gam*Tt/Wm(Npt))**.5
-              if( Detdbg ) write(IOOUT, 99003) itr, pp1, tt1, rr1, x1, x2
+              if( Detdbg ) write(IOOUT, '(/" ITER =", I2, 5X, "P/P1 =", E15.8, /7X, "T/T1 =", E15.8, 5X, &
+                   "RHO/RHO1 =", E15.8, /7X, "DEL LN P/P1 =", E15.8, 5X, &
+                   "DEL LN T/T1 =", E15.8)') itr, pp1, tt1, rr1, x1, x2
 ! CONVERGENCE TEST
               if( itr < 8 .and. tem > 0.5E-04 ) go to 110
               if( itr < 8 ) then
@@ -382,7 +374,7 @@ subroutine DETON
                   Vmoc(Npt) = ud/(Rr*gm1(Npt)*t1/Wmix)**.5
                 end if
               else
-                write(IOOUT, 99004)
+                write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
                 Npt = Npt - 1
                 Tt = 0.
               end if
@@ -394,7 +386,7 @@ subroutine DETON
               end if
             end if
 ! OUTPUT
-            write(IOOUT, 99005)
+            write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
             call OUT1
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
             do i = 1, 8
@@ -419,7 +411,7 @@ subroutine DETON
                 mmach = i
               end if
             end do
-            write(IOOUT, 99006)
+            write(IOOUT, '(/" UNBURNED GAS"/)')
             Fmt(4) = '13'
             Fmt(5) = ' '
             Fmt(7) = '4,'
@@ -456,11 +448,11 @@ subroutine DETON
                 if( mson > 0 ) Pltout(i+Iplt, mson) = Sonvel(i)
               end do
             end if
-            write(IOOUT, 99007)
+            write(IOOUT, '(/" BURNED GAS"/)')
             Fmt(4) = Fmt(6)
             call OUT2
             if( Trnspt ) call OUT4
-            write(IOOUT, 99008)
+            write(IOOUT, '(/" DETONATION PARAMETERS"/)')
             Fmt(7) = '3,'
             do i = 1, Npt
               V(i) = Ppp(i)/pub(i)
@@ -485,7 +477,7 @@ subroutine DETON
             Iplt = MIN(Iplt+Npt, 500)
             if( Isv == 0 .and. iof == Nof ) go to 200
             if( Np == 1 .and. Nt == 1 ) go to 100
-            write(IOOUT, 99009)
+            write(IOOUT, '(///)')
             Npt = 0
  120        Npt = Npt + 1
             if( Isv == 1 ) Isv = -1
@@ -498,19 +490,6 @@ subroutine DETON
       if( iof < Nof ) go to 100
  200  Tp = .false.
       return
-99001 format (/' T EST.=', F8.2/11X, 'P/P1', 17X, 'T/T1')
-99002 format (I5, 2E20.8)
-99003 format (/' ITER =', I2, 5X, 'P/P1 =', E15.8, /7X, 'T/T1 =', E15.8, 5X, &
-              'RHO/RHO1 =', E15.8, /7X, 'DEL LN P/P1 =', E15.8, 5X, &
-              'DEL LN T/T1 =', E15.8)
-99004 format (/ &
-              ' CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)' &
-              )
-99005 format (//, 21X, 'DETONATION PROPERTIES OF AN IDEAL REACTING GAS')
-99006 format (/' UNBURNED GAS'/)
-99007 format (/' BURNED GAS'/)
-99008 format (/' DETONATION PARAMETERS'/)
-99009 format (///)
 end subroutine
 
 
@@ -631,7 +610,7 @@ subroutine EQLBRM
             En(j+kg, Npt) = En(j, Npt)
             En(j, Npt) = 0.
             if( Prod(j) /= Prod(j+kg) .and. .not. Short )  &
-                 write(IOOUT, 99023) Prod(j), Prod(j+kg)
+                 write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') Prod(j), Prod(j+kg)
           end if
           go to 300
         else if( kc >= Nc .or. Ifz(kc+1) <= Ifz(kc) ) then
@@ -643,7 +622,7 @@ subroutine EQLBRM
         k = 1
         go to 100
       end if
-      write(IOOUT, 99028) Prod(j)
+      write(IOOUT, '(" REMOVE ", A16)') Prod(j)
       En(j, Npt) = 0.D0
       Enln(j) = 0.D0
       Deln(j) = 0.D0
@@ -673,8 +652,10 @@ subroutine EQLBRM
       lelim = 0
       lz = ls
       if( Ions ) lz = ls - 1
-      if( Npt == 1 .and. .not. Shock .and. .not. Short ) write(IOOUT, 99001) &
-           (Elmt(i), i=1, Nlm)
+      if( Npt == 1 .and. .not. Shock .and. .not. Short ) then
+         write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))') &
+              (Elmt(i), i=1, Nlm)
+      end if
       if( Debug(Npt) ) then
         do i = 1, Nlm
           cmp(i) = Elmt(i)
@@ -700,22 +681,22 @@ subroutine EQLBRM
       if( Convg ) Imat = Imat - 1
       if( Debug(Npt) ) then
         if( .not. Convg ) then
-          write(IOOUT, 99004) numb
+          write(IOOUT, '(/" ITERATION", I3, 6X, "MATRIX ")') numb
         else
-          if( .not. Pderiv ) write(IOOUT, 99002)
-          if( Pderiv ) write(IOOUT, 99003)
+          if( .not. Pderiv ) write(IOOUT, '(/" T DERIV MATRIX")')
+          if( Pderiv ) write(IOOUT, '(/" P DERIV MATRIX")')
         end if
         kmat = Imat + 1
         do i = 1, Imat
-          write(IOOUT, 99006) (G(i, k), k=1, kmat)
+          write(IOOUT, '(3X, 5E15.6)') (G(i, k), k=1, kmat)
         end do
       end if
       Msing = 0
       call GAUSS
       if( Msing == 0 ) then
         if( Debug(Npt) ) then
-          write(IOOUT, 99005) (cmp(k), k=1, le)
-          write(IOOUT, 99006) (X(i), i=1, Imat)
+          write(IOOUT, '(/" SOLUTION VECTOR", /, 6x, 5A15/8X, 5A15)') (cmp(k), k=1, le)
+          write(IOOUT, '(3X, 5E15.6)') (X(i), i=1, Imat)
         end if
         if( .not. Convg ) then
 ! OBTAIN CORRECTIONS TO THE ESTIMATES
@@ -778,17 +759,19 @@ subroutine EQLBRM
           end if
           if( Debug(Npt) ) then
 ! INTERMEDIATE OUTPUT
-            write(IOOUT, 99011) Tt, Enn, Ennl, Pp, Tm, ambda
+            write(IOOUT, '(/" T=", E15.8, " ENN=", E15.8, " ENNL=", E15.8, " PP=", E15.8, &
+              /" LN P/N=", E15.8, " AMBDA=", E15.8)') Tt, Enn, Ennl, Pp, Tm, ambda
             if( ambda /= 1.D0 ) then
               amb = 'ENN'
               if( dabs(X(iq2)) > dabs(X(Iq1)) ) amb = 'TEMP'
               if( ilamb /= 0 ) amb = Prod(ilamb)
-              write(IOOUT, 99012) amb
+              write(IOOUT, '(/" AMBDA SET BY ", A16)') amb
             end if
-            if( Vol ) write(IOOUT, 99013) Vv*.001D0
-            write(IOOUT, 99014)
+            if( Vol ) write(IOOUT, '(" VOLUME=", E15.8, "CC/G")') Vv*.001D0
+            write(IOOUT, '(/24X, "Nj", 12X, "LN Nj", 8X, "DEL LN Nj", 6X, "H0j/RT", /, 41X, &
+              "S0j/R", 10X, " G0j/RT", 8X, " Gj/RT")')
             do j = 1, Ngc
-              write(IOOUT, 99015) Prod(j), En(j, Npt), Enln(j), Deln(j), &
+              write(IOOUT, '(1X, A16, 4E15.6, /35x, 3E15.6)') Prod(j), En(j, Npt), Enln(j), Deln(j), &
                              H0(j), S(j), H0(j) - S(j), Mu(j)
             end do
           end if
@@ -856,13 +839,14 @@ subroutine EQLBRM
           end if
 ! TEST FOR CONVERGENCE
  560      if( numb > maxitn ) then
-            write(IOOUT, 99019) maxitn, Npt
+            write(IOOUT, '(/, I4, " ITERATIONS DID NOT SATISFY CONVERGENCE", /, 15x, &
+              " REQUIREMENTS FOR THE POINT", I5, " (EQLBRM)")') maxitn, Npt
             if( Nc == 0 .or. i2many ) go to 1500
             i2many = .true.
             if( .not. Hp .or. Npt /= 1 .or. Tt > 100. ) then
               if( Npr /= 1 .or. Enn > 1.E-4 ) go to 1500
 ! HIGH TEMPERATURE, INCLUDED CONDENSED CONDITION
-              write(IOOUT, 99020)
+              write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
               Enn = .1
               Ennl = -2.3025851
               Sumn = Enn
@@ -877,7 +861,9 @@ subroutine EQLBRM
               k = 1
               go to 1000
             else
-              write(IOOUT, 99008)
+              write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
+              "VE BEEN INSERTED,", &
+              /" RESTART WITH insert DATASET (EQLBRM)")')
               go to 1500
             end if
           else
@@ -956,12 +942,12 @@ subroutine EQLBRM
                     if( A(ls, j) /= 0. ) Enln(j) = Enln(j) + A(ls, j) &
                          *dpie
                   end do
-                  if( Debug(Npt) ) write(IOOUT, 99016) iter, dpie
+                  if( Debug(Npt) ) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", I4, "  DELTA PI =", E14.7)') iter, dpie
                   if( dabs(dpie) > .0001 ) then
                     X(le) = X(le) + dpie
                     iter = iter + 1
                     if( iter <= 80 ) go to 566
-                    write(IOOUT, 99017)
+                    write(IOOUT, '(/" DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)")')
                     go to 1500
                   else if( Elmt(Nlm) == 'E' .and. pie /= 0. ) then
                     Nlm = Nlm - 1
@@ -997,14 +983,15 @@ subroutine EQLBRM
 ! SINGULAR MATRIX
       else
         if( Convg ) then
-          write(IOOUT, 99007)
+          write(IOOUT, '(/" DERIVATIVE MATRIX SINGULAR (EQLBRM)")')
           Dlvpt(Npt) = -1.
           Dlvtp(Npt) = 1.
           Cpr(Npt) = Cpsum
           Gammas(Npt) = -1./(Dlvpt(Npt)+(Dlvtp(Npt)**2)*Enn/Cpr(Npt))
           go to 1400
         else
-          write(IOOUT, 99009) numb, Msing
+          write(IOOUT, '(/" SINGULAR MATRIX, ITERATION", I3, "  VARIABLE", I3, &
+              "(EQLBRM)")') numb, Msing
           lsing = Msing
           ixsing = ixsing + 1
           if( ixsing <= 8 ) then
@@ -1030,7 +1017,7 @@ subroutine EQLBRM
                 end if
  570          continue
               if( j > 0 ) then
-                write(IOOUT, 99020)
+                write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
                 go to 1000
               end if
             else if( .not. Hp .or. Npt /= 1 .or. Nc == 0 .or. Tt > 100. ) then
@@ -1038,7 +1025,12 @@ subroutine EQLBRM
                 if( Msing < Iq1 ) then
                   if( reduce .and. Msing <= Nlm ) then
                     if( Nlm < lelim ) go to 1500
-                    write(IOOUT, 99010) Npt, Elmt(Nlm)
+                    write(IOOUT, '(/" WARNING!! POINT", I3, &
+              " USES A REDUCED SET OF COMPONENTS", / &
+             " SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.", &
+             / &
+         " IT MAY BE NECESSARY TO RERUN WITH INSERTED CONDENSED SPECIES", &
+         /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') Npt, Elmt(Nlm)
                     Nlm = Nlm - 1
                     go to 500
                   else if( Msing <= Nlm ) then
@@ -1076,7 +1068,9 @@ subroutine EQLBRM
  575          continue
               go to 500
             else
-              write(IOOUT, 99008)
+              write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
+              "VE BEEN INSERTED,", &
+              /" RESTART WITH insert DATASET (EQLBRM)")')
             end if
           end if
         end if
@@ -1098,14 +1092,15 @@ subroutine EQLBRM
       else
         tem = Ssum(Npt) - S0
         if( dabs(tem) > .0005 ) go to 500
-        if( Debug(Npt) ) write(IOOUT, 99018) tem
+        if( Debug(Npt) ) write(IOOUT, '(/" DELTA S/R =", E15.8)') tem
         Convg = .true.
       end if
 ! CONVERGENCE TESTS ARE SATISFIED, TEST CONDENSED SPECIES.
  700  ncvg = ncvg + 1
       if( ncvg > lncvg ) then
 ! ERROR, SET TT=0
-        write(IOOUT, 99034) lncvg
+        write(IOOUT, '(/, I3, " CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED", &
+              " SPECIES (EQLBRM)")') lncvg
         go to 1500
       else
         if( .not. Shock ) then
@@ -1113,11 +1108,13 @@ subroutine EQLBRM
             xx(il) = X(il)
           end do
           if( .not. Short ) then
-            if( newcom ) write(IOOUT, 99021) (cmp(k), k=1, le)
-            write(IOOUT, 99022) Npt, numb, Tt, (xx(il), il=1, le)
+            if( newcom ) write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4A12/(18X, 5A12))') (cmp(k), k=1, le)
+            write(IOOUT, '(I4, I5, 5F12.3, /(12X, 5F12.3))') Npt, numb, Tt, (xx(il), il=1, le)
           end if
           if( .not. Tp .and. Npr == 0 .and. Tt <= Tg(1)*.2D0 ) then
-            write(IOOUT, 99008)
+            write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
+              "VE BEEN INSERTED,", &
+              /" RESTART WITH insert DATASET (EQLBRM)")')
             go to 1500
           end if
           newcom = .false.
@@ -1183,7 +1180,7 @@ subroutine EQLBRM
           szgj = 0.
           do inc = 1, Nc
             j = inc + Ng
-            if( Debug(Npt) ) write(IOOUT, 99024) Prod(j), Temp(1, inc), &
+            if( Debug(Npt) ) write(IOOUT, '(/1X, A15, 2F10.3, 3X, E15.7)') Prod(j), Temp(1, inc), &
                                      Temp(2, inc), En(j, Npt)
             if( En(j, Npt) <= 0. ) then
               if( Tt > Temp(1, inc) .or. Temp(1, inc) == Tg(1) ) then
@@ -1202,7 +1199,8 @@ subroutine EQLBRM
                     end if
                     ipr = ipr - 1
                   end if
-                  if( Debug(Npt) ) write(IOOUT, 99025) delg, sizeg
+                  if( Debug(Npt) ) write(IOOUT, '(" [G0j-SUM(Aij*PIi)]/Mj =", E15.7, 9X, "MAX NEG DELTA G =", &
+              E15.7)') delg, sizeg
                 end if
               end if
             end if
@@ -1212,7 +1210,8 @@ subroutine EQLBRM
             j = jdelg
             go to 800
           else
-            write(IOOUT, 99026) Prod(jcons)
+            write(IOOUT, '(/" REINSERTION OF ", A16, " LIKELY TO CAUSE SINGULARITY, ", &
+              "(EQLBRM)")') Prod(jcons)
             go to 1500
           end if
  720      kk = MAX(0, kg)
@@ -1230,7 +1229,7 @@ subroutine EQLBRM
           Jcond(ipr) = jkg
           En(j, Npt) = 0.
           jsw = j
-          if( Prod(j) /= Prod(jkg) .and. .not. Short ) write(IOOUT, 99023) &
+          if( Prod(j) /= Prod(jkg) .and. .not. Short ) write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') &
                Prod(j), Prod(jkg)
           j = jkg
           go to 900
@@ -1263,7 +1262,7 @@ subroutine EQLBRM
         i = i - 1
       end do
       Jcond(1) = j
-      if( .not. Short ) write(IOOUT, 99027) Prod(j)
+      if( .not. Short ) write(IOOUT, '(" ADD ", A16)') Prod(j)
  900  inc = j - Ng
       Convg = .false.
       if( Tp ) cpcalc = .false.
@@ -1276,7 +1275,7 @@ subroutine EQLBRM
       do i = k, Npr
         Jcond(i) = Jcond(i+1)
       end do
-      if( .not. Short ) write(IOOUT, 99028) Prod(j)
+      if( .not. Short ) write(IOOUT, '(" REMOVE ", A16)') Prod(j)
       Npr = Npr - 1
       do i = 1, Nlm
         if( cmp(i) == Prod(j) ) then
@@ -1377,8 +1376,8 @@ subroutine EQLBRM
           end if
         end do
         if( Debug(Npt) ) then
-          write(IOOUT, 99029)
-          write(IOOUT, 99030) (cmp(k), k=1, nn)
+          write(IOOUT, '(/" NEW COMPONENTS")')
+          write(IOOUT, '(/2x, 6A12)') (cmp(k), k=1, nn)
         end if
       end if
       if( Msing /= 0 ) then
@@ -1431,7 +1430,8 @@ subroutine EQLBRM
       Hsum(Npt) = Hsum(Npt)*Tt
       Wm(Npt) = 1./Enn
       gasfrc = Enn/Totn(Npt)
-      if( gasfrc < .0001 ) write(IOOUT, 99031) Npt, gasfrc
+      if( gasfrc < .0001 ) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", I3, " DUE TO", &
+              /" LOW MOLE FRACTION OF GASES (", E15.8, ") (EQLBRM)")') Npt, gasfrc
       if( Trace /= 0. ) then
         do 1450 j = 1, Ng
           if( lelim /= 0 ) then
@@ -1442,75 +1442,25 @@ subroutine EQLBRM
           if( Enln(j) > -87. ) En(j, Npt) = dexp(Enln(j))
  1450   continue
       end if
-      if( Debug(Npt) ) write(IOOUT, 99032) Npt, Pp, Tt, Hsum(Npt), &
+      if( Debug(Npt) ) write(IOOUT, '(/" POINT=", I3, 3X, "P=", E13.6, 3X, "T=", E13.6, /3X, "H/R=", &
+              E13.6, 3X, "S/R=", E13.6, /3X, "M=", E13.6, 3X, "CP/R=", E13.6, 3X, &
+              "DLVPT=", E13.6, /3X, "DLVTP=", E13.6, 3X, "GAMMA(S)=", E13.6, 3X, &
+              "V=", E13.6)') Npt, Pp, Tt, Hsum(Npt), &
                             Ssum(Npt), Wm(Npt), Cpr(Npt), Dlvpt(Npt), &
                                   Dlvtp(Npt), Gammas(Npt), Vlm(Npt)
       if( Tt >= Tg(1) .and. Tt <= Tg(4) ) go to 1600
       if( Shock ) go to 1600
-      write(IOOUT, 99033) Tt, Npt
+      write(IOOUT, '(" THE TEMPERATURE=", E12.4, " IS OUT OF RANGE FOR POINT", I5, &
+              "(EQLBRM)")') Tt, Npt
       if( Tt >= Tg(1)*.8D0 .and. Tt <= Tg(4)*1.1D0 ) go to 1600
       Npt = Npt + 1
  1500 Tt = 0.
       Npt = Npt - 1
-      write(IOOUT, 99035) Npt
+      write(IOOUT, '(/" CALCULATIONS STOPPED AFTER POINT", I3, "(EQLBRM)")') Npt
  1600 Lsave = Nlm
       Nlm = ls
       if( Npr > 0 ) Gonly = .false.
       return
-99001 format (/' POINT ITN', 6X, 'T', 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))
-99002 format (/' T DERIV MATRIX')
-99003 format (/' P DERIV MATRIX')
-99004 format (/' ITERATION', I3, 6X, 'MATRIX ')
-99005 format (/' SOLUTION VECTOR', /, 6x, 5A15/8X, 5A15)
-99006 format (3X, 5E15.6)
-99007 format (/' DERIVATIVE MATRIX SINGULAR (EQLBRM)')
-99008 format (/' LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA', &
-              'VE BEEN INSERTED,', &
-              /' RESTART WITH insert DATASET (EQLBRM)')
-99009 format (/' SINGULAR MATRIX, ITERATION', I3, '  VARIABLE', I3, &
-              '(EQLBRM)')
-99010 format (/' WARNING!! POINT', I3, &
-              ' USES A REDUCED SET OF COMPONENTS', / &
-             ' SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.', &
-             / &
-         ' IT MAY BE NECESSARY TO RERUN WITH INSERTED CONDENSED SPECIES', &
-         /' CONTAINING COMPONENT ', A8, '(EQLBRM)')
-99011 format (/' T=', E15.8, ' ENN=', E15.8, ' ENNL=', E15.8, ' PP=', E15.8, &
-              /' LN P/N=', E15.8, ' AMBDA=', E15.8)
-99012 format (/' AMBDA SET BY ', A16)
-99013 format (' VOLUME=', E15.8, 'CC/G')
-99014 format (/24X, 'Nj', 12X, 'LN Nj', 8X, 'DEL LN Nj', 6X, 'H0j/RT', /, 41X, &
-              'S0j/R', 10X, ' G0j/RT', 8X, ' Gj/RT')
-99015 format (1X, A16, 4E15.6, /35x, 3E15.6)
-99016 format (/' ELECTRON BALANCE ITER NO. =', I4, '  DELTA PI =', E14.7)
-99017 format (/' DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)')
-99018 format (/' DELTA S/R =', E15.8)
-99019 format (/, I4, ' ITERATIONS DID NOT SATISFY CONVERGENCE', /, 15x, &
-              ' REQUIREMENTS FOR THE POINT', I5, ' (EQLBRM)')
-99020 format (/' TRY REMOVING CONDENSED SPECIES (EQLBRM)')
-99021 format (/' POINT ITN', 6X, 'T', 10X, 4A12/(18X, 5A12))
-99022 format (I4, I5, 5F12.3, /(12X, 5F12.3))
-99023 format (' PHASE CHANGE, REPLACE ', A16, 'WITH ', A16)
-99024 format (/1X, A15, 2F10.3, 3X, E15.7)
-99025 format (' [G0j-SUM(Aij*PIi)]/Mj =', E15.7, 9X, 'MAX NEG DELTA G =', &
-              E15.7)
-99026 format (/' REINSERTION OF ', A16, ' LIKELY TO CAUSE SINGULARITY, ', &
-              '(EQLBRM)')
-99027 format (' ADD ', A16)
-99028 format (' REMOVE ', A16)
-99029 format (/' NEW COMPONENTS')
-99030 format (/2x, 6A12)
-99031 format (/' WARNING!  RESULTS MAY BE WRONG FOR POINT', I3, ' DUE TO', &
-              /' LOW MOLE FRACTION OF GASES (', E15.8, ') (EQLBRM)')
-99032 format (/' POINT=', I3, 3X, 'P=', E13.6, 3X, 'T=', E13.6, /3X, 'H/R=', &
-              E13.6, 3X, 'S/R=', E13.6, /3X, 'M=', E13.6, 3X, 'CP/R=', E13.6, 3X, &
-              'DLVPT=', E13.6, /3X, 'DLVTP=', E13.6, 3X, 'GAMMA(S)=', E13.6, 3X, &
-              'V=', E13.6)
-99033 format (' THE TEMPERATURE=', E12.4, ' IS OUT OF RANGE FOR POINT', I5, &
-              '(EQLBRM)')
-99034 format (/, I3, ' CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED', &
-              ' SPECIES (EQLBRM)')
-99035 format (/' CALCULATIONS STOPPED AFTER POINT', I3, '(EQLBRM)')
 end subroutine
 
 
@@ -1584,11 +1534,10 @@ subroutine FROZEN
           Tt = dexp(Tln)
         end if
       end do
-      write(IOOUT, 99001)
+      write(IOOUT, '(/" FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)")')
  100  Tt = 0.
       Npt = Npt - 1
  200  return
-99001 format (/' FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)')
 end subroutine
 
 
@@ -1731,7 +1680,7 @@ subroutine HCALC
             if( Rname(n) == Prod(j) .or. '*'//Rname(n) == Prod(j) ) then
               Jray(n) = j
               if( j > Ng ) then
-                write(IOOUT, 99001)
+                write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
                 go to 20
               end if
               go to 50
@@ -1772,14 +1721,15 @@ subroutine HCALC
                 end do
                 go to 50
               else
-                if( ifaz > 0 ) write(IOOUT, 99001)
-                if( nint == 0 ) write(IOOUT, 99002) Rname(n)
+                if( ifaz > 0 ) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
+                if( nint == 0 ) write(IOOUT, '(/" COEFFICIENTS FOR ", A15, " ARE NOT AVAILABLE (HCALC)")') Rname(n)
                 go to 20
               end if
             end if
           end do
           Nspr = Nspr - 1
-          write(IOOUT, 99003) Rname(n)
+          write(IOOUT, '(/" ERROR IN DATA FOR ", A15, " CHECK NAME AND TEMPERATURE", &
+              " RANGE IN", /, " thermo.inp (HCALC)")') Rname(n)
           Energy(n) = ' '
  20       Tt = 0.
           Cpmix = 0.
@@ -1819,10 +1769,6 @@ subroutine HCALC
       end do
       if( tsave /= 0. ) Tt = tsave
  100  return
-99001 format (/' REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)')
-99002 format (/' COEFFICIENTS FOR ', A15, ' ARE NOT AVAILABLE (HCALC)')
-99003 format (/' ERROR IN DATA FOR ', A15, ' CHECK NAME AND TEMPERATURE', &
-              ' RANGE IN', /, ' thermo.inp (HCALC)')
 end subroutine
 
 
@@ -1877,7 +1823,7 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
       ch1(1) = ' '
       nch1 = 1
 ! READ CHARACTERS, ONE AT A TIME
-      read(IOINP, 99001, END=500, ERR=500) ch1
+      read(IOINP, '(132A1)', END=500, ERR=500) ch1
 ! FIND FIRST AND LAST NON-BLANK CHARACTER
       do i = 132, 1, - 1
         nch1 = i
@@ -1888,7 +1834,7 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
         if( ch1(i) /= ' ' .and. ch1(i) /= '	' ) go to 300
       end do
  300  if( nch1 == 1 .or. ch1(ich1) == '#' .or. ch1(ich1) == '!' ) then
-        write(IOOUT, 99002) (ch1(i), i=1, nch1)
+        write(IOOUT, '(1x, 80A1)') (ch1(i), i=1, nch1)
         go to 100
       end if
       w1 = ch1(ich1)//ch1(ich1+1)//ch1(ich1+2)//ch1(ich1+3)
@@ -1899,7 +1845,7 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
         if( Ncin == 1 ) then
           Cin(Ncin) = w1
           if( w1(1:3) == 'end' .or. w1 == 'ther' .or. w1 == 'tran' ) then
-            write(IOOUT, 99002) (ch1(i), i=1, nch1)
+            write(IOOUT, '(1x, 80A1)') (ch1(i), i=1, nch1)
             return
           end if
           ich1 = ich1 + 4
@@ -1912,10 +1858,10 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
           return
         end if
       else if( Ncin == 1 ) then
-        write(IOOUT, 99003)
+        write(IOOUT, '(/" FATAL ERROR IN INPUT format (INFREE)")')
         go to 500
       end if
-      write(IOOUT, 99002) (ch1(i), i=1, nch1)
+      write(IOOUT, '(1x, 80A1)') (ch1(i), i=1, nch1)
       do 400 i = ich1, nch1
         cx = ch1(i)
 ! LOOK FOR DELIMITER STRINGS
@@ -1952,7 +1898,7 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
             read(cnum, fmtl, ERR=320) Dpin(Ncin)
           end if
           go to 340
- 320      if( Cin(Ncin-1)(:4) /= 'case' ) write(IOOUT, 99004) Cin(i)
+ 320      if( Cin(Ncin-1)(:4) /= 'case' ) write(IOOUT, '(/" WARNING!!  UNACCEPTABLE NUMBER ", A15, " (INFREE)")') Cin(i)
           Lcin(Ncin) = 0
  340      Ncin = Ncin + 1
           Cin(Ncin) = ' '
@@ -1971,10 +1917,6 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
       go to 100
  500  Readok = .false.
       return
-99001 format (132A1)
-99002 format (1x, 80A1)
-99003 format (/' FATAL ERROR IN INPUT format (INFREE)')
-99004 format (/' WARNING!!  UNACCEPTABLE NUMBER ', A15, ' (INFREE)')
 end subroutine
 
 
@@ -2001,7 +1943,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
       real(8), save:: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
       real(8):: dabs, dmin1, dsqrt
 
-      write(IOOUT, 99001)
+      write(IOOUT, '(/, /)')
       Caseok = .true.
       Nonly = 0
       Nomit = 0
@@ -2047,7 +1989,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
           rewind IOTHM
           call UTHERM(Readok)
           if( .not. Readok ) then
-            write(IOOUT, 99025)
+            write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
             go to 400
           end if
 ! KEYWORD 'TRAN' READ
@@ -2055,7 +1997,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
         else if( code == 'tran' ) then
           call UTRAN(Readok)
           if( .not. Readok ) then
-            write(IOOUT, 99025)
+            write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
             go to 400
           end if
 ! PROCESS 'OUTP' DATASET.
@@ -2090,7 +2032,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
               else if( cx2 == 'pl' ) then
                 pltdat = .true.
               else
-                write(IOOUT, 99002) cin(i)
+                write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", A15, " (INPUT)"/)') cin(i)
               end if
             end if
  120      continue
@@ -2107,7 +2049,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
           if( i <= ncin ) then
             if( lcin(i) /= 0 ) then
               if( lcin(i) > 0 ) then
-                write(IOOUT, 99003) cin(i)
+                write(IOOUT, '(/" WARNING!!  LITERAL EXPECTED FOR ", A15, "(INPUT)")') cin(i)
                 go to 140
               end if
               cx15 = cin(i)
@@ -2124,13 +2066,13 @@ subroutine INPUT(Readok, Caseok, Ensert)
                     Pecwt(Nreac) = dpin(i)
                   else
                     Caseok = .false.
-                    write(IOOUT, 99004)
+                    write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
                   end if
                   if( cx1 == 'm' .and. Nreac == 1 ) Moles = .true.
                   if( cx1 == 'm' .and. .not. Moles .or. cx1 == 'w' .and.  &
                        Moles ) then
                     Caseok = .false.
-                    write(IOOUT, 99005)
+                    write(IOOUT, '(/" MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)")')
                   end if
                   go to 140
                 end if
@@ -2148,7 +2090,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
                            = (Rtemp(Nreac)-32.D0)/1.8D0 + 273.15D0
                     end if
                   else
-                    write(IOOUT, 99006)
+                    write(IOOUT, '(/" REACTANT TEMPERATURE MISSING (INPUT) ")')
                     Caseok = .false.
                   end if
                   go to 140
@@ -2195,7 +2137,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
                   i = i + 1
                   go to 140
                 end if
-                write(IOOUT, 99007) cin(i)
+                write(IOOUT, '(/" WARNING!! ", A15, " NOT RECOGNIZED (INPUT)")') cin(i)
               else
                 Nreac = MIN(Nreac+1, maxR)
                 Fox(Nreac) = cx15
@@ -2334,7 +2276,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
               else if( cx4 == 'ions' ) then
                 Ions = .true.
               else
-                write(IOOUT, 99002) cx15
+                write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", A15, " (INPUT)"/)') cx15
               end if
               lcin(i) = 0
             end if
@@ -2357,33 +2299,38 @@ subroutine INPUT(Readok, Caseok, Ensert)
           if( Siunit ) R = Rr/1000.
           if( Detn .or. Shock ) Newr = .true.
           if( .not. Short ) then
-            write(IOOUT, 99008) Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), &
+            write(IOOUT, '(/" OPTIONS: TP=", L1, "  HP=", L1, "  SP=", L1, "  TV=", L1, &
+              "  UV=", L1, "  SV=", L1, "  DETN=", L1, "  SHOCK=", L1, &
+              "  REFL=", L1, "  INCD=", L1, /" RKT=", L1, "  FROZ=", L1, &
+              "  EQL=", L1, "  IONS=", L1, "  SIUNIT=", L1, "  DEBUGF=", L1, &
+              "  SHKDBG=", L1, "  DETDBG=", L1, "  TRNSPT=", L1)') Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), &
                             (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
                             incd, Rkt, Froz, Eql, Ions, Siunit, Debugf, Shkdbg, &
                             Detdbg, Trnspt
-            if( T(1) > 0. ) write(IOOUT, 99009) (T(jj), jj=1, Nt)
-            write(IOOUT, 99010) Trace, S0, hr, ur
-            if( Np > 0 .and. Vol ) write(IOOUT, 99011) &
+            if( T(1) > 0. ) write(IOOUT, '(/" T,K =", 7F11.4)') (T(jj), jj=1, Nt)
+            write(IOOUT, '(/1p, " TRACE=", E9.2, "  S/R=", E13.6, "  H/R=", E13.6, "  U/R=", &
+              E13.6)') Trace, S0, hr, ur
+            if( Np > 0 .and. Vol ) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4E14.7))') &
                  (V(jj)*1.D-05, jj=1, Np)
           end if
           if( Rkt ) then
             if( Nt == 0 ) Hp = .true.
             if( .not. Short ) then
-              write(IOOUT, 99012) (P(jj), jj=1, Np)
-              write(IOOUT, 99013) (Pcp(jj), jj=1, Npp)
-              write(IOOUT, 99014) (Subar(i), i=1, Nsub)
-              write(IOOUT, 99015) (Supar(i), i=1, Nsup)
-              write(IOOUT, 99016) Nfz, Ma, Acat
+              write(IOOUT, '(/" Pc,BAR =", 7F13.6)') (P(jj), jj=1, Np)
+              write(IOOUT, '(/" Pc/P =", 9F11.4)') (Pcp(jj), jj=1, Npp)
+              write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5F11.4))') (Subar(i), i=1, Nsub)
+              write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5F11.4))') (Supar(i), i=1, Nsup)
+              write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') Nfz, Ma, Acat
             end if
           else
-            if( .not. Vol .and. .not. Short ) write(IOOUT, 99017) &
+            if( .not. Vol .and. .not. Short ) write(IOOUT, '(/" P,BAR =", 7F13.6)') &
                  (P(jj), jj=1, Np)
           end if
           if( reacts ) call REACT
           if( Nreac == 0 .or. Nlm <= 0 ) then
-            write(IOOUT, 99018)
+            write(IOOUT, '(/" ERROR IN REACTANTS DATASET (INPUT)")')
             Caseok = .false.
-            write(IOOUT, 99025)
+            write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
             go to 400
           end if
           if( Nof == 0 ) then
@@ -2393,8 +2340,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
               Oxf(1) = Wp(1)/Wp(2)
             else
               Caseok = .false.
-              write(IOOUT, 99004)
-              write(IOOUT, 99025)
+              write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
+              write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
               go to 400
             end if
           else if( phi .or. eqrats ) then
@@ -2409,8 +2356,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
               end if
               if( dabs(denmtr) < 1.D-30 ) then
                 Caseok = .false.
-                write(IOOUT, 99019) eratio
-                write(IOOUT, 99025)
+                write(IOOUT, '(/" UNABLE TO PROCESS EQUIVALENCE RATIO =", E11.4, "(INPUT)")') eratio
+                write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 go to 400
               end if
               Oxf(i) = xyz/denmtr
@@ -2419,18 +2366,20 @@ subroutine INPUT(Readok, Caseok, Ensert)
           if( .not. Sp .and. .not. Tp .and. .not. Hp .and. .not. Rkt .and.  &
                .not. Detn .and. .not. Shock ) then
             Caseok = .false.
-            write(IOOUT, 99020)
+            write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
           else if( Tp .and. T(1) <= 0. ) then
             Caseok = .false.
-            write(IOOUT, 99021)
+            write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", &
+              " DATASET (INPUT)")')
           else if( Np <= 0 ) then
             Caseok = .false.
-            write(IOOUT, 99022)
+            write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", &
+              " DATASET (INPUT)")')
           end if
-          if( .not. (Caseok .and. Nlm > 0) ) write(IOOUT, 99025)
+          if( .not. (Caseok .and. Nlm > 0) ) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
           go to 400
         else
-          write(IOOUT, 99023)
+          write(IOOUT, '(/" WARNING!!  A KEYWORD IS MISSING (INPUT)")')
         end if
       end if
       go to 100
@@ -2465,7 +2414,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Nt = nmix
         if( nmix > maxMix ) then
           Nt = maxMix
-          write(IOOUT, 99024) 't', Nt
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 't', Nt
         end if
         do i = 1, Nt
           if( cx4 /= 'tces' ) then
@@ -2483,7 +2433,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Npp = nmix
         if( nmix > 2*Ncol ) then
           Npp = 2*Ncol
-          write(IOOUT, 99024) 'pcp', Npp
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'pcp', Npp
         end if
         do i = 1, Npp
           Pcp(i) = mix(i)
@@ -2492,7 +2443,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Np = nmix
         if( nmix > maxPv ) then
           Np = maxPv
-          write(IOOUT, 99024) 'p', Np
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'p', Np
         end if
         do 350 i = 1, Np
           P(i) = mix(i)
@@ -2511,7 +2463,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Np = nmix
         if( nmix > maxPv ) then
           Np = maxPv
-          write(IOOUT, 99024) 'rho', Np
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'rho', Np
         end if
         do i = 1, Np
           V(i) = xyz/mix(i)
@@ -2522,7 +2475,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Np = nmix
         if( nmix > maxPv ) then
           Np = maxPv
-          write(IOOUT, 99024) 'v', Np
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'v', Np
         end if
         do i = 1, Np
           V(i) = mix(i)*xyz
@@ -2544,7 +2498,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Nsk = nmix
         if( nmix > Ncol ) then
           Nsk = Ncol
-          write(IOOUT, 99024) 'u1', Nsk
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'u1', Nsk
         end if
         do i = 1, Nsk
           U1(i) = mix(i)
@@ -2553,7 +2508,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Nsk = nmix
         if( nmix > Ncol ) then
           Nsk = Ncol
-          write(IOOUT, 99024) 'mach1', Nsk
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'mach1', Nsk
         end if
         do i = 1, Nsk
           Mach1(i) = mix(i)
@@ -2562,7 +2518,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Nsub = nmix
         if( nmix > 13 ) then
           Nsub = 13
-          write(IOOUT, 99024) 'subar', Nsub
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'subar', Nsub
         end if
         do i = 1, Nsub
           Subar(i) = mix(i)
@@ -2571,7 +2528,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Nsup = nmix
         if( nmix > 13 ) then
           Nsup = 13
-          write(IOOUT, 99024) 'supar', Nsup
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'supar', Nsup
         end if
         do i = 1, Nsup
           Supar(i) = mix(i)
@@ -2589,7 +2547,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
         Nof = nmix
         if( nmix > maxMix ) then
           Nof = maxMix
-          write(IOOUT, 99024) 'o/f', Nof
+          write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
+              " (INPUT)", /)') 'o/f', Nof
         end if
         do k = 1, Nof
           Oxf(k) = mix(k)
@@ -2608,44 +2567,11 @@ subroutine INPUT(Readok, Caseok, Ensert)
           end do
         end if
       else
-        write(IOOUT, 99002) cx15
+        write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", A15, " (INPUT)"/)') cx15
       end if
       if( iv >= ncin ) go to 100
       go to 200
  400  return
-99001 format (/, /)
-99002 format ('  WARNING!!  DID NOT RECOGNIZE ', A15, ' (INPUT)'/)
-99003 format (/' WARNING!!  LITERAL EXPECTED FOR ', A15, '(INPUT)')
-99004 format (/' REACTANT AMOUNT MISSING (INPUT)')
-99005 format (/' MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)')
-99006 format (/' REACTANT TEMPERATURE MISSING (INPUT) ')
-99007 format (/' WARNING!! ', A15, ' NOT RECOGNIZED (INPUT)')
-99008 format (/' OPTIONS: TP=', L1, '  HP=', L1, '  SP=', L1, '  TV=', L1, &
-              '  UV=', L1, '  SV=', L1, '  DETN=', L1, '  SHOCK=', L1, &
-              '  REFL=', L1, '  INCD=', L1, /' RKT=', L1, '  FROZ=', L1, &
-              '  EQL=', L1, '  IONS=', L1, '  SIUNIT=', L1, '  DEBUGF=', L1, &
-              '  SHKDBG=', L1, '  DETDBG=', L1, '  TRNSPT=', L1)
-99009 format (/' T,K =', 7F11.4)
-99010 format (/1p, ' TRACE=', E9.2, '  S/R=', E13.6, '  H/R=', E13.6, '  U/R=', &
-              E13.6)
-99011 format (/' SPECIFIC VOLUME,M**3/KG =', 1p, (4E14.7))
-99012 format (/' Pc,BAR =', 7F13.6)
-99013 format (/' Pc/P =', 9F11.4)
-99014 format (/' SUBSONIC AREA RATIOS =', (5F11.4))
-99015 format (/' SUPERSONIC AREA RATIOS =', (5F11.4))
-99016 format (/' NFZ=', i3, 1p, '  Mdot/Ac=', e13.6, '  Ac/At=', e13.6)
-99017 format (/' P,BAR =', 7F13.6)
-99018 format (/' ERROR IN REACTANTS DATASET (INPUT)')
-99019 format (/' UNABLE TO PROCESS EQUIVALENCE RATIO =', E11.4, '(INPUT)')
-99020 format (/' TYPE OF PROBLEM NOT SPECIFIED (INPUT)')
-99021 format (/' ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob', &
-              ' DATASET (INPUT)')
-99022 format (/' ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob', &
-              ' DATASET (INPUT)')
-99023 format (/' WARNING!!  A KEYWORD IS MISSING (INPUT)')
-99024 format (/' NOTE!! MAXIMUM NUMBER OF ASSIGNED ', A5, ' VALUES IS', I3, &
-              ' (INPUT)', /)
-99025 format (/' FATAL ERROR IN DATASET (INPUT)')
 end subroutine
 
 
@@ -2805,7 +2731,7 @@ subroutine NEWOF
       real(8), save:: assval, bigb, bratio, dbi, smalb, tem, v1, v2
       real(8):: dabs, dlog
 
-      if( .not. Short ) write(IOOUT, 99001) Oxfl
+      if( .not. Short ) write(IOOUT, '(/" O/F = ", F10.6)') Oxfl
       Eqrat = 0.
       tem = Oxfl + 1.
       v2 = (Oxfl*Vmin(1)+Vmin(2))/tem
@@ -2841,26 +2767,18 @@ subroutine NEWOF
       Jsol = 0
       Jliq = 0
       if( .not. Short ) then
-        write(IOOUT, 99002)
-        if( Vol ) write(IOOUT, 99003)
-        if( .not. Vol ) write(IOOUT, 99004)
-        write(IOOUT, 99005) Hpp(2), Hpp(1), Hsub0
-        write(IOOUT, 99006)
+        write(IOOUT, '(/, 23X, "EFFECTIVE FUEL", 5X, "EFFECTIVE OXIDANT", 8X, &
+              "MIXTURE")')
+        if( Vol ) write(IOOUT, '(" INTERNAL ENERGY", 11X, "u(2)/R", 14X, "u(1)/R", 14X, "u0/R")')
+        if( .not. Vol ) write(IOOUT, '(" ENTHALPY", 18X, "h(2)/R", 14X, "h(1)/R", 15X, "h0/R")')
+        write(IOOUT, '(" (KG-MOL)(K)/KG", 4X, E18.8, 2E20.8)') Hpp(2), Hpp(1), Hsub0
+        write(IOOUT, '(/" KG-FORM.WT./KG", 13X, "bi(2)", 15X, "bi(1)", 15X, "b0i")')
       end if
       do i = 1, Nlm
         j = Jcm(i)
-        if( .not. Short ) write(IOOUT, 99007) Prod(j), B0p(i, 2), B0p(i, 1), &
-                                 B0(i)
+        if( .not. Short ) write(IOOUT, '(1X, A16, 3E20.8)') Prod(j), B0p(i, 2), B0p(i, 1), B0(i)
       end do
       return
-99001 format (/' O/F = ', F10.6)
-99002 format (/, 23X, 'EFFECTIVE FUEL', 5X, 'EFFECTIVE OXIDANT', 8X, &
-              'MIXTURE')
-99003 format (' INTERNAL ENERGY', 11X, 'u(2)/R', 14X, 'u(1)/R', 14X, 'u0/R')
-99004 format (' ENTHALPY', 18X, 'h(2)/R', 14X, 'h(1)/R', 15X, 'h0/R')
-99005 format (' (KG-MOL)(K)/KG', 4X, E18.8, 2E20.8)
-99006 format (/' KG-FORM.WT./KG', 13X, 'bi(2)', 15X, 'bi(1)', 15X, 'b0i')
-99007 format (1X, A16, 3E20.8)
 end subroutine
 
 
@@ -2910,18 +2828,18 @@ subroutine OUT1
       equivalence(mxx(22), mdvp)
       equivalence(mxx(23), mcondf)
       equivalence(mxx(24), mpnf)
-      write(IOOUT, 99001) Case
+      write(IOOUT, '(" CASE = ", a15)') Case
       if( Moles ) then
-        write(IOOUT, 99002) '   MOLES   '
-        if( .not. Siunit ) write(IOOUT, 99003)
-        if( Siunit ) write(IOOUT, 99004)
+        write(IOOUT, '(/13X, "REACTANT", 20x, a11, "      ENERGY", 6x, "TEMP")') '   MOLES   '
+        if( .not. Siunit ) write(IOOUT, '(57X, " CAL/MOL ", 6x, "K")')
+        if( Siunit ) write(IOOUT, '(57X, "KJ/KG-MOL", 6x, "K")')
       else
-        write(IOOUT, 99002) 'WT FRACTION'
-        if( .not. Siunit ) write(IOOUT, 99005)
-        if( Siunit ) write(IOOUT, 99006)
+        write(IOOUT, '(/13X, "REACTANT", 20x, a11, "      ENERGY", 6x, "TEMP")') 'WT FRACTION'
+        if( .not. Siunit ) write(IOOUT, '(42X, "(SEE NOTE)      CAL/MOL       K  ")')
+        if( Siunit ) write(IOOUT, '(42X, "(SEE NOTE)     KJ/KG-MOL      K  ")')
       end if
       do n = 1, Nreac
-        write(IOOUT, 99007) Fox(n), Rname(n), Pecwt(n), Enth(n)*R, Rtemp(n)
+        write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') Fox(n), Rname(n), Pecwt(n), Enth(n)*R, Rtemp(n)
       end do
       phi = 0.
       tem = (Vpls(1)+Vmin(1))*Oxfl
@@ -2939,12 +2857,13 @@ subroutine OUT1
         end if
         if( Siunit ) then
           rho = rho*1000.D0
-          write(IOOUT, 99021) rho
+          write(IOOUT, '(/" REACTANT DENSITY=", F8.2, " KG/CU M")') rho
         else
-          write(IOOUT, 99022) rho
+          write(IOOUT, '(/" REACTANT DENSITY=", F8.4, " G/CC")') rho
         end if
       end if
-      write(IOOUT, 99008) Oxfl, pfuel, Eqrat, phi
+      write(IOOUT, '(/" O/F=", F11.5, 2X, "%FUEL=", F10.6, 2X, "R,EQ.RATIO=", F9.6, 2X, &
+              "PHI,EQ.RATIO=", F9.6)') Oxfl, pfuel, Eqrat, phi
       return
 !***********************************************************************
       ENTRY OUT2
@@ -3107,7 +3026,7 @@ subroutine OUT1
       Fmt(5) = ' '
       Fmt(7) = '4,'
       write(IOOUT, Fmt) fs, (Ssum(j)*R, j=1, Npt)
-      write(IOOUT, 99009)
+      write(IOOUT, *)
 ! MOLECULAR WEIGHT
       Fmt(7) = '3,'
       write(IOOUT, Fmt) 'M, (1/n)        ', (Wm(j), j=1, Npt)
@@ -3144,7 +3063,7 @@ subroutine OUT1
         mamo = 'MOLE'
       end if
       if( Eql ) then
-        write(IOOUT, 99010) mamo
+        write(IOOUT, '(/1x, A4, " FRACTIONS"/)') mamo
         notuse = 0
         do k = 1, Ngc
           kok = .true.
@@ -3180,7 +3099,7 @@ subroutine OUT1
           end do
           if( kin == 1 ) then
             if( Trace == 0. ) then
-              write(IOOUT, 99011) Prod(k), (X(i), i=1, Npt)
+              write(IOOUT, '(1x, A15, F9.5, 12F9.5)') Prod(k), (X(i), i=1, Npt)
             else
               call EFMT(Fmt(4), Prod(k), X)
             end if
@@ -3191,21 +3110,24 @@ subroutine OUT1
           end if
         end do
       end if
-      write(IOOUT, 99012) Tg(4)
+      write(IOOUT, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", F7.0, "K")') Tg(4)
       if( .not. Short ) then
-        write(IOOUT, 99013) mamo, tra
-        write(IOOUT, 99014) (Omit(i), i=1, notuse)
+        write(IOOUT, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", A4, &
+              " FRACTIONS", /"    WERE LESS THAN", 1PE13.6, &
+              " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
+        write(IOOUT, '(5(1x, A15))') (Omit(i), i=1, notuse)
       end if
-      if( .not. Moles ) write(IOOUT, 99015)
+      if( .not. Moles ) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
+              " OXIDANT IN TOTAL OXIDANTS")')
       go to 200
 !***********************************************************************
       ENTRY OUT4
-      write(IOOUT, 99009)
-      write(IOOUT, 99016)
+      write(IOOUT, *)
+      write(IOOUT, '(" TRANSPORT PROPERTIES (GASES ONLY)")')
       if( Siunit ) then
-        write(IOOUT, 99018)
+        write(IOOUT, '("   CONDUCTIVITY IN UNITS OF MILLIWATTS/(CM)(K)"/)')
       else
-        write(IOOUT, 99017)
+        write(IOOUT, '("   CONDUCTIVITY IN UNITS OF MILLICALORIES/(CM)(K)(SEC)"/)')
       end if
 ! TRANSPORT PROPERTIES
       Fmt(4) = Fmt(6)
@@ -3226,7 +3148,7 @@ subroutine OUT1
       Fmt(5) = ' '
       Fmt(7) = '4,'
       if( Eql ) then
-        write(IOOUT, 99019)
+        write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
 ! SPECIFIC HEAT
         write(IOOUT, Fmt) fc, (Cpeql(j), j=1, Npt)
 ! CONDUCTIVITY
@@ -3234,7 +3156,7 @@ subroutine OUT1
 ! PRANDTL NUMBER
         write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Preql(j), j=1, Npt)
       end if
-      write(IOOUT, 99020)
+      write(IOOUT, '(/"  WITH FROZEN REACTIONS"/)')
 ! SPECIFIC HEAT
       write(IOOUT, Fmt) fc, (Cpfro(j), j=1, Npt)
 ! CONDUCTIVITY
@@ -3242,32 +3164,6 @@ subroutine OUT1
 ! PRANDTL NUMBER
       write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j=1, Npt)
  200  return
-99001 format (' CASE = ', a15)
-99002 format (/13X, 'REACTANT', 20x, a11, '      ENERGY', 6x, 'TEMP')
-99003 format (57X, ' CAL/MOL ', 6x, 'K')
-99004 format (57X, 'KJ/KG-MOL', 6x, 'K')
-99005 format (42X, '(SEE NOTE)      CAL/MOL       K  ')
-99006 format (42X, '(SEE NOTE)     KJ/KG-MOL      K  ')
-99007 format (1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)
-99008 format (/' O/F=', F11.5, 2X, '%FUEL=', F10.6, 2X, 'R,EQ.RATIO=', F9.6, 2X, &
-              'PHI,EQ.RATIO=', F9.6)
-99009 format ()
-99010 format (/1x, A4, ' FRACTIONS'/)
-99011 format (1x, A15, F9.5, 12F9.5)
-99012 format (/'  * THERMODYNAMIC PROPERTIES FITTED TO', F7.0, 'K')
-99013 format (/'    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ', A4, &
-              ' FRACTIONS', /'    WERE LESS THAN', 1PE13.6, &
-              ' FOR ALL ASSIGNED CONDITIONS'/)
-99014 format (5(1x, A15))
-99015 format (/' NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF', &
-              ' OXIDANT IN TOTAL OXIDANTS')
-99016 format (' TRANSPORT PROPERTIES (GASES ONLY)')
-99017 format ('   CONDUCTIVITY IN UNITS OF MILLICALORIES/(CM)(K)(SEC)'/)
-99018 format ('   CONDUCTIVITY IN UNITS OF MILLIWATTS/(CM)(K)'/)
-99019 format (/'  WITH EQUILIBRIUM REACTIONS'/)
-99020 format (/'  WITH FROZEN REACTIONS'/)
-99021 format (/' REACTANT DENSITY=', F8.2, ' KG/CU M')
-99022 format (/' REACTANT DENSITY=', F8.4, ' G/CC')
 end subroutine
 
 
@@ -3338,12 +3234,16 @@ subroutine REACT
                   dift = dabs(Tt-t1)
                   if( dift > 01d0 ) then
                     if( dift > 10.d0 ) then
-                      write(IOOUT, 99001) Rname(n), t1, Tt
+                      write(IOOUT, '(/" REACTANT ", A15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
+                           F8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", F8.2, &
+                           " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') Rname(n), t1, Tt
                       Nlm = 0
                       hok = .false.
                       go to 200
                     else
-                      write(IOOUT, 99002) Rname(n), t1, Tt
+                      write(IOOUT, '(/" NOTE! REACTANT ", A15, "HAS BEEN DEFINED FOR ", &
+                           "TEMPERATURE", F8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
+                           F8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') Rname(n), t1, Tt
                       Tt = t1
                       Rtemp(n) = t1
                     end if
@@ -3367,7 +3267,7 @@ subroutine REACT
               end do
  5            if( Tt == 0. ) then
                 if( .not. Hp ) go to 50
-                write(IOOUT, 99004) n
+                write(IOOUT, '(/" TEMPERATURE MISSING FOR REACTANT NO.", I2, "(REACT)")') n
                 Nlm = 0
                 go to 200
               end if
@@ -3387,7 +3287,8 @@ subroutine REACT
             end if
  20       continue
           if (.not.hok) then
-            write(IOOUT, 99010) Tt, Rname(n), t1save, t2save
+            write(IOOUT, '(/" YOUR ASSIGNED TEMPERATURE", F8.2, "K FOR ", A15, /, &
+                 "IS OUTSIDE ITS TEMPERATURE RANGE", F8.2, " TO", F9.2, "K (REACT)")') Tt, Rname(n), t1save, t2save
             Energy(n) = ' '
             Nlm = 0
             goto 200
@@ -3430,7 +3331,7 @@ subroutine REACT
               go to 100
             end if
           end do
-          write(IOOUT, 99005) Ratom(n, jj)
+          write(IOOUT, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') Ratom(n, jj)
           Nlm = 0
           go to 200
  100    continue
@@ -3439,9 +3340,10 @@ subroutine REACT
           if( .not. Moles .and. .not. wdone(kr) ) then
             wdone(kr) = .true.
             Pecwt(n) = 100.
-            write(IOOUT, 99006) n
+            write(IOOUT, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", I3, ".", &
+                 /" PROGRAM SETS WEIGHT PERCENT = 100. (REACT)")') n
           else
-            write(IOOUT, 99007) n
+            write(IOOUT, '(/" AMOUNT MISSING FOR REACTANT NO.", I2, "(REACT)")') n
             Nlm = 0
             go to 200
           end if
@@ -3508,36 +3410,20 @@ subroutine REACT
         end do
         if( .not. Short ) then
           if( Moles ) then
-            write(IOOUT, 99008) ' MOLES '
+            write(IOOUT, '(/4x, "REACTANT", 10x, A7, 3X, "(ENERGY/R),K", 3X, &
+                 "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') ' MOLES '
           else
-            write(IOOUT, 99008) 'WT.FRAC'
+            write(IOOUT, '(/4x, "REACTANT", 10x, A7, 3X, "(ENERGY/R),K", 3X, &
+                 "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') 'WT.FRAC'
           end if
           do n = 1, Nreac
-            write(IOOUT, 99009) Fox(n), Rname(n), Pecwt(n), Enth(n), &
-                 Rtemp(n), Dens(n), (Ratom(n, i), Rnum(n, i), i=1, Nfla(n)) 
+             write(IOOUT, '(1x, a1, ": ", a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))') &
+                  Fox(n), Rname(n), Pecwt(n), Enth(n), &
+                 Rtemp(n), Dens(n), (Ratom(n, i), Rnum(n, i), i=1, Nfla(n))
           end do
         end if
       end if
  200  return
-99001 format (/' REACTANT ', A15, 'HAS BEEN DEFINED FOR THE TEMPERATURE', &
-        F8.2, 'K ONLY.'/' YOUR TEMPERATURE ASSIGNMENT', F8.2, &
-        ' IS MORE THAN 10 K FROM THIS VALUE. (REACT)')
-99002 format (/' NOTE! REACTANT ', A15, 'HAS BEEN DEFINED FOR ', &
-        'TEMPERATURE', F8.2, 'K ONLY.'/' YOUR TEMPERATURE ASSIGNMENT', &
-        F8.2, ' IS NOT = BUT <10 K FROM THIS VALUE. (REACT)')
-99003 format (/' NOTE: ', A15, ' IS EITHER NOT IN thermo.lib OR THE', &
-              ' TEMPERATURE ', /, &
-              ' IS OUT OF RANGE FOR THIS SPECIES (REACT)')
-99004 format (/' TEMPERATURE MISSING FOR REACTANT NO.', I2, '(REACT)')
-99005 format (/1x, a2, ' NOT FOUND IN BLOCKDATA (REACT)')
-99006 format (/' WARNING!!  AMOUNT MISSING FOR REACTANT', I3, '.', &
-              /' PROGRAM SETS WEIGHT PERCENT = 100. (REACT)')
-99007 format (/' AMOUNT MISSING FOR REACTANT NO.', I2, '(REACT)')
-99008 format (/4x, 'REACTANT', 10x, A7, 3X, '(ENERGY/R),K', 3X, &
-              'TEMP,K  DENSITY'/, 8x, 'EXPLODED FORMULA')
-99009 format (1x, a1, ': ', a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))
-99010 format (/' YOUR ASSIGNED TEMPERATURE', F8.2, 'K FOR ', A15, /, &
-       'IS OUTSIDE ITS TEMPERATURE RANGE', F8.2, ' TO', F9.2, 'K (REACT)')
 end subroutine
 
 
@@ -3565,20 +3451,20 @@ subroutine RKTOUT
       equivalence(mxx(7), misp)
 
       if( .not. Eql ) then
-        write(IOOUT, 99004)
-        if( Nfz > 1 ) write(IOOUT, 99005) Nfz
+        write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
+        if( Nfz > 1 ) write(IOOUT, '(33X, "AFTER POINT", I2)') Nfz
       else
-        write(IOOUT, 99001)
-        if( Iopt /= 0 ) write(IOOUT, 99002)
-        if( Iopt == 0 ) write(IOOUT, 99003)
+        write(IOOUT, '(/////13x, " THEORETICAL ROCKET PERFORMANCE ASSUMING EQUILIBRIUM")')
+        if( Iopt /= 0 ) write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
+        if( Iopt == 0 ) write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
       end if
-      if( Ttt(1) == T(It) ) write(IOOUT, 99006)
+      if( Ttt(1) == T(It) ) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
       tem = Ppp(1)*14.696006D0/1.01325D0
-      write(IOOUT, 99009) 'Pin', tem
+      write(IOOUT, '(/1x, A3, " =", F8.1, " PSIA")') 'Pin', tem
       i23 = 2
       if( Iopt > 0 ) then
-        if( Iopt == 1 ) write(IOOUT, 99007) Subar(1), App(2)
-        if( Iopt == 2 ) write(IOOUT, 99008) Ma, App(2)
+        if( Iopt == 1 ) write(IOOUT, '(" Ac/At =", F8.4, 6x, "Pinj/Pinf =", F10.6)') Subar(1), App(2)
+        if( Iopt == 2 ) write(IOOUT, '(" MDOT/Ac =", F10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", F10.6)') Ma, App(2)
         i23 = 3
       end if
       call OUT1
@@ -3595,12 +3481,12 @@ subroutine RKTOUT
       end if
 ! PRESSURE RATIOS
       if( Iopt == 0 ) then
-        write(IOOUT, 99011) (exit(i), i=1, nex)
+        write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i=1, nex)
         call VARFMT(App)
         write(IOOUT, Fmt) 'Pinf/P         ', (App(j), j=1, Npt)
       else
         nex = nex - 1
-        write(IOOUT, 99010) (exit(i), i=1, nex)
+        write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i=1, nex)
         X(1) = 1.D0
         do i = 2, Npt
           X(i) = Ppp(1)/Ppp(i)
@@ -3666,7 +3552,7 @@ subroutine RKTOUT
       Fmt(7) = '3,'
       write(IOOUT, Fmt) 'MACH NUMBER    ', (Vmoc(j), j=1, Npt)
       if( Trnspt ) call OUT4
-      write(IOOUT, 99013)
+      write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
 ! AREA RATIO
       Fmt(4) = '9x,'
       Fmt(i46) = '9x,'
@@ -3708,7 +3594,7 @@ subroutine RKTOUT
           if( misp > 0 ) Pltout(i+Iplt-ione, misp) = Spim(i)
         end do
       end if
-      write(IOOUT, 99012)
+      write(IOOUT, *)
       Fmt(4) = ' '
       Fmt(5) = '13'
       Fmt(7) = '5,'
@@ -3718,9 +3604,9 @@ subroutine RKTOUT
       end if
       if( .not. Eql ) then
         if( Massf ) then
-          write(IOOUT, 99014) 'MASS'
+          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
         else
-          write(IOOUT, 99014) 'MOLE'
+          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
           ww = 1.D0/Totn(Nfz)
         end if
 ! MOLE (OR MASS) FRACTIONS - FROZEN
@@ -3736,32 +3622,13 @@ subroutine RKTOUT
           end if
           if( line == 3 .or. k == Ngc ) then
             if( line == 0 ) go to 200
-            write(IOOUT, 99015) (z(ln), X(ln), ln=1, line)
+            write(IOOUT, '(1X, 3(A15, F8.5, 3X))') (z(ln), X(ln), ln=1, line)
             line = 0
           end if
         end do
       end if
  200  call OUT3
       return
-99001 format (/////13x, ' THEORETICAL ROCKET PERFORMANCE ASSUMING', &
-              ' EQUILIBRIUM')
-99002 format (/11x, ' COMPOSITION DURING EXPANSION FROM FINITE AREA', &
-              ' COMBUSTOR')
-99003 format (/10x, ' COMPOSITION DURING EXPANSION FROM INFINITE AREA', &
-              ' COMBUSTOR')
-99004 format (/////10x, ' THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN' &
-              , ' COMPOSITION')
-99005 format (33X, 'AFTER POINT', I2)
-99006 format (25X, 'AT AN ASSIGNED TEMPERATURE  ')
-99007 format (' Ac/At =', F8.4, 6x, 'Pinj/Pinf =', F10.6)
-99008 format (' MDOT/Ac =', F10.3, ' (KG/S)/M**2', 6x, 'Pinj/Pinf =', F10.6)
-99009 format (/1x, A3, ' =', F8.1, ' PSIA')
-99010 format (/, 17X, 'INJECTOR  COMB END  THROAT', 10(5X, A4))
-99011 format (/17X, 'CHAMBER   THROAT', 11(5X, A4))
-99012 format ()
-99013 format (/' PERFORMANCE PARAMETERS'/)
-99014 format (1x, A4, ' FRACTIONS'/)
-99015 format (1X, 3(A15, F8.5, 3X))
 end subroutine
 
 
@@ -3800,7 +3667,7 @@ subroutine ROCKET
         else if( Ma /= 0. ) then
           Iopt = 2
         else
-          write(IOOUT, 99001)
+          write(IOOUT, '(/" FATAL ERROR!! EITHER mdot OR ac/at MISSING FOR fac PROBLEM (ROCKET)")')
           Tt = 0.
           go to 1400
         end if
@@ -3818,11 +3685,13 @@ subroutine ROCKET
         Subar(1) = Acat
       else if( .not. Eql .and. Nfz > 1 .and. Nsub > 0 ) then
         Nsub = 0
-        write(IOOUT, 99023)
+        write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
+             " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
       end if
       nn = nn + Nsub + Nsup
       if( Nfz > 2 .and. nn > Ncol-2 ) then
-        write(IOOUT, 99002) Ncol - 2
+        write(IOOUT, '(/" WARNING!!  nfz NOT ALLOWED TO BE > 2 IF THE TOTAL", /, &
+              " NUMBER OF POINTS IS >", i3, " (ROCKET)")') Ncol - 2
         Nfz = 1
         Froz = .false.
       end if
@@ -3891,11 +3760,12 @@ subroutine ROCKET
             if( Acat >= 1. ) then
               pratsv = prat
               if( Debugf ) then
-                if( i <= 1 ) write(IOOUT, 99004)
-                write(IOOUT, 99005) i, ppa, Acat
+                if( i <= 1 ) write(IOOUT, '(/"  ITERATION", 9X, "PC", 7X, "CONTRACTION RATIO")')
+                write(IOOUT, '(5X, I2, 7X, F12.2, 3X, F12.6)') i, ppa, Acat
               end if
             else
-              write(IOOUT, 99003) Ma
+              write(IOOUT, '(/" INPUT VALUE OF mdot/a =", F12.3, " IS TOO LARGE."/ &
+              " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') Ma
               Tt = 0.
               go to 1400
             end if
@@ -3941,7 +3811,7 @@ subroutine ROCKET
         Ttt(2) = Ttt(4)
         Vlm(2) = Vlm(4)
         Wm(2) = Wm(4)
-        if( .not. Short ) write(IOOUT, 99009)
+        if( .not. Short ) write(IOOUT, '(" END OF CHAMBER ITERATIONS")')
         go to 600
 ! INITIALIZE FOR THROAT
  400    if( ipp > nipp ) then
@@ -3952,11 +3822,11 @@ subroutine ROCKET
             Vv = Vlm(nptth)
             pvg = Pp*Vv*Gammas(nptth)
             if( pvg == 0. ) then
-              write(IOOUT, 99010)
+              write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
               go to 550
             else
               msq = usq/pvg
-              if( Debug(1) .or. Debug(2) ) write(IOOUT, 99011) usq, pvg
+              if( Debug(1) .or. Debug(2) ) write(IOOUT, '(/" USQ=", E15.8, 5X, "PVG=", E15.8)') usq, pvg
               dh = dabs(msq-1.D0)
               if( dh <= 0.4D-4 ) go to 550
               if( itrot > 0 ) then
@@ -3967,21 +3837,20 @@ subroutine ROCKET
                 else if( tmelt == 0. ) then
                   Pp = Pp*(1.D0+msq*Gammas(nptth))/(Gammas(nptth)+1.D0)
                 else
-                  write(IOOUT, 99012)
+                  write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                   dlt = dlog(tmelt/Tt)
                   dd = dlt*Cpr(nptth)/(Enn*Dlvtp(nptth))
                   Pp = Pp*EXP(dd)
                   App(nptth) = P(Ip)/Pp
                   if( Fac ) App(nptth) = pinf/Pp
-                  if( Eql .and. .not. Short ) write(IOOUT, 99013)  &
-                                  App(nptth)
+                  if( Eql .and. .not. Short ) write(IOOUT, '(" Pinf/Pt =", F9.6)') App(nptth)
                   thi = .true.
                   go to 250
                 end if
                 go to 500
               else if( itrot < 0 ) then
                 if( itrot < -19 ) then
-                  write(IOOUT, 99010)
+                  write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                   go to 550
                 else
                   if( Npr /= npr1 ) go to 550
@@ -3989,12 +3858,12 @@ subroutine ROCKET
                   go to 500
                 end if
               else if( Npr == npr1 ) then
-                write(IOOUT, 99010)
+                write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                 go to 550
               else
                 dp = dabs(Pp-p1)/20.
                 Pp = dmax1(Pp, p1)
-                write(IOOUT, 99012)
+                write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                 Pp = Pp - dp
                 go to 500
               end if
@@ -4016,14 +3885,14 @@ subroutine ROCKET
         thi = .false.
         App(nptth) = ((Gammas(i12)+1.)/2.) &
                      **(Gammas(i12)/(Gammas(i12)-1.))
-        if( Eql .and. .not. Short ) write(IOOUT, 99013) App(nptth)
+        if( Eql .and. .not. Short ) write(IOOUT, '(" Pinf/Pt =", F9.6)') App(nptth)
         Pp = pinf/App(nptth)
         Isv = -i12
         go to 1200
  500    npr1 = Npr
         App(nptth) = P(Ip)/Pp
         if( Fac ) App(nptth) = pinf/Pp
-        if( Eql .and. .not. Short ) write(IOOUT, 99013) App(nptth)
+        if( Eql .and. .not. Short ) write(IOOUT, '(" Pinf/Pt =", F9.6)') App(nptth)
         itrot = itrot - 1
         go to 250
  550    Awt = Enn*Tt/(Pp*usq**.5)
@@ -4057,12 +3926,14 @@ subroutine ROCKET
           if( (.not. Fac .or. done) .and. Nsub <= i01 ) aratio = Supar(Isup)
           if( .not. Eql .and. Nfz >= 3 ) then
             if( aratio <= Aeat(Nfz) ) then
-              write(IOOUT, 99014) Nfz
+              write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
+                   " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
+                   "LESS THAN THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
               go to 1050
             end if
           end if
           if(aratio  <  1.d0 ) then
-            write(IOOUT, 99025) 
+            write(IOOUT, '(/" AN ASSIGNED AREA RATIO IS < 1 (ROCKET)" )')
             go to 1050
           end if
           eln = dlog(aratio)
@@ -4083,14 +3954,16 @@ subroutine ROCKET
 ! TEST FOR CONVERGENCE ON AREA RATIO.
         else if( Gammas(Npt) > 0. ) then
           check = .00004
-          if( Debug(Npt) ) write(IOOUT, 99016) itnum, aratio, Aeat(Npt), &
+          if( Debug(Npt) ) write(IOOUT, '(/" ITER=", I2, 2X, "ASSIGNED AE/AT=", F14.7, 3X, "AE/AT=", F14.7, &
+               /, 2X, "PC/P=", F14.7, 2X, "DELTA LN PCP=", F14.7)') itnum, aratio, Aeat(Npt), &
                                    App(Npt), dlnp
           if( dabs(Aeat(Npt)-aratio)/aratio <= check ) go to 900
           if( ABS(dlnp) < .00004 ) go to 900
           aeatl = dlog(Aeat(Npt))
           itnum = itnum + 1
           if( itnum > 10 ) then
-            write(IOOUT, 99017) aratio
+            write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, &
+              " (ROCKET)")') aratio
             go to 900
           else
 ! IMPROVED PCP ESTIMATES.
@@ -4099,7 +3972,8 @@ subroutine ROCKET
             go to 850
           end if
         else
-          write(IOOUT, 99015)
+          write(IOOUT, '(/" WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ", &
+               "BECAUSE GAMMAs", /, " CALCULATION IMPOSSIBLE. (ROCKET)")')
           Npt = Npt - 1
           if( Nsub <= 0 ) isup1 = 100
           if( Nsub < 0. ) Nsup = Isup - 1
@@ -4132,8 +4006,9 @@ subroutine ROCKET
               test = (pinj-pinjas)/pinjas
               pcpa = pinf*pa
               if( Debugf ) then
-                write(IOOUT, 99006)
-                write(IOOUT, 99007) niter, test, pinjas, pinj, pcpa, ppa, &
+                write(IOOUT, '(" ITER", 3X, "TEST", 3X, "ASSIGNED PINJ", 1x, "CALC PINJ", 5X, &
+                     "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
+                write(IOOUT, '(I3, F10.6, 1x, 4F12.2, 2F9.5)') niter, test, pinjas, pinj, pcpa, ppa, &
                                 acatsv, Acat
               end if
               if( ABS(test) < 0.00002 ) go to 350
@@ -4156,8 +4031,9 @@ subroutine ROCKET
               test = (pinj-pinjas)/pinjas
               pcpa = pinf*pa
               if( Debugf ) then
-                write(IOOUT, 99006)
-                write(IOOUT, 99007) niter, test, pinjas, pinj, pcpa, ppa, &
+                write(IOOUT, '(" ITER", 3X, "TEST", 3X, "ASSIGNED PINJ", 1x, "CALC PINJ", 5X, &
+                     "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
+                write(IOOUT, '(I3, F10.6, 1x, 4F12.2, 2F9.5)') niter, test, pinjas, pinj, pcpa, ppa, &
                                 acatsv, Acat
               end if
               if( ABS(test) < 0.00002 ) go to 350
@@ -4173,7 +4049,8 @@ subroutine ROCKET
                 pratsv = prat
                 pjrat = 1.
                 prat = (b1+c1*Acat)/(1.+a1l*Acat)
-                if( Debugf ) write(IOOUT, 99008) pcpa, Acat, pjrat, pracat
+                if( Debugf ) write(IOOUT, '(" NEW PC = ", F10.2, 2X, "NEW ACAT = ", F9.6, 2X, "PJRAT =", &
+                     F10.7, " PRACAT =", F10.7)') pcpa, Acat, pjrat, pracat
               end do
               go to 300
             end if
@@ -4218,7 +4095,9 @@ subroutine ROCKET
         iplte = MAX(iplte, Iplt)
         dlnp = 1.
         if( Tt == 0. ) Area = .false.
-        if( .not. Eql .and. Tt == 0. ) write(IOOUT, 99018)
+        if( .not. Eql .and. Tt == 0. ) write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
+             "POINT IS MORE", /, " THAN 50 K BELOW THE TEMPERATURE", &
+             " RANGE OF A CONDENSED SPECIES (ROCKET)")')
         if( Isv == 0 ) then
 ! PCP, SUBAR, AND SUPAR SCHEDULES COMPLETED
           if( Nsub < 0 ) Nsub = -Nsub
@@ -4236,17 +4115,20 @@ subroutine ROCKET
           if( Nfz == 1 ) go to 450
           if( Nsub > 0 ) then
             Nsub = -Nsub
-            write(IOOUT, 99023)
+            write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
+             " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
           end if
           if( App(Nfz) < App(nptth) ) then
-            write(IOOUT, 99024)
+            write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
+                 "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
+                 "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
           else
             if( Nfz < Npp ) go to 1200
             go to 700
           end if
           go to 1300
         else
-          if( Eql ) write(IOOUT, 99019)
+          if( Eql ) write(IOOUT, '(////)')
           Npt = nptth
         end if
 ! SET INDICES AND ESTIMATES FOR NEXT POINT.
@@ -4266,7 +4148,10 @@ subroutine ROCKET
             App(Npt) = Pcp(ipp-nptth)
             if( Fac ) App(Npt) = App(Npt)*pinf/Ppp(1)
             if( .not. Eql .and. App(Npt) < App(Nfz) ) then
-              write(IOOUT, 99020) Nfz
+              write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
+                   " WHERE THE ASSIGNED", /, &
+                   " PRESSURE RATIOS WERE LESS THAN ", &
+                   "THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
               go to 1250
             end if
           end if
@@ -4275,12 +4160,16 @@ subroutine ROCKET
             if( Area ) then
               if( isub <= Nsub .and. isub > i01 .and. aratio >= Aeat(2) ) &
                    then
-                write(IOOUT, 99021) aratio, Aeat(2)
+                write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
+                     "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
+                     ".  POINT OMITTED (ROCKET)")') aratio, Aeat(2)
                 Npt = Npt - 1
                 go to 1000
               end if
             else if( Npt > nptth .and. Pcp(ipp-3) < Ppp(1)/Ppp(2) ) then
-              write(IOOUT, 99022) Pcp(ipp-3), Ppp(1)/Ppp(2)
+              write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
+                   " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
+                   ". POINT OMITTED", " (ROCKET)")') Pcp(ipp-3), Ppp(1)/Ppp(2)
               Npt = Npt - 1
               go to 650
             end if
@@ -4293,7 +4182,7 @@ subroutine ROCKET
 ! 2) CHAMBER TEMPERATURES(IT = NT)
 ! 3) O/F VALUES(IOF = NOF)
         if( Ip == Np .and. It == Nt .and. iof == Nof ) go to 1400
-        write(IOOUT, 99019)
+        write(IOOUT, '(////)')
         call SETEN
         Tt = Ttt(i12)
       end do
@@ -4306,54 +4195,6 @@ subroutine ROCKET
       end if
  1400 Iplt = MAX(Iplt, iplte)
       return
-99001 format (/' FATAL ERROR!! EITHER mdot OR ac/at MISSING ', &
-              'FOR fac PROBLEM (ROCKET)')
-99002 format (/' WARNING!!  nfz NOT ALLOWED TO BE > 2 IF THE TOTAL', /, &
-              ' NUMBER OF POINTS IS >', i3, ' (ROCKET)')
-99003 format (/' INPUT VALUE OF mdot/a =', F12.3, ' IS TOO LARGE.'/ &
-              ' GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)')
-99004 format (/'  ITERATION', 9X, 'PC', 7X, 'CONTRACTION RATIO')
-99005 format (5X, I2, 7X, F12.2, 3X, F12.6)
-99006 format (' ITER', 3X, 'TEST', 3X, 'ASSIGNED PINJ', 1x, 'CALC PINJ', 5X, &
-              'PC', 7X, 'P AT ACAT', 3X, 'PREV ACAT', 2X, 'ACAT')
-99007 format (I3, F10.6, 1x, 4F12.2, 2F9.5)
-99008 format (' NEW PC = ', F10.2, 2X, 'NEW ACAT = ', F9.6, 2X, 'PJRAT =', &
-              F10.7, ' PRACAT =', F10.7)
-99009 format (' END OF CHAMBER ITERATIONS')
-99010 format (/' WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)')
-99011 format (/' USQ=', E15.8, 5X, 'PVG=', E15.8)
-99012 format (/' WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)')
-99013 format (' Pinf/Pt =', F9.6)
-99014 format (/, ' WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED', &
-              ' WHERE THE ASSIGNED', /, ' SUPERSONIC AREA RATIOS WERE ', &
-              'LESS THAN THE VALUE AT POINT nfz =', I3, ' (ROCKET)')
-99015 format (/' WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ', &
-              'BECAUSE GAMMAs', /, ' CALCULATION IMPOSSIBLE. (ROCKET)')
-99016 format (/' ITER=', I2, 2X, 'ASSIGNED AE/AT=', F14.7, 3X, 'AE/AT=', F14.7, &
-              /, 2X, 'PC/P=', F14.7, 2X, 'DELTA LN PCP=', F14.7)
-99017 format (/' WARNING!!  DID NOT CONVERGE FOR AREA RATIO =', F10.5, &
-              ' (ROCKET)')
-99018 format (/' WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ', &
-              'POINT IS MORE', /, ' THAN 50 K BELOW THE TEMPERATURE', &
-              ' RANGE OF A CONDENSED SPECIES (ROCKET)')
-99019 format (////)
-99020 format (/, ' WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED', &
-              ' WHERE THE ASSIGNED', /, &
-              ' PRESSURE RATIOS WERE LESS THAN ', &
-              'THE VALUE AT POINT nfz =', I3, ' (ROCKET)')
-99021 format (/' WARNING!!  ASSIGNED subae/at =', f10.5, ' IS NOT ', &
-              'PERMITTED TO BE GREATER'/' THAN ac/at =', f9.5, &
-              '.  POINT OMITTED (ROCKET)')
-99022 format (/' WARNING!!  ASSIGNED pip =', F10.5, &
-              ' IS NOT PERMITTED'/' TO BE LESS THAN  Pinj/Pc =', f9.5, &
-              '. POINT OMITTED', ' (ROCKET)')
-99023 format (/' WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ', /, &
-             ' RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)' &
-             )
-99024 format (/' WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ', &
-              'PRESSURE RATIO FOR nfz GREATER'/' THAN 1. FROZEN ', &
-              'PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)')
-99025 format (/' AN ASSIGNED AREA RATIO IS < 1 (ROCKET)' )
 end subroutine
 
 
@@ -4477,7 +4318,7 @@ subroutine SEARCH
       Ngp1 = Ng + 1
       if( Ngc < Nonly ) then
         do k = Ngc + 1, Nonly
-          write(IOOUT, 99001) Prod(k)
+          write(IOOUT, '(/" WARNING!!  ", A15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') Prod(k)
         end do
       end if
 ! FIND MISSING ELEMENTS (IF ANY) FOR COMPONENTS
@@ -4511,21 +4352,25 @@ subroutine SEARCH
           if( A(i, j) /= 0. ) go to 300
           ii = i
         end do
-        write(IOOUT, 99002) Elmt(ii)
+        write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", A3, " MISSING", &
+             //, 13x, "FATAL ERROR (SEARCH)")') Elmt(ii)
         Ngc = 0
         go to 600
  300  continue
 ! WRITE POSSIBLE PRODUCT LIST
       if( .not. Short ) then
-        write(IOOUT, 99003) Thdate
+        write(IOOUT, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &
+             /" (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)", &
+             /"  LAST thermo.inp UPDATE: ", A10, /)') Thdate
         do i = 1, Ngc, 3
           i5 = i + 2
           if( Ngc < i5 ) i5 = Ngc
-          write(IOOUT, 99004) (date(j), Prod(j), j=i, i5)
+          write(IOOUT, '(3(2X, A6, 2X, A15))') (date(j), Prod(j), j=i, i5)
         end do
       end if
       go to 600
- 400  write(IOOUT, 99005)
+ 400  write(IOOUT, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", &
+              /"   PART 2, PAGE 39. (SEARCH)")')
       Ngc = 0
       go to 600
 ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
@@ -4535,7 +4380,7 @@ subroutine SEARCH
       Ntape = 0
       npure = 0
       lineb = 1
-      if( .not. Short ) write(IOOUT, 99006)
+      if( .not. Short ) write(IOOUT, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
       read(IOTRN) nrec
       do ir = 1, nrec
         read(IOTRN) spece, trdata
@@ -4568,34 +4413,19 @@ subroutine SEARCH
  500    write(IOSCH) jj, trdata
         Ntape = Ntape + 1
  550    if( npure /= 0 .and. (npure >= 6 .or. ir >= nrec) ) then
-          if( .not. Short ) write(IOOUT, 99007) (pure(jk), jk=1, npure)
+          if( .not. Short ) write(IOOUT, '(4(2x, A16))') (pure(jk), jk=1, npure)
           npure = 0
         end if
       end do
       lineb = lineb - 1
       if( .not. Short ) then
-        write(IOOUT, 99008)
+        write(IOOUT, '(/"     BINARY INTERACTIONS"/)')
         do j = 1, lineb
-          write(IOOUT, 99009) (bin(i, j), i=1, 2)
+          write(IOOUT, '(5X, 2A16)') (bin(i, j), i=1, 2)
         end do
       end if
-      write(IOOUT, 99010)
+      write(IOOUT, *)
  600  return
-99001 format (/' WARNING!!  ', A15, ' NOT A PRODUCT IN thermo.lib FILE ', &
-              '(SEARCH)')
-99002 format (/' PRODUCT SPECIES CONTAINING THE ELEMENT', A3, ' MISSING', &
-              //, 13x, 'FATAL ERROR (SEARCH)')
-99003 format (/2x, 'SPECIES BEING CONSIDERED IN THIS SYSTEM', &
-              /' (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)', &
-              /'  LAST thermo.inp UPDATE: ', A10, /)
-99004 format (3(2X, A6, 2X, A15))
-99005 format (/' INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,', &
-              /'   PART 2, PAGE 39. (SEARCH)')
-99006 format (/' SPECIES WITH TRANSPORT PROPERTIES'//8X, 'PURE SPECIES'/)
-99007 format (4(2x, A16))
-99008 format (/'     BINARY INTERACTIONS'/)
-99009 format (5X, 2A16)
-99010 format ()
 end subroutine
 
 
@@ -4700,8 +4530,9 @@ subroutine SHCK
       Cpmix = 0.
       srefl = .false.
       if( .not. Short ) then
-        write(IOOUT, 99001)
-        write(IOOUT, 99002) Incdeq, Refleq, Incdfz, Reflfz
+        write(IOOUT, '(/"   *** INPUT FOR SHOCK PROBLEMS ***")')
+        write(IOOUT, '(/" INCDEQ =", L2, "   REFLEQ =", L2, "   INCDFZ =", L2, &
+             "    REFLFZ =", L2)') Incdeq, Refleq, Incdfz, Reflfz
       end if
       if( Refleq .or. Reflfz ) srefl = .true.
       seql = Incdeq
@@ -4712,12 +4543,12 @@ subroutine SHCK
         if( Mach1(i) == 0.0 .and. U1(i) == 0.0 ) go to 100
       end do
  100  if( Nsk > Ncol ) then
-        write(IOOUT, 99003) Ncol
+        write(IOOUT, '(/" WARNING!!  ONLY ", I2, " u1 OR mach1 VALUES ALLOWED (SHCK)")') Ncol
         Nsk = Ncol
       end if
       if( .not. Short ) then
-        write(IOOUT, 99004) (U1(i), i=1, Nsk)
-        write(IOOUT, 99005) (Mach1(i), i=1, Nsk)
+        write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (U1(i), i=1, Nsk)
+        write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (Mach1(i), i=1, Nsk)
       end if
       iof = 0
  200  iof = iof + 1
@@ -4752,7 +4583,8 @@ subroutine SHCK
           call HCALC
           Hsum(Npt) = Hsub0
         else
-          write(IOOUT, 99016) Tt, Npt
+          write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
+               "FOR POINT", I5, " (SHCK)")') Tt, Npt
           go to 1000
         end if
  350    if( Cpmix /= 0. ) Gamma1 = Cpmix/(Cpmix-1./Wmix)
@@ -4766,15 +4598,15 @@ subroutine SHCK
       end do
       Npt = Nsk
 ! OUTPUT--1ST CONDITION
-      write(IOOUT, 99006)
+      write(IOOUT, '(////25X, "SHOCK WAVE PARAMETERS ASSUMING")')
       if( .not. Incdeq ) then
-        write(IOOUT, 99008)
+        write(IOOUT, '(/, 17X, " FROZEN COMPOSITION FOR INCIDENT SHOCKED CONDITI1ONS"//)')
       else
-        write(IOOUT, 99007)
+        write(IOOUT, '(/, 16X, " EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED CONDITIONS"//)')
       end if
       Eql = .false.
       call OUT1
-      write(IOOUT, 99009)
+      write(IOOUT, '(/" INITIAL GAS (1)")')
       Fmt(4) = '13'
       Fmt(5) = ' '
       Fmt(7) = '4,'
@@ -4820,8 +4652,8 @@ subroutine SHCK
       t21 = dmin1(t21, ttmax)
       t21l = dlog(t21)
       itr = 1
- 500  if( Shkdbg ) write(IOOUT, 99010) itr, it2, it1, p21, it2, it1, t21, &
-           rho52
+ 500  if( Shkdbg ) write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
+           "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, t21, rho52
       Tt = t21*t1
       Pp = p21*p1
       if( .not. Eql ) then
@@ -4864,10 +4696,10 @@ subroutine SHCK
       X(1) = (G(1, 3)*G(2, 2)-G(2, 3)*G(1, 2))/X(3)
       X(2) = (G(1, 1)*G(2, 3)-G(2, 1)*G(1, 3))/X(3)
       if( Shkdbg ) then
-        write(IOOUT, 99011) G(1, 1), G(1, 2), G(1, 3)
-        write(IOOUT, 99011) G(2, 1), G(2, 2), G(2, 3)
-        write(IOOUT, 99012) X(1), X(2)
-        write(IOOUT, 99013) Hsum(Npt), hs, uu, uu*rho12
+        write(IOOUT, '(/" G(I,J)  ", 3E15.8)') G(1, 1), G(1, 2), G(1, 3)
+        write(IOOUT, '(/" G(I,J)  ", 3E15.8)') G(2, 1), G(2, 2), G(2, 3)
+        write(IOOUT, '(/" X       ", 2E15.8)') X(1), X(2)
+        write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') Hsum(Npt), hs, uu, uu*rho12
       end if
       ax = dabs(X(1))
       axx = dabs(X(2))
@@ -4886,11 +4718,12 @@ subroutine SHCK
         t21l = t21l + X(2)
         p21 = dexp(p21l)
         t21 = dexp(t21l)
-        if( Shkdbg ) write(IOOUT, 99014) cormax, X(1), X(2)
+        if( Shkdbg ) write(IOOUT, '(/" MAX.COR.=", e13.6, " X(1)=", e13.6, " X(2)=", e13.6)') cormax, X(1), X(2)
         if( itr /= 1 .or. t21 < ttmax ) then
           itr = itr + 1
           if( itr < 61 ) go to 500
-          write(IOOUT, 99015) U1(Npt)
+          write(IOOUT, '(/6x, " WARNING!!  NO CONVERGENCE FOR u1=", F8.1, &
+               /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') U1(Npt)
         else
           Tt = 0.
           Npt = Npt - 1
@@ -4923,7 +4756,8 @@ subroutine SHCK
         end if
         go to 900
       end if
- 700  write(IOOUT, 99016) Tt, Npt
+ 700  write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
+           "FOR POINT", I5, " (SHCK)")') Tt, Npt
       Tt = 0.
  800  if( Npt < 1 ) go to 1000
       Nsk = Npt
@@ -4936,13 +4770,13 @@ subroutine SHCK
       if( Npt <= Nsk ) go to 400
       Npt = Nsk
       if( refl ) then
-        if( .not. Eql ) write(IOOUT, 99020)
-        if( Eql ) write(IOOUT, 99021)
+        if( .not. Eql ) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--FROZEN")')
+        if( Eql ) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM")')
         cr12 = '2'
         cr52 = '5'
       else
-        if( .not. Eql ) write(IOOUT, 99018)
-        if( Eql ) write(IOOUT, 99019)
+        if( .not. Eql ) write(IOOUT, '(/" SHOCKED GAS (2)--INCIDENT--FROZEN")')
+        if( Eql ) write(IOOUT, '(/" SHOCKED GAS (2)--INCIDENT--EQUILIBRIUM")')
         cr12 = '1'
         cr52 = '2'
       end if
@@ -4950,7 +4784,7 @@ subroutine SHCK
       write(IOOUT, Fmt) 'U'//cr52//', M/SEC      ', (utwo(j), j=1, Npt)
       call OUT2
       if( Trnspt ) call OUT4
-      write(IOOUT, 99017)
+      write(IOOUT, *)
       Fmt(7) = '3,'
       write(IOOUT, Fmt) 'P'//cr52//'/P'//cr12//'           ', &
                     (p2p1(j), j=1, Npt)
@@ -4970,15 +4804,15 @@ subroutine SHCK
         Fmt(7) = '5,'
         if( .not. Incdeq ) then
           if( Massf ) then
-            write(IOOUT, 99022) 'MASS'
+            write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MASS'
           else
-            write(IOOUT, 99022) 'MOLE'
+            write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MOLE'
             ww = wmx
           end if
           do n = 1, Nreac
             j = Jray(n)
             if( Massf ) ww = Mw(j)
-            write(IOOUT, 99023) Prod(j), (En(j, i)*ww, i=1, Npt)
+            write(IOOUT, '(" ", A16, F8.5, 12F9.5)') Prod(j), (En(j, i)*ww, i=1, Npt)
           end do
         else
           Eql = .true.
@@ -5050,36 +4884,6 @@ subroutine SHCK
         go to 200
       end if
  1000 return
-99001 format (/'   *** INPUT FOR SHOCK PROBLEMS ***')
-99002 format (/' INCDEQ =', L2, '   REFLEQ =', L2, '   INCDFZ =', L2, &
-              '    REFLFZ =', L2)
-99003 format (/' WARNING!!  ONLY ', I2, ' u1 OR mach1 VALUES ALLOWED ', &
-              '(SHCK)')
-99004 format (/1p, ' U1 =   ', 5E13.6, /(8X, 5E13.6))
-99005 format (/1p, ' MACH1 =', 5E13.6, /(8X, 5E13.6))
-99006 format (////25X, 'SHOCK WAVE PARAMETERS ASSUMING')
-99007 format (/, 16X, ' EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED', &
-              ' CONDITIONS'//)
-99008 format (/, 17X, ' FROZEN COMPOSITION FOR INCIDENT SHOCKED', &
-              ' CONDITI1ONS'//)
-99009 format (/' INITIAL GAS (1)')
-99010 format (/' ITR NO.=', I3, 3X, 'P', I1, '/P', I1, ' =', F9.4, 3X, 'T', I1, &
-              '/T', I1, ' =', F9.4, '   RHO2/RHO1 =', F9.6)
-99011 format (/' G(I,J)  ', 3E15.8)
-99012 format (/' X       ', 2E15.8)
-99013 format (/' HSUM HS UU U2 ', 4E15.8)
-99014 format (/' MAX.COR.=', e13.6, ' X(1)=', e13.6, ' X(2)=', e13.6)
-99015 format (/6x, ' WARNING!!  NO CONVERGENCE FOR u1=', F8.1, &
-              /'  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)')
-99016 format (/' TEMPERATURE=', E12.4, ' IS OUT OF EXTENDED RANGE ', &
-              'FOR POINT', I5, ' (SHCK)')
-99017 format ()
-99018 format (/' SHOCKED GAS (2)--INCIDENT--FROZEN')
-99019 format (/' SHOCKED GAS (2)--INCIDENT--EQUILIBRIUM')
-99020 format (/' SHOCKED GAS (5)--REFLECTED--FROZEN')
-99021 format (/' SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM')
-99022 format (/1x, A4, ' FRACTIONS'/)
-99023 format (' ', A16, F8.5, 12F9.5)
 end subroutine
 
 
@@ -5116,25 +4920,25 @@ subroutine THERMP
               Isv = Npt
               if( Npt /= Ncol ) go to 10
             end if
-            if( .not. Hp ) write(IOOUT, 99001)
-            if( Hp ) write(IOOUT, 99002)
+            if( .not. Hp ) write(IOOUT, '(////15X, "THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED")')
+            if( Hp ) write(IOOUT, '(////9X, "THERMODYNAMIC EQUILIBRIUM COMBUSTION PROPERTIES AT ASSIGNED")')
             if( .not. Vol ) then
-              if( Hp ) write(IOOUT, 99006)
-              if( Tp ) write(IOOUT, 99007)
-              if( Sp ) write(IOOUT, 99008)
+              if( Hp ) write(IOOUT, '(/34X, " PRESSURES"/)')
+              if( Tp ) write(IOOUT, '(/27X, "TEMPERATURE AND PRESSURE"/)')
+              if( Sp ) write(IOOUT, '(/29X, "ENTROPY AND PRESSURE"/)')
             else
-              if( Uv ) write(IOOUT, 99003)
-              if( Tv ) write(IOOUT, 99004)
-              if( Sv ) write(IOOUT, 99005)
+              if( Uv ) write(IOOUT, '(/36X, " VOLUME"/)')
+              if( Tv ) write(IOOUT, '(/28X, "TEMPERATURE AND VOLUME"/)')
+              if( Sv ) write(IOOUT, '(/30X, "ENTROPY AND VOLUME"/)')
             end if
             call OUT1
-            write(IOOUT, 99009)
+            write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
             call OUT2
             if( Trnspt ) call OUT4
             call OUT3
             Iplt = MIN(Iplt+Npt, 500)
             if( Isv == 0 .and. iof == Nof ) go to 200
-            write(IOOUT, 99010)
+            write(IOOUT, '(////)')
             Npt = 0
  10         Npt = Npt + 1
             if( .not. Tp .and. Tt /= 0. ) T(1) = Tt
@@ -5148,19 +4952,6 @@ subroutine THERMP
         end do
  100  continue
  200  return
-99001 format (////15X, 'THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED' &
-              )
-99002 format (////9X, &
-           'THERMODYNAMIC EQUILIBRIUM COMBUSTION PROPERTIES AT ASSIGNED' &
-           )
-99003 format (/36X, ' VOLUME'/)
-99004 format (/28X, 'TEMPERATURE AND VOLUME'/)
-99005 format (/30X, 'ENTROPY AND VOLUME'/)
-99006 format (/34X, ' PRESSURES'/)
-99007 format (/27X, 'TEMPERATURE AND PRESSURE'/)
-99008 format (/29X, 'ENTROPY AND PRESSURE'/)
-99009 format (/' THERMODYNAMIC PROPERTIES'/)
-99010 format (////)
 end subroutine
 
 
@@ -5229,7 +5020,8 @@ subroutine TRANIN
         do j = 1, Ng
           if( En(j, Npt) >= testen ) then
             if( Nm >= maxTr ) then
-              write(IOOUT, 99001) Nm, Npt
+              write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
+                   /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') Nm, Npt
               go to 200
             else
               total = total + En(j, Npt)
@@ -5435,10 +5227,6 @@ subroutine TRANIN
  450    continue
       end do
       return
-99001 format (/' WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES', I3, &
-              ' WAS USED IN ', &
-              /' TRANSPORT PROPERTY CALCULATIONS FOR POINT', I3, &
-              '(TRANIN))')
 end subroutine
 
 
@@ -5679,7 +5467,7 @@ subroutine UTHERM(Readok)
       inew = 0
       tinf = 1.D06
       rewind IOSCH
-      read(IOINP, 99001) tgl, Thdate
+      read(IOINP, '(4F10.3, a10)') tgl, Thdate
  100  do i = 1, 3
         fill(i) = .true.
         do j = 1, 9
@@ -5689,21 +5477,21 @@ subroutine UTHERM(Readok)
       hform = 0.
       tl(1) = 0.
       tl(2) = 0.
-      read(IOINP, 99002, END=300, ERR=400) name, notes
+      read(IOINP, '(a15, a65)', END=300, ERR=400) name, notes
       if( name(:3) == 'END' .or. name(:3) == 'end' ) then
         if( index(name, 'ROD') == 0 .and. index(name, 'rod') == 0 ) &
              go to 300
         ns = nall
         go to 100
       end if
-      read(IOINP, 99003, ERR=400) ntl, date, (sym(j), fno(j), j=1, 5), &
+      read(IOINP, '(i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)', ERR=400) ntl, date, (sym(j), fno(j), j=1, 5), &
                        ifaz, mwt, hform
-      write(IOOUT, 99004) name, date, hform, notes
+      write(IOOUT, '(" ", a15, 2x, a6, e15.6, 2x, a65)') name, date, hform, notes
 ! IF NTL=0, REACTANT WITHOUT COEFFICIENTS
       if( ntl == 0 ) then
         if( ns == 0 ) go to 300
         nall = nall + 1
-        read(IOINP, 99005, ERR=400) tl, ncoef, expn, hh
+        read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
         thermo(1, 1) = hform
         write(IOSCH) name, ntl, date, (sym(j), fno(j), j=1, 5), ifaz, tl, mwt, &
                       thermo
@@ -5721,8 +5509,8 @@ subroutine UTHERM(Readok)
         mwt = 5.48579903D-04
       end if
       do 200 i = 1, ntl
-        read(IOINP, 99005, ERR=400) tl, ncoef, expn, hh
-        read(IOINP, 99006, ERR=400) templ
+        read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
+        read(IOINP, '(5D16.8/2D16.8, 16x, 2D16.8)', ERR=400) templ
         if( ifaz == 0 .and. i > 3 ) go to 400
         if( ifaz <= 0 ) then
           if( tl(2) > tgl(4)-.01D0 ) then
@@ -5848,17 +5636,9 @@ subroutine UTHERM(Readok)
         end do
       end if
       return
- 400  write(IOOUT, 99007) name
+ 400  write(IOOUT, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
       Readok = .false.
       return
-99001 format (4F10.3, a10)
-99002 format (a15, a65)
-99003 format (i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)
-99004 format (' ', a15, 2x, a6, e15.6, 2x, a65)
-99005 format (2F11.3, i1, 8F5.1, 2x, f15.3)
-99006 format (5D16.8/2D16.8, 16x, 2D16.8)
-99007 format (/' ERROR IN PROCESSING thermo.inp AT OR NEAR ', A15, &
-              ' (UTHERM)')
 end subroutine
 
 
@@ -5890,7 +5670,7 @@ subroutine UTRAN(Readok)
  100  do i = 1, 36
         tc(i) = 0.
       end do
-      read(IOINP, 99001) tname, vvl, nv, cc, ncc
+      read(IOINP, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
       if( tname(1) == 'end' .or. tname(1) == 'LAST' ) then
         write(IOTRN) ns
         rewind IOSCH
@@ -5905,7 +5685,7 @@ subroutine UTRAN(Readok)
         nn = nv + ncc
         if( nv <= 3 .and. ncc <= 3 ) then
           do in = 1, nn
-            read(IOINP, 99002) vorc, tcin
+            read(IOINP, '(1X, A1, 2F9.2, 4E15.8)') vorc, tcin
             if( vorc == 'C' ) then
               k = 2
               ic = ic + 1
@@ -5925,13 +5705,9 @@ subroutine UTRAN(Readok)
           go to 100
         end if
       end if
- 200  write(IOOUT, 99003) tname
+ 200  write(IOOUT, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
       Readok = .false.
  300  return
-99001 format (2A16, 2X, A1, I1, A1, I1)
-99002 format (1X, A1, 2F9.2, 4E15.8)
-99003 format (/' ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)', /1X, &
-              2A16)
 end subroutine
 
 
