@@ -101,8 +101,8 @@
 ! 02/05/04 - Chg. numbered ENDDO's to CONTINUE's for Watson compiler.
 ! 05/21/04 - Added labels to columns in .plt file
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*15 ensert(20)
       CHARACTER*200 infile,ofile
@@ -243,69 +243,13 @@
 99008 FORMAT (/,'OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)')
 99009 FORMAT ('#',2x,20A12)
       END
-      BLOCKDATA 
-!***********************************************************************
-! FUNDAMENTAL CONSTANTS FROM:  COHEN,E.RICHARD & TAYLOR,BARRY N.,
-! THE 1986 CODATA RECOMMENDED VALUES OF THE FUNDAMENTAL PHYSICAL
-! CONSTANTS, J.PHYS.CHEM.REF.DATA, VOL.17, NO.4, 1988, PP 1795-1803.
-!***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
 
-      DATA Rr/8314.51D0/,Pi/3.14159265D0/,Avgdr/6.0221367D0/, &
-           Boltz/1.380658D0/
-! ATOMIC SYMBOLS
-      DATA Symbol/'H ','D ','HE','LI','BE','B ','C ','N ','O ','F ', &
-           'NE','NA','MG','AL','SI','P ','S ','CL','AR','K ','CA','SC', &
-           'TI','V ','CR','MN','FE','CO','NI','CU','ZN','GA','GE','AS', &
-           'SE','BR','KR','RB','SR','Y ','ZR','NB','MO','TC','RU','RH', &
-           'PD','AG','CD','IN','SN','SB','TE','I ','XE','CS','BA','LA', &
-           'CE','PR','ND','PM','SM','EU','GD','TB','DY','HO','ER','TM', &
-           'YB','LU','HF','TA','W ','RE','OS','IR','PT','AU','HG','TL', &
-           'PB','BI','PO','AT','RN','FR','RA','AC','TH','PA','U ','NP', &
-           'PU','AM','CM','BK','CF','ES'/
-
-!  ATOMIC WEIGHTS - Coplen,T.B., Atomic Weights of the Elements 1999. 
-!     J.Phys.Chem.Ref.Data, vol.30, no.3, 2001, pp.701-712.
-
-      DATA atmwt/               1.00794D0,2.014102D0,4.002602D0,6.941D0, &
-       9.012182D0,10.811D0,12.0107D0,14.0067D0,15.9994D0,18.9984032D0, &
-       20.1797D0,22.989770D0,24.305D0,26.981538D0,28.0855D0,30.973761D0, &
-       32.065D0,35.453D0,39.948D0,39.0983D0,40.078D0,44.95591D0, &
-       47.867D0, 50.9415D0,51.9961D0,54.938049D0, &
-       55.845D0,58.933200D0,58.6934D0,63.546D0,65.39D0,69.723D0,72.64D0, &
-       74.92160D0,78.96D0,79.904D0,83.80D0,85.4678D0,87.62D0,88.90585D0, &
-       91.224D0,92.90638D0,95.94D0,97.9072D0,101.07D0,102.9055D0, &
-       106.42D0, &
-       107.8682D0,112.411D0,114.818D0,118.710D0, 121.760D0,127.6D0, &
-       126.90447D0,131.293D0,132.90545D0,137.327D0,138.9055D0,140.116D0, &
-       140.90765D0,144.9127D0,145.D0,150.36D0,151.964D0,157.25D0, &
-       158.92534D0, &
-       162.50D0,164.93032D0,167.259D0,168.93421D0,173.04D0,174.967D0, &
-       178.49D0,180.9479D0,183.84D0,186.207D0,190.23D0,192.217D0, &
-       195.078D0,196.96655D0,200.59D0,204.3833D0,207.2D0,208.98038D0, &
-       208.9824D0, 209.9871D0, &
-       222.0176D0,223.0197D0,226.0254D0,227.0278D0,232.0381D0, &
-       231.03588D0,238.02891D0,237.0482D0,244.0642D0,243.0614D0, &
-       247.0703D0,247.0703D0,251.0587D0,252.083D0/
-! ATOMIC VALENCES
-      DATA Valnce/1.,1.,0.,1.,2.,3.,4.,0., - 2., - 1.,0.,1.,2.,3.,4.,5., &
-           4., - 1.,0.,1.,2.,3.,4.,5.,3.,2.,3.,2.,2.,2.,2.,3.,4.,3.,4., &
-           - 1.,0.,1.,2.,3.,4.,5.,6.,7.,3.,3.,2.,1.,2.,3.,4.,3.,4., &
-           - 1.,0.,1.,2.,3.,3.,3.,3.,3.,3.,3.,3.,3.,3.,3.,3.,3.,3.,3., &
-           4.,5.,6.,7.,4.,4.,4.,3.,2.,1.,2.,3.,2., - 1.,0.,1.,2.,3.,4., &
-           5.,6.,5.,4.,3.,3.,3.,3.,3./
-! INFORMATION USED IN VARIABLE OUTPUT FORMAT
-      DATA Fmt/'(1X',',A15',',','F9.','0,','F9.','0,','F9.','0,','F9.', &
-           '0,','F9.','0,','F9.','0,','F9.','0,','F9.','0,','F9.','0,', &
-           'F9.','0,','F9.','0,','F9.','0,','F9.','0',')'/
-      END
       SUBROUTINE CPHS
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       REAL*8 cx(7),hcx(7),scx(7)
       INTEGER i,ij,j,jj,k
@@ -408,8 +352,8 @@
 !***********************************************************************
 ! CHAPMAN-JOUGUET DETONATIONS.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*15 fdv,fg1,fh1,fhs1,fm1,fmm1,fpp1,frr1,ft1,ftt1
       CHARACTER*3 unit
@@ -664,8 +608,8 @@
 !***********************************************************************
 ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! DUMMY ARGUMENTS
       CHARACTER*15 Aa
       CHARACTER*4 Fone
@@ -710,8 +654,8 @@
 !***********************************************************************
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*12 ae,cmp(MAXEL)
       CHARACTER*16 amb
@@ -1665,8 +1609,8 @@
 ! CALCULATE PROPERTIES WITH FROZEN COMPOSITION AT ASSIGNED ENTROPY
 ! AND PRESSURE.  CALLED FROM ROCKET.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER i,inc,iter,j,k,nnn
       REAL*8 DABS,DEXP,DLOG
@@ -1741,8 +1685,8 @@
 ! SOLVE ANY LINEAR SET OF UP TO MAXMAT EQUATIONS
 ! NUMBER OF EQUATIONS = IMAT
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER i,imatp1,j,k,nn,nnp1
       REAL*8 bigno,coefx(50),tmp
@@ -1837,8 +1781,8 @@
 ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
 ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*6 date(MAXNGC)
       CHARACTER*2 el(5)
@@ -1985,8 +1929,8 @@
 !   CNUM - CHARACTER STRING REPRESENTING DATASET NUMBERS. MAXIMUM 24
 !          CHARACTERS.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! DUMMY ARGUMENTS
       CHARACTER*15 Cin(MAXNGC)
       INTEGER Ncin
@@ -2119,8 +2063,8 @@
 !***********************************************************************
 ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! DUMMY ARGUMENTS
       LOGICAL Caseok,Readok
       CHARACTER*15 Ensert(20)
@@ -2792,8 +2736,8 @@
 !***********************************************************************
 ! SET UP ITERATION OR DERIVATIVE MATRIX.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER i,iq,iq2,iq3,isym,j,k,kk,kmat
       REAL*8 energyl,f,h,ss,sss,term,term1
@@ -2934,8 +2878,8 @@
 !***********************************************************************
 ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER i,j
       REAL*8 assval,bigb,bratio,dbi,smalb,tem,v1,v2
@@ -3008,8 +2952,8 @@
 !
 ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*15 fc,fgi,fh,fp,frh,fs,fu
       CHARACTER*4 mamo
@@ -3411,8 +3355,8 @@
 !***********************************************************************
 ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*6 date
       CHARACTER*2 el(5)
@@ -3681,8 +3625,8 @@
 !***********************************************************************
 ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*4 exit(11)
       CHARACTER*15 fi,fiv,fr,z(4)
@@ -3905,8 +3849,8 @@
 !***********************************************************************
 ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER i,i01,i12,iof,iplt1,iplte,ipp,isub,isup1,isupsv,itnum, &
               itrot,nar,nipp,niter,nn,npr1,nptth
@@ -4499,8 +4443,8 @@
 !***********************************************************************
 ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*16 bin(2,40),pure(6),spece(2)
       CHARACTER*6 date(MAXNGC)
@@ -4745,8 +4689,8 @@
 !         ALSO USE COMPOSITIONS FROM POINT -ISV FOR NPT.
 !  ISV=0  USE COMPOSITIONS SAVED WHEN ISV<0.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER j,lsav
       REAL*8 tsave
@@ -4818,8 +4762,8 @@
 !***********************************************************************
 ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       CHARACTER*1 cr12,cr52
       INTEGER i,iof,it1,it2,itr,j,n
@@ -5223,16 +5167,16 @@
 !***********************************************************************
 ! ASSIGNED THERMODYNAMIC STATES.  HP,SP,TP,UV,SV, AND TV PROBLEMS.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER iof
       LOGICAL uv,tv,sv
       SAVE iof
 
-      EQUIVALENCE (Hp,Uv)
-      EQUIVALENCE (Tp,Tv)
-      EQUIVALENCE (Sp,Sv)
+      Uv = transfer(Hp, Uv)
+      Tv = transfer(Tp, Tv)
+      Sv = transfer(Sp, Sv)
       Eql = .TRUE.
       DO 100 iof = 1,Nof
         Oxfl = Oxf(iof)
@@ -5302,8 +5246,8 @@
 !***********************************************************************
 ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER i,ii,inds(MAXTR),ir,j,jtape(2),k,k1,k2,kt,kvc,l,loop,m,nms
       LOGICAL change,elc1,elc2,ion1,ion2,setx
@@ -5585,8 +5529,8 @@
 !   NUMBER OF CHEMICAL REACTIONS = NR (NM - NLM)
 !   ARRAY OF STOICHIOMETRIC COEFFICIENTS = STC
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! LOCAL VARIABLES
       INTEGER i,i1,j,jj,k,m,mm,nlmm,nmm
       REAL*8 cpreac,delh(MAXTR),gmat(MAXMAT,MAXMAT+1),phi(MAXTR,MAXTR), &
@@ -5788,8 +5732,8 @@
 !           CONTIGUOUS PHASE, ETC.
 ! NTL     - NUMBER OF T INTERVALS FOR A SPECIES SET.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! DUMMY ARGUMENTS
       LOGICAL Readok
 ! LOCAL VARIABLES
@@ -6004,8 +5948,8 @@
 ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY  AND USED BY ITSELF TO
 ! PROCESS THE TRANSPORT PROPERTY DATA.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! DUMMY ARGUMENTS
       LOGICAL Readok
 ! LOCAL VARIABLES
@@ -6068,8 +6012,8 @@
 ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-FORMAT IN
 ! VARIABLE FORMAT FMT.
 !***********************************************************************
-      IMPLICIT NONE
-      INCLUDE 'cea.f90'
+      use cea
+      implicit none
 ! DUMMY ARGUMENTS
       REAL*8 Vx(NCOL)
 ! LOCAL VARIABLES

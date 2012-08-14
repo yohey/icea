@@ -3,12 +3,11 @@ FC = gfortran
 FFLAGS = 
 
 RUN = cea2
-SRC = cea2.f90
-INC = cea.f90
+SRC = cea.f90 cea2.f90
 
 
-$(RUN): $(SRC) $(INC)
-	$(FC) $(FFLAGS) -o $@ $(SRC)
+$(RUN): $(SRC)
+	$(FC) $(FFLAGS) -o $@ $^
 
 
 check: check-thermo check-trans check-cea2
@@ -33,6 +32,7 @@ check-cea2: $(RUN) cea2.inp
 
 clean:
 	$(RM) $(RUN)
+	$(RM) cea.mod
 	$(RM) thermo.lib thermo.out
 	$(RM) trans.lib trans.out
 	$(RM) cea2.out cea2.plt
