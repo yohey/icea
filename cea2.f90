@@ -12,9 +12,7 @@ program main
       character(196):: prefix
       logical:: caseok, ex, readok
       integer:: i, inc, iof, j, ln, n
-      integer:: index
       real(8):: xi, xln
-      real(8):: dlog
 
       write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
            "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
@@ -84,7 +82,7 @@ program main
         xi = Ng
         if ( xi == 0. ) xi = 1.
         xi = Enn/xi
-        xln = dlog(xi)
+        xln = log(xi)
         do inc = 1, Nc
           j = Ng + inc
           En(j, 1) = 0.D0
@@ -262,7 +260,6 @@ subroutine DETON
       character(15):: fdv  = 'DET VEL,M/SEC'
       character(3), save:: unit
       integer, save:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt, mxx(8)
-      integer:: index
       real(8), save:: a11, a12, a21, a22, alam, alfa, amm, b1, b2, cpl(Ncol), d, gam, &
              gm1(Ncol), h1(Ncol), p1, pp1, pub(Ncol), rk, rr1, rrho(Ncol), t1, &
              tem, tt1, tub(Ncol), ud, x1, x2
@@ -474,7 +471,7 @@ subroutine DETON
             write(IOOUT, Fmt) fdv, (Sonvel(j), j=1, Npt)
             Eql = .true.
             call OUT3
-            Iplt = MIN(Iplt+Npt, 500)
+            Iplt = min(Iplt+Npt, 500)
             if ( Isv == 0 .and. iof == Nof ) go to 200
             if ( Np == 1 .and. Nt == 1 ) go to 100
             write(IOOUT, '(///)')
@@ -485,8 +482,8 @@ subroutine DETON
           end if
         end do
       end do
-!     Iplt = MIN(Iplt+Npt, 500)
-      Iplt = MIN(Iplt+Npt-1, 500)
+!     Iplt = min(Iplt+Npt, 500)
+      Iplt = min(Iplt+Npt-1, 500)
       if ( iof < Nof ) go to 100
  200  Tp = .false.
       return
@@ -507,9 +504,7 @@ subroutine EFMT(Fone, Aa, Vx)
 ! LOCAL VARIABLES
       character(4):: fmix(5), frmt(8)
       integer, save:: i, j, j1, ne(Ncol)
-      integer:: IABS
       real(8), save:: ee, fe, w(Ncol)
-      real(8):: dabs, dlog10
 
       data frmt /'(1H ', ',A15', ',', '9X,', '13(F', '6.4,', 'I2,', '1X))'/
       data fmix /'I3,', '6.4,', 'I2,', '9X,', '5.3,'/
@@ -524,11 +519,11 @@ subroutine EFMT(Fone, Aa, Vx)
       end if
       do i = j1, Npt
         if ( Vx(i) /= 0. ) then
-          ee = dlog10(dabs(Vx(i)))
+          ee = log10(abs(Vx(i)))
           ne(i) = ee
           fe = ne(i)
           if ( ee < -.2181E-05 .and. fe /= ee ) ne(i) = ne(i) - 1
-          if ( IABS(ne(i)) >= 10 ) then
+          if ( abs(ne(i)) >= 10 ) then
             frmt(6) = fmix(5)
             frmt(7) = fmix(1)
           end if
@@ -557,12 +552,10 @@ subroutine EQLBRM
               jbx, jc, jcondi, jcons, jdelg, jex, jj, jkg, jneg, jsw, k, kc, kg, kk, &
               kmat, kneg, l, lc, lcs(maxEl), le, lelim, lk, ll, lncvg, ls, lsing, &
               lz, maxitn, ncvg, njc, nn, numb
-      integer:: IABS
       real(8), save:: aa, ambda, ambda1, bigen, bigneg, delg, dlnt, dpie, ensol, esize, &
              gap, gasfrc, pie, pisave(maxMat-2), siz9, sizeg, &
              sum, sum1, szgj, tem, tmelt, tsize, ween, xi, xln, xsize, xx(maxMat)
       real(8):: smalno = 1e-6, smnol = -13.815511
-      real(8):: dabs, dexp, dlog, dmax1
 
       ixsing = 0
       lsing = 0
@@ -577,11 +570,11 @@ subroutine EQLBRM
       xsize = Size + 6.90775528D0
       if ( Trace /= 0. ) then
         maxitn = maxitn + Ngc/2
-        xsize = -dlog(Trace)
+        xsize = -log(Trace)
         if ( xsize < Size ) xsize = Size + .1
       end if
       if ( xsize > 80. ) xsize = 80.D0
-      esize = MIN(80.D0, xsize+6.90775528D0)
+      esize = min(80.D0, xsize+6.90775528D0)
       jcons = 0
       pie = 0.
       i2many = .false.
@@ -632,10 +625,10 @@ subroutine EQLBRM
       Npr = Npr - 1
  300  k = k + 1
       if ( k <= Npr ) go to 100
- 400  Tln = dlog(Tt)
+ 400  Tln = log(Tt)
       if ( Vol ) Pp = Rr*Enn*Tt/Vv
       call CPHS
-      Tm = dlog(Pp/Enn)
+      Tm = log(Pp/Enn)
       le = Nlm
       if ( Lsave /= 0 .and. Nlm /= Lsave ) then
         tem = EXP(-tsize)
@@ -733,14 +726,14 @@ subroutine EQLBRM
           ambda1 = 1.D0
           ilamb = 0
           ilamb1 = 0
-          sum = dmax1(dabs(X(Iq1)), dabs(dlnt))
+          sum = max(abs(X(Iq1)), abs(dlnt))
           sum = sum*5.
           do j = 1, Ng
             if ( Deln(j) > 0. ) then
               if ( (Enln(j)-Ennl+Size) <= 0. ) then
-                sum1 = dabs(Deln(j)-X(Iq1))
+                sum1 = abs(Deln(j)-X(Iq1))
                 if ( sum1 >= siz9 ) then
-                  sum1 = dabs(-9.2103404D0-Enln(j)+Ennl)/sum1
+                  sum1 = abs(-9.2103404D0-Enln(j)+Ennl)/sum1
                   if ( sum1 < ambda1 ) then
                     ambda1 = sum1
                     ilamb1 = j
@@ -763,7 +756,7 @@ subroutine EQLBRM
               /" LN P/N=", E15.8, " AMBDA=", E15.8)') Tt, Enn, Ennl, Pp, Tm, ambda
             if ( ambda /= 1.D0 ) then
               amb = 'ENN'
-              if ( dabs(X(iq2)) > dabs(X(Iq1)) ) amb = 'TEMP'
+              if ( abs(X(iq2)) > abs(X(Iq1)) ) amb = 'TEMP'
               if ( ilamb /= 0 ) amb = Prod(ilamb)
               write(IOOUT, '(/" AMBDA SET BY ", A16)') amb
             end if
@@ -788,7 +781,7 @@ subroutine EQLBRM
               end do
             end if
             if ( (Enln(j)-Ennl+tsize) > 0. ) then
-              En(j, Npt) = dexp(Enln(j))
+              En(j, Npt) = exp(Enln(j))
               Totn(Npt) = Totn(Npt) + En(j, Npt)
             end if
  540      continue
@@ -796,7 +789,7 @@ subroutine EQLBRM
             do j = 1, Ng
               if ( A(ls, j) /= 0. .and. En(j, Npt) == 0. ) then
                 if ( (Enln(j)-Ennl+esize) > 0. ) then
-                  En(j, Npt) = dexp(Enln(j))
+                  En(j, Npt) = exp(Enln(j))
                   Totn(Npt) = Totn(Npt) + En(j, Npt)
                 end if
               end if
@@ -812,19 +805,19 @@ subroutine EQLBRM
           end if
           if ( .not. Tp ) then
             Tln = Tln + ambda*dlnt
-            Tt = dexp(Tln)
+            Tt = exp(Tln)
             cpcalc = .true.
             call CPHS
           end if
           if ( Vol ) then
             Enn = Sumn
-            Ennl = dlog(Enn)
+            Ennl = log(Enn)
             if ( Vol ) Pp = Rr*Tt*Enn/Vv
           else
             Ennl = Ennl + ambda*X(Iq1)
-            Enn = dexp(Ennl)
+            Enn = exp(Ennl)
           end if
-          Tm = dlog(Pp/Enn)
+          Tm = log(Pp/Enn)
           if ( Elmt(Nlm) == 'E' ) then
 ! CHECK ON REMOVING IONS
             do j = 1, Ngc
@@ -852,7 +845,7 @@ subroutine EQLBRM
               Sumn = Enn
               xi = Ng
               xi = Enn/xi
-              xln = dlog(xi)
+              xln = log(xi)
               do j = 1, Ng
                 En(j, Npt) = xi
                 Enln(j) = xln
@@ -868,27 +861,27 @@ subroutine EQLBRM
             end if
           else
             sum = (X(Iq1)*Enn/Totn(Npt))
-            if ( dabs(sum) > 0.5E-5 ) go to 500
+            if ( abs(sum) > 0.5E-5 ) go to 500
             do j = 1, Ng
-              if ( dabs(Deln(j))*En(j, Npt)/Totn(Npt) > 0.5D-5 ) &
+              if ( abs(Deln(j))*En(j, Npt)/Totn(Npt) > 0.5D-5 ) &
                    go to 500
             end do
-            if ( dabs(dlnt) > 1.D-04 ) go to 500
+            if ( abs(dlnt) > 1.D-04 ) go to 500
             if ( Npr /= 0 ) then
               do k = 1, Npr
                 j = Jcond(k)
-                if ( dabs(Deln(j)/Totn(Npt)) > 0.5D-5 ) go to 500
+                if ( abs(Deln(j)/Totn(Npt)) > 0.5D-5 ) go to 500
                 if ( En(j, Npt) < 0. ) go to 700
               end do
             end if
             le = Nlm
             do i = 1, Nlm
-              if ( dabs(B0(i)) >= 1.D-06 ) then
+              if ( abs(B0(i)) >= 1.D-06 ) then
                 sum = 0.
                 do j = 1, Ngc
                   sum = sum + En(j, Npt)*A(i, j)
                 end do
-                if ( dabs(B0(i)-sum) > Bcheck ) go to 500
+                if ( abs(B0(i)-sum) > Bcheck ) go to 500
               end if
             end do
             if ( Trace /= 0. ) then
@@ -901,7 +894,7 @@ subroutine EQLBRM
                   if ( i /= lsing ) then
                     tem = 0.
                     if ( X(i) /= 0. ) then
-                      tem = dabs((pisave(i)-X(i))/X(i))
+                      tem = abs((pisave(i)-X(i))/X(i))
                       if ( tem > .001 ) go to 565
                     end if
                   end if
@@ -925,7 +918,7 @@ subroutine EQLBRM
                   if ( A(ls, j) /= 0. ) then
                     En(j, Npt) = 0.
                     tem = 0.
-                    if ( Enln(j) > -87. ) tem = dexp(Enln(j))
+                    if ( Enln(j) > -87. ) tem = exp(Enln(j))
                     if ( (Enln(j)-Ennl+tsize) > 0. .and. Elmt(Nlm) &
                           == 'E' ) then
                       pie = 0.
@@ -943,7 +936,7 @@ subroutine EQLBRM
                          *dpie
                   end do
                   if ( Debug(Npt) ) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", I4, "  DELTA PI =", E14.7)') iter, dpie
-                  if ( dabs(dpie) > .0001 ) then
+                  if ( abs(dpie) > .0001 ) then
                     X(le) = X(le) + dpie
                     iter = iter + 1
                     if ( iter <= 80 ) go to 566
@@ -1091,7 +1084,7 @@ subroutine EQLBRM
         Convg = .true.
       else
         tem = Ssum(Npt) - S0
-        if ( dabs(tem) > .0005 ) go to 500
+        if ( abs(tem) > .0005 ) go to 500
         if ( Debug(Npt) ) write(IOOUT, '(/" DELTA S/R =", E15.8)') tem
         Convg = .true.
       end if
@@ -1160,7 +1153,7 @@ subroutine EQLBRM
                   if ( Tt <= Temp(2, kc) ) then
                     if ( kg /= 0 ) then
                       jkg = j + kg
-                      if ( IABS(kg) > 1 .or. Prod(j) == Prod(jkg) ) &
+                      if ( abs(kg) > 1 .or. Prod(j) == Prod(jkg) ) &
                            go to 740
                       if ( jkg == jsw ) go to 720
                       if ( Tt < Temp(1, inc)-gap .or. Tt > Temp(2, inc) &
@@ -1214,11 +1207,11 @@ subroutine EQLBRM
               "(EQLBRM)")') Prod(jcons)
             go to 1500
           end if
- 720      kk = MAX(0, kg)
+ 720      kk = max(0, kg)
           tmelt = Temp(kk+1, inc)
           Tt = tmelt
-          Tln = dlog(Tt)
-          Jsol = MIN(j, jkg)
+          Tln = log(Tt)
+          Jsol = min(j, jkg)
           Jliq = Jsol + 1
           En(jkg, Npt) = .5D0*En(j, Npt)
           En(j, Npt) = En(jkg, Npt)
@@ -1322,7 +1315,7 @@ subroutine EQLBRM
  1210       do i = 1, nn
               if ( i /= lc ) then
                 jex = Jx(i)
-                if ( dabs(A(lc, jbx)*A(i, jex)-A(lc, jex)*A(i, jbx)) &
+                if ( abs(A(lc, jbx)*A(i, jex)-A(lc, jex)*A(i, jbx)) &
                       <= smalno ) go to 1250
               end if
             end do
@@ -1337,7 +1330,7 @@ subroutine EQLBRM
         if ( njc < nn ) go to 1200
       end if
       do j = 1, Ng
-        En(j, Npt) = dabs(En(j, Npt))
+        En(j, Npt) = abs(En(j, Npt))
       end do
       if ( newcom ) then
 ! SWITCH COMPONENTS
@@ -1366,7 +1359,7 @@ subroutine EQLBRM
                 tem = A(i, jb)
                 do j = 1, Nspx
                   A(i, j) = A(i, j) - A(lc, j)*tem
-                  if ( dabs(A(i, j)) < 1.E-5 ) A(i, j) = 0.
+                  if ( abs(A(i, j)) < 1.E-5 ) A(i, j) = 0.
                 end do
                 B0(i) = B0(i) - B0(lc)*tem
                 B0p(i, 1) = B0p(i, 1) - B0p(lc, 1)*tem
@@ -1439,7 +1432,7 @@ subroutine EQLBRM
               if ( A(i, j) /= 0. ) go to 1450
             end do
           end if
-          if ( Enln(j) > -87. ) En(j, Npt) = dexp(Enln(j))
+          if ( Enln(j) > -87. ) En(j, Npt) = exp(Enln(j))
  1450   continue
       end if
       if ( Debug(Npt) ) write(IOOUT, '(/" POINT=", I3, 3X, "P=", E13.6, 3X, "T=", E13.6, /3X, "H/R=", &
@@ -1474,16 +1467,15 @@ subroutine FROZEN
       implicit none
 ! LOCAL VARIABLES
       integer, save:: i, inc, iter, j, k, nnn
-      real(8):: dabs, dexp, dlog
       real(8), save:: dlnt, dlpm
 
       Convg = .false.
-      Tln = dlog(Tt)
-      dlpm = dlog(Pp*Wm(Nfz))
+      Tln = log(Tt)
+      dlpm = log(Pp*Wm(Nfz))
       nnn = Npt
       Npt = Nfz
       do j = 1, Ng
-        if ( En(j, Nfz) /= 0.D0 ) Deln(j) = -(dlog(En(j, Nfz))+dlpm)
+        if ( En(j, Nfz) /= 0.D0 ) Deln(j) = -(log(En(j, Nfz))+dlpm)
       end do
       do iter = 1, 8
         Ssum(nnn) = 0.D0
@@ -1530,8 +1522,8 @@ subroutine FROZEN
         else
           dlnt = (Ssum(Nfz)-Ssum(nnn))/Cpsum
           Tln = Tln + dlnt
-          if ( dabs(dlnt) < 0.5D-4 ) Convg = .true.
-          Tt = dexp(Tln)
+          if ( abs(dlnt) < 0.5D-4 ) Convg = .true.
+          Tt = exp(Tln)
         end if
       end do
       write(IOOUT, '(/" FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)")')
@@ -1553,7 +1545,6 @@ subroutine GAUSS
       integer, save:: i, imatp1, j, k, nn, nnp1
       real(8):: bigno = 1e25
       real(8), save:: coefx(50), tmp
-      real(8):: dabs, dmax1
 
 ! BEGIN ELIMINATION OF NNTH VARIABLE
       imatp1 = Imat + 1
@@ -1566,9 +1557,9 @@ subroutine GAUSS
             if ( G(i, nn) /= 0. ) then
               coefx(i) = 0.
               do j = nnp1, imatp1
-                coefx(i) = dmax1(coefx(i), dabs(G(i, j)))
+                coefx(i) = max(coefx(i), abs(G(i, j)))
               end do
-              tmp = dabs(G(i, nn))
+              tmp = abs(G(i, nn))
               if ( bigno*tmp > coefx(i) ) then
                 coefx(i) = coefx(i)/tmp
               else
@@ -1653,11 +1644,10 @@ subroutine HCALC
       character(15), save:: sub
       integer, save:: i, icf, ifaz, itot, j, k, l, m, n, nall, nint, ntgas, ntot
       real(8), save:: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), tsave
-      real(8):: dlog
 
       tsave = Tt
       Tm = 0.
-      if ( Pp > 0. ) Tm = dlog(Pp*Wmix)
+      if ( Pp > 0. ) Tm = log(Pp*Wmix)
       Ssum(Npt) = 0.
       Hpp(1) = 0.
       Hpp(2) = 0.
@@ -1740,7 +1730,7 @@ subroutine HCALC
         if ( .not. Moles ) enj = Pecwt(n)/Rmw(n)
         enj = enj/tem
         if ( k == 1 ) enj = enj*Oxfl
-        Tln = dlog(Tt)
+        Tln = log(Tt)
         En(j, Npt) = enj
         l = 1
         if ( ifaz <= 0 ) then
@@ -1761,7 +1751,7 @@ subroutine HCALC
 ! ADD CONTRIBUTION TO CP, H, AND S OF TOTAL REACTANT.
         Cpmix = Cpmix + Cp(j)*enj
 ! FOR CONDENSED SPECIES:  SJ = S(J)
-        sj = S(j) - dlog(enj) - Tm
+        sj = S(j) - log(enj) - Tm
         Ssum(Npt) = Ssum(Npt) + enj*sj
         er = H0(j)*enj*Tt
         Hsub0 = Hsub0 + er
@@ -1893,7 +1883,7 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
         if ( nb == 1. .and. nx > 0 ) then
           if ( Ncin > 0 .and. Lcin(Ncin) > 0 ) then
 ! CONVERT NUMERIC CHARACTER STRINGS TO real(8) VARIABLES (DPIN)
-            fmtl(2) = numg(MIN(24, nx))
+            fmtl(2) = numg(min(24, nx))
 ! INTERNAL READ TO CONVERT TO NUMERIC
             read(cnum, fmtl, ERR=320) Dpin(Ncin)
           end if
@@ -1939,9 +1929,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
       character(26):: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
       logical, save:: eqrats, incd, phi, pltdat, reacts, refl
       integer, save:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
-      integer:: index
       real(8), save:: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
-      real(8):: dabs, dmin1, dsqrt
 
       write(IOOUT, '(/, /)')
       Caseok = .true.
@@ -1965,20 +1953,20 @@ subroutine INPUT(Readok, Caseok, Ensert)
       if ( code /= '    ' ) then
 ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
         if ( code == 'only' ) then
-          Nonly = MIN(maxNgc, ncin-1)
+          Nonly = min(maxNgc, ncin-1)
           do i = 1, Nonly
             Prod(i) = cin(i+1)
           end do
 ! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
         else if ( code == 'inse' ) then
-          Nsert = MIN(20, ncin-1)
+          Nsert = min(20, ncin-1)
           do i = 1, Nsert
             Ensert(i) = cin(i+1)
           end do
 ! STORE PRODUCT NAMES FROM 'OMIT' DATASET
         else if ( code == 'omit' ) then
 ! CHECK OMIT DATASET
-          Nomit = MIN(maxNgc, ncin-1)
+          Nomit = min(maxNgc, ncin-1)
           do i = 1, Nomit
             Omit(i) = cin(i+1)
           end do
@@ -2139,7 +2127,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
                 end if
                 write(IOOUT, '(/" WARNING!! ", A15, " NOT RECOGNIZED (INPUT)")') cin(i)
               else
-                Nreac = MIN(Nreac+1, maxR)
+                Nreac = min(Nreac+1, maxR)
                 Fox(Nreac) = cx15
                 i = i + 1
                 if ( lcin(i) < 0 ) Rname(Nreac) = cin(i)
@@ -2291,11 +2279,11 @@ subroutine INPUT(Readok, Caseok, Ensert)
             if ( refl .and. Froz ) Reflfz = .true.
             if ( refl .and. Eql ) Refleq = .true.
           end if
-          Hsub0 = dmin1(hr, ur)
+          Hsub0 = min(hr, ur)
           Size = 0.
           if ( hr > .9D30 ) hr = 0.D0
           if ( ur > .9D30 ) ur = 0.D0
-          if ( Trnspt ) Viscns = .3125*dsqrt(1.E5*Boltz/(Pi*Avgdr))
+          if ( Trnspt ) Viscns = .3125*sqrt(1.E5*Boltz/(Pi*Avgdr))
           if ( Siunit ) R = Rr/1000.
           if ( Detn .or. Shock ) Newr = .true.
           if ( .not. Short ) then
@@ -2354,7 +2342,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
                 xyz = -Vmin(2) - Vpls(2)
                 denmtr = eratio*(Vmin(1)+Vpls(1))
               end if
-              if ( dabs(denmtr) < 1.D-30 ) then
+              if ( abs(denmtr) < 1.D-30 ) then
                 Caseok = .false.
                 write(IOOUT, '(/" UNABLE TO PROCESS EQUIVALENCE RATIO =", E11.4, "(INPUT)")') eratio
                 write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
@@ -2729,17 +2717,16 @@ subroutine NEWOF
 ! LOCAL VARIABLES
       integer, save:: i, j
       real(8), save:: assval, bigb, bratio, dbi, smalb, tem, v1, v2
-      real(8):: dabs, dlog
 
       if ( .not. Short ) write(IOOUT, '(/" O/F = ", F10.6)') Oxfl
       Eqrat = 0.
       tem = Oxfl + 1.
       v2 = (Oxfl*Vmin(1)+Vmin(2))/tem
       v1 = (Oxfl*Vpls(1)+Vpls(2))/tem
-      if ( v2 /= 0. ) Eqrat = dabs(v1/v2)
+      if ( v2 /= 0. ) Eqrat = abs(v1/v2)
       do i = 1, Nlm
         B0(i) = (Oxfl*B0p(i, 1)+B0p(i, 2))/tem
-        dbi = dabs(B0(i))
+        dbi = abs(B0(i))
         if ( i == 1 ) then
           bigb = dbi
           smalb = dbi
@@ -2763,7 +2750,7 @@ subroutine NEWOF
 ! NOTE THAT "BRATIO" IS "BRATIO" IN SEC 3.2 IN RP-1311.
       bratio = smalb/bigb
       Size = 18.420681D0
-      if ( bratio < 1.D-5 ) Size = dlog(1000.D0/bratio)
+      if ( bratio < 1.D-5 ) Size = log(1000.D0/bratio)
       Jsol = 0
       Jliq = 0
       if ( .not. Short ) then
@@ -2800,7 +2787,6 @@ subroutine OUT1
       integer, save:: i, im, ione, j, k, kin, m, mcond, mcondf, mcp, mdvp, mdvt, meq, mfa, &
               mg, mgam, mh, mie, mm, mmw, mof, mp, mpf, mph, mpn, mpnf, mrho, ms, &
               mson, mt, mvis, mxx(24), n, notuse
-      integer:: index
       logical, save:: kok
       real(8), save:: pfactor, pfuel, phi, rho, tem, tra, vnum
 
@@ -2851,7 +2837,7 @@ subroutine OUT1
       end if
       if ( Rh(1) /= 0. .or. Rh(2) /= 0. ) then
         if ( Rh(1) == 0. .or. Rh(2) == 0. ) then
-          rho = MAX(Rh(1), Rh(2))
+          rho = max(Rh(1), Rh(2))
         else
           rho = (Oxfl+1.)*Rh(1)*Rh(2)/(Rh(1)+Oxfl*Rh(2))
         end if
@@ -3182,7 +3168,7 @@ subroutine REACT
       logical, save:: fuel, rcoefs, wdone(2)
       logical:: hok
       real(8), save:: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, t1, t2
-      real(8):: dabs, dlog, t1save, t2save
+      real(8):: t1save, t2save
 
       do k = 1, 2
         wdone(k) = .false.
@@ -3231,7 +3217,7 @@ subroutine REACT
                   Tt = t1
                   Rtemp(n) = t1
                 else
-                  dift = dabs(Tt-t1)
+                  dift = abs(Tt-t1)
                   if ( dift > 01d0 ) then
                     if ( dift > 10.d0 ) then
                       write(IOOUT, '(/" REACTANT ", A15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
@@ -3272,7 +3258,7 @@ subroutine REACT
                 go to 200
               end if
               if ( rcoefs.and.hok ) then
-                Tln = dlog(Tt)
+                Tln = log(Tt)
                 l = 1
                 if ( ifaz <= 0 ) then
                   if ( Tt > Tg(2) ) l = 2
@@ -3439,7 +3425,6 @@ subroutine RKTOUT
       character(15), save:: fi, fiv, fr, z(4)
       integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, &
               misp, mivac, mmach, mppf, mppj, mxx(8), nex
-      integer:: index
       real(8), save:: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
       equivalence(mxx(1), mppf)
@@ -3647,7 +3632,6 @@ subroutine ROCKET
       real(8), save:: acatsv, aeatl, appl, aratio, asq, check, cprf, dd, dh, &
              dlnp, dlnpe, dlt, dp, eln, mat, msq, p1, pcpa, pcplt, pinf, pinj, &
              pinjas, pjrat, ppa, pr, pracat, prat, pratsv, pvg, test, tmelt, usq
-      real(8):: dabs, dlog, dmax1, dsqrt
 
       iplte = Iplt
       isup1 = 1
@@ -3797,7 +3781,7 @@ subroutine ROCKET
         if ( Nsub > 1 ) isub = 2
         Isv = 4
         Npt = 2
-        ipp = MIN(4, Npp)
+        ipp = min(4, Npp)
         call SETEN
         Cpr(2) = Cpr(4)
         Dlvpt(2) = Dlvpt(4)
@@ -3827,7 +3811,7 @@ subroutine ROCKET
             else
               msq = usq/pvg
               if ( Debug(1) .or. Debug(2) ) write(IOOUT, '(/" USQ=", E15.8, 5X, "PVG=", E15.8)') usq, pvg
-              dh = dabs(msq-1.D0)
+              dh = abs(msq-1.D0)
               if ( dh <= 0.4D-4 ) go to 550
               if ( itrot > 0 ) then
                 p1 = Pp
@@ -3838,7 +3822,7 @@ subroutine ROCKET
                   Pp = Pp*(1.D0+msq*Gammas(nptth))/(Gammas(nptth)+1.D0)
                 else
                   write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
-                  dlt = dlog(tmelt/Tt)
+                  dlt = log(tmelt/Tt)
                   dd = dlt*Cpr(nptth)/(Enn*Dlvtp(nptth))
                   Pp = Pp*EXP(dd)
                   App(nptth) = P(Ip)/Pp
@@ -3861,8 +3845,8 @@ subroutine ROCKET
                 write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                 go to 550
               else
-                dp = dabs(Pp-p1)/20.
-                Pp = dmax1(Pp, p1)
+                dp = abs(Pp-p1)/20.
+                Pp = max(Pp, p1)
                 write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                 Pp = Pp - dp
                 go to 500
@@ -3896,7 +3880,7 @@ subroutine ROCKET
         itrot = itrot - 1
         go to 250
  550    Awt = Enn*Tt/(Pp*usq**.5)
-        pcplt = dlog(App(nptth))
+        pcplt = log(App(nptth))
  600    Isv = 0
         Aeat(Npt) = Enn*Ttt(Npt)/(Pp*usq**.5*Awt)
         if ( Tt == 0. ) go to 1150
@@ -3936,14 +3920,14 @@ subroutine ROCKET
             write(IOOUT, '(/" AN ASSIGNED AREA RATIO IS < 1 (ROCKET)" )')
             go to 1050
           end if
-          eln = dlog(aratio)
+          eln = log(aratio)
           if ( Fac ) then
             if ( .not. done ) go to 800
           end if
           if ( Nsub <= i01 ) then
             if ( Nfz == ipp ) isupsv = Isup
             if ( Supar(Isup) < 2. ) then
-              appl = dsqrt(eln*(1.535d0+3.294d0*eln)) + pcplt
+              appl = sqrt(eln*(1.535d0+3.294d0*eln)) + pcplt
               go to 1100
             else
               if ( Isup > isup1 .and. Supar(Isup-1) >= 2. ) go to 850
@@ -3957,9 +3941,9 @@ subroutine ROCKET
           if ( Debug(Npt) ) write(IOOUT, '(/" ITER=", I2, 2X, "ASSIGNED AE/AT=", F14.7, 3X, "AE/AT=", F14.7, &
                /, 2X, "PC/P=", F14.7, 2X, "DELTA LN PCP=", F14.7)') itnum, aratio, Aeat(Npt), &
                                    App(Npt), dlnp
-          if ( dabs(Aeat(Npt)-aratio)/aratio <= check ) go to 900
+          if ( abs(Aeat(Npt)-aratio)/aratio <= check ) go to 900
           if ( ABS(dlnp) < .00004 ) go to 900
-          aeatl = dlog(Aeat(Npt))
+          aeatl = log(Aeat(Npt))
           itnum = itnum + 1
           if ( itnum > 10 ) then
             write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, &
@@ -4088,11 +4072,11 @@ subroutine ROCKET
         if ( .not. Page1 ) then
           Iplt = Iplt - 2
           if ( Iopt /= 0 ) Iplt = Iplt - 1
-          Iplt = MIN(Iplt, 500)
+          Iplt = min(Iplt, 500)
         else
           Page1 = .false.
         end if
-        iplte = MAX(iplte, Iplt)
+        iplte = max(iplte, Iplt)
         dlnp = 1.
         if ( Tt == 0. ) Area = .false.
         if ( .not. Eql .and. Tt == 0. ) write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
@@ -4193,7 +4177,7 @@ subroutine ROCKET
       else if ( iof < Nof ) then
         go to 100
       end if
- 1400 Iplt = MAX(Iplt, iplte)
+ 1400 Iplt = max(Iplt, iplte)
       return
 end subroutine
 
@@ -4444,7 +4428,6 @@ subroutine SETEN
 ! LOCAL VARIABLES
       integer, save:: j, lsav
       real(8), save:: tsave
-      real(8):: dexp
 
       if ( Isv < 0 ) then
 ! FIRST T--SAVE COMPOSITIONS FOR FUTURE POINTS WITH THIS T
@@ -4495,7 +4478,7 @@ subroutine SETEN
           En(j, Npt) = 0.
           Enln(j) = Sln(j)
           if ( Sln(j) /= 0. ) then
-            if ( (Enln(j)-Ennl+18.5) > 0. ) En(j, Npt) = dexp(Enln(j))
+            if ( (Enln(j)-Ennl+18.5) > 0. ) En(j, Npt) = exp(Enln(j))
           end if
         end do
         if ( .not. Tp ) Tt = tsave
@@ -4523,7 +4506,6 @@ subroutine SHCK
       real(8), save:: ax, axx, b2, cormax, gg, hs, m2m1(Ncol), mis(13), mu12rt, p1, p21, &
              p21l, p2p1(Ncol), pmn, rho12, rho52, rrho(Ncol), sg(78), t1, t21, &
              t21l, t2t1(Ncol), ttmax, u1u2(Ncol), uis(13), utwo(Ncol), uu, wmx, ww
-      real(8):: dabs, dexp, dlog, dmin1
 
       if ( Trace == 0. ) Trace = 5.E-9
       Tp = .true.
@@ -4647,10 +4629,10 @@ subroutine SHCK
           Tp = .true.
         end if
       end if
-      p21l = dlog(p21)
+      p21l = log(p21)
       ttmax = 1.05*Tg(4)/t1
-      t21 = dmin1(t21, ttmax)
-      t21l = dlog(t21)
+      t21 = min(t21, ttmax)
+      t21l = log(t21)
       itr = 1
  500  if ( Shkdbg ) write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
            "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, t21, rho52
@@ -4658,7 +4640,7 @@ subroutine SHCK
       Pp = p21*p1
       if ( .not. Eql ) then
 ! FROZEN
-        Tln = dlog(Tt)
+        Tln = log(Tt)
         if ( .not. Incdeq ) then
           call HCALC
           if ( Tt == 0. ) go to 600
@@ -4701,8 +4683,8 @@ subroutine SHCK
         write(IOOUT, '(/" X       ", 2E15.8)') X(1), X(2)
         write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') Hsum(Npt), hs, uu, uu*rho12
       end if
-      ax = dabs(X(1))
-      axx = dabs(X(2))
+      ax = abs(X(1))
+      axx = abs(X(2))
       if ( axx > ax ) ax = axx
       if ( ax >= .00005 ) then
         cormax = .40546511
@@ -4716,8 +4698,8 @@ subroutine SHCK
         end if
         p21l = p21l + X(1)
         t21l = t21l + X(2)
-        p21 = dexp(p21l)
-        t21 = dexp(t21l)
+        p21 = exp(p21l)
+        t21 = exp(t21l)
         if ( Shkdbg ) write(IOOUT, '(/" MAX.COR.=", e13.6, " X(1)=", e13.6, " X(2)=", e13.6)') cormax, X(1), X(2)
         if ( itr /= 1 .or. t21 < ttmax ) then
           itr = itr + 1
@@ -4750,7 +4732,7 @@ subroutine SHCK
             do j = 1, Ngc
               pmn = Pp*wmx*En(j, Npt)
               if ( En(j, Npt) > 0. ) Ssum(Npt) = Ssum(Npt) + En(j, Npt) &
-                   *(S(j)-dlog(pmn))
+                   *(S(j)-log(pmn))
             end do
           end if
         end if
@@ -4822,7 +4804,7 @@ subroutine SHCK
       else
         call OUT3
       end if
-      Iplt = MIN(Iplt+Npt, 500)
+      Iplt = min(Iplt+Npt, 500)
       if ( srefl ) then
         if ( .not. refl ) then
           refl = .true.
@@ -4936,7 +4918,7 @@ subroutine THERMP
             call OUT2
             if ( Trnspt ) call OUT4
             call OUT3
-            Iplt = MIN(Iplt+Npt, 500)
+            Iplt = min(Iplt+Npt, 500)
             if ( Isv == 0 .and. iof == Nof ) go to 200
             write(IOOUT, '(////)')
             Npt = 0
@@ -4968,7 +4950,6 @@ subroutine TRANIN
       real(8), save:: coeff, debye, ekt, enel, enmin, ionic, lamda, omega, prop, qc, ratio, &
              stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
              trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
-      real(8):: dabs, dexp, dlog, dsqrt
 
       if ( .not. Eql ) then
         if ( .not. Shock ) then
@@ -5004,7 +4985,7 @@ subroutine TRANIN
         j = Jcm(i)
         if ( En(j, Npt) <= 0.D0 .and. j <= Ngc ) then
           if ( (Enln(j)-Ennl+25.328436D0) > 0.D0 ) En(j, Npt) &
-               = dexp(Enln(j))
+               = exp(Enln(j))
         end if
         Nm = Nm + 1
         Ind(Nm) = j
@@ -5035,7 +5016,7 @@ subroutine TRANIN
       end if
 ! CALCULATE MOLE FRACTIONS FROM THE EN(J, NPT)
  200  do j = 1, Ng
-        En(j, Npt) = dabs(En(j, Npt))
+        En(j, Npt) = abs(En(j, Npt))
       end do
       do i = 1, Nm
         j = Ind(i)
@@ -5164,18 +5145,18 @@ subroutine TRANIN
         debye = ((22.5D0/Pi)*(Rr/Avgdr*100.D0)*(te/xsel))/ekt**3
         ionic = ((810.D0/(4.0D0*Pi))*(Rr/Avgdr*100D0)*(te/xsel)) &
                 **(2.0/3.0)/ekt**2
-        lamda = dsqrt(debye+ionic)
-        lamda = MAX(lamda, 2.71828183D0)
+        lamda = sqrt(debye+ionic)
+        lamda = max(lamda, 2.71828183D0)
       end if
       do i = 1, Nm
         k = Ind(i)
         Cprr(i) = Cp(k)
-        if ( .not. (Ions .and. (dabs(A(Nlm, k)) == 1.D0) .and.  &
+        if ( .not. (Ions .and. (abs(A(Nlm, k)) == 1.D0) .and.  &
              (Eta(i, i) == 0.D0)) ) then
           if ( Eta(i, i) == 0.D0 ) then
-            omega = dlog(50.D0*Wmol(i)**4.6/Tt**1.4)
-            omega = MAX(omega, 1.D0)
-            Eta(i, i) = Viscns*dsqrt(Wmol(i)*Tt)/omega
+            omega = log(50.D0*Wmol(i)**4.6/Tt**1.4)
+            omega = max(omega, 1.D0)
+            Eta(i, i) = Viscns*sqrt(Wmol(i)*Tt)/omega
           end if
           if ( Con(i) == 0.D0 ) Con(i) = Eta(i, i) &
                *Rr*(.00375D0+.00132D0*(Cprr(i)-2.5D0))/Wmol(i)
@@ -5199,13 +5180,13 @@ subroutine TRANIN
               if ( ABS(A(Nlm, k2)) == 1.0 ) ion2 = .true.
               if ( Wmol(i) < 1.0 ) elc1 = .true.
               if ( Wmol(j) < 1.0 ) elc2 = .true.
-              if ( ion1 .and. ion2 ) omega = 1.36D0*qc*dlog(lamda)
+              if ( ion1 .and. ion2 ) omega = 1.36D0*qc*log(lamda)
               if ( (ion1 .and. elc2) .or. (ion2 .and. elc1) ) &
-                   omega = 1.29D0*qc*dlog(lamda)
+                   omega = 1.29D0*qc*log(lamda)
               if ( (ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1) ) &
                    omega = EXP(6.776-0.4*Tln)
               if ( omega /= 0. ) then
-                wmred = dsqrt(2.0*Tt*Wmol(i)*Wmol(j)/(Wmol(i)+Wmol(j)))
+                wmred = sqrt(2.0*Tt*Wmol(i)*Wmol(j)/(Wmol(i)+Wmol(j)))
                 Eta(i, j) = Viscns*wmred*Pi/omega
                 Eta(j, i) = Eta(i, j)
                 if ( i == j ) then
@@ -5218,10 +5199,10 @@ subroutine TRANIN
               end if
             end if
 ! ESTIMATE FOR UNLIKE INTERACTIONS FROM RIGID SPHERE ANALOGY
-            ratio = dsqrt(Wmol(j)/Wmol(i))
+            ratio = sqrt(Wmol(j)/Wmol(i))
             Eta(i, j) = 5.656854D0*Eta(i, i) &
                        *SQRT(Wmol(j)/(Wmol(i)+Wmol(j)))
-            Eta(i, j) = Eta(i, j)/(1.D0+dsqrt(ratio*Eta(i, i)/Eta(j, j)))**2
+            Eta(i, j) = Eta(i, j)/(1.D0+sqrt(ratio*Eta(i, i)/Eta(j, j)))**2
             Eta(j, i) = Eta(i, j)
           end if
  450    continue
@@ -5246,7 +5227,6 @@ subroutine TRANP
       real(8), save:: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
              psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
              stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
-      real(8):: dabs
 
       call TRANIN
 ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
@@ -5302,7 +5282,7 @@ subroutine TRANP
         end do
         do i = 1, maxTr
           do j = 1, maxTr
-            if ( dabs(Stc(i, j)) < 1.0D-6 ) Stc(i, j) = 0.0D0
+            if ( abs(Stc(i, j)) < 1.0D-6 ) Stc(i, j) = 0.0D0
           end do
         end do
         jj = Nm - 1
@@ -5454,11 +5434,9 @@ subroutine UTHERM(Readok)
       character(2):: sym(5)
       character(6):: date
       integer:: i, ifaz, ifzm1, inew, int, j, k, kk, l, nall, ncoef, ngl, ns, ntl
-      integer:: index
       logical:: fill(3)
       real(8):: aa, atms, cpfix, dlt, expn(8), fno(5), hform, hh, mwt, templ(9), tex, &
              tgl(4), thermo(9, 3), tinf, tl(2), ttl, tx
-      real(8):: DBLE, dlog
 
       ngl = 0
       ns = 0
@@ -5531,7 +5509,7 @@ subroutine UTHERM(Readok)
         end if
         do 150 l = 1, ncoef
           do k = 1, 7
-            if ( expn(l) == DBLE(k-3) ) then
+            if ( expn(l) == real(k-3) ) then
               thermo(k, int) = templ(l)
               go to 150
             end if
@@ -5572,7 +5550,7 @@ subroutine UTHERM(Readok)
             cpfix = 0
             templ(8) = 0.
             templ(9) = 0.
-            dlt = dlog(ttl)
+            dlt = log(ttl)
             do k = 7, 1, - 1
               kk = k - 3
               if ( kk == 0 ) then
@@ -5724,10 +5702,9 @@ subroutine VARFMT(Vx)
 ! LOCAL VARIABLES
       integer, save:: i, k
       real(8), save:: vi
-      real(8):: dabs
 
       do i = 1, Npt
-        vi = dabs(Vx(i))
+        vi = abs(Vx(i))
         k = 2*i + 3
         Fmt(k) = '5,'
         if ( vi >= 1. ) Fmt(k) = '4,'
