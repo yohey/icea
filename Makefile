@@ -1,6 +1,6 @@
 
 FC = gfortran
-FFLAGS = -O3
+FFLAGS = 
 DFLAGS = -O0 -std=f2003 -fbounds-check -Wall -ffpe-trap=invalid,zero,overflow -g -fbacktrace
 
 RUN = cea2

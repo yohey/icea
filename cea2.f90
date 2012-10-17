@@ -3422,16 +3422,9 @@ subroutine RKTOUT
   character(4):: exit(11) = 'EXIT'
   character(15), save:: fi, fiv, fr, z(4)
   integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, &
-       misp, mivac, mmach, mppf, mppj, mxx(8), nex
+       misp, mivac, mmach, mppf, mppj, nex
   real(8), save:: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
-  equivalence(mxx(1), mppf)
-  equivalence(mxx(2), mppj)
-  equivalence(mxx(3), mmach)
-  equivalence(mxx(4), mae)
-  equivalence(mxx(5), mcf)
-  equivalence(mxx(6), mivac)
-  equivalence(mxx(7), misp)
 
   if ( .not. Eql ) then
      write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
@@ -3478,9 +3471,13 @@ subroutine RKTOUT
      write(IOOUT, Fmt) 'Pinj/P         ', (X(i), i=1, Npt)
   end if
   call OUT2
-  do i = 1, 8
-     mxx(i) = 0
-  end do
+  mppf  = 0
+  mppj  = 0
+  mmach = 0
+  mae   = 0
+  mcf   = 0
+  mivac = 0
+  misp  = 0
   do 100 i = 1, Nplt
      ixfz = index(Pltvar(i)(2:), 'fz')
      ixfr = index(Pltvar(i)(2:), 'fr')
