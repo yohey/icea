@@ -5642,15 +5642,13 @@ subroutine UTRAN(Readok)
   character(16):: tname(2)
   character(1):: vorc
   integer:: i, ic, in, iv, j, k, ncc, nn, ns, nv
-  real(8):: cc, tc(36), tcin(6), trcoef(6, 3, 2), vvl
+  real(8):: cc, tcin(6), trcoef(6, 3, 2), vvl
 
-
-  equivalence(tc(1), trcoef(1, 1, 1))
 
   ns = 0
   rewind IOSCH
   outerLoop: do
-     tc(:) = 0.
+     trcoef(:, :, :) = 0.
      read(IOINP, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
      if ( tname(1) == 'end' .or. tname(1) == 'LAST' ) then
         write(IOTRN) ns
