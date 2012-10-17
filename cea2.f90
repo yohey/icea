@@ -381,12 +381,12 @@ subroutine DETON
            write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
            call OUT1
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
-           mp = 0
-           mt = 0
-           mgam = 0
-           mh = 0
-           mdv = 0
-           mson = 0
+           mp    = 0
+           mt    = 0
+           mgam  = 0
+           mh    = 0
+           mdv   = 0
+           mson  = 0
            mmach = 0
            do i = 1, Nplt
               if ( index(Pltvar(i)(2:), '1') /= 0 ) then
@@ -2786,34 +2786,11 @@ subroutine OUT1
   character(4), save:: mamo
   integer, save:: i, im, ione, j, k, kin, m, mcond, mcondf, mcp, mdvp, mdvt, meq, mfa, &
        mg, mgam, mh, mie, mm, mmw, mof, mp, mpf, mph, mpn, mpnf, mrho, ms, &
-       mson, mt, mvis, mxx(24), n, notuse
+       mson, mt, mvis, n, notuse
   logical, save:: kok
   real(8), save:: pfactor, pfuel, phi, rho, tem, tra, vnum
 
-  equivalence(mxx(1), mp)
-  equivalence(mxx(2), mt)
-  equivalence(mxx(3), mrho)
-  equivalence(mxx(4), mh)
-  equivalence(mxx(5), mie)
-  equivalence(mxx(6), mg)
-  equivalence(mxx(7), ms)
-  equivalence(mxx(8), mm)
-  equivalence(mxx(9), mcp)
-  equivalence(mxx(10), mgam)
-  equivalence(mxx(11), mson)
-  equivalence(mxx(12), mcond)
-  equivalence(mxx(13), mvis)
-  equivalence(mxx(14), mpn)
-  equivalence(mxx(15), mpf)
-  equivalence(mxx(16), mof)
-  equivalence(mxx(17), mph)
-  equivalence(mxx(18), meq)
-  equivalence(mxx(19), mfa)
-  equivalence(mxx(20), mmw)
-  equivalence(mxx(21), mdvt)
-  equivalence(mxx(22), mdvp)
-  equivalence(mxx(23), mcondf)
-  equivalence(mxx(24), mpnf)
+
   write(IOOUT, '(" CASE = ", a15)') Case
   if ( Moles ) then
      write(IOOUT, '(/13X, "REACTANT", 20x, a11, "      ENERGY", 6x, "TEMP")') '   MOLES   '
@@ -2859,9 +2836,30 @@ subroutine OUT1
      if ( Iopt /= 0 ) ione = 3
   end if
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
-  do i = 1, 24
-     mxx(i) = 0
-  end do
+  mp     = 0
+  mt     = 0
+  mrho   = 0
+  mh     = 0
+  mie    = 0
+  mg     = 0
+  ms     = 0
+  mm     = 0
+  mcp    = 0
+  mgam   = 0
+  mson   = 0
+  mcond  = 0
+  mvis   = 0
+  mpn    = 0
+  mpf    = 0
+  mof    = 0
+  mph    = 0
+  meq    = 0
+  mfa    = 0
+  mmw    = 0
+  mdvt   = 0
+  mdvp   = 0
+  mcondf = 0
+  mpnf   = 0
   do 100 i = 1, Nplt
      if ( index(Pltvar(i)(2:), '1') == 0 ) then
         if ( index(Pltvar(i)(1:), 'dlnt') /= 0 ) then
