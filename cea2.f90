@@ -15,9 +15,9 @@ program main
   real(8):: xi, xln
 
   write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
-       "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
-       " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
-       //)')
+       & "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
+       & " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
+       & //)')
   read(*, '(a)') prefix
   ln = index(prefix, ' ') - 1
   infile = prefix(1:ln)//'.inp'
@@ -35,10 +35,10 @@ program main
   open(IOTRN, FILE='trans.lib', FORM='unformatted')
   write(IOOUT, '(/" *******************************************************************************")')
   write(IOOUT, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
-       " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
-       " AND SANFORD GORDON", /5x, &
-       " REFS: NASA RP-1311, PART I, 1994", &
-       " AND NASA RP-1311, PART II, 1996")')
+       & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
+       & " AND SANFORD GORDON", /5x, &
+       & " REFS: NASA RP-1311, PART I, 1994", &
+       & " AND NASA RP-1311, PART II, 1996")')
   write(IOOUT, '(/" *******************************************************************************")')
   readok = .true.
   Newr = .false.
@@ -358,8 +358,8 @@ subroutine DETON
               Tt = t1*tt1
               ud = rr1*(Rr*gam*Tt/Wm(Npt))**.5
               if ( Detdbg ) write(IOOUT, '(/" ITER =", I2, 5X, "P/P1 =", E15.8, /7X, "T/T1 =", E15.8, 5X, &
-                   "RHO/RHO1 =", E15.8, /7X, "DEL LN P/P1 =", E15.8, 5X, &
-                   "DEL LN T/T1 =", E15.8)') itr, pp1, tt1, rr1, x1, x2
+                   & "RHO/RHO1 =", E15.8, /7X, "DEL LN P/P1 =", E15.8, 5X, &
+                   & "DEL LN T/T1 =", E15.8)') itr, pp1, tt1, rr1, x1, x2
 ! CONVERGENCE TEST
               if ( itr < 8 .and. tem > 0.5E-04 ) go to 110
               if ( itr < 8 ) then
@@ -604,7 +604,7 @@ subroutine EQLBRM
            En(j+kg, Npt) = En(j, Npt)
            En(j, Npt) = 0.
            if ( Prod(j) /= Prod(j+kg) .and. .not. Short )  &
-                write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') Prod(j), Prod(j+kg)
+                & write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') Prod(j), Prod(j+kg)
         end if
         go to 300
      else if ( kc >= Nc .or. Ifz(kc+1) <= Ifz(kc) ) then
@@ -754,7 +754,7 @@ subroutine EQLBRM
         if ( Debug(Npt) ) then
 ! INTERMEDIATE OUTPUT
            write(IOOUT, '(/" T=", E15.8, " ENN=", E15.8, " ENNL=", E15.8, " PP=", E15.8, &
-                /" LN P/N=", E15.8, " AMBDA=", E15.8)') Tt, Enn, Ennl, Pp, Tm, ambda
+                & /" LN P/N=", E15.8, " AMBDA=", E15.8)') Tt, Enn, Ennl, Pp, Tm, ambda
            if ( ambda /= 1.D0 ) then
               amb = 'ENN'
               if ( abs(X(iq2)) > abs(X(Iq1)) ) amb = 'TEMP'
@@ -763,7 +763,7 @@ subroutine EQLBRM
            end if
            if ( Vol ) write(IOOUT, '(" VOLUME=", E15.8, "CC/G")') Vv*.001D0
            write(IOOUT, '(/24X, "Nj", 12X, "LN Nj", 8X, "DEL LN Nj", 6X, "H0j/RT", /, 41X, &
-                "S0j/R", 10X, " G0j/RT", 8X, " Gj/RT")')
+                & "S0j/R", 10X, " G0j/RT", 8X, " Gj/RT")')
            do j = 1, Ngc
               write(IOOUT, '(1X, A16, 4E15.6, /35x, 3E15.6)') Prod(j), En(j, Npt), Enln(j), Deln(j), &
                    H0(j), S(j), H0(j) - S(j), Mu(j)
@@ -834,7 +834,7 @@ subroutine EQLBRM
 ! TEST FOR CONVERGENCE
 560     if ( numb > maxitn ) then
            write(IOOUT, '(/, I4, " ITERATIONS DID NOT SATISFY CONVERGENCE", /, 15x, &
-                " REQUIREMENTS FOR THE POINT", I5, " (EQLBRM)")') maxitn, Npt
+                & " REQUIREMENTS FOR THE POINT", I5, " (EQLBRM)")') maxitn, Npt
            if ( Nc == 0 .or. i2many ) go to 1500
            i2many = .true.
            if ( .not. Hp .or. Npt /= 1 .or. Tt > 100. ) then
@@ -856,8 +856,8 @@ subroutine EQLBRM
               go to 1000
            else
               write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
-                   "VE BEEN INSERTED,", &
-                   /" RESTART WITH insert DATASET (EQLBRM)")')
+                   & "VE BEEN INSERTED,", &
+                   & /" RESTART WITH insert DATASET (EQLBRM)")')
               go to 1500
            end if
         else
@@ -985,7 +985,7 @@ subroutine EQLBRM
         go to 1400
      else
         write(IOOUT, '(/" SINGULAR MATRIX, ITERATION", I3, "  VARIABLE", I3, &
-             "(EQLBRM)")') numb, Msing
+             & "(EQLBRM)")') numb, Msing
         lsing = Msing
         ixsing = ixsing + 1
         if ( ixsing <= 8 ) then
@@ -1020,11 +1020,11 @@ subroutine EQLBRM
                     if ( reduce .and. Msing <= Nlm ) then
                        if ( Nlm < lelim ) go to 1500
                        write(IOOUT, '(/" WARNING!! POINT", I3, &
-                            " USES A REDUCED SET OF COMPONENTS", / &
-                            " SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.", &
-                            / &
-                            " IT MAY BE NECESSARY TO RERUN WITH INSERTED CONDENSED SPECIES", &
-                            /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') Npt, Elmt(Nlm)
+                            & " USES A REDUCED SET OF COMPONENTS", / &
+                            & " SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.", &
+                            & / &
+                            & " IT MAY BE NECESSARY TO RERUN WITH INSERTED CONDENSED SPECIES", &
+                            & /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') Npt, Elmt(Nlm)
                        Nlm = Nlm - 1
                        go to 500
                     else if ( Msing <= Nlm ) then
@@ -1063,8 +1063,8 @@ subroutine EQLBRM
               go to 500
            else
               write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
-                   "VE BEEN INSERTED,", &
-                   /" RESTART WITH insert DATASET (EQLBRM)")')
+                   & "VE BEEN INSERTED,", &
+                   & /" RESTART WITH insert DATASET (EQLBRM)")')
            end if
         end if
      end if
@@ -1094,7 +1094,7 @@ subroutine EQLBRM
   if ( ncvg > lncvg ) then
 ! ERROR, SET TT=0
      write(IOOUT, '(/, I3, " CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED", &
-          " SPECIES (EQLBRM)")') lncvg
+          & " SPECIES (EQLBRM)")') lncvg
      go to 1500
   else
      if ( .not. Shock ) then
@@ -1107,8 +1107,8 @@ subroutine EQLBRM
         end if
         if ( .not. Tp .and. Npr == 0 .and. Tt <= Tg(1)*.2D0 ) then
            write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
-                "VE BEEN INSERTED,", &
-                /" RESTART WITH insert DATASET (EQLBRM)")')
+                & "VE BEEN INSERTED,", &
+                & /" RESTART WITH insert DATASET (EQLBRM)")')
            go to 1500
         end if
         newcom = .false.
@@ -1194,7 +1194,7 @@ subroutine EQLBRM
                        ipr = ipr - 1
                     end if
                     if ( Debug(Npt) ) write(IOOUT, '(" [G0j-SUM(Aij*PIi)]/Mj =", E15.7, 9X, "MAX NEG DELTA G =", &
-                         E15.7)') delg, sizeg
+                         & E15.7)') delg, sizeg
                  end if
               end if
            end if
@@ -1205,7 +1205,7 @@ subroutine EQLBRM
            go to 800
         else
            write(IOOUT, '(/" REINSERTION OF ", A16, " LIKELY TO CAUSE SINGULARITY, ", &
-                "(EQLBRM)")') Prod(jcons)
+                & "(EQLBRM)")') Prod(jcons)
            go to 1500
         end if
 720     kk = max(0, kg)
@@ -1425,7 +1425,7 @@ subroutine EQLBRM
   Wm(Npt) = 1./Enn
   gasfrc = Enn/Totn(Npt)
   if ( gasfrc < .0001 ) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", I3, " DUE TO", &
-       /" LOW MOLE FRACTION OF GASES (", E15.8, ") (EQLBRM)")') Npt, gasfrc
+       & /" LOW MOLE FRACTION OF GASES (", E15.8, ") (EQLBRM)")') Npt, gasfrc
   if ( Trace /= 0. ) then
      do 1450 j = 1, Ng
         if ( lelim /= 0 ) then
@@ -1437,15 +1437,15 @@ subroutine EQLBRM
 1450 continue
   end if
   if ( Debug(Npt) ) write(IOOUT, '(/" POINT=", I3, 3X, "P=", E13.6, 3X, "T=", E13.6, /3X, "H/R=", &
-       E13.6, 3X, "S/R=", E13.6, /3X, "M=", E13.6, 3X, "CP/R=", E13.6, 3X, &
-       "DLVPT=", E13.6, /3X, "DLVTP=", E13.6, 3X, "GAMMA(S)=", E13.6, 3X, &
-       "V=", E13.6)') Npt, Pp, Tt, Hsum(Npt), &
+       & E13.6, 3X, "S/R=", E13.6, /3X, "M=", E13.6, 3X, "CP/R=", E13.6, 3X, &
+       & "DLVPT=", E13.6, /3X, "DLVTP=", E13.6, 3X, "GAMMA(S)=", E13.6, 3X, &
+       & "V=", E13.6)') Npt, Pp, Tt, Hsum(Npt), &
        Ssum(Npt), Wm(Npt), Cpr(Npt), Dlvpt(Npt), &
        Dlvtp(Npt), Gammas(Npt), Vlm(Npt)
   if ( Tt >= Tg(1) .and. Tt <= Tg(4) ) go to 1600
   if ( Shock ) go to 1600
   write(IOOUT, '(" THE TEMPERATURE=", E12.4, " IS OUT OF RANGE FOR POINT", I5, &
-       "(EQLBRM)")') Tt, Npt
+       & "(EQLBRM)")') Tt, Npt
   if ( Tt >= Tg(1)*.8D0 .and. Tt <= Tg(4)*1.1D0 ) go to 1600
   Npt = Npt + 1
 1500 Tt = 0.
@@ -1721,7 +1721,7 @@ subroutine HCALC
         end do
         Nspr = Nspr - 1
         write(IOOUT, '(/" ERROR IN DATA FOR ", A15, " CHECK NAME AND TEMPERATURE", &
-             " RANGE IN", /, " thermo.inp (HCALC)")') Rname(n)
+             & " RANGE IN", /, " thermo.inp (HCALC)")') Rname(n)
         Energy(n) = ' '
 20      Tt = 0.
         Cpmix = 0.
@@ -2290,16 +2290,16 @@ subroutine INPUT(Readok, Caseok, Ensert)
         if ( Detn .or. Shock ) Newr = .true.
         if ( .not. Short ) then
            write(IOOUT, '(/" OPTIONS: TP=", L1, "  HP=", L1, "  SP=", L1, "  TV=", L1, &
-                "  UV=", L1, "  SV=", L1, "  DETN=", L1, "  SHOCK=", L1, &
-                "  REFL=", L1, "  INCD=", L1, /" RKT=", L1, "  FROZ=", L1, &
-                "  EQL=", L1, "  IONS=", L1, "  SIUNIT=", L1, "  DEBUGF=", L1, &
-                "  SHKDBG=", L1, "  DETDBG=", L1, "  TRNSPT=", L1)') Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), &
+                & "  UV=", L1, "  SV=", L1, "  DETN=", L1, "  SHOCK=", L1, &
+                & "  REFL=", L1, "  INCD=", L1, /" RKT=", L1, "  FROZ=", L1, &
+                & "  EQL=", L1, "  IONS=", L1, "  SIUNIT=", L1, "  DEBUGF=", L1, &
+                & "  SHKDBG=", L1, "  DETDBG=", L1, "  TRNSPT=", L1)') Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), &
                 (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
                 incd, Rkt, Froz, Eql, Ions, Siunit, Debugf, Shkdbg, &
                 Detdbg, Trnspt
            if ( T(1) > 0. ) write(IOOUT, '(/" T,K =", 7F11.4)') (T(jj), jj=1, Nt)
            write(IOOUT, '(/1p, " TRACE=", E9.2, "  S/R=", E13.6, "  H/R=", E13.6, "  U/R=", &
-                E13.6)') Trace, S0, hr, ur
+                & E13.6)') Trace, S0, hr, ur
            if ( Np > 0 .and. Vol ) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4E14.7))') &
                 (V(jj)*1.D-05, jj=1, Np)
         end if
@@ -2360,11 +2360,11 @@ subroutine INPUT(Readok, Caseok, Ensert)
         else if ( Tp .and. T(1) <= 0. ) then
            Caseok = .false.
            write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", &
-                " DATASET (INPUT)")')
+                & " DATASET (INPUT)")')
         else if ( Np <= 0 ) then
            Caseok = .false.
            write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", &
-                " DATASET (INPUT)")')
+                & " DATASET (INPUT)")')
         end if
         if ( .not. (Caseok .and. Nlm > 0) ) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
         go to 400
@@ -2405,7 +2405,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > maxMix ) then
         Nt = maxMix
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 't', Nt
+             & " (INPUT)", /)') 't', Nt
      end if
      do i = 1, Nt
         if ( cx4 /= 'tces' ) then
@@ -2424,7 +2424,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > 2*Ncol ) then
         Npp = 2*Ncol
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'pcp', Npp
+             & " (INPUT)", /)') 'pcp', Npp
      end if
      do i = 1, Npp
         Pcp(i) = mix(i)
@@ -2434,7 +2434,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > maxPv ) then
         Np = maxPv
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'p', Np
+             & " (INPUT)", /)') 'p', Np
      end if
      do 350 i = 1, Np
         P(i) = mix(i)
@@ -2454,7 +2454,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > maxPv ) then
         Np = maxPv
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'rho', Np
+             & " (INPUT)", /)') 'rho', Np
      end if
      do i = 1, Np
         V(i) = xyz/mix(i)
@@ -2466,7 +2466,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > maxPv ) then
         Np = maxPv
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'v', Np
+             & " (INPUT)", /)') 'v', Np
      end if
      do i = 1, Np
         V(i) = mix(i)*xyz
@@ -2489,7 +2489,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > Ncol ) then
         Nsk = Ncol
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'u1', Nsk
+             & " (INPUT)", /)') 'u1', Nsk
      end if
      do i = 1, Nsk
         U1(i) = mix(i)
@@ -2499,7 +2499,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > Ncol ) then
         Nsk = Ncol
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'mach1', Nsk
+             & " (INPUT)", /)') 'mach1', Nsk
      end if
      do i = 1, Nsk
         Mach1(i) = mix(i)
@@ -2509,7 +2509,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > 13 ) then
         Nsub = 13
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'subar', Nsub
+             & " (INPUT)", /)') 'subar', Nsub
      end if
      do i = 1, Nsub
         Subar(i) = mix(i)
@@ -2519,7 +2519,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > 13 ) then
         Nsup = 13
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'supar', Nsup
+             & " (INPUT)", /)') 'supar', Nsup
      end if
      do i = 1, Nsup
         Supar(i) = mix(i)
@@ -2538,7 +2538,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
      if ( nmix > maxMix ) then
         Nof = maxMix
         write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             " (INPUT)", /)') 'o/f', Nof
+             & " (INPUT)", /)') 'o/f', Nof
      end if
      do k = 1, Nof
         Oxf(k) = mix(k)
@@ -2757,7 +2757,7 @@ subroutine NEWOF
   Jliq = 0
   if ( .not. Short ) then
      write(IOOUT, '(/, 23X, "EFFECTIVE FUEL", 5X, "EFFECTIVE OXIDANT", 8X, &
-          "MIXTURE")')
+          & "MIXTURE")')
      if ( Vol ) write(IOOUT, '(" INTERNAL ENERGY", 11X, "u(2)/R", 14X, "u(1)/R", 14X, "u0/R")')
      if ( .not. Vol ) write(IOOUT, '(" ENTHALPY", 18X, "h(2)/R", 14X, "h(1)/R", 15X, "h0/R")')
      write(IOOUT, '(" (KG-MOL)(K)/KG", 4X, E18.8, 2E20.8)') Hpp(2), Hpp(1), Hsub0
@@ -2851,7 +2851,7 @@ subroutine OUT1
      end if
   end if
   write(IOOUT, '(/" O/F=", F11.5, 2X, "%FUEL=", F10.6, 2X, "R,EQ.RATIO=", F9.6, 2X, &
-       "PHI,EQ.RATIO=", F9.6)') Oxfl, pfuel, Eqrat, phi
+       & "PHI,EQ.RATIO=", F9.6)') Oxfl, pfuel, Eqrat, phi
   return
 !***********************************************************************
   entry OUT2
@@ -3101,12 +3101,12 @@ subroutine OUT1
   write(IOOUT, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", F7.0, "K")') Tg(4)
   if ( .not. Short ) then
      write(IOOUT, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", A4, &
-          " FRACTIONS", /"    WERE LESS THAN", 1PE13.6, &
-          " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
+          & " FRACTIONS", /"    WERE LESS THAN", 1PE13.6, &
+          & " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
      write(IOOUT, '(5(1x, A15))') (Omit(i), i=1, notuse)
   end if
   if ( .not. Moles ) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
-       " OXIDANT IN TOTAL OXIDANTS")')
+       & " OXIDANT IN TOTAL OXIDANTS")')
   go to 200
 !***********************************************************************
   entry OUT4
@@ -3223,15 +3223,15 @@ subroutine REACT
                     if ( dift > 01d0 ) then
                        if ( dift > 10.d0 ) then
                           write(IOOUT, '(/" REACTANT ", A15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
-                               F8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", F8.2, &
-                               " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') Rname(n), t1, Tt
+                               & F8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", F8.2, &
+                               & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') Rname(n), t1, Tt
                           Nlm = 0
                           hok = .false.
                           go to 200
                        else
                           write(IOOUT, '(/" NOTE! REACTANT ", A15, "HAS BEEN DEFINED FOR ", &
-                               "TEMPERATURE", F8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
-                               F8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') Rname(n), t1, Tt
+                               & "TEMPERATURE", F8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
+                               & F8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') Rname(n), t1, Tt
                           Tt = t1
                           Rtemp(n) = t1
                        end if
@@ -3276,7 +3276,7 @@ subroutine REACT
 20      continue
         if (.not.hok) then
            write(IOOUT, '(/" YOUR ASSIGNED TEMPERATURE", F8.2, "K FOR ", A15, /, &
-                "IS OUTSIDE ITS TEMPERATURE RANGE", F8.2, " TO", F9.2, "K (REACT)")') Tt, Rname(n), t1save, t2save
+                & "IS OUTSIDE ITS TEMPERATURE RANGE", F8.2, " TO", F9.2, "K (REACT)")') Tt, Rname(n), t1save, t2save
            Energy(n) = ' '
            Nlm = 0
            goto 200
@@ -3329,7 +3329,7 @@ subroutine REACT
            wdone(kr) = .true.
            Pecwt(n) = 100.
            write(IOOUT, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", I3, ".", &
-                /" PROGRAM SETS WEIGHT PERCENT = 100. (REACT)")') n
+                & /" PROGRAM SETS WEIGHT PERCENT = 100. (REACT)")') n
         else
            write(IOOUT, '(/" AMOUNT MISSING FOR REACTANT NO.", I2, "(REACT)")') n
            Nlm = 0
@@ -3399,10 +3399,10 @@ subroutine REACT
      if ( .not. Short ) then
         if ( Moles ) then
            write(IOOUT, '(/4x, "REACTANT", 10x, A7, 3X, "(ENERGY/R),K", 3X, &
-                "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') ' MOLES '
+                & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') ' MOLES '
         else
            write(IOOUT, '(/4x, "REACTANT", 10x, A7, 3X, "(ENERGY/R),K", 3X, &
-                "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') 'WT.FRAC'
+                & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') 'WT.FRAC'
         end if
         do n = 1, Nreac
            write(IOOUT, '(1x, a1, ": ", a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))') &
@@ -3672,12 +3672,12 @@ subroutine ROCKET
   else if ( .not. Eql .and. Nfz > 1 .and. Nsub > 0 ) then
      Nsub = 0
      write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
-          " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
+          & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
   end if
   nn = nn + Nsub + Nsup
   if ( Nfz > 2 .and. nn > Ncol-2 ) then
      write(IOOUT, '(/" WARNING!!  nfz NOT ALLOWED TO BE > 2 IF THE TOTAL", /, &
-          " NUMBER OF POINTS IS >", i3, " (ROCKET)")') Ncol - 2
+          & " NUMBER OF POINTS IS >", i3, " (ROCKET)")') Ncol - 2
      Nfz = 1
      Froz = .false.
   end if
@@ -3751,7 +3751,7 @@ subroutine ROCKET
               end if
            else
               write(IOOUT, '(/" INPUT VALUE OF mdot/a =", F12.3, " IS TOO LARGE."/ &
-                   " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') Ma
+                   & " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') Ma
               Tt = 0.
               go to 1400
            end if
@@ -3913,8 +3913,8 @@ subroutine ROCKET
         if ( .not. Eql .and. Nfz >= 3 ) then
            if ( aratio <= Aeat(Nfz) ) then
               write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
-                   " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
-                   "LESS THAN THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
+                   & " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
+                   & "LESS THAN THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
               go to 1050
            end if
         end if
@@ -3941,7 +3941,7 @@ subroutine ROCKET
      else if ( Gammas(Npt) > 0. ) then
         check = .00004
         if ( Debug(Npt) ) write(IOOUT, '(/" ITER=", I2, 2X, "ASSIGNED AE/AT=", F14.7, 3X, "AE/AT=", F14.7, &
-             /, 2X, "PC/P=", F14.7, 2X, "DELTA LN PCP=", F14.7)') itnum, aratio, Aeat(Npt), &
+             & /, 2X, "PC/P=", F14.7, 2X, "DELTA LN PCP=", F14.7)') itnum, aratio, Aeat(Npt), &
              App(Npt), dlnp
         if ( abs(Aeat(Npt)-aratio)/aratio <= check ) go to 900
         if ( ABS(dlnp) < .00004 ) go to 900
@@ -3949,7 +3949,7 @@ subroutine ROCKET
         itnum = itnum + 1
         if ( itnum > 10 ) then
            write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, &
-                " (ROCKET)")') aratio
+                & " (ROCKET)")') aratio
            go to 900
         else
 ! IMPROVED PCP ESTIMATES.
@@ -3959,7 +3959,7 @@ subroutine ROCKET
         end if
      else
         write(IOOUT, '(/" WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ", &
-             "BECAUSE GAMMAs", /, " CALCULATION IMPOSSIBLE. (ROCKET)")')
+             & "BECAUSE GAMMAs", /, " CALCULATION IMPOSSIBLE. (ROCKET)")')
         Npt = Npt - 1
         if ( Nsub <= 0 ) isup1 = 100
         if ( Nsub < 0. ) Nsup = Isup - 1
@@ -3993,7 +3993,7 @@ subroutine ROCKET
               pcpa = pinf*pa
               if ( Debugf ) then
                  write(IOOUT, '(" ITER", 3X, "TEST", 3X, "ASSIGNED PINJ", 1x, "CALC PINJ", 5X, &
-                      "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
+                      & "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
                  write(IOOUT, '(I3, F10.6, 1x, 4F12.2, 2F9.5)') niter, test, pinjas, pinj, pcpa, ppa, &
                       acatsv, Acat
               end if
@@ -4018,7 +4018,7 @@ subroutine ROCKET
               pcpa = pinf*pa
               if ( Debugf ) then
                  write(IOOUT, '(" ITER", 3X, "TEST", 3X, "ASSIGNED PINJ", 1x, "CALC PINJ", 5X, &
-                      "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
+                      & "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
                  write(IOOUT, '(I3, F10.6, 1x, 4F12.2, 2F9.5)') niter, test, pinjas, pinj, pcpa, ppa, &
                       acatsv, Acat
               end if
@@ -4036,7 +4036,7 @@ subroutine ROCKET
                  pjrat = 1.
                  prat = (b1+c1*Acat)/(1.+a1l*Acat)
                  if ( Debugf ) write(IOOUT, '(" NEW PC = ", F10.2, 2X, "NEW ACAT = ", F9.6, 2X, "PJRAT =", &
-                      F10.7, " PRACAT =", F10.7)') pcpa, Acat, pjrat, pracat
+                      & F10.7, " PRACAT =", F10.7)') pcpa, Acat, pjrat, pracat
               end do
               go to 300
            end if
@@ -4082,8 +4082,8 @@ subroutine ROCKET
      dlnp = 1.
      if ( Tt == 0. ) Area = .false.
      if ( .not. Eql .and. Tt == 0. ) write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
-          "POINT IS MORE", /, " THAN 50 K BELOW THE TEMPERATURE", &
-          " RANGE OF A CONDENSED SPECIES (ROCKET)")')
+          & "POINT IS MORE", /, " THAN 50 K BELOW THE TEMPERATURE", &
+          & " RANGE OF A CONDENSED SPECIES (ROCKET)")')
      if ( Isv == 0 ) then
 ! PCP, SUBAR, AND SUPAR SCHEDULES COMPLETED
         if ( Nsub < 0 ) Nsub = -Nsub
@@ -4102,12 +4102,12 @@ subroutine ROCKET
         if ( Nsub > 0 ) then
            Nsub = -Nsub
            write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
-                " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
+                & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
         end if
         if ( App(Nfz) < App(nptth) ) then
            write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
-                "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
-                "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
+                & "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
+                & "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
         else
            if ( Nfz < Npp ) go to 1200
            go to 700
@@ -4135,9 +4135,9 @@ subroutine ROCKET
            if ( Fac ) App(Npt) = App(Npt)*pinf/Ppp(1)
            if ( .not. Eql .and. App(Npt) < App(Nfz) ) then
               write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
-                   " WHERE THE ASSIGNED", /, &
-                   " PRESSURE RATIOS WERE LESS THAN ", &
-                   "THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
+                   & " WHERE THE ASSIGNED", /, &
+                   & " PRESSURE RATIOS WERE LESS THAN ", &
+                   & "THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
               go to 1250
            end if
         end if
@@ -4147,15 +4147,15 @@ subroutine ROCKET
               if ( isub <= Nsub .and. isub > i01 .and. aratio >= Aeat(2) ) &
                    then
                  write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
-                      "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
-                      ".  POINT OMITTED (ROCKET)")') aratio, Aeat(2)
+                      & "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
+                      & ".  POINT OMITTED (ROCKET)")') aratio, Aeat(2)
                  Npt = Npt - 1
                  go to 1000
               end if
            else if ( Npt > nptth .and. Pcp(ipp-3) < Ppp(1)/Ppp(2) ) then
               write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
-                   " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
-                   ". POINT OMITTED", " (ROCKET)")') Pcp(ipp-3), Ppp(1)/Ppp(2)
+                   & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
+                   & ". POINT OMITTED", " (ROCKET)")') Pcp(ipp-3), Ppp(1)/Ppp(2)
               Npt = Npt - 1
               go to 650
            end if
@@ -4339,15 +4339,15 @@ subroutine SEARCH
         ii = i
      end do
      write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", A3, " MISSING", &
-          //, 13x, "FATAL ERROR (SEARCH)")') Elmt(ii)
+          & //, 13x, "FATAL ERROR (SEARCH)")') Elmt(ii)
      Ngc = 0
      go to 600
 300 continue
 ! WRITE POSSIBLE PRODUCT LIST
   if ( .not. Short ) then
      write(IOOUT, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &
-          /" (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)", &
-          /"  LAST thermo.inp UPDATE: ", A10, /)') Thdate
+          & /" (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)", &
+          & /"  LAST thermo.inp UPDATE: ", A10, /)') Thdate
      do i = 1, Ngc, 3
         i5 = i + 2
         if ( Ngc < i5 ) i5 = Ngc
@@ -4356,7 +4356,7 @@ subroutine SEARCH
   end if
   go to 600
 400 write(IOOUT, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", &
-       /"   PART 2, PAGE 39. (SEARCH)")')
+       & /"   PART 2, PAGE 39. (SEARCH)")')
   Ngc = 0
   go to 600
 ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
@@ -4516,7 +4516,7 @@ subroutine SHCK
   if ( .not. Short ) then
      write(IOOUT, '(/"   *** INPUT FOR SHOCK PROBLEMS ***")')
      write(IOOUT, '(/" INCDEQ =", L2, "   REFLEQ =", L2, "   INCDFZ =", L2, &
-          "    REFLFZ =", L2)') Incdeq, Refleq, Incdfz, Reflfz
+          & "    REFLFZ =", L2)') Incdeq, Refleq, Incdfz, Reflfz
   end if
   if ( Refleq .or. Reflfz ) srefl = .true.
   seql = Incdeq
@@ -4568,7 +4568,7 @@ subroutine SHCK
         Hsum(Npt) = Hsub0
      else
         write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
-             "FOR POINT", I5, " (SHCK)")') Tt, Npt
+             & "FOR POINT", I5, " (SHCK)")') Tt, Npt
         go to 1000
      end if
 350  if ( Cpmix /= 0. ) Gamma1 = Cpmix/(Cpmix-1./Wmix)
@@ -4637,7 +4637,7 @@ subroutine SHCK
   t21l = log(t21)
   itr = 1
 500 if ( Shkdbg ) write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
-       "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, t21, rho52
+       & "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, t21, rho52
   Tt = t21*t1
   Pp = p21*p1
   if ( .not. Eql ) then
@@ -4707,7 +4707,7 @@ subroutine SHCK
         itr = itr + 1
         if ( itr < 61 ) go to 500
         write(IOOUT, '(/6x, " WARNING!!  NO CONVERGENCE FOR u1=", F8.1, &
-             /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') U1(Npt)
+             & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') U1(Npt)
      else
         Tt = 0.
         Npt = Npt - 1
@@ -4741,7 +4741,7 @@ subroutine SHCK
      go to 900
   end if
 700 write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
-       "FOR POINT", I5, " (SHCK)")') Tt, Npt
+       & "FOR POINT", I5, " (SHCK)")') Tt, Npt
   Tt = 0.
 800 if ( Npt < 1 ) go to 1000
   Nsk = Npt
@@ -5004,7 +5004,7 @@ subroutine TRANIN
         if ( En(j, Npt) >= testen ) then
            if ( Nm >= maxTr ) then
               write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
-                   /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') Nm, Npt
+                   & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') Nm, Npt
               go to 200
            else
               total = total + En(j, Npt)

@@ -1,6 +1,7 @@
 
 FC = gfortran
-FFLAGS = -std=f2003
+FFLAGS = -O3
+DFLAGS = -O0 -std=f2003 -fbounds-check -Wuninitialized -ffpe-trap=invalid,zero,overflow -g -fbacktrace
 
 RUN = cea2
 SRC = cea.f90 cea2.f90
@@ -8,6 +9,10 @@ SRC = cea.f90 cea2.f90
 
 $(RUN): $(SRC)
 	$(FC) $(FFLAGS) -o $@ $^
+
+
+debug: $(SRC)
+	$(FC) $(DFLAGS) -o $@ $^
 
 
 check: check-thermo check-trans check-cea2
@@ -32,6 +37,7 @@ check-cea2: $(RUN) cea2.inp
 
 clean:
 	$(RM) $(RUN)
+	$(RM) debug
 	$(RM) cea.mod
 	$(RM) thermo.lib thermo.out
 	$(RM) trans.lib trans.out
