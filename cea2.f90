@@ -5637,57 +5637,60 @@ subroutine UTRAN(Readok)
   use cea
   implicit none
 ! DUMMY ARGUMENTS
-  logical:: Readok
+  logical, intent(out):: Readok
 ! LOCAL VARIABLES
   character(16):: tname(2)
   character(1):: vorc
   integer:: i, ic, in, iv, j, k, ncc, nn, ns, nv
   real(8):: cc, tc(36), tcin(6), trcoef(6, 3, 2), vvl
 
+
   equivalence(tc(1), trcoef(1, 1, 1))
+
   ns = 0
   rewind IOSCH
-100 do i = 1, 36
-     tc(i) = 0.
-  end do
-  read(IOINP, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
-  if ( tname(1) == 'end' .or. tname(1) == 'LAST' ) then
-     write(IOTRN) ns
-     rewind IOSCH
-     do i = 1, ns
-        read(IOSCH, ERR=200) tname, trcoef
-        write(IOTRN) tname, trcoef
-     end do
-     go to 300
-  else
-     ic = 0
-     iv = 0
-     nn = nv + ncc
-     if ( nv <= 3 .and. ncc <= 3 ) then
-        do in = 1, nn
-           read(IOINP, '(1X, A1, 2F9.2, 4E15.8)') vorc, tcin
-           if ( vorc == 'C' ) then
-              k = 2
-              ic = ic + 1
-              j = ic
-           else
-              k = 1
-              iv = iv + 1
-              j = iv
-           end if
-           if ( j > 3 ) go to 200
-           do i = 1, 6
-              trcoef(i, j, k) = tcin(i)
-           end do
+  outerLoop: do
+     tc(:) = 0.
+     read(IOINP, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
+     if ( tname(1) == 'end' .or. tname(1) == 'LAST' ) then
+        write(IOTRN) ns
+        rewind IOSCH
+        do i = 1, ns
+           read(IOSCH, ERR=200) tname, trcoef
+           write(IOTRN) tname, trcoef
         end do
-        ns = ns + 1
-        write(IOSCH) tname, trcoef
-        go to 100
+        return
+     else
+        ic = 0
+        iv = 0
+        nn = nv + ncc
+        if ( nv <= 3 .and. ncc <= 3 ) then
+           do in = 1, nn
+              read(IOINP, '(1X, A1, 2F9.2, 4E15.8)') vorc, tcin
+              if ( vorc == 'C' ) then
+                 k = 2
+                 ic = ic + 1
+                 j = ic
+              else
+                 k = 1
+                 iv = iv + 1
+                 j = iv
+              end if
+              if ( j > 3 ) exit outerLoop
+              do i = 1, 6
+                 trcoef(i, j, k) = tcin(i)
+              end do
+           end do
+           ns = ns + 1
+           write(IOSCH) tname, trcoef
+           cycle
+        end if
      end if
-  end if
+     exit
+  end do outerLoop
 200 write(IOOUT, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
   Readok = .false.
-300 return
+  return
 end subroutine UTRAN
 
 
@@ -5700,7 +5703,7 @@ subroutine VARFMT(Vx)
   use cea
   implicit none
 ! DUMMY ARGUMENTS
-  real(8):: Vx(Ncol)
+  real(8), intent(in):: Vx(Ncol)
 ! LOCAL VARIABLES
   integer, save:: i, k
   real(8), save:: vi

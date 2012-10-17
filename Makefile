@@ -1,6 +1,6 @@
 
 FC = gfortran
-FFLAGS = 
+FFLAGS = -std=f2003
 
 RUN = cea2
 SRC = cea.f90 cea2.f90
