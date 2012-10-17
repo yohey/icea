@@ -260,18 +260,12 @@ subroutine DETON
   character(15):: frr1 = 'RHO/RHO1'
   character(15):: fdv  = 'DET VEL,M/SEC'
   character(3), save:: unit
-  integer, save:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt, mxx(8)
+  integer, save:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt
   real(8), save:: a11, a12, a21, a22, alam, alfa, amm, b1, b2, cpl(Ncol), d, gam, &
        gm1(Ncol), h1(Ncol), p1, pp1, pub(Ncol), rk, rr1, rrho(Ncol), t1, &
        tem, tt1, tub(Ncol), ud, x1, x2
 
-  equivalence(mxx(1), mp)
-  equivalence(mxx(2), mt)
-  equivalence(mxx(3), mgam)
-  equivalence(mxx(4), mh)
-  equivalence(mxx(5), mdv)
-  equivalence(mxx(6), mson)
-  equivalence(mxx(7), mmach)
+
   iof = 0
   Eql = .true.
   if ( T(1) == 0. ) then
@@ -387,9 +381,13 @@ subroutine DETON
            write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
            call OUT1
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
-           do i = 1, 8
-              mxx(i) = 0
-           end do
+           mp = 0
+           mt = 0
+           mgam = 0
+           mh = 0
+           mdv = 0
+           mson = 0
+           mmach = 0
            do i = 1, Nplt
               if ( index(Pltvar(i)(2:), '1') /= 0 ) then
                  if ( Pltvar(i)(:3) == 'son' ) then
