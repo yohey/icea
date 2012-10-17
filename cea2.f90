@@ -521,7 +521,7 @@ subroutine EFMT(Fone, Aa, Vx)
   do i = j1, Npt
      if ( Vx(i) /= 0. ) then
         ee = log10(abs(Vx(i)))
-        ne(i) = ee
+        ne(i) = int(ee)
         fe = ne(i)
         if ( ee < -.2181E-05 .and. fe /= ee ) ne(i) = ne(i) - 1
         if ( abs(ne(i)) >= 10 ) then
@@ -531,7 +531,7 @@ subroutine EFMT(Fone, Aa, Vx)
         w(i) = Vx(i)/10.**ne(i)
      else
         w(i) = 0.
-        ne(i) = 0.
+        ne(i) = 0
      end if
   end do
   write(IOOUT, frmt) Aa, (w(j), ne(j), j=j1, Npt)
@@ -1345,7 +1345,7 @@ subroutine EQLBRM
         if ( tem /= 0. ) then
            pisave(lc) = H0(jb) - S(jb)
            if ( jb <= Ng ) pisave(lc) = pisave(lc) + Enln(jb) + Tm
-           cmp(lc) = Prod(jb)
+           cmp(lc) = trim(Prod(jb))
 ! CALCULATE NEW COEFFICIENTS
            if ( tem /= 1. ) then
               B0(lc) = B0(lc)/tem
@@ -1393,7 +1393,7 @@ subroutine EQLBRM
         cmp(Nlm) = ae
         ae = Elmt(Msing)
         Elmt(Msing) = Elmt(Nlm)
-        Elmt(Nlm) = ae
+        Elmt(Nlm) = trim(ae)
         ja = Jx(Msing)
         Jx(Msing) = Jx(Nlm)
         Jx(Nlm) = ja
@@ -1864,7 +1864,7 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
         nx = nx + 1
         if ( Ncin > 1 ) then
            cnum(nx:nx) = cx
-           if ( nx <= 15 ) Cin(Ncin) = cnum
+           if ( nx <= 15 ) Cin(Ncin) = trim(cnum)
            if ( nx == 1 ) then
 ! IS THIS A NUMERIC?
               do j = 1, 13
@@ -1951,7 +1951,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
 ! CALL INFREE TO READ DATASET
 100 call INFREE(Readok, cin, ncin, lcin, dpin)
   if ( .not. Readok ) go to 400
-  code = cin(1)
+  code = trim(cin(1))
   if ( code /= '    ' ) then
 ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
      if ( code == 'only' ) then
@@ -2010,7 +2010,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
               else if ( cx3 == 'deb' .or. cx3 == 'dbg' ) then
                  do j = i + 1, ncin
                     if ( lcin(j) /= i ) go to 120
-                    k = dpin(j)
+                    k = int(dpin(j))
                     if ( k <= Ncol ) Debug(k) = .true.
                     lcin(j) = 0
                  end do
@@ -2130,7 +2130,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
                  write(IOOUT, '(/" WARNING!! ", A15, " NOT RECOGNIZED (INPUT)")') cin(i)
               else
                  Nreac = min(Nreac+1, maxR)
-                 Fox(Nreac) = cx15
+                 Fox(Nreac) = trim(cx15)
                  i = i + 1
                  if ( lcin(i) < 0 ) Rname(Nreac) = cin(i)
                  ifrmla = 0
@@ -2472,7 +2472,7 @@ subroutine INPUT(Readok, Caseok, Ensert)
         V(i) = mix(i)*xyz
      end do
   else if ( cx3 == 'nfz' .or. cx3 == 'nfr' ) then
-     Nfz = mix(1)
+     Nfz = int(mix(1))
      Froz = .true.
   else if ( cx4 == 'tces' ) then
      Tcest = mix(1)

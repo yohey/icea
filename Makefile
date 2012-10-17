@@ -1,7 +1,7 @@
 
 FC = gfortran
 FFLAGS = -O3
-DFLAGS = -O0 -std=f2003 -fbounds-check -Wuninitialized -ffpe-trap=invalid,zero,overflow -g -fbacktrace
+DFLAGS = -O0 -std=f2003 -fbounds-check -Wall -ffpe-trap=invalid,zero,overflow -g -fbacktrace
 
 RUN = cea2
 SRC = cea.f90 cea2.f90
