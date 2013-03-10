@@ -1763,7 +1763,7 @@ end subroutine HCALC
 
 
 
-subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
+subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
 !***********************************************************************
 ! FREE-FORM READ FOR CEA.  READS AND DECIPHERS DATA FOR ONE DATASET.
 !
@@ -1787,7 +1787,7 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
   character(15):: Cin(maxNgc)
   integer:: Ncin
   integer:: Lcin(maxNgc)
-  logical:: Readok
+  logical:: readOK
   real(8):: Dpin(maxNgc)
 ! LOCAL VARIABLES
   character(1):: ch1(132), cx, nums(13)
@@ -1905,20 +1905,20 @@ subroutine INFREE(Readok, Cin, Ncin, Lcin, Dpin)
      Dpin(Ncin) = 0.D0
   end if
   go to 100
-500 Readok = .false.
+500 readOK = .false.
   return
 end subroutine
 
 
 
-subroutine INPUT(Readok, Caseok, Ensert)
+subroutine INPUT(readOK, Caseok, Ensert)
 !***********************************************************************
 ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
 !***********************************************************************
   use cea
   implicit none
 ! DUMMY ARGUMENTS
-  logical:: Caseok, Readok
+  logical:: Caseok, readOK
   character(15):: Ensert(20)
 ! LOCAL VARIABLES
   character(15), save:: cin(maxNgc), cx15
@@ -1947,8 +1947,8 @@ subroutine INPUT(Readok, Caseok, Ensert)
   Siunit = .true.
   pltdat = .false.
 ! CALL INFREE TO READ DATASET
-100 call INFREE(Readok, cin, ncin, lcin, dpin)
-  if ( .not. Readok ) go to 400
+100 call INFREE(readOK, cin, ncin, lcin, dpin)
+  if ( .not. readOK ) go to 400
   code = trim(cin(1))
   if ( code /= '    ' ) then
 ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
@@ -1975,16 +1975,16 @@ subroutine INPUT(Readok, Caseok, Ensert)
      else if ( code == 'ther' ) then
         Newr = .true.
         rewind IOTHM
-        call UTHERM(Readok)
-        if ( .not. Readok ) then
+        call UTHERM(readOK)
+        if ( .not. readOK ) then
            write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
            go to 400
         end if
 ! KEYWORD 'TRAN' READ
 ! CALL UTRAN TO CONVERT formatTED TRANSPORT PROPERTIES
      else if ( code == 'tran' ) then
-        call UTRAN(Readok)
-        if ( .not. Readok ) then
+        call UTRAN(readOK)
+        if ( .not. readOK ) then
            write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
            go to 400
         end if
@@ -5369,7 +5369,7 @@ end subroutine TRANP
 
 
 
-subroutine UTHERM(Readok)
+subroutine UTHERM(readOK)
 !***********************************************************************
 ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
 ! UNformatTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
@@ -5421,7 +5421,7 @@ subroutine UTHERM(Readok)
   use cea
   implicit none
 ! DUMMY ARGUMENTS
-  logical:: Readok
+  logical:: readOK
 ! LOCAL VARIABLES
   character(15):: name
   character(16):: namee
@@ -5610,13 +5610,13 @@ subroutine UTHERM(Readok)
   end if
   return
 400 write(IOOUT, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
-  Readok = .false.
+  readOK = .false.
   return
 end subroutine
 
 
 
-subroutine UTRAN(Readok)
+subroutine UTRAN(readOK)
 !***********************************************************************
 ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
 ! UNformatTED ON I/O UNIT IOTRN.  USES SCRATCH I/O UNIT IOSCH.
@@ -5630,7 +5630,7 @@ subroutine UTRAN(Readok)
   use cea
   implicit none
 ! DUMMY ARGUMENTS
-  logical, intent(out):: Readok
+  logical, intent(out):: readOK
 ! LOCAL VARIABLES
   character(16):: tname(2)
   character(1):: vorc
@@ -5680,7 +5680,7 @@ subroutine UTRAN(Readok)
      exit
   end do outerLoop
 200 write(IOOUT, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
-  Readok = .false.
+  readOK = .false.
   return
 end subroutine UTRAN
 
