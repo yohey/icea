@@ -1455,58 +1455,57 @@ subroutine FROZEN
 
   Convg = .false.
   Tln = log(Tt)
-  dlpm = log(Pp*Wm(Nfz))
+  dlpm = log(Pp * Wm(Nfz))
   nnn = Npt
   Npt = Nfz
   do j = 1, Ng
-     if ( En(j, Nfz) /= 0.D0 ) Deln(j) = -(log(En(j, Nfz))+dlpm)
+     if (En(j, Nfz) /= 0.D0) Deln(j) = -(log(En(j, Nfz)) + dlpm)
   end do
   do iter = 1, 8
      Ssum(nnn) = 0.D0
      Cpsum = 0.D0
      call CPHS
      do j = 1, Ng
-        Cpsum = Cpsum + En(j, Nfz)*Cp(j)
-        Ssum(nnn) = Ssum(nnn) + En(j, Nfz)*(S(j)+Deln(j))
+        Cpsum = Cpsum + En(j, Nfz) * Cp(j)
+        Ssum(nnn) = Ssum(nnn) + En(j, Nfz) * (S(j) + Deln(j))
      end do
-     if ( Npr /= 0 ) then
+     if (Npr /= 0) then
         do k = 1, Npr
            j = Jcond(k)
-           Cpsum = Cpsum + En(j, Nfz)*Cp(j)
-           Ssum(nnn) = Ssum(nnn) + En(j, Nfz)*S(j)
+           Cpsum = Cpsum + En(j, Nfz) * Cp(j)
+           Ssum(nnn) = Ssum(nnn) + En(j, Nfz) * S(j)
         end do
      end if
-     if ( Convg ) then
+     if (Convg) then
         Npt = nnn
         Hsum(Npt) = 0.D0
         do j = 1, Ngc
-           Hsum(Npt) = Hsum(Npt) + En(j, Nfz)*H0(j)
+           Hsum(Npt) = Hsum(Npt) + En(j, Nfz) * H0(j)
         end do
-        Hsum(Npt) = Hsum(Npt)*Tt
+        Hsum(Npt) = Hsum(Npt) * Tt
         Ttt(Npt) = Tt
-        Gammas(Npt) = Cpsum/(Cpsum-1./Wm(Nfz))
-        Vlm(Npt) = Rr*Tt/(Wm(Nfz)*Pp)
+        Gammas(Npt) = Cpsum/(Cpsum - 1. / Wm(Nfz))
+        Vlm(Npt) = Rr * Tt / (Wm(Nfz) * Pp)
         Wm(Npt) = Wm(Nfz)
         Dlvpt(Npt) = -1.
         Dlvtp(Npt) = 1.
         Totn(Npt) = Totn(Nfz)
         Ppp(Npt) = Pp
         Cpr(Npt) = Cpsum
-        if ( Tt >= (Tg(1)*.8D0) ) then
+        if (Tt >= Tg(1) * .8D0) then
            do i = Ngp1, Ngc
-              if ( En(i, Nfz) /= 0. ) then
+              if (En(i, Nfz) /= 0.) then
                  inc = i - Ng
-                 if ( Tt < (Temp(1, inc)-50.) .or. Tt > (Temp(2, inc)+50.) &
-                      ) go to 100
+                 if (Tt < (Temp(1, inc)-50.) .or. Tt > (Temp(2, inc)+50.)) go to 100
               end if
            end do
            go to 200
         end if
         go to 100
      else
-        dlnt = (Ssum(Nfz)-Ssum(nnn))/Cpsum
+        dlnt = (Ssum(Nfz) - Ssum(nnn)) / Cpsum
         Tln = Tln + dlnt
-        if ( abs(dlnt) < 0.5D-4 ) Convg = .true.
+        if (abs(dlnt) < 0.5D-4) Convg = .true.
         Tt = exp(Tln)
      end if
   end do
