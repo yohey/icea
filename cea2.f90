@@ -1532,19 +1532,19 @@ subroutine GAUSS
 ! BEGIN ELIMINATION OF NNTH VARIABLE
   imatp1 = Imat + 1
   do nn = 1, Imat
-     if ( nn /= Imat ) then
+     if (nn /= Imat) then
 ! SEARCH FOR MAXIMUM COEFFICIENT IN EACH ROW
         nnp1 = nn + 1
         do i = nn, Imat
            coefx(i) = bigno
-           if ( G(i, nn) /= 0. ) then
+           if (G(i, nn) /= 0.) then
               coefx(i) = 0.
               do j = nnp1, imatp1
                  coefx(i) = max(coefx(i), abs(G(i, j)))
               end do
               tmp = abs(G(i, nn))
-              if ( bigno*tmp > coefx(i) ) then
-                 coefx(i) = coefx(i)/tmp
+              if (bigno * tmp > coefx(i)) then
+                 coefx(i) = coefx(i) / tmp
               else
                  coefx(i) = bigno
               end if
@@ -1554,25 +1554,25 @@ subroutine GAUSS
         tmp = bigno
         i = 0
         do j = nn, Imat
-           if ( coefx(j) < tmp ) then
+           if (coefx(j) < tmp) then
               tmp = coefx(j)
               i = j
            end if
         end do
-        if ( i == 0 ) then
+        if (i == 0) then
            Msing = nn
            go to 99999
 ! INDEX I LOCATES EQUATION TO BE USED FOR ELIMINATING THE NTH
 ! VARIABLE FROM THE REMAINING EQUATIONS
 ! INTERCHANGE EQUATIONS I AND NN
-        else if ( nn /= i ) then
+        else if (nn /= i) then
            do j = nn, imatp1
               tmp = G(i, j)
               G(i, j) = G(nn, j)
               G(nn, j) = tmp
            end do
         end if
-     else if ( G(nn, nn) == 0 ) then
+     else if (G(nn, nn) == 0) then
         Msing = nn
         go to 99999
      end if
@@ -1580,18 +1580,18 @@ subroutine GAUSS
 ! VARIABLE FROM THE REMAINING EQUATIONS
      k = nn + 1
      tmp = G(nn, nn)
-     if ( tmp == 0. ) then
+     if (tmp == 0.) then
         Msing = nn
         go to 99999
      else
         do j = k, imatp1
-           G(nn, j) = G(nn, j)/tmp
+           G(nn, j) = G(nn, j) / tmp
         end do
-        if ( k /= imatp1 ) then
+        if (k /= imatp1) then
            do i = k, Imat
 !DIR$ IVDEP
               do j = k, imatp1
-                 G(i, j) = G(i, j) - G(i, nn)*G(nn, j)
+                 G(i, j) = G(i, j) - G(i, nn) * G(nn, j)
               end do
            end do
         end if
@@ -1602,14 +1602,14 @@ subroutine GAUSS
 100 j = k + 1
   X(k) = 0.0D0
   tmp = 0.0
-  if ( Imat >= j ) then
+  if (Imat >= j) then
      do i = j, Imat
-        tmp = tmp + G(k, i)*X(i)
+        tmp = tmp + G(k, i) * X(i)
      end do
   end if
   X(k) = G(k, imatp1) - tmp
   k = k - 1
-  if ( k /= 0 ) go to 100
+  if (k /= 0) go to 100
 99999 return
 end subroutine GAUSS
 
