@@ -1631,29 +1631,29 @@ subroutine HCALC
 
   tsave = Tt
   Tm = 0.
-  if ( Pp > 0. ) Tm = log(Pp*Wmix)
+  if (Pp > 0.) Tm = log(Pp * Wmix)
   Ssum(Npt) = 0.
   Hpp(1) = 0.
   Hpp(2) = 0.
   Hsub0 = 0.
   Cpmix = 0.
-  tem = (1.+Oxfl)
+  tem = (1. + Oxfl)
 ! LOOP ON REACTANTS.
-! IF OXIDANT, K=1
-! IF FUEL, K=2
+! if oxidant, k = 1
+! if fuel,    k = 2
   Nspr = Nspx
   do n = 1, Nreac
      k = 2
-     if ( Fox(n)(:1) == 'O' .or. Fox(n)(:1) == 'o' ) k = 1
-     if ( Tt == 0. ) Tt = Rtemp(n)
+     if (Fox(n)(:1) == 'O' .or. Fox(n)(:1) == 'o') k = 1
+     if (Tt == 0.) Tt = Rtemp(n)
      j = Jray(n)
-     if ( j == 0 ) then
+     if (j == 0) then
 ! SEARCH FOR REACTANT IN STORED THERMO SPECIES. STORE INDEX IN JRAY(N).
         ifaz = 0
         do j = 1, Ngc
-           if ( Rname(n) == Prod(j) .or. '*'//Rname(n) == Prod(j) ) then
+           if (Rname(n) == Prod(j) .or. '*' // Rname(n) == Prod(j)) then
               Jray(n) = j
-              if ( j > Ng ) then
+              if (j > Ng) then
                  write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
                  go to 20
               end if
@@ -1665,23 +1665,23 @@ subroutine HCALC
         read(IOTHM) Tg, ntgas, ntot, nall
         Nspr = Nspr + 1
         do itot = 1, nall
-           if ( itot <= ntot ) then
+           if (itot <= ntot) then
               icf = 3
-              if ( itot > ntgas ) icf = 1
-              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j=1, 5), ifaz, &
-                   t1, t2, Mw(Nspr), ((thermo(l, m), l=1, 9), m=1, icf)
+              if (itot > ntgas) icf = 1
+              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j = 1, 5), ifaz, &
+                   t1, t2, Mw(Nspr), ((thermo(l, m), l = 1, 9), m = 1, icf)
            else
-              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j=1, 5), ifaz, &
+              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j = 1, 5), ifaz, &
                    t1, t2, Mw(Nspr), er
-              if ( nint /= 0 ) then
-                 read(IOTHM) ((thermo(i, j), i=1, 9), j=1, nint)
+              if (nint /= 0) then
+                 read(IOTHM) ((thermo(i, j), i = 1, 9), j = 1, nint)
                  icf = nint
               end if
            end if
-           if ( sub == Rname(n) .or. sub == '*'//Rname(n) ) then
-              if ( ifaz <= 0 .and. nint > 0 ) then
+           if (sub == Rname(n) .or. sub == '*' // Rname(n)) then
+              if (ifaz <= 0 .and. nint > 0) then
                  do j = 1, 5
-                    if ( bb(j) == 0. ) go to 2
+                    if (bb(j) == 0.) go to 2
                     Nfla(n) = j
                     Ratom(n, j) = el(j)
                     Rnum(n, j) = bb(j)
@@ -1695,8 +1695,8 @@ subroutine HCALC
                  end do
                  go to 50
               else
-                 if ( ifaz > 0 ) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
-                 if ( nint == 0 ) write(IOOUT, '(/" COEFFICIENTS FOR ", A15, " ARE NOT AVAILABLE (HCALC)")') Rname(n)
+                 if (ifaz > 0) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
+                 if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", A15, " ARE NOT AVAILABLE (HCALC)")') Rname(n)
                  go to 20
               end if
            end if
@@ -1710,38 +1710,36 @@ subroutine HCALC
         go to 100
      end if
 ! CALCULATE EN FOR REACTANT AND CALCULATE PROPERTIES.
-50   if ( Moles ) enj = Pecwt(n)/Wp(k)
-     if ( .not. Moles ) enj = Pecwt(n)/Rmw(n)
-     enj = enj/tem
-     if ( k == 1 ) enj = enj*Oxfl
+50   if (Moles) enj = Pecwt(n) / Wp(k)
+     if (.not. Moles) enj = Pecwt(n) / Rmw(n)
+     enj = enj / tem
+     if (k == 1) enj = enj * Oxfl
      Tln = log(Tt)
      En(j, Npt) = enj
      l = 1
-     if ( ifaz <= 0 ) then
-        if ( Tt > Tg(2) ) l = 2
-        if ( Tt > Tg(3) .and. ifaz < 0 ) l = 3
+     if (ifaz <= 0) then
+        if (Tt > Tg(2)) l = 2
+        if (Tt > Tg(3) .and. ifaz < 0) l = 3
      end if
-     S(j) = ((((Coef(j, 7, l)/4.)*Tt+Coef(j, 6, l)/3.)*Tt+Coef(j, 5, l)/2.) &
-          *Tt+Coef(j, 4, l))*Tt - (Coef(j, 1, l)*.5D0/Tt+Coef(j, 2, l)) &
-          /Tt + Coef(j, 3, l)*Tln + Coef(j, 9, l)
-     H0(j) = ((((Coef(j, 7, l)/5.)*Tt+Coef(j, 6, l)/4.)*Tt+Coef(j, 5, l)/3. &
-          )*Tt+Coef(j, 4, l)/2.) &
-          *Tt - (Coef(j, 1, l)/Tt-Coef(j, 2, l)*Tln-Coef(j, 8, l)) &
-          /Tt + Coef(j, 3, l)
-     Cp(j) = (((Coef(j, 7, l)*Tt+Coef(j, 6, l))*Tt+Coef(j, 5, l)) &
-          *Tt+Coef(j, 4, l))*Tt + (Coef(j, 1, l)/Tt+Coef(j, 2, l)) &
-          /Tt + Coef(j, 3, l)
-     if ( H0(j) > -.01 .and. H0(j) < .01 ) H0(j) = 0.
+     S(j) = ((((Coef(j, 7, l) / 4.) * Tt + Coef(j, 6, l) / 3.) * Tt + Coef(j, 5, l) / 2.) * Tt &
+          + Coef(j, 4, l)) * Tt - (Coef(j, 1, l) * .5D0 / Tt + Coef(j, 2, l)) &
+          / Tt + Coef(j, 3, l) * Tln + Coef(j, 9, l)
+     H0(j) = ((((Coef(j, 7, l) / 5.) * Tt + Coef(j, 6, l) / 4.) * Tt + Coef(j, 5, l) / 3.) * Tt &
+          + Coef(j, 4, l) / 2.) * Tt &
+          - (Coef(j, 1, l) / Tt - Coef(j, 2, l) * Tln - Coef(j, 8, l)) / Tt + Coef(j, 3, l)
+     Cp(j) = (((Coef(j, 7, l) * Tt + Coef(j, 6, l)) * Tt + Coef(j, 5, l)) * Tt &
+          + Coef(j, 4, l)) * Tt + (Coef(j, 1, l) / Tt + Coef(j, 2, l)) / Tt + Coef(j, 3, l)
+     if (H0(j) > -.01 .and. H0(j) < .01) H0(j) = 0.
 ! ADD CONTRIBUTION TO CP, H, AND S OF TOTAL REACTANT.
-     Cpmix = Cpmix + Cp(j)*enj
+     Cpmix = Cpmix + Cp(j) * enj
 ! FOR CONDENSED SPECIES:  SJ = S(J)
      sj = S(j) - log(enj) - Tm
-     Ssum(Npt) = Ssum(Npt) + enj*sj
-     er = H0(j)*enj*Tt
+     Ssum(Npt) = Ssum(Npt) + enj * sj
+     er = H0(j) * enj * Tt
      Hsub0 = Hsub0 + er
      Hpp(k) = Hpp(k) + er
   end do
-  if ( tsave /= 0. ) Tt = tsave
+  if (tsave /= 0.) Tt = tsave
 100 return
 end subroutine HCALC
 
