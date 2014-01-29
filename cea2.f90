@@ -76,7 +76,7 @@ program main
 ! INITIAL ESTIMATES
      Npr = 0
      Gonly = .true.
-     Enn = .1D0
+     Enn = .1d0
      Ennl = -2.3025851
      Sumn = Enn
      xi = Ng
@@ -85,8 +85,8 @@ program main
      xln = log(xi)
      do inc = 1, Nc
         j = Ng + inc
-        En(j, 1) = 0.D0
-        Enln(j) = 0.D0
+        En(j, 1) = 0.d0
+        Enln(j) = 0.d0
      end do
      do j = 1, Ng
         En(j, 1) = xi
@@ -150,20 +150,20 @@ subroutine CPHS
   k = 1
   if (Tt > Tg(2)) k = 2
   if (Tt > Tg(3)) k = 3
-  cx(2) = 1.D0 / Tt
+  cx(2) = 1.d0 / Tt
   cx(1) = cx(2)**2
   scx(3) = Tln
   scx(2) = -cx(2)
   hcx(2) = Tln * cx(2)
   hcx(1) = -cx(1)
-  scx(1) = hcx(1) * .5D0
+  scx(1) = hcx(1) * .5d0
   do i = 4, 7
      hcx(i) = cx(i) * Tt
      scx(i) = cx(i-1) * Tt
   end do
   do j = 1, Ng
-     H0(j) = 0.D0
-     S(j) = 0.D0
+     H0(j) = 0.d0
+     S(j) = 0.d0
   end do
   do i = 7, 4, - 1
      do j = 1, Ng
@@ -183,7 +183,7 @@ subroutine CPHS
   end do
   if (.not. Tp .or. Convg) then
      do j = 1, Ng
-        Cp(j) = 0.D0
+        Cp(j) = 0.d0
      end do
      do i = 7, 4, - 1
         do j = 1, Ng
@@ -200,9 +200,9 @@ subroutine CPHS
      do ij = 1, Npr
         j = Jcond(ij)
         jj = Jcond(ij) - Ng
-        Cp(j) = 0.D0
-        H0(j) = 0.D0
-        S(j) = 0.D0
+        Cp(j) = 0.d0
+        H0(j) = 0.d0
+        S(j) = 0.d0
         do i = 7, 4, - 1
            S(j) = (S(j) + Cft(jj, i)) * scx(i)
            H0(j) = (H0(j) + Cft(jj, i)) * hcx(i)
@@ -221,9 +221,9 @@ subroutine CPHS
   entry ALLCON
   do jj = 1, Nc
      j = jj + Ng
-     Cp(j) = 0.D0
-     H0(j) = 0.D0
-     S(j) = 0.D0
+     Cp(j) = 0.d0
+     H0(j) = 0.d0
+     S(j) = 0.d0
      do i = 7, 4, - 1
         S(j) = (S(j) + Cft(jj, i)) * scx(i)
         H0(j) = (H0(j) + Cft(jj, i)) * hcx(i)
@@ -414,7 +414,7 @@ subroutine DETON
                  V(i) = pub(i)
                  unit = 'BAR'
               else
-                 V(i) = pub(i) / 1.01325D0
+                 V(i) = pub(i) / 1.01325d0
                  unit = 'ATM'
               end if
               if (mp > 0) Pltout(i+Iplt, mp) = V(i)
@@ -562,16 +562,16 @@ subroutine EQLBRM
   ncvg = 0
   lncvg = 3 * Nlm
   reduce = .false.
-  siz9 = Size - 9.2103404D0
+  siz9 = Size - 9.2103404d0
   tsize = Size
-  xsize = Size + 6.90775528D0
+  xsize = Size + 6.90775528d0
   if (Trace /= 0.) then
      maxitn = maxitn + Ngc / 2
      xsize = -log(Trace)
      if (xsize < Size) xsize = Size + .1
   end if
-  if (xsize > 80.) xsize = 80.D0
-  esize = min(80.D0, xsize + 6.90775528D0)
+  if (xsize > 80.) xsize = 80.d0
+  esize = min(80.d0, xsize + 6.90775528d0)
   jcons = 0
   pie = 0.
   i2many = .false.
@@ -580,11 +580,11 @@ subroutine EQLBRM
   numb = 0
   cpcalc = .true.
   if (Tp) cpcalc = .false.
-  if (Tt /= 0.D0) then
+  if (Tt /= 0.d0) then
      if (Npr == 0 .or. (Tt /= T(1) .and. .not. Tp)) go to 400
      k = 1
   else
-     Tt = 3800.D0
+     Tt = 3800.d0
      if (Npr == 0) go to 400
      k = 1
   end if
@@ -608,14 +608,14 @@ subroutine EQLBRM
      end if
   end do
 200 if (.not. Tp) then
-     Tt = Temp(2, kc) - 10.D0
+     Tt = Temp(2, kc) - 10.d0
      k = 1
      go to 100
   end if
   write(IOOUT, '(" REMOVE ", A16)') Prod(j)
-  En(j, Npt) = 0.D0
-  Enln(j) = 0.D0
-  Deln(j) = 0.D0
+  En(j, Npt) = 0.d0
+  Enln(j) = 0.d0
+  Deln(j) = 0.d0
   do i = k, Npr
      Jcond(i) = Jcond(i+1)
   end do
@@ -652,7 +652,7 @@ subroutine EQLBRM
   end if
 ! BEGIN ITERATION
 500 if (cpcalc) then
-     Cpsum = 0.D0
+     Cpsum = 0.d0
      do j = 1, Ng
         Cpsum = Cpsum + En(j, Npt) * Cp(j)
      end do
@@ -718,8 +718,8 @@ subroutine EQLBRM
            end do
         end if
 ! CALCULATE CONTROL FACTOR, AMBDA
-        ambda = 1.D0
-        ambda1 = 1.D0
+        ambda = 1.d0
+        ambda1 = 1.d0
         ilamb = 0
         ilamb1 = 0
         sum = max(abs(X(Iq1)), abs(dlnt))
@@ -729,7 +729,7 @@ subroutine EQLBRM
               if ((Enln(j) - Ennl + Size) <= 0.) then
                  sum1 = abs(Deln(j)-X(Iq1))
                  if (sum1 >= siz9) then
-                    sum1 = abs(-9.2103404D0 - Enln(j) + Ennl) / sum1
+                    sum1 = abs(-9.2103404d0 - Enln(j) + Ennl) / sum1
                     if (sum1 < ambda1) then
                        ambda1 = sum1
                        ilamb1 = j
@@ -741,7 +741,7 @@ subroutine EQLBRM
               end if
            end if
         end do
-        if (sum > 2.D0) ambda = 2.D0/sum
+        if (sum > 2.d0) ambda = 2.d0/sum
         if (ambda1 <= ambda) then
            ambda = ambda1
            ilamb = ilamb1
@@ -750,13 +750,13 @@ subroutine EQLBRM
 ! INTERMEDIATE OUTPUT
            write(IOOUT, '(/" T=", E15.8, " ENN=", E15.8, " ENNL=", E15.8, " PP=", E15.8, &
                 & /" LN P/N=", E15.8, " AMBDA=", E15.8)') Tt, Enn, Ennl, Pp, Tm, ambda
-           if (ambda /= 1.D0) then
+           if (ambda /= 1.d0) then
               amb = 'ENN'
               if (abs(X(iq2)) > abs(X(Iq1))) amb = 'TEMP'
               if (ilamb /= 0) amb = Prod(ilamb)
               write(IOOUT, '(/" AMBDA SET BY ", A16)') amb
            end if
-           if (Vol) write(IOOUT, '(" VOLUME=", E15.8, "CC/G")') Vv * .001D0
+           if (Vol) write(IOOUT, '(" VOLUME=", E15.8, "CC/G")') Vv * .001d0
            write(IOOUT, '(/24X, "Nj", 12X, "LN Nj", 8X, "DEL LN Nj", 6X, "H0j/RT", /, 41X, &
                 & "S0j/R", 10X, " G0j/RT", 8X, " Gj/RT")')
            do j = 1, Ngc
@@ -765,7 +765,7 @@ subroutine EQLBRM
            end do
         end if
 ! APPLY CORRECTIONS TO ESTIMATES
-        Totn(Npt) = 0.D0
+        Totn(Npt) = 0.d0
         do j = 1, Ng
            Enln(j) = Enln(j) + ambda * Deln(j)
         end do
@@ -859,19 +859,19 @@ subroutine EQLBRM
            sum = (X(Iq1) * Enn / Totn(Npt))
            if (abs(sum) > 0.5E-5) go to 500
            do j = 1, Ng
-              if (abs(Deln(j)) * En(j, Npt) / Totn(Npt) > 0.5D-5) go to 500
+              if (abs(Deln(j)) * En(j, Npt) / Totn(Npt) > 0.5d-5) go to 500
            end do
-           if (abs(dlnt) > 1.D-04) go to 500
+           if (abs(dlnt) > 1.d-04) go to 500
            if (Npr /= 0) then
               do k = 1, Npr
                  j = Jcond(k)
-                 if (abs(Deln(j)/Totn(Npt)) > 0.5D-5) go to 500
+                 if (abs(Deln(j)/Totn(Npt)) > 0.5d-5) go to 500
                  if (En(j, Npt) < 0.) go to 700
               end do
            end if
            le = Nlm
            do i = 1, Nlm
-              if (abs(B0(i)) >= 1.D-06) then
+              if (abs(B0(i)) >= 1.d-06) then
                  sum = 0.
                  do j = 1, Ngc
                     sum = sum + En(j, Npt) * A(i, j)
@@ -1022,7 +1022,7 @@ subroutine EQLBRM
                        if (.not. Ions) go to 1100
                        if (Elmt(Nlm) /= 'E') go to 1100
                        do j = 1, Ng
-                          if (A(Nlm, j) /= 0.) En(j, Npt) = 0.D0
+                          if (A(Nlm, j) /= 0.) En(j, Npt) = 0.d0
                        end do
                        pie = X(Nlm)
                        Nlm = Nlm - 1
@@ -1094,7 +1094,7 @@ subroutine EQLBRM
            if (newcom) write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4A12/(18X, 5A12))') (cmp(k), k = 1, le)
            write(IOOUT, '(I4, I5, 5F12.3, /(12X, 5F12.3))') Npt, numb, Tt, (xx(il), il = 1, le)
         end if
-        if (.not. Tp .and. Npr == 0 .and. Tt <= Tg(1) * .2D0) then
+        if (.not. Tp .and. Npr == 0 .and. Tt <= Tg(1) * .2d0) then
            write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
                 & "VE BEEN INSERTED,", &
                 & /" RESTART WITH insert DATASET (EQLBRM)")')
@@ -1154,7 +1154,7 @@ subroutine EQLBRM
                        go to 710
                     end if
                  end do
-                 if (Tt > Temp(2, kc) * 1.2D0) go to 1000
+                 if (Tt > Temp(2, kc) * 1.2d0) go to 1000
               end if
 710        continue
         end if
@@ -1199,7 +1199,7 @@ subroutine EQLBRM
         Tln = log(Tt)
         Jsol = min(j, jkg)
         Jliq = Jsol + 1
-        En(jkg, Npt) = .5D0 * En(j, Npt)
+        En(jkg, Npt) = .5d0 * En(j, Npt)
         En(j, Npt) = En(jkg, Npt)
         j = jkg
         go to 800
@@ -1248,9 +1248,9 @@ subroutine EQLBRM
   numb = -1
   go to 500
 ! REMOVE CONDENSED SPECIES
-1000 En(j, Npt) = 0.D0
-  Deln(j) = 0.D0
-  Enln(j) = 0.D0
+1000 En(j, Npt) = 0.d0
+  Deln(j) = 0.d0
+  Enln(j) = 0.d0
   do i = k, Npr
      Jcond(i) = Jcond(i+1)
   end do
@@ -1273,7 +1273,7 @@ subroutine EQLBRM
   do lc = 1, nn
      lcs(lc) = 0
   end do
-1200 bigen = -1.D-35
+1200 bigen = -1.d-35
   do j = 1, Ng
      if (En(j, Npt) > bigen) then
         if (.not. Ions .or. A(ls, j) == 0.) then
@@ -1429,7 +1429,7 @@ subroutine EQLBRM
   if (Tt >= Tg(1) .and. Tt <= Tg(4)) go to 1600
   if (Shock) go to 1600
   write(IOOUT, '(" THE TEMPERATURE=", E12.4, " IS OUT OF RANGE FOR POINT", I5, "(EQLBRM)")') Tt, Npt
-  if (Tt >= Tg(1) * .8D0 .and. Tt <= Tg(4) * 1.1D0) go to 1600
+  if (Tt >= Tg(1) * .8d0 .and. Tt <= Tg(4) * 1.1d0) go to 1600
   Npt = Npt + 1
 1500 Tt = 0.
   Npt = Npt - 1
@@ -1459,11 +1459,11 @@ subroutine FROZEN
   nnn = Npt
   Npt = Nfz
   do j = 1, Ng
-     if (En(j, Nfz) /= 0.D0) Deln(j) = -(log(En(j, Nfz)) + dlpm)
+     if (En(j, Nfz) /= 0.d0) Deln(j) = -(log(En(j, Nfz)) + dlpm)
   end do
   do iter = 1, 8
-     Ssum(nnn) = 0.D0
-     Cpsum = 0.D0
+     Ssum(nnn) = 0.d0
+     Cpsum = 0.d0
      call CPHS
      do j = 1, Ng
         Cpsum = Cpsum + En(j, Nfz) * Cp(j)
@@ -1478,7 +1478,7 @@ subroutine FROZEN
      end if
      if (Convg) then
         Npt = nnn
-        Hsum(Npt) = 0.D0
+        Hsum(Npt) = 0.d0
         do j = 1, Ngc
            Hsum(Npt) = Hsum(Npt) + En(j, Nfz) * H0(j)
         end do
@@ -1492,7 +1492,7 @@ subroutine FROZEN
         Totn(Npt) = Totn(Nfz)
         Ppp(Npt) = Pp
         Cpr(Npt) = Cpsum
-        if (Tt >= Tg(1) * .8D0) then
+        if (Tt >= Tg(1) * .8d0) then
            do i = Ngp1, Ngc
               if (En(i, Nfz) /= 0.) then
                  inc = i - Ng
@@ -1505,7 +1505,7 @@ subroutine FROZEN
      else
         dlnt = (Ssum(Nfz) - Ssum(nnn)) / Cpsum
         Tln = Tln + dlnt
-        if (abs(dlnt) < 0.5D-4) Convg = .true.
+        if (abs(dlnt) < 0.5d-4) Convg = .true.
         Tt = exp(Tln)
      end if
   end do
@@ -1600,7 +1600,7 @@ subroutine GAUSS
 ! BACKSOLVE FOR THE VARIABLES
   k = Imat
 100 j = k + 1
-  X(k) = 0.0D0
+  X(k) = 0.0d0
   tmp = 0.0
   if (Imat >= j) then
      do i = j, Imat
@@ -1722,7 +1722,7 @@ subroutine HCALC
         if (Tt > Tg(3) .and. ifaz < 0) l = 3
      end if
      S(j) = ((((Coef(j, 7, l) / 4.) * Tt + Coef(j, 6, l) / 3.) * Tt + Coef(j, 5, l) / 2.) * Tt &
-          + Coef(j, 4, l)) * Tt - (Coef(j, 1, l) * .5D0 / Tt + Coef(j, 2, l)) &
+          + Coef(j, 4, l)) * Tt - (Coef(j, 1, l) * .5d0 / Tt + Coef(j, 2, l)) &
           / Tt + Coef(j, 3, l) * Tln + Coef(j, 9, l)
      H0(j) = ((((Coef(j, 7, l) / 5.) * Tt + Coef(j, 6, l) / 4.) * Tt + Coef(j, 5, l) / 3.) * Tt &
           + Coef(j, 4, l) / 2.) * Tt &
@@ -1787,7 +1787,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   Ncin = 1
   Lcin(1) = 0
   kcin = 0
-  Dpin(1) = 0.D0
+  Dpin(1) = 0.d0
 100 nb = 1
   nx = 0
   cnum = ' '
@@ -1875,7 +1875,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
 340     Ncin = Ncin + 1
         Cin(Ncin) = ' '
         Lcin(Ncin) = 0
-        Dpin(Ncin) = 0.D0
+        Dpin(Ncin) = 0.d0
         nx = 0
         cnum = ' '
      end if
@@ -1884,7 +1884,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   if (nx > 0) then
      Ncin = Ncin + 1
      Lcin(Ncin) = 0
-     Dpin(Ncin) = 0.D0
+     Dpin(Ncin) = 0.d0
   end if
   go to 100
 500 readOK = .false.
@@ -2053,11 +2053,11 @@ subroutine INPUT(readOK, caseOK, Ensert)
                        Rtemp(Nreac) = dpin(i)
                        if (lcin(i-1) < 1) then
                           if (index(cx15, 'r') > 0) Rtemp(Nreac) &
-                               = Rtemp(Nreac)/1.8D0
+                               = Rtemp(Nreac)/1.8d0
                           if (index(cx15, 'c') > 0) Rtemp(Nreac) &
-                               = Rtemp(Nreac) + 273.15D0
+                               = Rtemp(Nreac) + 273.15d0
                           if (index(cx15, 'f') > 0) Rtemp(Nreac) &
-                               = (Rtemp(Nreac)-32.D0)/1.8D0 + 273.15D0
+                               = (Rtemp(Nreac)-32.d0)/1.8d0 + 273.15d0
                        end if
                     else
                        write(IOOUT, '(/" REACTANT TEMPERATURE MISSING (INPUT) ")')
@@ -2070,11 +2070,11 @@ subroutine INPUT(readOK, caseOK, Ensert)
                     Energy(Nreac) = cx15
                     if (lcin(i+1) > 0) then
                        i = i + 1
-                       Enth(Nreac) = dpin(i)*1000.D0/Rr
+                       Enth(Nreac) = dpin(i)*1000.d0/Rr
                        if (index(cin(i-1), 'c') > 0) Enth(Nreac) &
-                            = Enth(Nreac)*4.184D0
+                            = Enth(Nreac)*4.184d0
                        if (index(cin(i-1), 'k') > 0) Enth(Nreac) &
-                            = Enth(Nreac)*1000.D0
+                            = Enth(Nreac)*1000.d0
                     end if
                     go to 140
                  end if
@@ -2084,7 +2084,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
                        i = i + 1
                        Dens(Nreac) = dpin(i)
                        if (index(cx15, 'kg') > 0) Dens(Nreac) &
-                            = Dens(Nreac)/1000.D0
+                            = Dens(Nreac)/1000.d0
                     end if
                     go to 140
                  end if
@@ -2139,10 +2139,10 @@ subroutine INPUT(readOK, caseOK, Ensert)
         P(1) = 1.
         Trace = 0.
         Lsave = 0
-        R = Rr/4184.D0
+        R = Rr/4184.d0
         S0 = 0.
-        hr = 1.D30
-        ur = 1.D30
+        hr = 1.d30
+        ur = 1.d30
         Tp = .false.
         Hp = .false.
         Sp = .false.
@@ -2263,8 +2263,8 @@ subroutine INPUT(readOK, caseOK, Ensert)
         end if
         Hsub0 = min(hr, ur)
         Size = 0.
-        if (hr > .9D30) hr = 0.D0
-        if (ur > .9D30) ur = 0.D0
+        if (hr > .9d30) hr = 0.d0
+        if (ur > .9d30) ur = 0.d0
         if (Trnspt) Viscns = .3125*sqrt(1.E5*Boltz/(Pi*Avgdr))
         if (SIunit) R = Rr/1000.
         if (Detn .or. Shock) Newr = .true.
@@ -2281,7 +2281,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
            write(IOOUT, '(/1p, " TRACE=", E9.2, "  S/R=", E13.6, "  H/R=", E13.6, "  U/R=", &
                 & E13.6)') Trace, S0, hr, ur
            if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4E14.7))') &
-                (V(jj)*1.D-05, jj=1, Np)
+                (V(jj)*1.d-05, jj=1, Np)
         end if
         if (Rkt) then
            if (Nt == 0) Hp = .true.
@@ -2324,7 +2324,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
                  xyz = -Vmin(2) - Vpls(2)
                  denmtr = eratio*(Vmin(1)+Vpls(1))
               end if
-              if (abs(denmtr) < 1.D-30) then
+              if (abs(denmtr) < 1.d-30) then
                  caseOK = .false.
                  write(IOOUT, '(/" UNABLE TO PROCESS EQUIVALENCE RATIO =", E11.4, "(INPUT)")') eratio
                  write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
@@ -2391,10 +2391,10 @@ subroutine INPUT(readOK, caseOK, Ensert)
         if (cx4 /= 'tces') then
            T(i) = mix(i)
            if (lcin(in) < -1) then
-              if (index(cx15, 'r') > 0) T(i) = T(i)/1.8D0
-              if (index(cx15, 'c') > 0) T(i) = T(i) + 273.15D0
-              if (index(cx15, 'f') > 0) T(i) = (T(i)-32.D0) &
-                   /1.8D0 + 273.15D0
+              if (index(cx15, 'r') > 0) T(i) = T(i)/1.8d0
+              if (index(cx15, 'c') > 0) T(i) = T(i) + 273.15d0
+              if (index(cx15, 'f') > 0) T(i) = (T(i)-32.d0) &
+                   /1.8d0 + 273.15d0
            end if
         end if
      end do
@@ -2419,17 +2419,17 @@ subroutine INPUT(readOK, caseOK, Ensert)
      do 350 i = 1, Np
         P(i) = mix(i)
         if (index(cx15, 'psi') /= 0) then
-           P(i) = P(i)/14.696006D0
+           P(i) = P(i)/14.696006d0
         else if (index(cx15, 'mmh') /= 0) then
-           P(i) = P(i)/760.D0
+           P(i) = P(i)/760.d0
         else if (index(cx15, 'atm') == 0) then
            go to 350
         end if
-        P(i) = P(i)*1.01325D0
+        P(i) = P(i)*1.01325d0
 350  continue
   else if (cx3 == 'rho') then
-     xyz = 1.D02
-     if (index(cx15, 'kg') /= 0) xyz = 1.D05
+     xyz = 1.d02
+     if (index(cx15, 'kg') /= 0) xyz = 1.d05
      Np = nmix
      if (nmix > maxPv) then
         Np = maxPv
@@ -2440,8 +2440,8 @@ subroutine INPUT(readOK, caseOK, Ensert)
         V(i) = xyz/mix(i)
      end do
   else if (cx1 == 'v') then
-     xyz = 1.D02
-     if (index(cx15, 'kg') /= 0) xyz = 1.D05
+     xyz = 1.d02
+     if (index(cx15, 'kg') /= 0) xyz = 1.d05
      Np = nmix
      if (nmix > maxPv) then
         Np = maxPv
@@ -2566,16 +2566,16 @@ subroutine MATRIX
 ! CLEAR MATRIX STORAGES TO ZERO
   do i = 1, Imat
      do k = 1, kmat
-        G(i, k) = 0.0D0
+        G(i, k) = 0.0d0
      end do
   end do
-  G(iq2, Iq1) = 0.D0
-  sss = 0.D0
-  Hsum(Npt) = 0.D0
+  G(iq2, Iq1) = 0.d0
+  sss = 0.d0
+  Hsum(Npt) = 0.d0
 ! BEGIN SET-UP OF ITERATION OR DERIVATIVE MATRIX
   do j = 1, Ng
      Mu(j) = H0(j) - S(j) + Enln(j) + Tm
-     if (En(j, Npt) /= 0.D0) then
+     if (En(j, Npt) /= 0.d0) then
         h = H0(j)*En(j, Npt)
         f = Mu(j)*En(j, Npt)
         ss = h - f
@@ -2717,7 +2717,7 @@ subroutine NEWOF
         if (dbi > bigb) bigb = dbi
      end if
   end do
-  Bcheck = bigb*.000001D0
+  Bcheck = bigb*.000001d0
 ! CALCUALTE MOLECULAR WEIGHT OF TOTAL REACTANT, WMIX.
   if (Am(1) /= 0.0 .and. Am(2) /= 0.0) then
      Wmix = (Oxfl+1.)*Am(1)*Am(2)/(Am(1)+Oxfl*Am(2))
@@ -2726,13 +2726,13 @@ subroutine NEWOF
      if (Am(2) == 0.0) Wmix = Am(1)
   end if
   Npt = 1
-! IF ASSIGNED U OR H NOT GIVEN IN PROB DATA, INITIAL HSUB0 = 1.D30
+! IF ASSIGNED U OR H NOT GIVEN IN PROB DATA, INITIAL HSUB0 = 1.d30
   if (Size == 0.) assval = Hsub0
-  if (assval >= 1.D30) Hsub0 = (Oxfl*Hpp(1)+Hpp(2))/tem
+  if (assval >= 1.d30) Hsub0 = (Oxfl*Hpp(1)+Hpp(2))/tem
 ! NOTE THAT "BRATIO" IS "BRATIO" IN SEC 3.2 IN RP-1311.
   bratio = smalb/bigb
-  Size = 18.420681D0
-  if (bratio < 1.D-5) Size = log(1000.D0/bratio)
+  Size = 18.420681d0
+  if (bratio < 1.d-5) Size = log(1000.d0/bratio)
   Jsol = 0
   Jliq = 0
   if (.not. Short) then
@@ -2788,11 +2788,11 @@ subroutine OUT1
   end do
   phi = 0.
   tem = (Vpls(1)+Vmin(1))*Oxfl
-  if (ABS(tem) >= 1.D-3) phi = -(Vmin(2)+Vpls(2))/tem
+  if (ABS(tem) >= 1.d-3) phi = -(Vmin(2)+Vpls(2))/tem
   if (Fox(1) == 'NAME') then
      pfuel = 0.
   else
-     pfuel = 100.D0/(1.D0+Oxfl)
+     pfuel = 100.d0/(1.d0+Oxfl)
   end if
   if (Rh(1) /= 0. .or. Rh(2) /= 0.) then
      if (Rh(1) == 0. .or. Rh(2) == 0.) then
@@ -2801,7 +2801,7 @@ subroutine OUT1
         rho = (Oxfl+1.)*Rh(1)*Rh(2)/(Rh(1)+Oxfl*Rh(2))
      end if
      if (SIunit) then
-        rho = rho*1000.D0
+        rho = rho*1000.d0
         write(IOOUT, '(/" REACTANT DENSITY=", F8.2, " KG/CU M")') rho
      else
         write(IOOUT, '(/" REACTANT DENSITY=", F8.4, " G/CC")') rho
@@ -2907,13 +2907,13 @@ subroutine OUT1
      if (mof > 0) Pltout(i, mof) = Oxfl
      if (mpf > 0) Pltout(i, mpf) = pfuel
      if (mph > 0) Pltout(i, mph) = phi
-     if (mfa > 0) Pltout(i, mfa) = 1.D0/Oxfl
+     if (mfa > 0) Pltout(i, mfa) = 1.d0/Oxfl
      if (meq > 0) Pltout(i, meq) = Eqrat
   end do
   if (SIunit) then
-     pfactor = 1.D0
+     pfactor = 1.d0
      fp = 'P, BAR'
-     vnum = 1.D05
+     vnum = 1.d05
      frh = 'RHO, KG/CU M'
      fh = 'H, KJ/KG'
      fu = 'U, KJ/KG'
@@ -2921,9 +2921,9 @@ subroutine OUT1
      fs = 'S, KJ/(KG)(K)'
      fc = 'Cp, KJ/(KG)(K)'
   else
-     pfactor = 1.D0/1.01325D0
+     pfactor = 1.d0/1.01325d0
      fp = 'P, ATM'
-     vnum = 100.D0
+     vnum = 100.d0
      frh = 'RHO, G/CC'
      fh = 'H, CAL/G'
      fu = 'U, CAL/G'
@@ -2977,7 +2977,7 @@ subroutine OUT1
      if (Nplt /= 0 .and. i > ione) then
         if (mg > 0) Pltout(i+Iplt-ione, mg) = X(i)
         if (mm > 0) Pltout(i+Iplt-ione, mm) = Wm(i)
-        if (mmw > 0) Pltout(i+Iplt-ione, mmw) = 1.D0/Totn(i)
+        if (mmw > 0) Pltout(i+Iplt-ione, mmw) = 1.d0/Totn(i)
         if (ms > 0) Pltout(i+Iplt-ione, ms) = Ssum(i)*R
         if (mcp > 0) Pltout(i+Iplt-ione, mcp) = Cpr(i)*R
         if (mgam > 0) Pltout(i+Iplt-ione, mgam) = Gammas(i)
@@ -2997,7 +2997,7 @@ subroutine OUT1
   Fmt(7) = '3,'
   write(IOOUT, Fmt) 'M, (1/n)        ', (Wm(j), j=1, Npt)
   if (.not. Gonly) write(IOOUT, Fmt) 'MW, MOL WT      ', &
-       (1.D0/Totn(j), j=1, Npt)
+       (1.d0/Totn(j), j=1, Npt)
 ! (DLV/DLP)T
   Fmt(7) = '5,'
   if (Eql) write(IOOUT, Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j=1, Npt)
@@ -3020,7 +3020,7 @@ subroutine OUT1
   return
 !***********************************************************************
   entry OUT3
-  tra = 5.D-6
+  tra = 5.d-6
   if (Trace /= 0.) tra = Trace
 ! MASS OR MOLE FRACTIONS 
   if (Massf) then
@@ -3051,13 +3051,13 @@ subroutine OUT1
            if (Massf) then
               tem = Mw(k)
            else
-              tem = 1.D0/Totn(i)
+              tem = 1.d0/Totn(i)
            end if
            if (k <= Ng) then
               X(i) = En(k, i)*tem
            else
-              if (Prod(k) /= Prod(k-1)) X(i) = 0.D0
-              if (En(k, i) > 0.D0) X(i) = En(k, i)*tem
+              if (Prod(k) /= Prod(k-1)) X(i) = 0.d0
+              if (En(k, i) > 0.d0) X(i) = En(k, i)*tem
            end if
            if (Nplt /= 0 .and. i > ione .and. im > 0) &
                 Pltout(i+Iplt-ione, im) = X(i)
@@ -3192,7 +3192,7 @@ subroutine REACT
               if (nint == 0) then
                  rcoefs = .false.
                  hOK = .true.
-                 Enth(n) = eform*1000.D0/Rr
+                 Enth(n) = eform*1000.d0/Rr
                  if (Tt == 0) then
                     Tt = t1
                     Rtemp(n) = t1
@@ -3244,8 +3244,8 @@ subroutine REACT
                     if (Tt > Tg(2)) l = 2
                     if (Tt > Tg(3)) l = 3
                  end if
-                 Enth(n) = (((((rcf(7, l)/5.D0)*Tt+rcf(6, l)/4.D0)*Tt+rcf(5 &
-                      , l)/3.D0)*Tt+rcf(4, l)/2.D0)*Tt+rcf(3, l)) &
+                 Enth(n) = (((((rcf(7, l)/5.d0)*Tt+rcf(6, l)/4.d0)*Tt+rcf(5 &
+                      , l)/3.d0)*Tt+rcf(4, l)/2.d0)*Tt+rcf(3, l)) &
                       *Tt - rcf(1, l)/Tt + rcf(2, l)*Tln + rcf(8, l)
                  if (Vol .and. ifaz <= 0) Enth(n) = Enth(n) - Tt
               end if
@@ -3279,7 +3279,7 @@ subroutine REACT
 ! STORE ATOMIC SYMBOLS IN ELMT ARRAY.
 ! CALCULATE MOLECULAR WEIGHT.
 ! TEMPORARILY STORE ATOMIC VALENCE IN X.
-     rm = 0.D0
+     rm = 0.d0
      do 100 jj = 1, ifrmla
         do j = 1, maxEl
            nj = j
@@ -3319,7 +3319,7 @@ subroutine REACT
      pcwt = Pecwt(n)
      if (Moles) pcwt = pcwt*rm
      Wp(kr) = Wp(kr) + pcwt
-     if (rm <= 0.D0) then
+     if (rm <= 0.d0) then
         Nlm = 0
         go to 200
      else
@@ -3417,7 +3417,7 @@ subroutine RKTOUT
      if (Iopt == 0) write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
   end if
   if (Ttt(1) == T(It)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
-  tem = Ppp(1)*14.696006D0/1.01325D0
+  tem = Ppp(1)*14.696006d0/1.01325d0
   write(IOOUT, '(/1x, A3, " =", F8.1, " PSIA")') 'Pin', tem
   i23 = 2
   if (Iopt > 0) then
@@ -3445,7 +3445,7 @@ subroutine RKTOUT
   else
      nex = nex - 1
      write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i=1, nex)
-     X(1) = 1.D0
+     X(1) = 1.d0
      do i = 2, Npt
         X(i) = Ppp(1)/Ppp(i)
      end do
@@ -3569,7 +3569,7 @@ subroutine RKTOUT
         write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
      else
         write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
-        ww = 1.D0/Totn(Nfz)
+        ww = 1.d0/Totn(Nfz)
      end if
 ! MOLE (OR MASS) FRACTIONS - FROZEN
      tra = 5.E-6
@@ -3788,15 +3788,15 @@ subroutine ROCKET
            else
               msq = usq/pvg
               if (Debug(1) .or. Debug(2)) write(IOOUT, '(/" USQ=", E15.8, 5X, "PVG=", E15.8)') usq, pvg
-              dh = abs(msq-1.D0)
-              if (dh <= 0.4D-4) go to 550
+              dh = abs(msq-1.d0)
+              if (dh <= 0.4d-4) go to 550
               if (itrot > 0) then
                  p1 = Pp
                  if (Jsol /= 0) then
                     tmelt = Tt
-                    Pp = Pp*(1.D0+msq*Gammas(nptth))/(Gammas(nptth)+1.D0)
+                    Pp = Pp*(1.d0+msq*Gammas(nptth))/(Gammas(nptth)+1.d0)
                  else if (tmelt == 0.) then
-                    Pp = Pp*(1.D0+msq*Gammas(nptth))/(Gammas(nptth)+1.D0)
+                    Pp = Pp*(1.d0+msq*Gammas(nptth))/(Gammas(nptth)+1.d0)
                  else
                     write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                     dlt = log(tmelt/Tt)
@@ -3963,7 +3963,7 @@ subroutine ROCKET
               Area = .false.
               itnum = 0
               ppa = Ppp(Npt)*pa
-              pinj = ppa + 1.D05*usq/Vlm(Npt)
+              pinj = ppa + 1.d05*usq/Vlm(Npt)
               test = (pinj-pinjas)/pinjas
               pcpa = pinf*pa
               if (Debugf) then
@@ -3985,7 +3985,7 @@ subroutine ROCKET
               Area = .false.
               itnum = 0
               ppa = Ppp(4)*pa
-              pinj = ppa + 1.D05*usq/Vlm(4)
+              pinj = ppa + 1.d05*usq/Vlm(4)
               mat = pa/(Awt*Rr)
               Acat = mat/Ma
               prat = (b1+c1*Acat)/(1.+a1l*Acat)
@@ -4298,7 +4298,7 @@ subroutine SEARCH
               if (Elmt(i) == Symbol(k)) then
                  Mw(Nspx) = Atmwt(k)
                  Atwt(i) = Atmwt(k)
-                 Cp(Nspx) = 2.5D0
+                 Cp(Nspx) = 2.5d0
                  go to 210
               end if
            end do
@@ -4446,7 +4446,7 @@ subroutine SETEN
      Npr = 0
      do j = Ngp1, Ngc
         En(j, Npt) = Sln(j)
-        if (En(j, Npt) > 0.D0) then
+        if (En(j, Npt) > 0.d0) then
            Npr = Npr + 1
            Jcond(Npr) = j
         end if
@@ -4538,7 +4538,7 @@ subroutine SHCK
      end if
      Pp = Ppp(Npt)
      Tt = Ttt(Npt)
-     if (Tt >= Tg(1)*.8D0) then
+     if (Tt >= Tg(1)*.8d0) then
         call HCALC
         Hsum(Npt) = Hsub0
      else
@@ -4697,7 +4697,7 @@ subroutine SHCK
   t2t1(Npt) = t21
   utwo(Npt) = uu*rho12
   u1u2(Npt) = uu - utwo(Npt)
-  if (Tt >= Tg(1)*.8D0 .and. Tt <= Tg(4)*1.1D0) then
+  if (Tt >= Tg(1)*.8d0 .and. Tt <= Tg(4)*1.1d0) then
      if (.not. Eql) then
 ! FROZEN
         Ppp(Npt) = Pp
@@ -4955,22 +4955,22 @@ subroutine TRANIN
   end if
 ! PICK OUT IMPORTANT SPECIES
   Nm = 0
-  total = 0.D0
-  enmin = 1.0D-11/Wm(Npt)
-  testot = 0.999999999D0/Wm(Npt)
+  total = 0.d0
+  enmin = 1.0d-11/Wm(Npt)
+  testot = 0.999999999d0/Wm(Npt)
   do i = 1, Lsave
      j = Jcm(i)
-     if (En(j, Npt) <= 0.D0 .and. j <= Ngc) then
-        if ((Enln(j)-Ennl+25.328436D0) > 0.D0) En(j, Npt) &
+     if (En(j, Npt) <= 0.d0 .and. j <= Ngc) then
+        if ((Enln(j)-Ennl+25.328436d0) > 0.d0) En(j, Npt) &
              = exp(Enln(j))
      end if
      Nm = Nm + 1
      Ind(Nm) = j
      total = total + En(j, Npt)
-     if (Mw(j) < 1.0D0) enel = En(j, Npt)
+     if (Mw(j) < 1.0d0) enel = En(j, Npt)
      En(j, Npt) = -En(j, Npt)
   end do
-  testen = 1.D0/(Ng*Wm(Npt))
+  testen = 1.d0/(Ng*Wm(Npt))
   loop = 0
 100 if (total <= testot .and. loop <= Ng) then
      loop = loop + 1
@@ -5014,12 +5014,12 @@ subroutine TRANIN
   if (Nr /= 0) then
      do k = 1, maxTr
         do m = 1, maxTr
-           Stc(k, m) = 0.0D0
+           Stc(k, m) = 0.0d0
         end do
      end do
      k = 1
      do i = Lsave + 1, Nm
-        Stc(k, i) = -1.0D0
+        Stc(k, i) = -1.0d0
         j = Ind(i)
         do m = 1, Lsave
            Stc(k, m) = A(m, j)
@@ -5027,12 +5027,12 @@ subroutine TRANIN
         k = k + 1
      end do
      do i = 1, Nm
-        if (Xs(i) < 1.0D-10) then
+        if (Xs(i) < 1.0d-10) then
            m = 1
            change = .false.
            do 210 j = 1, Nr
               coeff = Stc(j, i)
-              if (ABS(coeff) > 1.0D-05) then
+              if (ABS(coeff) > 1.0d-05) then
                  if (.not. change) then
                     change = .true.
                     do k = 1, Nm
@@ -5114,29 +5114,29 @@ subroutine TRANIN
 ! ESTIMATES FOR  E-ION, ION-ION, E-NEUTRAL, ION-NEUTRAL
 ! DEBYE SHIELDING WITH IONIC CUTOFF DISTANCE
   if (Ions) then
-     te = Tt/1000.D0
-     ekt = 4.8032D0**2/(Boltz*te)
-     qc = 100.D0*(ekt**2)
+     te = Tt/1000.d0
+     ekt = 4.8032d0**2/(Boltz*te)
+     qc = 100.d0*(ekt**2)
      xsel = enel/total
-     if (xsel < 1.0D-12) xsel = 1.0D-12
-     debye = ((22.5D0/Pi)*(Rr/Avgdr*100.D0)*(te/xsel))/ekt**3
-     ionic = ((810.D0/(4.0D0*Pi))*(Rr/Avgdr*100D0)*(te/xsel)) &
+     if (xsel < 1.0d-12) xsel = 1.0d-12
+     debye = ((22.5d0/Pi)*(Rr/Avgdr*100.d0)*(te/xsel))/ekt**3
+     ionic = ((810.d0/(4.0d0*Pi))*(Rr/Avgdr*100d0)*(te/xsel)) &
           **(2.0/3.0)/ekt**2
      lamda = sqrt(debye+ionic)
-     lamda = max(lamda, 2.71828183D0)
+     lamda = max(lamda, 2.71828183d0)
   end if
   do i = 1, Nm
      k = Ind(i)
      Cprr(i) = Cp(k)
-     if (.not. (Ions .and. (abs(A(Nlm, k)) == 1.D0) .and.  &
-          (Eta(i, i) == 0.D0))) then
-        if (Eta(i, i) == 0.D0) then
-           omega = log(50.D0*Wmol(i)**4.6/Tt**1.4)
-           omega = max(omega, 1.D0)
+     if (.not. (Ions .and. (abs(A(Nlm, k)) == 1.d0) .and.  &
+          (Eta(i, i) == 0.d0))) then
+        if (Eta(i, i) == 0.d0) then
+           omega = log(50.d0*Wmol(i)**4.6/Tt**1.4)
+           omega = max(omega, 1.d0)
            Eta(i, i) = Viscns*sqrt(Wmol(i)*Tt)/omega
         end if
-        if (Con(i) == 0.D0) Con(i) = Eta(i, i) &
-             *Rr*(.00375D0+.00132D0*(Cprr(i)-2.5D0))/Wmol(i)
+        if (Con(i) == 0.d0) Con(i) = Eta(i, i) &
+             *Rr*(.00375d0+.00132d0*(Cprr(i)-2.5d0))/Wmol(i)
      end if
   end do
   do i = 1, Nm
@@ -5157,9 +5157,9 @@ subroutine TRANIN
               if (ABS(A(Nlm, k2)) == 1.0) ion2 = .true.
               if (Wmol(i) < 1.0) elc1 = .true.
               if (Wmol(j) < 1.0) elc2 = .true.
-              if (ion1 .and. ion2) omega = 1.36D0*qc*log(lamda)
+              if (ion1 .and. ion2) omega = 1.36d0*qc*log(lamda)
               if ((ion1 .and. elc2) .or. (ion2 .and. elc1)) &
-                   omega = 1.29D0*qc*log(lamda)
+                   omega = 1.29d0*qc*log(lamda)
               if ((ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1)) &
                    omega = EXP(6.776-0.4*Tln)
               if (omega /= 0.) then
@@ -5169,7 +5169,7 @@ subroutine TRANIN
                  if (i == j) then
                     Cprr(i) = Cp(k1)
                     Con(i) = Eta(i, i) &
-                         *Rr*(.00375D0+.00132D0*(Cprr(i)-2.5D0)) &
+                         *Rr*(.00375d0+.00132d0*(Cprr(i)-2.5d0)) &
                          /Wmol(i)
                  end if
                  go to 450
@@ -5177,9 +5177,9 @@ subroutine TRANIN
            end if
 ! ESTIMATE FOR UNLIKE INTERACTIONS FROM RIGID SPHERE ANALOGY
            ratio = sqrt(Wmol(j)/Wmol(i))
-           Eta(i, j) = 5.656854D0*Eta(i, i) &
+           Eta(i, j) = 5.656854d0*Eta(i, i) &
                 *SQRT(Wmol(j)/(Wmol(i)+Wmol(j)))
-           Eta(i, j) = Eta(i, j)/(1.D0+sqrt(ratio*Eta(i, i)/Eta(j, j)))**2
+           Eta(i, j) = Eta(i, j)/(1.d0+sqrt(ratio*Eta(i, i)/Eta(j, j)))**2
            Eta(j, i) = Eta(i, j)
         end if
 450  continue
@@ -5209,31 +5209,31 @@ subroutine TRANP
 ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
   nmm = Nm - 1
   do i = 1, Nm
-     rtpd(i, i) = 0.D0
-     phi(i, i) = 1.D0
-     psi(i, i) = 1.D0
+     rtpd(i, i) = 0.d0
+     phi(i, i) = 1.d0
+     psi(i, i) = 1.d0
   end do
-  Confro(Npt) = 0.D0
-  Vis(Npt) = 0.D0
+  Confro(Npt) = 0.d0
+  Vis(Npt) = 0.d0
   do i = 1, nmm
      i1 = i + 1
 !DIR$ IVDEP
      do j = i1, Nm
-        sumc = 2.D0/(Eta(i, j)*(Wmol(i)+Wmol(j)))
+        sumc = 2.d0/(Eta(i, j)*(Wmol(i)+Wmol(j)))
         phi(i, j) = sumc*Wmol(j)*Eta(i, i)
         phi(j, i) = sumc*Wmol(i)*Eta(j, j)
         sumc = (Wmol(i)+Wmol(j))**2
         psi(i, j) = phi(i, j) &
-             *(1.D0+2.41D0*(Wmol(i)-Wmol(j))*(Wmol(i)-.142D0* &
+             *(1.d0+2.41d0*(Wmol(i)-Wmol(j))*(Wmol(i)-.142d0* &
              Wmol(j))/sumc)
         psi(j, i) = phi(j, i) &
-             *(1.D0+2.41D0*(Wmol(j)-Wmol(i))*(Wmol(j)-.142D0* &
+             *(1.d0+2.41d0*(Wmol(j)-Wmol(i))*(Wmol(j)-.142d0* &
              Wmol(i))/sumc)
      end do
   end do
   do i = 1, Nm
-     sumc = 0.D0
-     sumv = 0.D0
+     sumc = 0.d0
+     sumv = 0.d0
      do j = 1, Nm
         sumc = sumc + psi(i, j)*Xs(j)
         sumv = sumv + phi(i, j)*Xs(j)
@@ -5245,7 +5245,7 @@ subroutine TRANP
 ! CALCULATE REACTION HEAT CAPACITY AND THERMAL CONDUCTIVITY
      m = Nr + 1
      do i = 1, Nr
-        delh(i) = 0.0D0
+        delh(i) = 0.0d0
         do k = 1, Lsave
            j = Jcm(k)
            delh(i) = Stc(i, k)*H0(j) + delh(i)
@@ -5259,7 +5259,7 @@ subroutine TRANP
      end do
      do i = 1, maxTr
         do j = 1, maxTr
-           if (abs(Stc(i, j)) < 1.0D-6) Stc(i, j) = 0.0D0
+           if (abs(Stc(i, j)) < 1.0d-6) Stc(i, j) = 0.0d0
         end do
      end do
      jj = Nm - 1
@@ -5274,18 +5274,18 @@ subroutine TRANP
      end do
      do i = 1, Nr
         do j = i, Nr
-           G(i, j) = 0.0D0
-           gmat(i, j) = 0.0D0
+           G(i, j) = 0.0d0
+           gmat(i, j) = 0.0d0
         end do
      end do
      do k = 1, jj
         mm = k + 1
         do m = mm, Nm
-           if (Xs(k) >= 1.0D-10 .and. Xs(m) >= 1.0D-10) then
+           if (Xs(k) >= 1.0d-10 .and. Xs(m) >= 1.0d-10) then
               do j = 1, Nr
-                 if ((Stc(j, k) == 0.D0) .and. (Stc(j, m) == 0.D0)) stx(j) &
-                      = 0.D0
-                 if ((Stc(j, k) /= 0.D0) .or. (Stc(j, m) /= 0.D0)) stx(j) &
+                 if ((Stc(j, k) == 0.d0) .and. (Stc(j, m) == 0.d0)) stx(j) &
+                      = 0.d0
+                 if ((Stc(j, k) /= 0.d0) .or. (Stc(j, m) /= 0.d0)) stx(j) &
                       = Xs(m)*Stc(j, k) - Xs(k)*Stc(j, m)
               end do
               do i = 1, Nr
@@ -5308,7 +5308,7 @@ subroutine TRANP
      end do
      Imat = Nr
      call GAUSS
-     cpreac = 0.D0
+     cpreac = 0.d0
      do i = 1, Nr
         G(i, m) = delh(i)
         cpreac = cpreac + R*delh(i)*X(i)
@@ -5319,30 +5319,30 @@ subroutine TRANP
         end do
      end do
      call GAUSS
-     reacon = 0.D0
+     reacon = 0.d0
      do i = 1, Nr
         reacon = reacon + R*delh(i)*X(i)
      end do
-     reacon = .6D0*reacon
+     reacon = .6d0*reacon
   else
-     cpreac = 0.D0
-     reacon = 0.D0
+     cpreac = 0.d0
+     reacon = 0.d0
   end if
 ! CALCULATE OTHER ANSWERS
-  Cpfro(Npt) = 0.D0
-  wtmol = 0.D0
+  Cpfro(Npt) = 0.d0
+  wtmol = 0.d0
   do i = 1, Nm
      Cpfro(Npt) = Cpfro(Npt) + Xs(i)*Cprr(i)
      wtmol = wtmol + Xs(i)*Wmol(i)
   end do
   Cpfro(Npt) = Cpfro(Npt)*R/wtmol
-  Confro(Npt) = Confro(Npt)/1000.D0
-  if (.not. SIunit) Confro(Npt) = Confro(Npt)/4.184D0
-  Vis(Npt) = Vis(Npt)/1000.D0
+  Confro(Npt) = Confro(Npt)/1000.d0
+  if (.not. SIunit) Confro(Npt) = Confro(Npt)/4.184d0
+  Vis(Npt) = Vis(Npt)/1000.d0
   Prfro(Npt) = Vis(Npt)*Cpfro(Npt)/Confro(Npt)
   if (Eql) then
      cpreac = cpreac/wtmol
-     reacon = reacon/1000.D0
+     reacon = reacon/1000.d0
      Cpeql(Npt) = cpreac + Cpfro(Npt)
      Coneql(Npt) = Confro(Npt) + reacon
      Preql(Npt) = Vis(Npt)*Cpeql(Npt)/Coneql(Npt)
@@ -5370,7 +5370,7 @@ subroutine UTHERM(readOK)
 ! WHEN COEFFICIENTS ARE NOT GIVEN FOR THE THIRD TEMPERATURE
 ! INTERVAL, A STRAIGHT LINE FOR CP/R IS USED.  FOR HIGH TEMPS, 
 ! THE EXTRAPOLATION GOES BETWEEN THE LAST POINT GIVEN AND THE
-! FOLLOWING VALUES AA AT TINF=1.D06 K:
+! FOLLOWING VALUES AA AT TINF=1.d06 K:
 !      MONATOMICS  2.5
 !      DIATOMICS   4.5
 !      POLYATOMICS 3*N-1.75  (AVERAGE 1.5 AND 2)
@@ -5420,7 +5420,7 @@ subroutine UTHERM(readOK)
   nall = 0
   ifzm1 = 0
   inew = 0
-  tinf = 1.D06
+  tinf = 1.d06
   rewind IOSCH
   read(IOINP, '(4F10.3, a10)') tgl, Thdate
 100 do i = 1, 3
@@ -5453,22 +5453,22 @@ subroutine UTHERM(readOK)
      go to 100
   else if (name == 'Air') then
      sym(1) = 'N'
-     fno(1) = 1.56168D0
+     fno(1) = 1.56168d0
      sym(2) = 'O'
-     fno(2) = .419590D0
+     fno(2) = .419590d0
      sym(3) = 'AR'
-     fno(3) = .009365D0
+     fno(3) = .009365d0
      sym(4) = 'C'
-     fno(4) = .000319D0
+     fno(4) = .000319d0
   else if (name == 'e-') then
-     mwt = 5.48579903D-04
+     mwt = 5.48579903d-04
   end if
   do 200 i = 1, ntl
      read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
-     read(IOINP, '(5D16.8/2D16.8, 16x, 2D16.8)', ERR=400) templ
+     read(IOINP, '(5d16.8/2d16.8, 16x, 2d16.8)', ERR=400) templ
      if (ifaz == 0 .and. i > 3) go to 400
      if (ifaz <= 0) then
-        if (tl(2) > tgl(4)-.01D0) then
+        if (tl(2) > tgl(4)-.01d0) then
            ifaz = -1
            namee = '*'//name
            name = namee(:15)
@@ -5480,7 +5480,7 @@ subroutine UTHERM(readOK)
         int = 1
         if (i > 1) then
            do k = 1, 7
-              thermo(k, 1) = 0.D0
+              thermo(k, 1) = 0.d0
            end do
         end if
      end if
@@ -5519,9 +5519,9 @@ subroutine UTHERM(readOK)
            end do
 ! FOR GASES WITH NO COEFFICIENTS FOR TGL(3)-TGL(4) INTERVAL, 
 ! CALCULATE ESTIMATED COEFFICIENTS. (STRAIGHT LINE FOR CP/R)
-210        aa = 2.5D0
-           if (atms > 1.9) aa = 4.5D0
-           if (atms > 2.1) aa = 3.*atms - 1.75D0
+210        aa = 2.5d0
+           if (atms > 1.9) aa = 4.5d0
+           if (atms > 2.1) aa = 3.*atms - 1.75d0
            ttl = tl(2)
            tx = ttl - tinf
            cpfix = 0
