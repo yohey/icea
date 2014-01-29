@@ -1772,22 +1772,22 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   logical:: readOK
   real(8):: Dpin(maxNgc)
 ! LOCAL VARIABLES
-  character(1):: ch1(132), cx, nums(13)
+  character(1), parameter:: nums(13) = ['+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
+  character(2), parameter:: numg(24) = &
+       [character(2):: '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', &
+                       '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24']
+  character(1):: ch1(132), cx
   character(24):: cnum
   character(3):: fmtl(3)
-  character(2):: numg(24)
   character(4):: w1
   integer:: i, ich1, j, kcin, nb, nch1, nx
 
-  data fmtl /'(g', '16', '.0)'/
-  data nums /'+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'/
-  data numg /'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', &
-       '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24'/
+  fmtl = [character(3):: '(g', '16', '.0)']
 
   Ncin = 1
   Lcin(1) = 0
   kcin = 0
-  Dpin(1) = 0.d0
+  Dpin(1) = 0
 100 nb = 1
   nx = 0
   cnum = ' '
@@ -1795,7 +1795,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   ch1(1) = ' '
   nch1 = 1
 ! READ CHARACTERS, ONE AT A TIME
-  read(IOINP, '(132A1)', END=500, ERR=500) ch1
+  read(IOINP, '(132a1)', END=500, ERR=500) ch1
 ! FIND FIRST AND LAST NON-BLANK CHARACTER
   do i = 132, 1, - 1
      nch1 = i
@@ -1806,7 +1806,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
      if (ch1(i) /= ' ' .and. ch1(i) /= '	') go to 300
   end do
 300 if (nch1 == 1 .or. ch1(ich1) == '#' .or. ch1(ich1) == '!') then
-     write(IOOUT, '(1x, 80A1)') (ch1(i), i = 1, nch1)
+     write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
      go to 100
   end if
   w1 = ch1(ich1) // ch1(ich1+1) // ch1(ich1+2) // ch1(ich1+3)
@@ -1817,7 +1817,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
      if (Ncin == 1) then
         Cin(Ncin) = w1
         if (w1(1:3) == 'end' .or. w1 == 'ther' .or. w1 == 'tran') then
-           write(IOOUT, '(1x, 80A1)') (ch1(i), i = 1, nch1)
+           write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
            return
         end if
         ich1 = ich1 + 4
@@ -1825,7 +1825,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
         Lcin(1) = -4
      else
 ! KEYWORD READ FOR NEXT DATASET. END PROCESSING
-        BACKSPACE IOINP
+        backspace IOINP
         if (nx == 0) Ncin = Ncin - 1
         return
      end if
@@ -1833,7 +1833,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
      write(IOOUT, '(/" FATAL ERROR IN INPUT format (INFREE)")')
      go to 500
   end if
-  write(IOOUT, '(1x, 80A1)') (ch1(i), i = 1, nch1)
+  write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
   do 400 i = ich1, nch1
      cx = ch1(i)
 ! LOOK FOR DELIMITER STRINGS
@@ -1870,12 +1870,12 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
            read(cnum, fmtl, ERR=320) Dpin(Ncin)
         end if
         go to 340
-320     if (Cin(Ncin-1)(:4) /= 'case') write(IOOUT, '(/" WARNING!!  UNACCEPTABLE NUMBER ", A15, " (INFREE)")') Cin(i)
+320     if (Cin(Ncin-1)(:4) /= 'case') write(IOOUT, '(/" WARNING!!  UNACCEPTABLE NUMBER ", a15, " (INFREE)")') Cin(i)
         Lcin(Ncin) = 0
 340     Ncin = Ncin + 1
         Cin(Ncin) = ' '
         Lcin(Ncin) = 0
-        Dpin(Ncin) = 0.d0
+        Dpin(Ncin) = 0
         nx = 0
         cnum = ' '
      end if
@@ -1884,7 +1884,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   if (nx > 0) then
      Ncin = Ncin + 1
      Lcin(Ncin) = 0
-     Dpin(Ncin) = 0.d0
+     Dpin(Ncin) = 0
   end if
   go to 100
 500 readOK = .false.
