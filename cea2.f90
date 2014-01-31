@@ -2538,46 +2538,46 @@ subroutine MATRIX
 ! CLEAR MATRIX STORAGES TO ZERO
   do i = 1, Imat
      do k = 1, kmat
-        G(i, k) = 0.0d0
+        G(i, k) = 0
      end do
   end do
-  G(iq2, Iq1) = 0.d0
-  sss = 0.d0
-  Hsum(Npt) = 0.d0
+  G(iq2, Iq1) = 0
+  sss = 0
+  Hsum(Npt) = 0
 ! BEGIN SET-UP OF ITERATION OR DERIVATIVE MATRIX
   do j = 1, Ng
      Mu(j) = H0(j) - S(j) + Enln(j) + Tm
-     if (En(j, Npt) /= 0.d0) then
-        h = H0(j)*En(j, Npt)
-        f = Mu(j)*En(j, Npt)
+     if (En(j, Npt) /= 0) then
+        h = H0(j) * En(j, Npt)
+        f = Mu(j) * En(j, Npt)
         ss = h - f
         term1 = h
         if (kmat == iq2) term1 = f
         do i = 1, Nlm
-           if (A(i, j) /= 0.) then
-              term = A(i, j)*En(j, Npt)
+           if (A(i, j) /= 0) then
+              term = A(i, j) * En(j, Npt)
               do k = i, Nlm
-                 G(i, k) = G(i, k) + A(k, j)*term
+                 G(i, k) = G(i, k) + A(k, j) * term
               end do
               G(i, Iq1) = G(i, Iq1) + term
-              G(i, iq2) = G(i, iq2) + A(i, j)*term1
+              G(i, iq2) = G(i, iq2) + A(i, j) * term1
               if (.not. (Convg .or. Tp)) then
-                 G(i, iq3) = G(i, iq3) + A(i, j)*f
-                 if (Sp) G(iq2, i) = G(iq2, i) + A(i, j)*ss
+                 G(i, iq3) = G(i, iq3) + A(i, j) * f
+                 if (Sp) G(iq2, i) = G(iq2, i) + A(i, j) * ss
               end if
            end if
         end do
         if (kmat /= iq2) then
            if (Convg .or. Hp) then
-              G(iq2, iq2) = G(iq2, iq2) + H0(j)*h
+              G(iq2, iq2) = G(iq2, iq2) + H0(j) * h
               if (.not. Convg) then
-                 G(iq2, iq3) = G(iq2, iq3) + H0(j)*f
+                 G(iq2, iq3) = G(iq2, iq3) + H0(j) * f
                  G(Iq1, iq3) = G(Iq1, iq3) + f
               end if
            else
               G(iq2, Iq1) = G(iq2, Iq1) + ss
-              G(iq2, iq2) = G(iq2, iq2) + H0(j)*ss
-              G(iq2, iq3) = G(iq2, iq3) + Mu(j)*ss
+              G(iq2, iq2) = G(iq2, iq2) + H0(j) * ss
+              G(iq2, iq3) = G(iq2, iq3) + Mu(j) * ss
               G(Iq1, iq3) = G(Iq1, iq3) + f
            end if
         end if
@@ -2592,13 +2592,13 @@ subroutine MATRIX
         Mu(j) = H0(j) - S(j)
         do i = 1, Nlm
            G(i, kk) = A(i, j)
-           G(i, kmat) = G(i, kmat) - A(i, j)*En(j, Npt)
+           G(i, kmat) = G(i, kmat) - A(i, j) * En(j, Npt)
         end do
         G(kk, iq2) = H0(j)
         G(kk, kmat) = Mu(j)
-        Hsum(Npt) = Hsum(Npt) + H0(j)*En(j, Npt)
+        Hsum(Npt) = Hsum(Npt) + H0(j) * En(j, Npt)
         if (Sp) then
-           sss = sss + S(j)*En(j, Npt)
+           sss = sss + S(j) * En(j, Npt)
            G(iq2, kk) = S(j)
         end if
      end do
