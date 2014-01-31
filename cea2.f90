@@ -1903,12 +1903,12 @@ subroutine INPUT(readOK, caseOK, Ensert)
   logical:: caseOK, readOK
   character(15):: Ensert(20)
 ! LOCAL VARIABLES
+  character(26), parameter:: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   character(15), save:: cin(maxNgc), cx15
   character(4), save:: code, cx4
   character(1), save:: cx1
   character(2), save:: cx2
   character(3), save:: cx3
-  character(26):: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   logical, save:: eqrats, incd, phi, pltdat, reacts, refl
   integer, save:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
   real(8), save:: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
@@ -1972,7 +1972,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
         end if
 ! PROCESS 'OUTP' DATASET.
      else if (code == 'outp') then
-        do 120 i = 2, ncin
+        do i = 2, ncin
            if (lcin(i) < 0) then
               cx2 = cin(i)(1:2)
               cx3 = cin(i)(1:3)
@@ -1989,7 +1989,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
                  Massf = .true.
               else if (cx3 == 'deb' .or. cx3 == 'dbg') then
                  do j = i + 1, ncin
-                    if (lcin(j) /= i) go to 120
+                    if (lcin(j) /= i) cycle
                     k = int(dpin(j))
                     if (k <= Ncol) Debug(k) = .true.
                     lcin(j) = 0
@@ -2002,10 +2002,10 @@ subroutine INPUT(readOK, caseOK, Ensert)
               else if (cx2 == 'pl') then
                  pltdat = .true.
               else
-                 write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", A15, " (INPUT)"/)') cin(i)
+                 write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cin(i)
               end if
            end if
-120     continue
+        end do
 ! SORT AND STORE DATA FROM 'REAC' DATASET.
      else if (code == 'reac') then
         reacts = .true.
@@ -2019,7 +2019,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
         if (i <= ncin) then
            if ( lcin(i) /= 0) then
               if (lcin(i) > 0) then
-                 write(IOOUT, '(/" WARNING!!  LITERAL EXPECTED FOR ", A15, "(INPUT)")') cin(i)
+                 write(IOOUT, '(/" WARNING!!  LITERAL EXPECTED FOR ", a15, "(INPUT)")') cin(i)
                  go to 140
               end if
               cx15 = cin(i)
@@ -2039,8 +2039,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
                        write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
                     end if
                     if (cx1 == 'm' .and. Nreac == 1) Moles = .true.
-                    if (cx1 == 'm' .and. .not. Moles .or. cx1 == 'w' .and.  &
-                         Moles) then
+                    if (cx1 == 'm' .and. .not. Moles .or. cx1 == 'w' .and. Moles) then
                        caseOK = .false.
                        write(IOOUT, '(/" MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)")')
                     end if
@@ -2052,12 +2051,9 @@ subroutine INPUT(readOK, caseOK, Ensert)
                        i = i + 1
                        Rtemp(Nreac) = dpin(i)
                        if (lcin(i-1) < 1) then
-                          if (index(cx15, 'r') > 0) Rtemp(Nreac) &
-                               = Rtemp(Nreac)/1.8d0
-                          if (index(cx15, 'c') > 0) Rtemp(Nreac) &
-                               = Rtemp(Nreac) + 273.15d0
-                          if (index(cx15, 'f') > 0) Rtemp(Nreac) &
-                               = (Rtemp(Nreac)-32.d0)/1.8d0 + 273.15d0
+                          if (index(cx15, 'r') > 0) Rtemp(Nreac) = Rtemp(Nreac)/1.8d0
+                          if (index(cx15, 'c') > 0) Rtemp(Nreac) = Rtemp(Nreac) + 273.15d0
+                          if (index(cx15, 'f') > 0) Rtemp(Nreac) = (Rtemp(Nreac)-32)/1.8d0 + 273.15d0
                        end if
                     else
                        write(IOOUT, '(/" REACTANT TEMPERATURE MISSING (INPUT) ")')
@@ -2070,11 +2066,9 @@ subroutine INPUT(readOK, caseOK, Ensert)
                     Energy(Nreac) = cx15
                     if (lcin(i+1) > 0) then
                        i = i + 1
-                       Enth(Nreac) = dpin(i)*1000.d0/Rr
-                       if (index(cin(i-1), 'c') > 0) Enth(Nreac) &
-                            = Enth(Nreac)*4.184d0
-                       if (index(cin(i-1), 'k') > 0) Enth(Nreac) &
-                            = Enth(Nreac)*1000.d0
+                       Enth(Nreac) = dpin(i)*1000/Rr
+                       if (index(cin(i-1), 'c') > 0) Enth(Nreac) = Enth(Nreac)*4.184d0
+                       if (index(cin(i-1), 'k') > 0) Enth(Nreac) = Enth(Nreac)*1000
                     end if
                     go to 140
                  end if
@@ -2083,14 +2077,12 @@ subroutine INPUT(readOK, caseOK, Ensert)
                     if (lcin(i+1) > 0) then
                        i = i + 1
                        Dens(Nreac) = dpin(i)
-                       if (index(cx15, 'kg') > 0) Dens(Nreac) &
-                            = Dens(Nreac)/1000.d0
+                       if (index(cx15, 'kg') > 0) Dens(Nreac) = Dens(Nreac)/1000
                     end if
                     go to 140
                  end if
 ! CHECK FOR CHEMICAL SYMBOLS IN EXPLODED FORMULA
-                 if ((lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) &
-                      > 0) then
+                 if ((lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) > 0) then
                     Energy(Nreac) = ' '
                     ifrmla = ifrmla + 1
                     Nfla(Nreac) = ifrmla
@@ -2107,7 +2099,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
                     i = i + 1
                     go to 140
                  end if
-                 write(IOOUT, '(/" WARNING!! ", A15, " NOT RECOGNIZED (INPUT)")') cin(i)
+                 write(IOOUT, '(/" WARNING!! ", a15, " NOT RECOGNIZED (INPUT)")') cin(i)
               else
                  Nreac = min(Nreac+1, maxR)
                  Fox(Nreac) = trim(cx15)
@@ -2116,12 +2108,12 @@ subroutine INPUT(readOK, caseOK, Ensert)
                  ifrmla = 0
                  Nfla(Nreac) = 0
                  Energy(Nreac) = 'lib'
-                 Enth(Nreac) = 0.
+                 Enth(Nreac) = 0
                  Jray(Nreac) = 0
-                 Pecwt(Nreac) = -1.
-                 Rnum(Nreac, 1) = 0.
-                 Rmw(Nreac) = 0.
-                 Rtemp(Nreac) = 0.
+                 Pecwt(Nreac) = -1
+                 Rnum(Nreac, 1) = 0
+                 Rmw(Nreac) = 0
+                 Rtemp(Nreac) = 0
               end if
            end if
            go to 140
@@ -2130,17 +2122,17 @@ subroutine INPUT(readOK, caseOK, Ensert)
      else if (code == 'prob') then
         Case = ' '
         do i = 1, maxPv
-           P(i) = 0.
-           V(i) = 0.
+           P(i) = 0
+           V(i) = 0
         end do
         do i = 1, maxT
-           T(i) = 0.
+           T(i) = 0
         end do
-        P(1) = 1.
-        Trace = 0.
+        P(1) = 1
+        Trace = 0
         Lsave = 0
         R = Rr/4184.d0
-        S0 = 0.
+        S0 = 0
         hr = 1.d30
         ur = 1.d30
         Tp = .false.
@@ -2155,22 +2147,22 @@ subroutine INPUT(readOK, caseOK, Ensert)
         Froz = .false.
         Fac = .false.
         Debugf = .false.
-        Acat = 0.
-        Ma = 0.
+        Acat = 0
+        Ma = 0
         Nfz = 1
         Nsub = 0
         Nsup = 0
         Npp = 0
-        Tcest = 3800.
+        Tcest = 3800
         do i = 1, Ncol
-           Pcp(i) = 0.
-           Pcp(i+Ncol) = 0.
-           Supar(i) = 0.
-           Subar(i) = 0.
-           Mach1(i) = 0.
-           U1(i) = 0.
+           Pcp(i) = 0
+           Pcp(i+Ncol) = 0
+           Supar(i) = 0
+           Subar(i) = 0
+           Mach1(i) = 0
+           U1(i) = 0
         end do
-        Gamma1 = 0.
+        Gamma1 = 0
         phi = .false.
         eqrats = .false.
         incd = .false.
@@ -2185,10 +2177,10 @@ subroutine INPUT(readOK, caseOK, Ensert)
         Trnspt = .false.
 ! PROCESS LITERAL VARIABLES IN 'PROB' DATASET THAT DO NOT HAVE
 ! ASSOCIATED NUMERICAL DATA.
-        do 160 i = 2, ncin
+        outerLoop: do i = 2, ncin
            if (lcin(i) < 0) then
               do j = i + 1, ncin
-                 if (lcin(j) == i) go to 160
+                 if (lcin(j) == i) cycle outerLoop
               end do
               cx15 = cin(i)
               cx2 = cx15(:2)
@@ -2246,11 +2238,11 @@ subroutine INPUT(readOK, caseOK, Ensert)
               else if (cx4 == 'ions') then
                  Ions = .true.
               else
-                 write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", A15, " (INPUT)"/)') cx15
+                 write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
               end if
               lcin(i) = 0
            end if
-160     continue
+        end do outerLoop
         iv = 2
         Nof = 0
         go to 200
@@ -2266,7 +2258,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
         if (hr > .9d30) hr = 0.d0
         if (ur > .9d30) ur = 0.d0
         if (Trnspt) Viscns = .3125*sqrt(1.E5*Boltz/(Pi*Avgdr))
-        if (SIunit) R = Rr/1000.
+        if (SIunit) R = Rr/1000
         if (Detn .or. Shock) Newr = .true.
         if (.not. Short) then
            write(IOOUT, '(/" OPTIONS: TP=", L1, "  HP=", L1, "  SP=", L1, "  TV=", L1, &
@@ -2277,24 +2269,21 @@ subroutine INPUT(readOK, caseOK, Ensert)
                 (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
                 incd, Rkt, Froz, Eql, Ions, SIunit, Debugf, Shkdbg, &
                 Detdbg, Trnspt
-           if (T(1) > 0.) write(IOOUT, '(/" T,K =", 7F11.4)') (T(jj), jj=1, Nt)
-           write(IOOUT, '(/1p, " TRACE=", E9.2, "  S/R=", E13.6, "  H/R=", E13.6, "  U/R=", &
-                & E13.6)') Trace, S0, hr, ur
-           if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4E14.7))') &
-                (V(jj)*1.d-05, jj=1, Np)
+           if (T(1) > 0) write(IOOUT, '(/" T,K =", 7F11.4)') (T(jj), jj = 1, Nt)
+           write(IOOUT, '(/1p, " TRACE=", E9.2, "  S/R=", E13.6, "  H/R=", E13.6, "  U/R=",  E13.6)') Trace, S0, hr, ur
+           if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4E14.7))') (V(jj)*1.d-05, jj = 1, Np)
         end if
         if (Rkt) then
            if (Nt == 0) Hp = .true.
            if (.not. Short) then
-              write(IOOUT, '(/" Pc,BAR =", 7F13.6)') (P(jj), jj=1, Np)
-              write(IOOUT, '(/" Pc/P =", 9F11.4)') (Pcp(jj), jj=1, Npp)
-              write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5F11.4))') (Subar(i), i=1, Nsub)
-              write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5F11.4))') (Supar(i), i=1, Nsup)
+              write(IOOUT, '(/" Pc,BAR =", 7F13.6)') (P(jj), jj = 1, Np)
+              write(IOOUT, '(/" Pc/P =", 9F11.4)') (Pcp(jj), jj = 1, Npp)
+              write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5F11.4))') (Subar(i), i = 1, Nsub)
+              write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5F11.4))') (Supar(i), i = 1, Nsup)
               write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') Nfz, Ma, Acat
            end if
         else
-           if (.not. Vol .and. .not. Short) write(IOOUT, '(/" P,BAR =", 7F13.6)') &
-                (P(jj), jj=1, Np)
+           if (.not. Vol .and. .not. Short) write(IOOUT, '(/" P,BAR =", 7F13.6)') (P(jj), jj = 1, Np)
         end if
         if (reacts) call REACT
         if (Nreac == 0 .or. Nlm <= 0) then
@@ -2305,9 +2294,9 @@ subroutine INPUT(readOK, caseOK, Ensert)
         end if
         if (Nof == 0) then
            Nof = 1
-           Oxf(1) = 0.
-           if (Wp(2) > 0.) then
-              Oxf(1) = Wp(1)/Wp(2)
+           Oxf(1) = 0
+           if (Wp(2) > 0) then
+              Oxf(1) = Wp(1) / Wp(2)
            else
               caseOK = .false.
               write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
@@ -2322,7 +2311,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
                  denmtr = eratio*Vmin(1) + Vpls(1)
               else
                  xyz = -Vmin(2) - Vpls(2)
-                 denmtr = eratio*(Vmin(1)+Vpls(1))
+                 denmtr = eratio * (Vmin(1) + Vpls(1))
               end if
               if (abs(denmtr) < 1.d-30) then
                  caseOK = .false.
@@ -2330,21 +2319,18 @@ subroutine INPUT(readOK, caseOK, Ensert)
                  write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
                  go to 400
               end if
-              Oxf(i) = xyz/denmtr
+              Oxf(i) = xyz / denmtr
            end do
         end if
-        if (.not. Sp .and. .not. Tp .and. .not. Hp .and. .not. Rkt .and.  &
-             .not. Detn .and. .not. Shock) then
+        if (.not. Sp .and. .not. Tp .and. .not. Hp .and. .not. Rkt .and. .not. Detn .and. .not. Shock) then
            caseOK = .false.
            write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
-        else if (Tp .and. T(1) <= 0.) then
+        else if (Tp .and. T(1) <= 0) then
            caseOK = .false.
-           write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", &
-                & " DATASET (INPUT)")')
+           write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
         else if (Np <= 0) then
            caseOK = .false.
-           write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", &
-                & " DATASET (INPUT)")')
+           write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", " DATASET (INPUT)")')
         end if
         if (.not. (caseOK .and. Nlm > 0)) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
         go to 400
@@ -2361,17 +2347,17 @@ subroutine INPUT(readOK, caseOK, Ensert)
      iv = i
      if (lcin(i) /= 0) then
         if (lcin(i) < 0) then
-           if (in > 0) go to 300
+           if (in > 0) exit
            in = i
         else
-           if (lcin(i) /= in) go to 300
+           if (lcin(i) /= in) exit
            nmix = nmix + 1
            mix(nmix) = dpin(i)
            lcin(i) = 0
         end if
      end if
   end do
-300 if (nmix <= 0) then
+  if (nmix <= 0) then
      if (iv < ncin) go to 200
      go to 100
   end if
@@ -2384,8 +2370,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
      Nt = nmix
      if (nmix > maxMix) then
         Nt = maxMix
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 't', Nt
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 't', Nt
      end if
      do i = 1, Nt
         if (cx4 /= 'tces') then
@@ -2393,18 +2378,15 @@ subroutine INPUT(readOK, caseOK, Ensert)
            if (lcin(in) < -1) then
               if (index(cx15, 'r') > 0) T(i) = T(i)/1.8d0
               if (index(cx15, 'c') > 0) T(i) = T(i) + 273.15d0
-              if (index(cx15, 'f') > 0) T(i) = (T(i)-32.d0) &
-                   /1.8d0 + 273.15d0
+              if (index(cx15, 'f') > 0) T(i) = (T(i)-32.d0) / 1.8d0 + 273.15d0
            end if
         end if
      end do
-  else if ((cx2 == 'pc' .or. cx2 == 'pi') .and. index(cx15(3:15), 'p') &
-       > 0 .and. index(cx15, 'psi') == 0) then
+  else if ((cx2 == 'pc' .or. cx2 == 'pi') .and. index(cx15(3:15), 'p') > 0 .and. index(cx15, 'psi') == 0) then
      Npp = nmix
      if (nmix > 2*Ncol) then
         Npp = 2*Ncol
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'pcp', Npp
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', Npp
      end if
      do i = 1, Npp
         Pcp(i) = mix(i)
@@ -2413,28 +2395,26 @@ subroutine INPUT(readOK, caseOK, Ensert)
      Np = nmix
      if (nmix > maxPv) then
         Np = maxPv
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'p', Np
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'p', Np
      end if
-     do 350 i = 1, Np
+     do i = 1, Np
         P(i) = mix(i)
         if (index(cx15, 'psi') /= 0) then
            P(i) = P(i)/14.696006d0
         else if (index(cx15, 'mmh') /= 0) then
            P(i) = P(i)/760.d0
         else if (index(cx15, 'atm') == 0) then
-           go to 350
+           cycle
         end if
         P(i) = P(i)*1.01325d0
-350  continue
+     end do
   else if (cx3 == 'rho') then
      xyz = 1.d02
      if (index(cx15, 'kg') /= 0) xyz = 1.d05
      Np = nmix
      if (nmix > maxPv) then
         Np = maxPv
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'rho', Np
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'rho', Np
      end if
      do i = 1, Np
         V(i) = xyz/mix(i)
@@ -2445,8 +2425,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
      Np = nmix
      if (nmix > maxPv) then
         Np = maxPv
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'v', Np
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'v', Np
      end if
      do i = 1, Np
         V(i) = mix(i)*xyz
@@ -2468,8 +2447,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
      Nsk = nmix
      if (nmix > Ncol) then
         Nsk = Ncol
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'u1', Nsk
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'u1', Nsk
      end if
      do i = 1, Nsk
         U1(i) = mix(i)
@@ -2478,8 +2456,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
      Nsk = nmix
      if (nmix > Ncol) then
         Nsk = Ncol
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'mach1', Nsk
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'mach1', Nsk
      end if
      do i = 1, Nsk
         Mach1(i) = mix(i)
@@ -2488,8 +2465,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
      Nsub = nmix
      if (nmix > 13) then
         Nsub = 13
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'subar', Nsub
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'subar', Nsub
      end if
      do i = 1, Nsub
         Subar(i) = mix(i)
@@ -2498,8 +2474,7 @@ subroutine INPUT(readOK, caseOK, Ensert)
      Nsup = nmix
      if (nmix > 13) then
         Nsup = 13
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'supar', Nsup
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'supar', Nsup
      end if
      do i = 1, Nsup
         Supar(i) = mix(i)
@@ -2511,14 +2486,11 @@ subroutine INPUT(readOK, caseOK, Ensert)
   else if (cx4 == 'case') then
      Case = cin(in+1)
      lcin(in+1) = 0
-  else if (Nof == 0 .and.  &
-       (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or.  &
-       cx2 == '%f' .or. cx1 == 'r')) then
+  else if (Nof == 0 .and. (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or. cx2 == '%f' .or. cx1 == 'r')) then
      Nof = nmix
      if (nmix > maxMix) then
         Nof = maxMix
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", A5, " VALUES IS", I3, &
-             & " (INPUT)", /)') 'o/f', Nof
+        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'o/f', Nof
      end if
      do k = 1, Nof
         Oxf(k) = mix(k)
@@ -2529,20 +2501,20 @@ subroutine INPUT(readOK, caseOK, Ensert)
         eqrats = .true.
      else if (cx3 == 'f/a') then
         do k = 1, Nof
-           if (Oxf(k) > 0.) Oxf(k) = 1./Oxf(k)
+           if (Oxf(k) > 0) Oxf(k) = 1/Oxf(k)
         end do
      else if (cx4 == '%fue') then
         do k = 1, Nof
-           if (Oxf(k) > 0.) Oxf(k) = (100.-Oxf(k))/Oxf(k)
+           if (Oxf(k) > 0) Oxf(k) = (100 - Oxf(k)) / Oxf(k)
         end do
      end if
   else
-     write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", A15, " (INPUT)"/)') cx15
+     write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
   end if
   if (iv >= ncin) go to 100
   go to 200
 400 return
-end subroutine
+end subroutine INPUT
 
 
 
