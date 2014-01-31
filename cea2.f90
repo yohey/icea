@@ -2672,14 +2672,14 @@ subroutine NEWOF
   integer, save:: i, j
   real(8), save:: assval, bigb, bratio, dbi, smalb, tem, v1, v2
 
-  if (.not. Short) write(IOOUT, '(/" O/F = ", F10.6)') Oxfl
-  Eqrat = 0.
-  tem = Oxfl + 1.
-  v2 = (Oxfl*Vmin(1)+Vmin(2))/tem
-  v1 = (Oxfl*Vpls(1)+Vpls(2))/tem
+  if (.not. Short) write(IOOUT, '(/" O/F = ", f10.6)') Oxfl
+  Eqrat = 0
+  tem = Oxfl + 1
+  v2 = (Oxfl * Vmin(1) + Vmin(2)) / tem
+  v1 = (Oxfl * Vpls(1) + Vpls(2)) / tem
   if (v2 /= 0.) Eqrat = abs(v1/v2)
   do i = 1, Nlm
-     B0(i) = (Oxfl*B0p(i, 1)+B0p(i, 2))/tem
+     B0(i) = (Oxfl * B0p(i, 1) + B0p(i, 2)) / tem
      dbi = abs(B0(i))
      if (i == 1) then
         bigb = dbi
@@ -2689,35 +2689,34 @@ subroutine NEWOF
         if (dbi > bigb) bigb = dbi
      end if
   end do
-  Bcheck = bigb*.000001d0
+  Bcheck = bigb * .000001d0
 ! CALCUALTE MOLECULAR WEIGHT OF TOTAL REACTANT, WMIX.
-  if (Am(1) /= 0.0 .and. Am(2) /= 0.0) then
-     Wmix = (Oxfl+1.)*Am(1)*Am(2)/(Am(1)+Oxfl*Am(2))
+  if (Am(1) /= 0 .and. Am(2) /= 0) then
+     Wmix = (Oxfl + 1) * Am(1) * Am(2) / (Am(1) + Oxfl * Am(2))
   else
      Wmix = Am(2)
      if (Am(2) == 0.0) Wmix = Am(1)
   end if
   Npt = 1
 ! IF ASSIGNED U OR H NOT GIVEN IN PROB DATA, INITIAL HSUB0 = 1.d30
-  if (Size == 0.) assval = Hsub0
-  if (assval >= 1.d30) Hsub0 = (Oxfl*Hpp(1)+Hpp(2))/tem
+  if (Size == 0) assval = Hsub0
+  if (assval >= 1.d30) Hsub0 = (Oxfl * Hpp(1) + Hpp(2)) / tem
 ! NOTE THAT "BRATIO" IS "BRATIO" IN SEC 3.2 IN RP-1311.
-  bratio = smalb/bigb
+  bratio = smalb / bigb
   Size = 18.420681d0
-  if (bratio < 1.d-5) Size = log(1000.d0/bratio)
+  if (bratio < 1.d-5) Size = log(1000/bratio)
   Jsol = 0
   Jliq = 0
   if (.not. Short) then
-     write(IOOUT, '(/, 23X, "EFFECTIVE FUEL", 5X, "EFFECTIVE OXIDANT", 8X, &
-          & "MIXTURE")')
-     if (Vol) write(IOOUT, '(" INTERNAL ENERGY", 11X, "u(2)/R", 14X, "u(1)/R", 14X, "u0/R")')
-     if (.not. Vol) write(IOOUT, '(" ENTHALPY", 18X, "h(2)/R", 14X, "h(1)/R", 15X, "h0/R")')
-     write(IOOUT, '(" (KG-MOL)(K)/KG", 4X, E18.8, 2E20.8)') Hpp(2), Hpp(1), Hsub0
-     write(IOOUT, '(/" KG-FORM.WT./KG", 13X, "bi(2)", 15X, "bi(1)", 15X, "b0i")')
+     write(IOOUT, '(/, 23x, "EFFECTIVE FUEL", 5x, "EFFECTIVE OXIDANT", 8x, "MIXTURE")')
+     if (Vol) write(IOOUT, '(" INTERNAL ENERGY", 11x, "u(2)/R", 14x, "u(1)/R", 14x, "u0/R")')
+     if (.not. Vol) write(IOOUT, '(" ENTHALPY", 18x, "h(2)/R", 14x, "h(1)/R", 15x, "h0/R")')
+     write(IOOUT, '(" (KG-MOL)(K)/KG", 4x, e18.8, 2e20.8)') Hpp(2), Hpp(1), Hsub0
+     write(IOOUT, '(/" KG-FORM.WT./KG", 13x, "bi(2)", 15x, "bi(1)", 15x, "b0i")')
   end if
   do i = 1, Nlm
      j = Jcm(i)
-     if (.not. Short) write(IOOUT, '(1X, A16, 3E20.8)') Prod(j), B0p(i, 2), B0p(i, 1), B0(i)
+     if (.not. Short) write(IOOUT, '(1x, a16, 3e20.8)') Prod(j), B0p(i, 2), B0p(i, 1), B0(i)
   end do
   return
 end subroutine NEWOF
