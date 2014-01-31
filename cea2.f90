@@ -2757,29 +2757,28 @@ subroutine OUT1
   do n = 1, Nreac
      write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') Fox(n), Rname(n), Pecwt(n), Enth(n)*R, Rtemp(n)
   end do
-  phi = 0.
-  tem = (Vpls(1)+Vmin(1))*Oxfl
-  if (ABS(tem) >= 1.d-3) phi = -(Vmin(2)+Vpls(2))/tem
+  phi = 0
+  tem = (Vpls(1) + Vmin(1)) * Oxfl
+  if (ABS(tem) >= 1.d-3) phi = -(Vmin(2) + Vpls(2)) / tem
   if (Fox(1) == 'NAME') then
-     pfuel = 0.
+     pfuel = 0
   else
-     pfuel = 100.d0/(1.d0+Oxfl)
+     pfuel = 100 / (1 + Oxfl)
   end if
-  if (Rh(1) /= 0. .or. Rh(2) /= 0.) then
-     if (Rh(1) == 0. .or. Rh(2) == 0.) then
+  if (Rh(1) /= 0 .or. Rh(2) /= 0) then
+     if (Rh(1) == 0 .or. Rh(2) == 0) then
         rho = max(Rh(1), Rh(2))
      else
-        rho = (Oxfl+1.)*Rh(1)*Rh(2)/(Rh(1)+Oxfl*Rh(2))
+        rho = (Oxfl + 1) * Rh(1) * Rh(2) / (Rh(1) + Oxfl * Rh(2))
      end if
      if (SIunit) then
-        rho = rho*1000.d0
+        rho = rho * 1000
         write(IOOUT, '(/" REACTANT DENSITY=", F8.2, " KG/CU M")') rho
      else
         write(IOOUT, '(/" REACTANT DENSITY=", F8.4, " G/CC")') rho
      end if
   end if
-  write(IOOUT, '(/" O/F=", F11.5, 2X, "%FUEL=", F10.6, 2X, "R,EQ.RATIO=", F9.6, 2X, &
-       & "PHI,EQ.RATIO=", F9.6)') Oxfl, pfuel, Eqrat, phi
+  write(IOOUT, '(/" O/F=", F11.5, 2X, "%FUEL=", F10.6, 2X, "R,EQ.RATIO=", F9.6, 2X, "PHI,EQ.RATIO=", F9.6)') Oxfl, pfuel, Eqrat, phi
   return
 !***********************************************************************
   entry OUT2
@@ -2820,15 +2819,13 @@ subroutine OUT1
         else if (index(Pltvar(i)(1:), 'dlnp') /= 0) then
            mdvp = i
         else if (Pltvar(i)(:4) == 'pran') then
-           if (index(Pltvar(i)(3:), 'fz') /= 0  .or.  &
-                index(Pltvar(i)(3:), 'fr') /= 0) then
+           if (index(Pltvar(i)(3:), 'fz') /= 0 .or. index(Pltvar(i)(3:), 'fr') /= 0) then
               mpnf = i
            else
               mpn = i
            end if
         else if (Pltvar(i)(:4) == 'cond') then
-           if (index(Pltvar(i)(3:), 'fz') /= 0  .or.  &
-                index(Pltvar(i)(3:), 'fr') /= 0) then
+           if (index(Pltvar(i)(3:), 'fz') /= 0 .or. index(Pltvar(i)(3:), 'fr') /= 0) then
               mcondf = i
            else
               mcond = i
@@ -2882,7 +2879,7 @@ subroutine OUT1
      if (meq > 0) Pltout(i, meq) = Eqrat
   end do
   if (SIunit) then
-     pfactor = 1.d0
+     pfactor = 1
      fp = 'P, BAR'
      vnum = 1.d05
      frh = 'RHO, KG/CU M'
@@ -2892,9 +2889,9 @@ subroutine OUT1
      fs = 'S, KJ/(KG)(K)'
      fc = 'Cp, KJ/(KG)(K)'
   else
-     pfactor = 1.d0/1.01325d0
+     pfactor = 1 / 1.01325d0
      fp = 'P, ATM'
-     vnum = 100.d0
+     vnum = 100
      frh = 'RHO, G/CC'
      fh = 'H, CAL/G'
      fu = 'U, CAL/G'
@@ -2906,94 +2903,89 @@ subroutine OUT1
 ! PRESSURE
   call VARFMT(Ppp)
   do i = 1, Npt
-     X(i) = Ppp(i)*pfactor
+     X(i) = Ppp(i) * pfactor
      if (Nplt /= 0 .and. i > ione) then
-        if (mp > 0) Pltout(i+Iplt-ione, mp) = X(i)
-        if (mt > 0) Pltout(i+Iplt-ione, mt) = Ttt(i)
+        if (mp > 0) Pltout(i + Iplt - ione, mp) = X(i)
+        if (mt > 0) Pltout(i + Iplt - ione, mt) = Ttt(i)
      end if
   end do
-  write(IOOUT, Fmt) fp, (X(j), j=1, Npt)
+  write(IOOUT, Fmt) fp, (X(j), j = 1, Npt)
 ! TEMPERATURE
   Fmt(4) = '13'
   Fmt(5) = ' '
   Fmt(7) = '2,'
-  write(IOOUT, Fmt) 'T, K            ', (Ttt(j), j=1, Npt)
+  write(IOOUT, Fmt) 'T, K            ', (Ttt(j), j = 1, Npt)
 ! DENSITY
   do i = 1, Npt
-     if (Vlm(i) /= 0.) X(i) = vnum/Vlm(i)
-     if (Nplt /= 0 .and. i > ione .and. mrho > 0) &
-          Pltout(i+Iplt-ione, mrho) = X(i)
+     if (Vlm(i) /= 0) X(i) = vnum / Vlm(i)
+     if (Nplt /= 0 .and. i > ione .and. mrho > 0) Pltout(i+Iplt-ione, mrho) = X(i)
   end do
   call EFMT(Fmt(4), frh, X)
 ! ENTHALPY
   do i = 1, Npt
-     X(i) = Hsum(i)*R
-     if (Nplt /= 0 .and. i > ione .and. mh > 0) &
-          Pltout(i+Iplt-ione, mh) = X(i)
+     X(i) = Hsum(i) * R
+     if (Nplt /= 0 .and. i > ione .and. mh > 0) Pltout(i+Iplt-ione, mh) = X(i)
   end do
   Fmt(4) = Fmt(6)
   call VARFMT(X)
-  write(IOOUT, Fmt) fh, (X(j), j=1, Npt)
+  write(IOOUT, Fmt) fh, (X(j), j = 1, Npt)
 ! INTERNAL ENERGY
   do i = 1, Npt
-     X(i) = (Hsum(i)-Ppp(i)*Vlm(i)/Rr)*R
-     if (Nplt /= 0 .and. i > ione .and. mie > 0) &
-          Pltout(i+Iplt-ione, mie) = X(i)
+     X(i) = (Hsum(i) - Ppp(i) * Vlm(i) / Rr) * R
+     if (Nplt /= 0 .and. i > ione .and. mie > 0) Pltout(i+Iplt-ione, mie) = X(i)
   end do
   call VARFMT(X)
-  write(IOOUT, Fmt) fu, (X(j), j=1, Npt)
+  write(IOOUT, Fmt) fu, (X(j), j = 1, Npt)
 ! GIBBS ENERGY
   do i = 1, Npt
-     X(i) = (Hsum(i)-Ttt(i)*Ssum(i))*R
+     X(i) = (Hsum(i) - Ttt(i) * Ssum(i)) * R
      if (Nplt /= 0 .and. i > ione) then
         if (mg > 0) Pltout(i+Iplt-ione, mg) = X(i)
         if (mm > 0) Pltout(i+Iplt-ione, mm) = Wm(i)
-        if (mmw > 0) Pltout(i+Iplt-ione, mmw) = 1.d0/Totn(i)
-        if (ms > 0) Pltout(i+Iplt-ione, ms) = Ssum(i)*R
-        if (mcp > 0) Pltout(i+Iplt-ione, mcp) = Cpr(i)*R
+        if (mmw > 0) Pltout(i+Iplt-ione, mmw) = 1 / Totn(i)
+        if (ms > 0) Pltout(i+Iplt-ione, ms) = Ssum(i) * R
+        if (mcp > 0) Pltout(i+Iplt-ione, mcp) = Cpr(i) * R
         if (mgam > 0) Pltout(i+Iplt-ione, mgam) = Gammas(i)
         if (mdvt > 0) Pltout(i+Iplt-ione, mdvt) = Dlvtp(i)
         if (mdvp > 0) Pltout(i+Iplt-ione, mdvp) = Dlvpt(i)
      end if
   end do
   call VARFMT(X)
-  write(IOOUT, Fmt) fgi, (X(j), j=1, Npt)
+  write(IOOUT, Fmt) fgi, (X(j), j = 1, Npt)
 ! ENTROPY
   Fmt(4) = '13'
   Fmt(5) = ' '
   Fmt(7) = '4,'
-  write(IOOUT, Fmt) fs, (Ssum(j)*R, j=1, Npt)
+  write(IOOUT, Fmt) fs, (Ssum(j) * R, j = 1, Npt)
   write(IOOUT, *)
 ! MOLECULAR WEIGHT
   Fmt(7) = '3,'
-  write(IOOUT, Fmt) 'M, (1/n)        ', (Wm(j), j=1, Npt)
-  if (.not. Gonly) write(IOOUT, Fmt) 'MW, MOL WT      ', &
-       (1.d0/Totn(j), j=1, Npt)
+  write(IOOUT, Fmt) 'M, (1/n)        ', (Wm(j), j = 1, Npt)
+  if (.not. Gonly) write(IOOUT, Fmt) 'MW, MOL WT      ', (1/Totn(j), j = 1, Npt)
 ! (DLV/DLP)T
   Fmt(7) = '5,'
-  if (Eql) write(IOOUT, Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j=1, Npt)
+  if (Eql) write(IOOUT, Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j = 1, Npt)
 ! (DLV/DLT)P
   Fmt(7) = '4,'
-  if (Eql) write(IOOUT, Fmt) '(dLV/dLT)p      ', (Dlvtp(j), j=1, Npt)
+  if (Eql) write(IOOUT, Fmt) '(dLV/dLT)p      ', (Dlvtp(j), j = 1, Npt)
 ! HEAT CAPACITY
-  write(IOOUT, Fmt) fc, (Cpr(j)*R, j=1, Npt)
+  write(IOOUT, Fmt) fc, (Cpr(j) * R, j = 1, Npt)
 ! GAMMA(S)
   Fmt(7) = '4,'
-  write(IOOUT, Fmt) 'GAMMAs          ', (Gammas(j), j=1, Npt)
+  write(IOOUT, Fmt) 'GAMMAs          ', (Gammas(j), j = 1, Npt)
 ! SONIC VELOCITY
   Fmt(7) = '1,'
   do i = 1, Npt
-     Sonvel(i) = (Rr*Gammas(i)*Ttt(i)/Wm(i))**.5
-     if (Nplt /= 0 .and. i > ione .and. mson > 0) &
-          Pltout(i+Iplt-ione, mson) = Sonvel(i)
+     Sonvel(i) = sqrt(Rr * Gammas(i) * Ttt(i) / Wm(i))
+     if (Nplt /= 0 .and. i > ione .and. mson > 0) Pltout(i+Iplt-ione, mson) = Sonvel(i)
   end do
-  write(IOOUT, Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j=1, Npt)
+  write(IOOUT, Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)
   return
 !***********************************************************************
   entry OUT3
   tra = 5.d-6
   if (Trace /= 0.) tra = Trace
-! MASS OR MOLE FRACTIONS 
+! MASS OR MOLE FRACTIONS
   if (Massf) then
      mamo = 'MASS'
   else
@@ -3011,10 +3003,9 @@ subroutine OUT1
         end if
         do m = 1, Nplt
            im = 0
-           if (Pltvar(m) == Prod(k) .or. '*'//Pltvar(m) == Prod(k)) &
-                then
+           if (Pltvar(m) == Prod(k) .or. '*' // Pltvar(m) == Prod(k)) then
               im = m
-              go to 120
+              exit
            end if
         end do
 120     kin = 0
@@ -3022,21 +3013,20 @@ subroutine OUT1
            if (Massf) then
               tem = Mw(k)
            else
-              tem = 1.d0/Totn(i)
+              tem = 1 / Totn(i)
            end if
            if (k <= Ng) then
-              X(i) = En(k, i)*tem
+              X(i) = En(k, i) * tem
            else
-              if (Prod(k) /= Prod(k-1)) X(i) = 0.d0
-              if (En(k, i) > 0.d0) X(i) = En(k, i)*tem
+              if (Prod(k) /= Prod(k-1)) X(i) = 0
+              if (En(k, i) > 0) X(i) = En(k, i) * tem
            end if
-           if (Nplt /= 0 .and. i > ione .and. im > 0) &
-                Pltout(i+Iplt-ione, im) = X(i)
+           if (Nplt /= 0 .and. i > ione .and. im > 0) Pltout(i+Iplt-ione, im) = X(i)
            if (kOK .and. X(i) >= tra) kin = 1
         end do
         if (kin == 1) then
-           if (Trace == 0.) then
-              write(IOOUT, '(1x, A15, F9.5, 12F9.5)') Prod(k), (X(i), i=1, Npt)
+           if (Trace == 0) then
+              write(IOOUT, '(1x, A15, F9.5, 12F9.5)') Prod(k), (X(i), i = 1, Npt)
            else
               call EFMT(Fmt(4), Prod(k), X)
            end if
@@ -3047,12 +3037,12 @@ subroutine OUT1
         end if
      end do
   end if
-  write(IOOUT, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", F7.0, "K")') Tg(4)
+  write(IOOUT, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') Tg(4)
   if (.not. Short) then
-     write(IOOUT, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", A4, &
-          & " FRACTIONS", /"    WERE LESS THAN", 1PE13.6, &
+     write(IOOUT, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", a4, &
+          & " FRACTIONS", /"    WERE LESS THAN", 1pe13.6, &
           & " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
-     write(IOOUT, '(5(1x, A15))') (Omit(i), i=1, notuse)
+     write(IOOUT, '(5(1x, a15))') (Omit(i), i = 1, notuse)
   end if
   if (.not. Moles) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
        & " OXIDANT IN TOTAL OXIDANTS")')
@@ -3080,28 +3070,28 @@ subroutine OUT1
      end do
   end if
   call VARFMT(Vis)
-  write(IOOUT, Fmt) 'VISC,MILLIPOISE', (Vis(j), j=1, Npt)
+  write(IOOUT, Fmt) 'VISC,MILLIPOISE', (Vis(j), j = 1, Npt)
   Fmt(4) = '13'
   Fmt(5) = ' '
   Fmt(7) = '4,'
   if (Eql) then
      write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
 ! SPECIFIC HEAT
-     write(IOOUT, Fmt) fc, (Cpeql(j), j=1, Npt)
+     write(IOOUT, Fmt) fc, (Cpeql(j), j = 1, Npt)
 ! CONDUCTIVITY
-     write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Coneql(j), j=1, Npt)
+     write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Coneql(j), j = 1, Npt)
 ! PRANDTL NUMBER
-     write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Preql(j), j=1, Npt)
+     write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Preql(j), j = 1, Npt)
   end if
   write(IOOUT, '(/"  WITH FROZEN REACTIONS"/)')
 ! SPECIFIC HEAT
-  write(IOOUT, Fmt) fc, (Cpfro(j), j=1, Npt)
+  write(IOOUT, Fmt) fc, (Cpfro(j), j = 1, Npt)
 ! CONDUCTIVITY
-  write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Confro(j), j=1, Npt)
+  write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Confro(j), j = 1, Npt)
 ! PRANDTL NUMBER
-  write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j=1, Npt)
+  write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
 200 return
-end subroutine
+end subroutine OUT1
 
 
 
