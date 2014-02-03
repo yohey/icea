@@ -3567,7 +3567,7 @@ subroutine ROCKET
 
   iplte = Iplt
   isup1 = 1
-  App(1) = 1.
+  App(1) = 1
   Iopt = 0
   Npp = Npp + 2
   nn = Npp
@@ -3578,13 +3578,13 @@ subroutine ROCKET
   if (Fac) then
      Eql = .true.
      Npp = Npp + 1
-     if (Acat /= 0.) then
+     if (Acat /= 0) then
         Iopt = 1
-     else if (Ma /= 0.) then
+     else if (Ma /= 0) then
         Iopt = 2
      else
         write(IOOUT, '(/" FATAL ERROR!! EITHER mdot OR ac/at MISSING FOR fac PROBLEM (ROCKET)")')
-        Tt = 0.
+        Tt = 0
         go to 1400
      end if
      i01 = 1
@@ -3596,7 +3596,7 @@ subroutine ROCKET
      end do
      Nsub = Nsub + 1
      if (Iopt /= 1) then
-        if (Acat == 0.) Acat = 2.
+        if (Acat == 0) Acat = 2
      end if
      Subar(1) = Acat
   else if (.not. Eql .and. Nfz > 1 .and. Nsub > 0) then
@@ -3615,7 +3615,7 @@ subroutine ROCKET
   iof = 0
   Tt = Tcest
   Pp = P(1)
-  App(i12) = 1.
+  App(i12) = 1
 ! LOOP FOR EACH O/F
 100 It = 1
   iof = iof + 1
@@ -3627,13 +3627,13 @@ subroutine ROCKET
   end if
   Sp = .false.
   call NEWOF
-  if (T(1) /= 0.) Tt = T(1)
+  if (T(1) /= 0) Tt = T(1)
 ! LOOP FOR CHAMBER PRESSURES
 200 do Ip = 1, Np
      itnum = 0
      Area = .false.
-     if (T(1) == 0.) Hp = .true.
-     if (T(1) /= 0.) Tp = .true.
+     if (T(1) == 0) Hp = .true.
+     if (T(1) /= 0) Tp = .true.
      Sp = .false.
      Eql = .true.
      isub = 1
@@ -3660,7 +3660,7 @@ subroutine ROCKET
      if (Tt /= 0.) then
 ! TEST FOR FINITE AREA COMBUSTOR
         if (.not. Fac) go to 400
-        pinjas = P(Ip)*pa
+        pinjas = P(Ip) * pa
         pinj = pinjas
         if (Npt <= 2) then
            if (Npt == 1 .and. Trnspt) call TRANP
@@ -3669,26 +3669,26 @@ subroutine ROCKET
         if (Npt /= 1) go to 400
 ! INITIAL ESTIMATE FOR PC (AND ACAT IF NOT ASSIGNED)
         do i = 1, 4
-           prat = (b1+c1*Acat)/(1.+a1l*Acat)
-           ppa = pinj*prat
+           prat = (b1 + c1 * Acat) / (1 + a1l * Acat)
+           ppa = pinj * prat
            if (Iopt == 1) go to 260
-           Acat = ppa/(Ma*2350.)
-           if (Acat >= 1.) then
+           Acat = ppa / (Ma * 2350)
+           if (Acat >= 1) then
               pratsv = prat
               if (Debugf) then
-                 if (i <= 1) write(IOOUT, '(/"  ITERATION", 9X, "PC", 7X, "CONTRACTION RATIO")')
-                 write(IOOUT, '(5X, I2, 7X, F12.2, 3X, F12.6)') i, ppa, Acat
+                 if (i <= 1) write(IOOUT, '(/"  ITERATION", 9x, "PC", 7x, "CONTRACTION RATIO")')
+                 write(IOOUT, '(5x, i2, 7x, f12.2, 3x, f12.6)') i, ppa, Acat
               end if
            else
-              write(IOOUT, '(/" INPUT VALUE OF mdot/a =", F12.3, " IS TOO LARGE."/ &
+              write(IOOUT, '(/" INPUT VALUE OF mdot/a =", f12.3, " IS TOO LARGE."/ &
                    & " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') Ma
-              Tt = 0.
+              Tt = 0
               go to 1400
            end if
         end do
         Subar(1) = Acat
-260     Pp = ppa/pa
-        App(1) = Pp/Ppp(1)
+260     Pp = ppa / pa
+        App(1) = Pp / Ppp(1)
         go to 1100
      else
         if (Npt < 1) go to 1400
@@ -3708,7 +3708,7 @@ subroutine ROCKET
      call SETEN
      go to 250
 350  done = .true.
-     App(1) = Ppp(2)/Ppp(1)
+     App(1) = Ppp(2) / Ppp(1)
      Area = .false.
      if (Nsub > 1) isub = 2
      Isv = 4
@@ -3731,34 +3731,34 @@ subroutine ROCKET
      go to 600
 ! INITIALIZE FOR THROAT
 400  if (ipp > nipp) then
-        usq = 2.*(Hsum(1)-Hsum(Npt))*Rr
+        usq = 2 * (Hsum(1) - Hsum(Npt)) * Rr
         if (ipp > nptth) go to 600
 ! THROAT
         if (.not. thi) then
            Vv = Vlm(nptth)
-           pvg = Pp*Vv*Gammas(nptth)
-           if (pvg == 0.) then
+           pvg = Pp * Vv * Gammas(nptth)
+           if (pvg == 0) then
               write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
               go to 550
            else
-              msq = usq/pvg
-              if (Debug(1) .or. Debug(2)) write(IOOUT, '(/" USQ=", E15.8, 5X, "PVG=", E15.8)') usq, pvg
-              dh = abs(msq-1.d0)
+              msq = usq / pvg
+              if (Debug(1) .or. Debug(2)) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
+              dh = abs(msq - 1)
               if (dh <= 0.4d-4) go to 550
               if (itrot > 0) then
                  p1 = Pp
                  if (Jsol /= 0) then
                     tmelt = Tt
-                    Pp = Pp*(1.d0+msq*Gammas(nptth))/(Gammas(nptth)+1.d0)
-                 else if (tmelt == 0.) then
-                    Pp = Pp*(1.d0+msq*Gammas(nptth))/(Gammas(nptth)+1.d0)
+                    Pp = Pp * (1 + msq * Gammas(nptth)) / (Gammas(nptth) + 1)
+                 else if (tmelt == 0) then
+                    Pp = Pp * (1 + msq * Gammas(nptth)) / (Gammas(nptth) + 1)
                  else
                     write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
-                    dlt = log(tmelt/Tt)
-                    dd = dlt*Cpr(nptth)/(Enn*Dlvtp(nptth))
-                    Pp = Pp*EXP(dd)
-                    App(nptth) = P(Ip)/Pp
-                    if (Fac) App(nptth) = pinf/Pp
+                    dlt = log(tmelt / Tt)
+                    dd = dlt * Cpr(nptth) / (Enn * Dlvtp(nptth))
+                    Pp = Pp * EXP(dd)
+                    App(nptth) = P(Ip) / Pp
+                    if (Fac) App(nptth) = pinf / Pp
                     if (Eql .and. .not. Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') App(nptth)
                     thi = .true.
                     go to 250
@@ -3777,7 +3777,7 @@ subroutine ROCKET
                  write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                  go to 550
               else
-                 dp = abs(Pp-p1)/20.
+                 dp = abs(Pp - p1) / 20
                  Pp = max(Pp, p1)
                  write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                  Pp = Pp - dp
@@ -3785,7 +3785,7 @@ subroutine ROCKET
               end if
            end if
         else
-           Gammas(nptth) = 0.
+           Gammas(nptth) = 0
            go to 550
         end if
      else
@@ -3796,26 +3796,25 @@ subroutine ROCKET
         Sp = .true.
         S0 = Ssum(i12)
      end if
-450  tmelt = 0.
+450  tmelt = 0
      itrot = 3
      thi = .false.
-     App(nptth) = ((Gammas(i12)+1.)/2.) &
-          **(Gammas(i12)/(Gammas(i12)-1.))
-     if (Eql .and. .not. Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') App(nptth)
-     Pp = pinf/App(nptth)
+     App(nptth) = ((Gammas(i12) + 1) / 2)**(Gammas(i12) / (Gammas(i12) - 1))
+     if (Eql .and. .not. Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') App(nptth)
+     Pp = Pinf / App(nptth)
      Isv = -i12
      go to 1200
 500  npr1 = Npr
-     App(nptth) = P(Ip)/Pp
-     if (Fac) App(nptth) = pinf/Pp
-     if (Eql .and. .not. Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') App(nptth)
+     App(nptth) = P(Ip) / Pp
+     if (Fac) App(nptth) = Pinf / Pp
+     if (Eql .and. .not. Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') App(nptth)
      itrot = itrot - 1
      go to 250
-550  Awt = Enn*Tt/(Pp*usq**.5)
+550  Awt = Enn * Tt / (Pp * sqrt(usq))
      pcplt = log(App(nptth))
 600  Isv = 0
-     Aeat(Npt) = Enn*Ttt(Npt)/(Pp*usq**.5*Awt)
-     if (Tt == 0.) go to 1150
+     Aeat(Npt) = Enn * Ttt(Npt) / (Pp * sqrt(usq) * Awt)
+     if (Tt == 0) go to 1150
      if (Area) go to 750
      if (Trnspt .and. (.not. Fac .or. done .or. Npt > 2)) call TRANP
      if (Npt == Nfz) Eql = seql
@@ -3836,7 +3835,7 @@ subroutine ROCKET
      Area = .true.
 ! PCP ESTIMATES FOR AREA RATIOS
 750  if (itnum == 0) then
-        dlnp = 1.
+        dlnp = 1
         itnum = 1
         aratio = Subar(isub)
         if ((.not. Fac .or. done) .and. Nsub <= i01) aratio = Supar(Isup)
@@ -3844,11 +3843,11 @@ subroutine ROCKET
            if (aratio <= Aeat(Nfz)) then
               write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
                    & " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
-                   & "LESS THAN THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
+                   & "LESS THAN THE VALUE AT POINT nfz =", i3, " (ROCKET)")') Nfz
               go to 1050
            end if
         end if
-        if (aratio  <  1.d0) then
+        if (aratio  <  1) then
            write(IOOUT, '(/" AN ASSIGNED AREA RATIO IS < 1 (ROCKET)")')
            go to 1050
         end if
@@ -3858,33 +3857,31 @@ subroutine ROCKET
         end if
         if (Nsub <= i01) then
            if (Nfz == ipp) isupsv = Isup
-           if (Supar(Isup) < 2.) then
-              appl = sqrt(eln*(1.535d0+3.294d0*eln)) + pcplt
+           if (Supar(Isup) < 2) then
+              appl = sqrt(eln*(1.535d0 + 3.294d0 * eln)) + pcplt
               go to 1100
            else
-              if (Isup > isup1 .and. Supar(Isup-1) >= 2.) go to 850
-              appl = Gammas(nptth) + eln*1.4
+              if (Isup > isup1 .and. Supar(Isup-1) >= 2) go to 850
+              appl = Gammas(nptth) + eln * 1.4
               go to 1100
            end if
         end if
 ! TEST FOR CONVERGENCE ON AREA RATIO.
-     else if (Gammas(Npt) > 0.) then
-        check = .00004
-        if (Debug(Npt)) write(IOOUT, '(/" ITER=", I2, 2X, "ASSIGNED AE/AT=", F14.7, 3X, "AE/AT=", F14.7, &
-             & /, 2X, "PC/P=", F14.7, 2X, "DELTA LN PCP=", F14.7)') itnum, aratio, Aeat(Npt), &
-             App(Npt), dlnp
-        if (abs(Aeat(Npt)-aratio)/aratio <= check) go to 900
-        if (ABS(dlnp) < .00004) go to 900
+     else if (Gammas(Npt) > 0) then
+        check = 0.00004
+        if (Debug(Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
+             & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') itnum, aratio, Aeat(Npt), App(Npt), dlnp
+        if (abs(Aeat(Npt) - Aratio) / Aratio <= check) go to 900
+        if (abs(dlnp) < 0.00004) go to 900
         aeatl = log(Aeat(Npt))
         itnum = itnum + 1
         if (itnum > 10) then
-           write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, &
-                & " (ROCKET)")') aratio
+           write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
            go to 900
         else
 ! IMPROVED PCP ESTIMATES.
-           asq = Gammas(Npt)*Enn*Rr*Tt
-           dlnpe = Gammas(Npt)*usq/(usq-asq)
+           asq = Gammas(Npt) * Enn * Rr * Tt
+           dlnpe = Gammas(Npt) * usq / (usq - asq)
            go to 850
         end if
      else
@@ -3896,20 +3893,20 @@ subroutine ROCKET
         if (Nsub > 0) Nsub = isub - 1
         go to 1000
      end if
-800  appl = pcplt/(Subar(isub)+(10.587*eln**2+9.454)*eln)
-     if (aratio < 1.09) appl = .9*appl
-     if (aratio > 10.) appl = appl/aratio
+800  appl = pcplt / (Subar(isub) + (10.587 * eln**2 + 9.454) * eln)
+     if (Aratio < 1.09) appl = 0.9 * appl
+     if (Aratio > 10) appl = appl / Aratio
      if (isub > 1 .or. Npt == Ncol) go to 1100
      go to 1200
-850  dlnp = dlnpe*eln - dlnpe*aeatl
+850  dlnp = dlnpe * eln - dlnpe * aeatl
      appl = appl + dlnp
      if (itnum == 1) go to 1100
-     if (appl < 0.) appl = .000001
+     if (appl < 0.) appl = 0.000001
      App(Npt) = EXP(appl)
-     Pp = pinf/App(Npt)
+     Pp = Pinf / App(Npt)
      go to 250
 ! CONVERGENCE HAS BEEN REACHED FOR ASSIGNED AREA RATIO
-900  Aeat(Npt) = aratio
+900  Aeat(Npt) = Aratio
      if (Fac) then
         if (.not. done) then
            if (Iopt == 1) then
@@ -3917,19 +3914,18 @@ subroutine ROCKET
 ! PRESSURE AND CONTRACTION RATIO. IMPROVED ESTIMATE FOR PC
               Area = .false.
               itnum = 0
-              ppa = Ppp(Npt)*pa
-              pinj = ppa + 1.d05*usq/Vlm(Npt)
-              test = (pinj-pinjas)/pinjas
-              pcpa = pinf*pa
+              ppa = Ppp(Npt) * pa
+              pinj = ppa + 1.d05 * usq / Vlm(Npt)
+              test = (pinj - pinjas) / pinjas
+              pcpa = pinf * pa
               if (Debugf) then
-                 write(IOOUT, '(" ITER", 3X, "TEST", 3X, "ASSIGNED PINJ", 1x, "CALC PINJ", 5X, &
-                      & "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
-                 write(IOOUT, '(I3, F10.6, 1x, 4F12.2, 2F9.5)') niter, test, pinjas, pinj, pcpa, ppa, &
-                      acatsv, Acat
+                 write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
+                      & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
+                 write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, Acat
               end if
-              if (ABS(test) < 0.00002) go to 350
-              prat = pinjas/pinj
-              Pp = pinf*prat
+              if (abs(test) < 0.00002) go to 350
+              prat = pinjas / pinj
+              Pp = pinf * prat
               go to 300
            else if (Iopt == 2) then
 ! OPTION 2 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
@@ -3939,34 +3935,33 @@ subroutine ROCKET
               pratsv = prat
               Area = .false.
               itnum = 0
-              ppa = Ppp(4)*pa
-              pinj = ppa + 1.d05*usq/Vlm(4)
-              mat = pa/(Awt*Rr)
-              Acat = mat/Ma
-              prat = (b1+c1*Acat)/(1.+a1l*Acat)
-              test = (pinj-pinjas)/pinjas
-              pcpa = pinf*pa
+              ppa = Ppp(4) * pa
+              pinj = ppa + 1.d05 * usq / Vlm(4)
+              mat = pa / (Awt * Rr)
+              Acat = mat / Ma
+              prat = (b1 + c1 * Acat) / (1 + a1l * Acat)
+              test = (pinj - pinjas) / pinjas
+              pcpa = pinf * pa
               if (Debugf) then
-                 write(IOOUT, '(" ITER", 3X, "TEST", 3X, "ASSIGNED PINJ", 1x, "CALC PINJ", 5X, &
-                      & "PC", 7X, "P AT ACAT", 3X, "PREV ACAT", 2X, "ACAT")')
-                 write(IOOUT, '(I3, F10.6, 1x, 4F12.2, 2F9.5)') niter, test, pinjas, pinj, pcpa, ppa, &
-                      acatsv, Acat
+                 write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
+                      & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
+                 write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, Acat
               end if
-              if (ABS(test) < 0.00002) go to 350
-              pjrat = pinj/pinjas
+              if (abs(test) < 0.00002) go to 350
+              pjrat = pinj / pinjas
               Pp = pinf
               do i = 1, 2
-                 pracat = pratsv/prat
-                 pr = pjrat*pracat
-                 Pp = Pp/pr
-                 pcpa = Pp*pa
-                 Acat = Acat/pr
+                 pracat = pratsv / prat
+                 pr = pjrat * pracat
+                 Pp = Pp / pr
+                 pcpa = Pp * pa
+                 Acat = Acat / pr
                  Subar(1) = Acat
                  pratsv = prat
-                 pjrat = 1.
-                 prat = (b1+c1*Acat)/(1.+a1l*Acat)
-                 if (Debugf) write(IOOUT, '(" NEW PC = ", F10.2, 2X, "NEW ACAT = ", F9.6, 2X, "PJRAT =", &
-                      & F10.7, " PRACAT =", F10.7)') pcpa, Acat, pjrat, pracat
+                 pjrat = 1
+                 prat = (b1 + c1 * Acat) / (1 + a1l * Acat)
+                 if (Debugf) write(IOOUT, '(" NEW PC = ", f10.2, 2x, "NEW ACAT = ", f9.6, 2x, "PJRAT =", &
+                      & f10.7, " PRACAT =", f10.7)') pcpa, Acat, pjrat, pracat
               end do
               go to 300
            end if
@@ -3996,7 +3991,7 @@ subroutine ROCKET
 1150 if (.not. Eql) then
         if (Nfz <= 1) then
            Cpr(Nfz) = cprf
-           Gammas(Nfz) = cprf/(cprf-1./Wm(Nfz))
+           Gammas(Nfz) = cprf / (cprf - 1 / Wm(Nfz))
         end if
      end if
      call RKTOUT
@@ -4009,8 +4004,8 @@ subroutine ROCKET
         Page1 = .false.
      end if
      iplte = max(iplte, Iplt)
-     dlnp = 1.
-     if (Tt == 0.) Area = .false.
+     dlnp = 1
+     if (Tt == 0) Area = .false.
      if (.not. Eql .and. Tt == 0.) write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
           & "POINT IS MORE", /, " THAN 50 K BELOW THE TEMPERATURE", &
           & " RANGE OF A CONDENSED SPECIES (ROCKET)")')
@@ -4061,31 +4056,30 @@ subroutine ROCKET
         if (Area) then
            App(Npt) = EXP(appl)
         else
-           App(Npt) = Pcp(ipp-nptth)
-           if (Fac) App(Npt) = App(Npt)*pinf/Ppp(1)
+           App(Npt) = Pcp(ipp - nptth)
+           if (Fac) App(Npt) = App(Npt) * Pinf / Ppp(1)
            if (.not. Eql .and. App(Npt) < App(Nfz)) then
               write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
                    & " WHERE THE ASSIGNED", /, &
                    & " PRESSURE RATIOS WERE LESS THAN ", &
-                   & "THE VALUE AT POINT nfz =", I3, " (ROCKET)")') Nfz
+                   & "THE VALUE AT POINT nfz =", i3, " (ROCKET)")') Nfz
               go to 1250
            end if
         end if
-        Pp = pinf/App(Npt)
+        Pp = pinf / App(Npt)
         if (Fac) then
            if (Area) then
-              if (isub <= Nsub .and. isub > i01 .and. aratio >= Aeat(2)) &
-                   then
+              if (isub <= Nsub .and. isub > i01 .and. aratio >= Aeat(2)) then
                  write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
                       & "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
                       & ".  POINT OMITTED (ROCKET)")') aratio, Aeat(2)
                  Npt = Npt - 1
                  go to 1000
               end if
-           else if (Npt > nptth .and. Pcp(ipp-3) < Ppp(1)/Ppp(2)) then
+           else if (Npt > nptth .and. Pcp(ipp-3) < Ppp(1) / Ppp(2)) then
               write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
                    & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
-                   & ". POINT OMITTED", " (ROCKET)")') Pcp(ipp-3), Ppp(1)/Ppp(2)
+                   & ". POINT OMITTED", " (ROCKET)")') Pcp(ipp-3), Ppp(1) / Ppp(2)
               Npt = Npt - 1
               go to 650
            end if
@@ -4987,7 +4981,7 @@ subroutine TRANIN
            change = .false.
            do 210 j = 1, Nr
               coeff = Stc(j, i)
-              if (ABS(coeff) > 1.0d-05) then
+              if (abs(coeff) > 1.0d-05) then
                  if (.not. change) then
                     change = .true.
                     do k = 1, Nm
@@ -5108,8 +5102,8 @@ subroutine TRANIN
 ! ESTIMATE FOR IONS
               k1 = Ind(i)
               k2 = Ind(j)
-              if (ABS(A(Nlm, k1)) == 1.0) ion1 = .true.
-              if (ABS(A(Nlm, k2)) == 1.0) ion2 = .true.
+              if (abs(A(Nlm, k1)) == 1.0) ion1 = .true.
+              if (abs(A(Nlm, k2)) == 1.0) ion2 = .true.
               if (Wmol(i) < 1.0) elc1 = .true.
               if (Wmol(j) < 1.0) elc2 = .true.
               if (ion1 .and. ion2) omega = 1.36d0*qc*log(lamda)
