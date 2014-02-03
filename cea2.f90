@@ -4120,8 +4120,7 @@ subroutine SEARCH
   character(6), save:: date(maxNgc)
   character(2), save:: el(5)
   character(15), save:: sub
-  integer, save:: i, i5, ifaz, ii, ir, itot, j, jj(2), jk, k, lineb, nall, ne, nint, &
-       npure, nrec, ntgas, ntot
+  integer, save:: i, i5, ifaz, ii, ir, itot, j, jj(2), jk, k, lineb, nall, ne, nint, npure, nrec, ntgas, ntot
   real(8), save:: b(5), t1, t2, thermo(9, 3), trdata(36)
 
   Nc = 0
@@ -4130,11 +4129,11 @@ subroutine SEARCH
      Jx(i) = 0
   end do
   do j = 1, maxNgc
-     S(j) = 0.
-     H0(j) = 0.
-     Deln(j) = 0.
+     S(j) = 0
+     H0(j) = 0
+     Deln(j) = 0
      do i = 1, Nlm
-        A(i, j) = 0.
+        A(i, j) = 0
      end do
   end do
 ! READ TEMPERATURE RANGES FOR COEFFICIENTS OF GASEOUS SPECIES.
@@ -4153,22 +4152,21 @@ subroutine SEARCH
 ! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
   do 200 itot = 1, ntot
      if (itot > ntgas) then
-        read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j=1, 5), Ifz(Nc), &
-             Temp(1, Nc), Temp(2, Nc), Mw(Ngc), (Cft(Nc, k), k=1, 9)
+        read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j = 1, 5), Ifz(Nc), &
+             Temp(1, Nc), Temp(2, Nc), Mw(Ngc), (Cft(Nc, k), k = 1, 9)
      else
-        read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j=1, 5), ifaz, t1, t2, &
-             Mw(Ngc), thermo
+        read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j = 1, 5), ifaz, T1, T2, Mw(Ngc), thermo
      end if
      if (Nonly /= 0) then
         i = 1
-20      if (Prod(i) /= sub .and. '*'//Prod(i) /= sub) then
+20      if (Prod(i) /= sub .and. '*' // Prod(i) /= sub) then
            i = i + 1
            if (i <= Nonly) go to 20
            go to 200
         else
            if (sub == Prod(Ngc-1)) then
               Nonly = Nonly + 1
-              do k = Nonly, i + 1, - 1
+              do k = Nonly, i+1, -1
                  Prod(k) = Prod(k-1)
               end do
            else
@@ -4178,11 +4176,11 @@ subroutine SEARCH
         end if
      else if (Nomit /= 0) then
         do i = 1, Nomit
-           if (Omit(i) == sub .or. '*'//Omit(i) == sub) go to 200
+           if (Omit(i) == sub .or. '*' // Omit(i) == sub) go to 200
         end do
      end if
      do 50 k = 1, 5
-        if (b(k) == 0.) go to 100
+        if (b(k) == 0) go to 100
         do i = 1, Nlm
            if (Elmt(i) == el(k)) then
               A(i, Ngc) = b(k)
@@ -4190,7 +4188,7 @@ subroutine SEARCH
            end if
         end do
         do j = 1, Nlm
-           A(j, Ngc) = 0.
+           A(j, Ngc) = 0
         end do
         go to 200
 50   continue
@@ -4207,7 +4205,7 @@ subroutine SEARCH
            end do
         end do
 ! IF SPECIES IS AN ATOMIC GAS, STORE INDEX IN JX
-        if (b(2) == 0. .and. b(1) == 1.) then
+        if (b(2) == 0 .and. b(1) == 1) then
            do i = 1, Nlm
               if (Elmt(i) == el(1)) then
                  ne = ne + 1
@@ -4227,8 +4225,8 @@ subroutine SEARCH
   Ngc = Ngc - 1
   Ngp1 = Ng + 1
   if (Ngc < Nonly) then
-     do k = Ngc + 1, Nonly
-        write(IOOUT, '(/" WARNING!!  ", A15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') Prod(k)
+     do k = Ngc+1, Nonly
+        write(IOOUT, '(/" WARNING!!  ", a15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') Prod(k)
      end do
   end if
 ! FIND MISSING ELEMENTS (IF ANY) FOR COMPONENTS
@@ -4239,9 +4237,9 @@ subroutine SEARCH
         if (Jx(i) == 0) then
            Nspx = Nspx + 1
            do k = 1, Nlm
-              A(k, Nspx) = 0.
+              A(k, Nspx) = 0
            end do
-           A(i, Nspx) = 1.
+           A(i, Nspx) = 1
            Prod(Nspx) = Elmt(i)
            do k = 1, 100
               if (Elmt(i) == Symbol(k)) then
@@ -4259,10 +4257,10 @@ subroutine SEARCH
 ! ARE ALL ELEMENTS IN PRODUCT SPECIES?
   do 300 i = 1, Nlm
      do j = 1, Ngc
-        if (A(i, j) /= 0.) go to 300
+        if (A(i, j) /= 0) go to 300
         ii = i
      end do
-     write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", A3, " MISSING", &
+     write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
           & //, 13x, "FATAL ERROR (SEARCH)")') Elmt(ii)
      Ngc = 0
      go to 600
@@ -4271,16 +4269,15 @@ subroutine SEARCH
   if (.not. Short) then
      write(IOOUT, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &
           & /" (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)", &
-          & /"  LAST thermo.inp UPDATE: ", A10, /)') Thdate
+          & /"  LAST thermo.inp UPDATE: ", a10, /)') Thdate
      do i = 1, Ngc, 3
         i5 = i + 2
         if (Ngc < i5) i5 = Ngc
-        write(IOOUT, '(3(2X, A6, 2X, A15))') (date(j), Prod(j), j=i, i5)
+        write(IOOUT, '(3(2X, A6, 2X, A15))') (date(j), Prod(j), j = i, i5)
      end do
   end if
   go to 600
-400 write(IOOUT, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", &
-       & /"   PART 2, PAGE 39. (SEARCH)")')
+400 write(IOOUT, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
   Ngc = 0
   go to 600
 ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
@@ -4296,7 +4293,7 @@ subroutine SEARCH
      read(IOTRN) spece, trdata
      k = 1
 450  do j = 1, Ng
-        if (spece(k) == Prod(j) .or. '*'//spece(k) == Prod(j)) then
+        if (spece(k) == Prod(j) .or. '*' // spece(k) == Prod(j)) then
            jj(k) = j
            if (k == 2) then
 ! STORE NAMES FOR BINARIES IN BIN ARRAY.
@@ -4323,7 +4320,7 @@ subroutine SEARCH
 500  write(IOSCH) jj, trdata
      Ntape = Ntape + 1
 550  if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
-        if (.not. Short) write(IOOUT, '(4(2x, A16))') (pure(jk), jk=1, npure)
+        if (.not. Short) write(IOOUT, '(4(2x, A16))') (pure(jk), jk = 1, npure)
         npure = 0
      end if
   end do
@@ -4331,12 +4328,12 @@ subroutine SEARCH
   if (.not. Short) then
      write(IOOUT, '(/"     BINARY INTERACTIONS"/)')
      do j = 1, lineb
-        write(IOOUT, '(5X, 2A16)') (bin(i, j), i=1, 2)
+        write(IOOUT, '(5X, 2A16)') (bin(i, j), i = 1, 2)
      end do
   end if
   write(IOOUT, *)
 600 return
-end subroutine
+end subroutine SEARCH
 
 
 
