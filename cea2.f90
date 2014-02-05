@@ -4427,33 +4427,33 @@ subroutine SHCK
   integer, save:: i, iof, it1, it2, itr, j, n
   logical, save:: refl, seql, srefl
   real(8), save:: ax, axx, b2, cormax, gg, hs, m2m1(Ncol), mis(13), mu12rt, p1, p21, &
-       p21l, p2p1(Ncol), pmn, rho12, rho52, rrho(Ncol), sg(78), t1, t21, &
+       p21l, p2p1(Ncol), pmn, rho12, rho52, rrho(Ncol), sg(78), T1, T21, &
        t21l, t2t1(Ncol), ttmax, u1u2(Ncol), uis(13), utwo(Ncol), uu, wmx, ww
 
-  if (Trace == 0.) Trace = 5.E-9
+  if (Trace == 0) Trace = 5.E-9
   Tp = .true.
-  Cpmix = 0.
+  Cpmix = 0
   srefl = .false.
   if (.not. Short) then
      write(IOOUT, '(/"   *** INPUT FOR SHOCK PROBLEMS ***")')
-     write(IOOUT, '(/" INCDEQ =", L2, "   REFLEQ =", L2, "   INCDFZ =", L2, &
-          & "    REFLFZ =", L2)') Incdeq, Refleq, Incdfz, Reflfz
+     write(IOOUT, '(/" INCDEQ =", L2, "   REFLEQ =", L2, "   INCDFZ =", L2, "    REFLFZ =", L2)') &
+          Incdeq, Refleq, Incdfz, Reflfz
   end if
   if (Refleq .or. Reflfz) srefl = .true.
   seql = Incdeq
-  if (T(1) == 0.) T(1) = Rtemp(1)
+  if (T(1) == 0) T(1) = Rtemp(1)
   do i = 1, Nsk
      uis(i) = U1(i)
      mis(i) = Mach1(i)
-     if (Mach1(i) == 0.0 .and. U1(i) == 0.0) go to 100
+     if (Mach1(i) == 0 .and. U1(i) == 0) exit
   end do
-100 if (Nsk > Ncol) then
+  if (Nsk > Ncol) then
      write(IOOUT, '(/" WARNING!!  ONLY ", I2, " u1 OR mach1 VALUES ALLOWED (SHCK)")') Ncol
      Nsk = Ncol
   end if
   if (.not. Short) then
-     write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (U1(i), i=1, Nsk)
-     write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (Mach1(i), i=1, Nsk)
+     write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (U1(i), i = 1, Nsk)
+     write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (Mach1(i), i = 1, Nsk)
   end if
   iof = 0
 200 iof = iof + 1
@@ -4468,38 +4468,37 @@ subroutine SHCK
   if (.not. Incdeq) then
 ! FROZEN
      do n = 1, Nsk
-        Dlvtp(n) = 1.
-        Dlvpt(n) = -1.
+        Dlvtp(n) = 1
+        Dlvpt(n) = -1
      end do
   end if
   do Npt = 1, Nsk
      Ppp(Npt) = P(Npt)
      Ttt(Npt) = T(Npt)
      if (Npt > 1) then
-        if (Ppp(Npt) == 0.) Ppp(Npt) = Ppp(Npt-1)
-        if (Ttt(Npt) == 0.) Ttt(Npt) = Ttt(Npt-1)
+        if (Ppp(Npt) == 0) Ppp(Npt) = Ppp(Npt-1)
+        if (Ttt(Npt) == 0) Ttt(Npt) = Ttt(Npt-1)
         Ssum(Npt) = Ssum(Npt-1)
         Hsum(Npt) = Hsum(Npt-1)
         if (Ttt(Npt) == Tt .and. Ppp(Npt) == Pp) go to 350
      end if
      Pp = Ppp(Npt)
      Tt = Ttt(Npt)
-     if (Tt >= Tg(1)*.8d0) then
+     if (Tt >= Tg(1) * 0.8d0) then
         call HCALC
         Hsum(Npt) = Hsub0
      else
-        write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
-             & "FOR POINT", I5, " (SHCK)")') Tt, Npt
+        write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') Tt, Npt
         go to 1000
      end if
-350  if (Cpmix /= 0.) Gamma1 = Cpmix/(Cpmix-1./Wmix)
-     A1 = (Rr*Gamma1*Tt/Wmix)**.5
-     if (U1(Npt) == 0.) U1(Npt) = A1*Mach1(Npt)
-     if (Mach1(Npt) == 0.) Mach1(Npt) = U1(Npt)/A1
+350  if (Cpmix /= 0) Gamma1 = Cpmix / (Cpmix - 1/Wmix)
+     A1 = sqrt(Rr * Gamma1 * Tt / Wmix)
+     if (U1(Npt) == 0) U1(Npt) = A1 * Mach1(Npt)
+     if (Mach1(Npt) == 0.) Mach1(Npt) = U1(Npt) / A1
      Wm(Npt) = Wmix
      Cpr(Npt) = Cpmix
      Gammas(Npt) = Gamma1
-     Vlm(Npt) = Rr*Tt/(Wmix*Pp)
+     Vlm(Npt) = Rr * Tt / (Wmix * Pp)
   end do
   Npt = Nsk
 ! OUTPUT--1ST CONDITION
@@ -4515,9 +4514,9 @@ subroutine SHCK
   Fmt(4) = '13'
   Fmt(5) = ' '
   Fmt(7) = '4,'
-  write(IOOUT, Fmt) 'MACH NUMBER1   ', (Mach1(j), j=1, Npt)
+  write(IOOUT, Fmt) 'MACH NUMBER1   ', (Mach1(j), j = 1, Npt)
   Fmt(7) = '2,'
-  write(IOOUT, Fmt) 'U1, M/SEC      ', (U1(j), j=1, Npt)
+  write(IOOUT, Fmt) 'U1, M/SEC      ', (U1(j), j = 1, Npt)
   call OUT2
 ! BEGIN CALCULATIONS FOR 2ND CONDITION
   if (Incdeq) Eql = .true.
@@ -4526,111 +4525,111 @@ subroutine SHCK
   uu = U1(Npt)
   wmx = Wm(Npt)
   p1 = Ppp(Npt)
-  t1 = Ttt(Npt)
+  T1 = Ttt(Npt)
   hs = Hsum(Npt)
   if (refl) uu = u1u2(Npt)
-  mu12rt = wmx*uu**2/(Rr*t1)
+  mu12rt = wmx * uu**2 / (Rr * T1)
   if (refl) then
 ! REFLECTED--SUBSCRIPTS 2=1, 5=2, P52=P21
-     t21 = 2.
-     b2 = (-1.-mu12rt-t21)/2.
-     p21 = -b2 + SQRT(b2**2-t21)
+     T21 = 2
+     b2 = (-1 - mu12rt - T21) / 2
+     p21 = -b2 + sqrt(b2**2 - T21)
   else
-     p21 = (2.*Gamma1*Mach1(Npt)**2-Gamma1+1.)/(Gamma1+1.)
+     p21 = (2 * Gamma1 * Mach1(Npt)**2 - Gamma1 + 1) / (Gamma1 + 1)
 ! THE FOLLOWING IMPROVED FORMULATION FOR THE INITIAL ESTIMATE FOR THE
 ! 2ND CONDITION WAS MADE AND TESTED BY S. GORDON 7/10/89.
      if (.not. Eql) then
-        t21 = p21*(2./Mach1(Npt)**2+Gamma1-1.)/(Gamma1+1.)
+        T21 = p21 * (2 / Mach1(Npt)**2 + Gamma1 - 1) / (Gamma1 + 1)
      else
-        Pp = p21*p1
+        Pp = p21 * p1
         Tp = .false.
         Hp = .true.
-        Hsub0 = hs + uu**2/(2.*Rr)
+        Hsub0 = hs + uu**2 / (2 * Rr)
         call EQLBRM
-        t21 = Ttt(Npt)/t1
+        T21 = Ttt(Npt) / T1
         Hp = .false.
         Tp = .true.
      end if
   end if
   p21l = log(p21)
-  ttmax = 1.05*Tg(4)/t1
-  t21 = min(t21, ttmax)
-  t21l = log(t21)
+  ttmax = 1.05 * Tg(4) / T1
+  T21 = min(T21, ttmax)
+  t21l = log(T21)
   itr = 1
 500 if (Shkdbg) write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
-       & "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, t21, rho52
-  Tt = t21*t1
-  Pp = p21*p1
+       & "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, T21, rho52
+  Tt = T21 * T1
+  Pp = p21 * p1
   if (.not. Eql) then
 ! FROZEN
      Tln = log(Tt)
      if (.not. Incdeq) then
         call HCALC
-        if (Tt == 0.) go to 600
+        if (Tt == 0) go to 600
         Hsum(Npt) = Hsub0
         Cpr(Npt) = Cpmix
      else
         call CPHS
         Cpr(Npt) = Cpsum
-        Hsum(Npt) = 0.
+        Hsum(Npt) = 0
         do j = 1, Ng
-           Hsum(Npt) = Hsum(Npt) + H0(j)*En(j, Npt)
+           Hsum(Npt) = Hsum(Npt) + H0(j) * En(j, Npt)
         end do
-        Hsum(Npt) = Hsum(Npt)*Tt
+        Hsum(Npt) = Hsum(Npt) * Tt
      end if
   else
      call EQLBRM
-     if (Tt == 0.) go to 800
+     if (Tt == 0) go to 800
   end if
-  rho12 = wmx*t21/(Wm(Npt)*p21)
-  gg = rho12*mu12rt
-  rho52 = 1./rho12
-  if (refl) gg = -mu12rt*rho52/(rho52-1.)**2
-  G(1, 1) = -gg*Dlvpt(Npt) - p21
-  G(1, 2) = -gg*Dlvtp(Npt)
-  G(1, 3) = p21 - 1. + gg - mu12rt
-  if (refl) G(1, 3) = p21 - 1. + gg*(rho52-1.)
-  gg = gg*t1/wmx
-  if (.not. refl) gg = gg*rho12
-  G(2, 1) = -gg*Dlvpt(Npt) + Tt*(Dlvtp(Npt)-1.)/Wm(Npt)
-  G(2, 2) = -gg*Dlvtp(Npt) - Tt*Cpr(Npt)
-  gg = 1. - rho12**2
-  if (refl) gg = (rho52+1.)/(rho52-1.)
-  G(2, 3) = Hsum(Npt) - hs - uu**2*gg/(2.*Rr)
-  X(3) = G(1, 1)*G(2, 2) - G(1, 2)*G(2, 1)
-  X(1) = (G(1, 3)*G(2, 2)-G(2, 3)*G(1, 2))/X(3)
-  X(2) = (G(1, 1)*G(2, 3)-G(2, 1)*G(1, 3))/X(3)
+  rho12 = wmx * T21 / (Wm(Npt) * p21)
+  gg = rho12 * mu12rt
+  rho52 = 1 / rho12
+  if (refl) gg = -mu12rt * rho52 / (rho52 - 1)**2
+  G(1, 1) = -gg * Dlvpt(Npt) - p21
+  G(1, 2) = -gg * Dlvtp(Npt)
+  G(1, 3) = p21 - 1 + gg - mu12rt
+  if (refl) G(1, 3) = p21 - 1 + gg * (rho52 - 1)
+  gg = gg * T1 / wmx
+  if (.not. refl) gg = gg * rho12
+  G(2, 1) = -gg * Dlvpt(Npt) + Tt * (Dlvtp(Npt) - 1) / Wm(Npt)
+  G(2, 2) = -gg * Dlvtp(Npt) - Tt * Cpr(Npt)
+  gg = 1 - rho12**2
+  if (refl) gg = (rho52 + 1) / (rho52 - 1)
+  G(2, 3) = Hsum(Npt) - hs - uu**2 * gg / (2 * Rr)
+  X(3) = G(1, 1) * G(2, 2) - G(1, 2) * G(2, 1)
+  X(1) = (G(1, 3) * G(2, 2) - G(2, 3) * G(1, 2)) / X(3)
+  X(2) = (G(1, 1) * G(2, 3) - G(2, 1) * G(1, 3)) / X(3)
   if (Shkdbg) then
      write(IOOUT, '(/" G(I,J)  ", 3E15.8)') G(1, 1), G(1, 2), G(1, 3)
      write(IOOUT, '(/" G(I,J)  ", 3E15.8)') G(2, 1), G(2, 2), G(2, 3)
      write(IOOUT, '(/" X       ", 2E15.8)') X(1), X(2)
-     write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') Hsum(Npt), hs, uu, uu*rho12
+     write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') Hsum(Npt), hs, uu, uu * rho12
   end if
   ax = abs(X(1))
   axx = abs(X(2))
   if (axx > ax) ax = axx
-  if (ax >= .00005) then
-     cormax = .40546511
-     if (itr > 4) cormax = .22314355
-     if (itr > 12) cormax = .09531018
-     if (itr > 20) cormax = .04879016
-     ax = ax/cormax
-     if (ax > 1.) then
-        X(1) = X(1)/ax
-        X(2) = X(2)/ax
+  if (ax >= 0.00005) then
+     cormax = 0.40546511
+     if (itr > 4) cormax = 0.22314355
+     if (itr > 12) cormax = 0.09531018
+     if (itr > 20) cormax = 0.04879016
+     ax = ax / cormax
+     if (ax > 1) then
+        X(1) = X(1) / ax
+        X(2) = X(2) / ax
      end if
      p21l = p21l + X(1)
      t21l = t21l + X(2)
      p21 = exp(p21l)
-     t21 = exp(t21l)
+     T21 = exp(t21l)
      if (Shkdbg) write(IOOUT, '(/" MAX.COR.=", e13.6, " X(1)=", e13.6, " X(2)=", e13.6)') cormax, X(1), X(2)
-     if (itr /= 1 .or. t21 < ttmax) then
+     if (itr /= 1 .or. T21 < ttmax) then
         itr = itr + 1
         if (itr < 61) go to 500
         write(IOOUT, '(/6x, " WARNING!!  NO CONVERGENCE FOR u1=", F8.1, &
              & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') U1(Npt)
      else
-        Tt = 0.
+        Tt = 0
         Npt = Npt - 1
         go to 700
      end if
@@ -4638,24 +4637,23 @@ subroutine SHCK
 ! CONVERGED OR TOOK 60 ITERATIONS WITHOUT CONVERGING.
 ! STORE RESULTS.
 600 rrho(Npt) = rho52
-  m2m1(Npt) = Wm(Npt)/wmx
+  m2m1(Npt) = Wm(Npt) / wmx
   p2p1(Npt) = p21
-  t2t1(Npt) = t21
-  utwo(Npt) = uu*rho12
+  t2t1(Npt) = T21
+  utwo(Npt) = uu * rho12
   u1u2(Npt) = uu - utwo(Npt)
-  if (Tt >= Tg(1)*.8d0 .and. Tt <= Tg(4)*1.1d0) then
+  if (Tt >= Tg(1) * 0.8d0 .and. Tt <= Tg(4) * 1.1d0) then
      if (.not. Eql) then
 ! FROZEN
         Ppp(Npt) = Pp
         Ttt(Npt) = Tt
-        Gammas(Npt) = Cpr(Npt)/(Cpr(Npt)-1./wmx)
-        Vlm(Npt) = Rr*Tt/(wmx*Pp)
+        Gammas(Npt) = Cpr(Npt) / (Cpr(Npt) - 1 / wmx)
+        Vlm(Npt) = Rr * Tt / (wmx * Pp)
         if (Incdeq) then
-           Ssum(Npt) = 0.
+           Ssum(Npt) = 0
            do j = 1, Ngc
-              pmn = Pp*wmx*En(j, Npt)
-              if (En(j, Npt) > 0.) Ssum(Npt) = Ssum(Npt) + En(j, Npt) &
-                   *(S(j)-log(pmn))
+              pmn = Pp * wmx * En(j, Npt)
+              if (En(j, Npt) > 0) Ssum(Npt) = Ssum(Npt) + En(j, Npt) * (S(j) - log(pmn))
            end do
         end if
      end if
@@ -4663,7 +4661,7 @@ subroutine SHCK
   end if
 700 write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
        & "FOR POINT", I5, " (SHCK)")') Tt, Npt
-  Tt = 0.
+  Tt = 0
 800 if (Npt < 1) go to 1000
   Nsk = Npt
 900 if (Trnspt) call TRANP
@@ -4686,24 +4684,19 @@ subroutine SHCK
      cr52 = '2'
   end if
   Fmt(7) = '2,'
-  write(IOOUT, Fmt) 'U'//cr52//', M/SEC      ', (utwo(j), j=1, Npt)
+  write(IOOUT, Fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, Npt)
   call OUT2
   if (Trnspt) call OUT4
   write(IOOUT, *)
   Fmt(7) = '3,'
-  write(IOOUT, Fmt) 'P'//cr52//'/P'//cr12//'           ', &
-       (p2p1(j), j=1, Npt)
-  write(IOOUT, Fmt) 'T'//cr52//'/T'//cr12//'           ', &
-       (t2t1(j), j=1, Npt)
+  write(IOOUT, Fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, Npt)
+  write(IOOUT, Fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, Npt)
   Fmt(7) = '4,'
-  write(IOOUT, Fmt) 'M'//cr52//'/M'//cr12//'           ', &
-       (m2m1(j), j=1, Npt)
-  write(IOOUT, Fmt) 'RHO'//cr52//'/RHO'//cr12//'       ', &
-       (rrho(j), j=1, Npt)
+  write(IOOUT, Fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, Npt)
+  write(IOOUT, Fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, Npt)
   Fmt(7) = '2,'
-  if (.not. refl) write(IOOUT, Fmt) 'V2, M/SEC      ', (u1u2(j), &
-       j=1, Npt)
-  if (refl) write(IOOUT, Fmt) 'U5+V2,M/SEC    ', (u1u2(j), j=1, Npt)
+  if (.not. refl) write(IOOUT, Fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, Npt)
+  if (refl) write(IOOUT, Fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, Npt)
   if (.not. Eql) then
 ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
      Fmt(7) = '5,'
@@ -4717,7 +4710,7 @@ subroutine SHCK
         do n = 1, Nreac
            j = Jray(n)
            if (Massf) ww = Mw(j)
-           write(IOOUT, '(" ", A16, F8.5, 12F9.5)') Prod(j), (En(j, i)*ww, i=1, Npt)
+           write(IOOUT, '(" ", A16, F8.5, 12F9.5)') Prod(j), (En(j, i) * ww, i = 1, Npt)
         end do
      else
         Eql = .true.
@@ -4727,7 +4720,7 @@ subroutine SHCK
   else
      call OUT3
   end if
-  Iplt = min(Iplt+Npt, 500)
+  Iplt = min(Iplt + Npt, 500)
   if (srefl) then
      if (.not. refl) then
         refl = .true.
