@@ -140,102 +140,116 @@ subroutine CPHS
   use cea
   implicit none
 ! LOCAL VARIABLES
-  real(8):: cx(7) = (/0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0/)
-  real(8):: hcx(7) = (/0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0/)
+  real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
+  real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
   real(8), save:: scx(7)
   integer, save:: i, ij, j, jj, k
 
   k = 1
   if (Tt > Tg(2)) k = 2
   if (Tt > Tg(3)) k = 3
-  cx(2) = 1.d0 / Tt
+  cx(2) = 1 / Tt
   cx(1) = cx(2)**2
   scx(3) = Tln
   scx(2) = -cx(2)
   hcx(2) = Tln * cx(2)
   hcx(1) = -cx(1)
-  scx(1) = hcx(1) * .5d0
-  do i = 4, 7
+  scx(1) = hcx(1) / 2
+  forall(i = 4:7)
      hcx(i) = cx(i) * Tt
      scx(i) = cx(i-1) * Tt
-  end do
-  do j = 1, Ng
-     H0(j) = 0.d0
-     S(j) = 0.d0
-  end do
-  do i = 7, 4, - 1
-     do j = 1, Ng
+  end forall
+
+  H0(1:Ng) = 0
+  S(1:Ng) = 0
+
+  do i = 7, 4, -1
+     forall(j = 1:Ng)
         S(j) = (S(j) + Coef(j, i, k)) * scx(i)
         H0(j) = (H0(j) + Coef(j, i, k)) * hcx(i)
-     end do
+     end forall
   end do
+
   do i = 1, 3
-     do j = 1, Ng
+     forall(j = 1:Ng)
         S(j) = S(j) + Coef(j, i, k) * scx(i)
         H0(j) = H0(j) + Coef(j, i, k) * hcx(i)
-     end do
+     end forall
   end do
-  do j = 1, Ng
+
+  forall(j = 1:Ng)
      S(j) = S(j) + Coef(j, 9, k)
      H0(j) = H0(j) + Coef(j, 8, k) * cx(2)
-  end do
+  end forall
+
   if (.not. Tp .or. Convg) then
-     do j = 1, Ng
-        Cp(j) = 0.d0
-     end do
-     do i = 7, 4, - 1
-        do j = 1, Ng
+     Cp(1:Ng) = 0
+
+     do i = 7, 4, -1
+        forall(j = 1:Ng)
            Cp(j) = (Cp(j) + Coef(j, i, k)) * Tt
-        end do
+        end forall
      end do
+
      do i = 1, 3
-        do j = 1, Ng
+        forall(j = 1:Ng)
            Cp(j) = Cp(j) + Coef(j, i, k) * cx(i)
-        end do
+        end forall
      end do
   end if
+
   if (Npr /= 0 .and. k /= 3 .and. Ng /= Ngc) then
      do ij = 1, Npr
         j = Jcond(ij)
         jj = Jcond(ij) - Ng
-        Cp(j) = 0.d0
-        H0(j) = 0.d0
-        S(j) = 0.d0
-        do i = 7, 4, - 1
+        Cp(j) = 0
+        H0(j) = 0
+        S(j) = 0
+
+        do i = 7, 4, -1
            S(j) = (S(j) + Cft(jj, i)) * scx(i)
            H0(j) = (H0(j) + Cft(jj, i)) * hcx(i)
            Cp(j) = (Cp(j) + Cft(jj, i)) * Tt
         end do
+
         do i = 1, 3
            S(j) = S(j) + Cft(jj, i) * scx(i)
            H0(j) = H0(j) + Cft(jj, i) * hcx(i)
            Cp(j) = Cp(j) + Cft(jj, i) * cx(i)
         end do
+
         S(j) = S(j) + Cft(jj, 9)
         H0(j) = H0(j) + Cft(jj, 8) * cx(2)
      end do
   end if
-  go to 99999
+
+  return
+
   entry ALLCON
+
   do jj = 1, Nc
      j = jj + Ng
-     Cp(j) = 0.d0
-     H0(j) = 0.d0
-     S(j) = 0.d0
-     do i = 7, 4, - 1
+     Cp(j) = 0
+     H0(j) = 0
+     S(j) = 0
+
+     do i = 7, 4, -1
         S(j) = (S(j) + Cft(jj, i)) * scx(i)
         H0(j) = (H0(j) + Cft(jj, i)) * hcx(i)
         Cp(j) = (Cp(j) + Cft(jj, i)) * Tt
      end do
+
      do i = 1, 3
         S(j) = S(j) + Cft(jj, i) * scx(i)
         H0(j) = H0(j) + Cft(jj, i) * hcx(i)
         Cp(j) = Cp(j) + Cft(jj, i) * cx(i)
      end do
+
      S(j) = S(j) + Cft(jj, 9)
      H0(j) = H0(j) + Cft(jj, 8) * cx(2)
   end do
-99999 return
+
+  return
 end subroutine CPHS
 
 
