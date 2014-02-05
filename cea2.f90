@@ -4812,9 +4812,9 @@ subroutine THERMP
            Tt = T(It)
            call EQLBRM
            if (Npt == 0) go to 200
-           if (Trnspt .and. Tt /= 0.) call TRANP
+           if (Trnspt .and. Tt /= 0) call TRANP
            Isv = 0
-           if (Ip /= Np .or. It /= Nt .and. Tt /= 0.) then
+           if (Ip /= Np .or. It /= Nt .and. Tt /= 0) then
               Isv = Npt
               if (Npt /= Ncol) go to 10
            end if
@@ -4834,12 +4834,12 @@ subroutine THERMP
            call OUT2
            if (Trnspt) call OUT4
            call OUT3
-           Iplt = min(Iplt+Npt, 500)
+           Iplt = min(Iplt + Npt, 500)
            if (Isv == 0 .and. iof == Nof) go to 200
            write(IOOUT, '(////)')
            Npt = 0
 10         Npt = Npt + 1
-           if (.not. Tp .and. Tt /= 0.) T(1) = Tt
+           if (.not. Tp .and. Tt /= 0) T(1) = Tt
            if (Nt == 1 .and. Np == 1) go to 100
            if (Ip == 1 .and. It == 1) Isv = -Isv
            if (Nt /= 1) then
@@ -4850,7 +4850,7 @@ subroutine THERMP
      end do
 100 continue
 200 return
-end subroutine
+end subroutine THERMP
 
 
 
