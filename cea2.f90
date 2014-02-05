@@ -60,15 +60,15 @@ program main
         if (Elmt(Nlm) /= 'E') then
            Nlm = Nlm + 1
            Elmt(Nlm) = 'E'
-           B0p(Nlm, 1) = 0.
-           B0p(Nlm, 2) = 0.
+           B0p(Nlm, 1) = 0
+           B0p(Nlm, 2) = 0
         end if
      else if (Elmt(Nlm) == 'E') then
         Nlm = Nlm - 1
      end if
-     do n = 1, Nreac
-        Jray(n) = 0
-     end do
+
+     Jray(1:Nreac) = 0
+
      call SEARCH
      if (Ngc == 0) go to 300
      Newr = .false.
@@ -76,34 +76,32 @@ program main
 ! INITIAL ESTIMATES
      Npr = 0
      Gonly = .true.
-     Enn = .1d0
+     Enn = 0.1d0
      Ennl = -2.3025851
      Sumn = Enn
      xi = Ng
-     if (xi == 0.) xi = 1.
+     if (xi == 0.) xi = 1
      xi = Enn/xi
      xln = log(xi)
-     do inc = 1, Nc
-        j = Ng + inc
-        En(j, 1) = 0.d0
-        Enln(j) = 0.d0
-     end do
-     do j = 1, Ng
-        En(j, 1) = xi
-        Enln(j) = xln
-     end do
+
+     En(Ng+1:Ng+Nc, 1) = 0
+     Enln(Ng+1:Ng+Nc) = 0
+
+     En(1:Ng, 1) = xi
+     Enln(1:Ng) = xln
+
      if (Nc /= 0 .and. Nsert /= 0) then
-        do 120 i = 1, Nsert
+        outerLoop: do i = 1, Nsert
            do j = Ngc, Ngp1, - 1
               if (Prod(j) == ensert(i)) then
                  Npr = Npr + 1
                  Jcond(Npr) = j
                  if (.not. Short) write(IOOUT, '(1X, A16, "INSERTED")') Prod(j)
-                 go to 120
+                 cycle outerLoop
               end if
            end do
            write(IOOUT, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') ensert(i)
-120     continue
+        end do outerLoop
      end if
      if (Rkt) then
         call ROCKET
@@ -131,7 +129,7 @@ program main
   close(IOTRN)
   close(IOPLT)
 400 stop
-end program
+end program main
 
 
 
@@ -5533,7 +5531,7 @@ subroutine UTRAN(readOK)
   ns = 0
   rewind IOSCH
   outerLoop: do
-     trcoef(:, :, :) = 0.
+     trcoef(:, :, :) = 0
      read(IOINP, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
      if (tname(1) == 'end' .or. tname(1) == 'LAST') then
         write(IOTRN) ns
