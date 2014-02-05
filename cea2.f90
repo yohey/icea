@@ -4350,12 +4350,12 @@ subroutine SETEN
   implicit none
 ! LOCAL VARIABLES
   integer, save:: j, lsav
-  real(8), save:: tsave
+  real(8), save:: Tsave
 
   if (Isv < 0) then
 ! FIRST T--SAVE COMPOSITIONS FOR FUTURE POINTS WITH THIS T
      Isv = -Isv
-     tsave = Ttt(Isv)
+     Tsave = Ttt(Isv)
      Ensave = Enn
      Enlsav = Ennl
      lsav = Lsave
@@ -4371,13 +4371,13 @@ subroutine SETEN
         En(j, Npt) = Sln(j)
         if (Jliq == j) then
            En(Jsol, Npt) = En(Jsol, Isv) + En(Jliq, Isv)
-           En(Jliq, Npt) = 0.
+           En(Jliq, Npt) = 0
            Jsol = 0
            Jliq = 0
-           tsave = tsave - 5.
-           Tt = tsave
-           Sln(j) = 0.
-        else if (En(j, Npt) > 0.) then
+           Tsave = Tsave - 5
+           Tt = Tsave
+           Sln(j) = 0
+        else if (En(j, Npt) > 0) then
            Npr = Npr + 1
            Jcond(Npr) = j
         end if
@@ -4398,13 +4398,13 @@ subroutine SETEN
         end if
      end do
      do j = 1, Ng
-        En(j, Npt) = 0.
+        En(j, Npt) = 0
         Enln(j) = Sln(j)
-        if (Sln(j) /= 0.) then
-           if ((Enln(j)-Ennl+18.5) > 0.) En(j, Npt) = exp(Enln(j))
+        if (Sln(j) /= 0) then
+           if ((Enln(j) - Ennl + 18.5) > 0) En(j, Npt) = exp(Enln(j))
         end if
      end do
-     if (.not. Tp) Tt = tsave
+     if (.not. Tp) Tt = Tsave
      Sumn = Enn
   else if (Isv > 0) then
 ! USE COMPOSITIONS FROM PREVIOUS POINT
