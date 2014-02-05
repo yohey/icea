@@ -274,122 +274,151 @@ subroutine DETON
   character(3), save:: unit
   integer, save:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt
   real(8), save:: a11, a12, a21, a22, alam, alpha, amm, b1, b2, cpl(Ncol), d, gam, &
-       gm1(Ncol), h1(Ncol), p1, pp1, pub(Ncol), rk, rr1, rrho(Ncol), t1, &
+       gm1(Ncol), h1(Ncol), p1, pp1, pub(Ncol), rk, rr1, rrho(Ncol), T1, &
        tem, tt1, tub(Ncol), ud, x1, x2
 
 
   iof = 0
   Eql = .true.
-  if (T(1) == 0.) then
+
+  if (T(1) == 0) then
      T(1) = Rtemp(1)
      Nt = 1
   end if
+
 100 Tt = T(1)
+
   iof = iof + 1
   Oxfl = Oxf(iof)
+
   call NEWOF
+
 ! BEGIN T LOOP.
   do It = 1, Nt
-     t1 = T(It)
+     T1 = T(It)
+
 ! BEGIN P LOOP.
      do Ip = 1, Np
         p1 = P(Ip)
-        Tt = t1
+        Tt = T1
         Pp = p1
+
         call HCALC
-        if (Tt == 0.) return
+
+        if (Tt == 0) return
         if (Detdbg) call OUT1
+
         h1(Npt) = Hsub0 * R
-        tub(Npt) = t1
+        tub(Npt) = T1
         pub(Npt) = p1
         cpl(Npt) = Cpmix * R
         itr = 0
-        Tt = 3800.
-        pp1 = 15.
+        Tt = 3800
+        pp1 = 15
         Pp = pp1 * p1
+
 ! CALCULATE ENTHALPY FOR INITIAL ESTIMATE OF T2(TT AFTER EQLBRM)
-        Hsub0 = h1(Npt) / R + .75 * t1 * pp1 / Wmix
+        Hsub0 = h1(Npt) / R + 0.75 * T1 * pp1 / Wmix
         Tp = .false.
         Hp = .true.
+
         call EQLBRM
+
         Hsub0 = h1(Npt) / R
         Hp = .false.
-        if (Tt /= 0.) then
+
+        if (Tt /= 0) then
            gam = Gammas(Npt)
-           tt1 = Tt / t1
+           tt1 = Tt / T1
            ii = 0
-           tem = tt1 - .75 * pp1 / (Cpr(Npt) * Wmix)
+           tem = tt1 - 0.75 * pp1 / (Cpr(Npt) * Wmix)
            amm = Wm(Npt) / Wmix
+
            if (Detdbg) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') Tt
+
 ! LOOP FOR IMPROVING T2/T1 AND P2/P1 INITIAL ESTIMATE.
            do ii = 1, 3
               alpha = amm / tt1
-              pp1 = (1. + gam) * (1. + (1. - 4. * gam * alpha / (1. + gam)**2)**.5) &
-                   / (2. * gam * alpha)
+              pp1 = (1 + gam) * (1 + sqrt(1 - 4 * gam * alpha / (1 + gam)**2)) / (2 * gam * alpha)
               rk = pp1 * alpha
-              tt1 = tem + .5 * pp1 * gam * (rk**2 - 1.) / (Wmix * Cpr(Npt) * rk)
-              if (Detdbg) write(IOOUT, '(I5, 2E20.8)') ii, pp1, tt1
+              tt1 = tem + 0.5 * pp1 * gam * (rk**2 - 1) / (Wmix * Cpr(Npt) * rk)
+              if (Detdbg) write(IOOUT, '(i5, 2e20.8)') ii, pp1, tt1
            end do
+
            Tp = .true.
-           Tt = t1 * tt1
+           Tt = T1 * tt1
            rr1 = pp1 * amm / tt1
+
 ! BEGIN MAIN ITERATION LOOP.
 110        itr = itr + 1
            Pp = p1 * pp1
+
            call EQLBRM
+
            if (Npt == 0) go to 200
-           if (Tt /= 0.) then
+
+           if (Tt /= 0) then
               gam = Gammas(Npt)
               amm = Wm(Npt) / Wmix
               rr1 = pp1 * amm / tt1
-              a11 = 1. / pp1 + gam * rr1 * Dlvpt(Npt)
+              a11 = 1 / pp1 + gam * rr1 * Dlvpt(Npt)
               a12 = gam * rr1 * Dlvtp(Npt)
-              a21 = .5 * gam * (rr1**2 - 1. - Dlvpt(Npt) * (1. + rr1**2)) + Dlvtp(Npt) - 1.
-              a22 = -.5 * gam * Dlvtp(Npt) * (rr1**2 + 1.) - Wm(Npt) * Cpr(Npt)
-              b1 = 1. / pp1 - 1. + gam * (rr1 - 1.)
-              b2 = Wm(Npt) * (Hsum(Npt) - h1(Npt) / R) / Tt - .5 * gam * (rr1**2 - 1.)
+              a21 = 0.5 * gam * (rr1**2 - 1 - Dlvpt(Npt) * (1 + rr1**2)) + Dlvtp(Npt) - 1
+              a22 = -0.5 * gam * Dlvtp(Npt) * (rr1**2 + 1) - Wm(Npt) * Cpr(Npt)
+              b1 = 1 / pp1 - 1 + gam * (rr1 - 1)
+              b2 = Wm(Npt) * (Hsum(Npt) - h1(Npt) / R) / Tt - 0.5 * gam * (rr1**2 - 1)
               d = a11 * a22 - a12 * a21
               x1 = (a22 * b1 - a12 * b2) / d
               x2 = (a11 * b2 - a21 * b1) / d
-              alam = 1.
+              alam = 1
               tem = x1
-              if (tem < 0.) tem = -tem
+
+              if (tem < 0) tem = -tem
               if (x2 > tem) tem = x2
               if (-x2 > tem) tem = -x2
-              if (tem > 0.4054652) alam = .4054652 / tem
+              if (tem > 0.4054652) alam = 0.4054652 / tem
+
               pp1 = pp1 * exp(x1 * alam)
               tt1 = tt1 * exp(x2 * alam)
-              Tt = t1 * tt1
-              ud = rr1 * (Rr * gam * Tt/Wm(Npt))**.5
-              if (Detdbg) write(IOOUT, '(/" ITER =", I2, 5X, "P/P1 =", E15.8, /7X, "T/T1 =", E15.8, 5X, &
-                   & "RHO/RHO1 =", E15.8, /7X, "DEL LN P/P1 =", E15.8, 5X, &
-                   & "DEL LN T/T1 =", E15.8)') itr, pp1, tt1, rr1, x1, x2
+
+              Tt = T1 * tt1
+              ud = rr1 * sqrt(Rr * gam * Tt/Wm(Npt))
+
+              if (Detdbg) write(IOOUT, '(/" ITER =", i2, 5x, "P/P1 =", e15.8, /7x, "T/T1 =", e15.8, 5x, &
+                   & "RHO/RHO1 =", e15.8, /7x, "DEL LN P/P1 =", e15.8, 5x, &
+                   & "DEL LN T/T1 =", e15.8)') itr, pp1, tt1, rr1, x1, x2
 ! CONVERGENCE TEST
               if (itr < 8 .and. tem > 0.5E-04) go to 110
+
               if (itr < 8) then
                  rrho(Npt) = rr1
-                 if (cpl(Npt) == 0.) then
-                    gm1(Npt) = 0.
-                    Vmoc(Npt) = 0.
+                 if (cpl(Npt) == 0) then
+                    gm1(Npt) = 0
+                    Vmoc(Npt) = 0
                  else
                     gm1(Npt) = cpl(Npt) / (cpl(Npt) - R / Wmix)
-                    Vmoc(Npt) = ud / (Rr * gm1(Npt) * t1 / Wmix)**.5
+                    Vmoc(Npt) = ud / sqrt(Rr * gm1(Npt) * T1 / Wmix)
                  end if
               else
                  write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
                  Npt = Npt - 1
-                 Tt = 0.
+                 Tt = 0
               end if
+
               if (Trnspt) call TRANP
+
               Isv = 0
-              if (Ip /= Np .or. It /= Nt .and. Tt /= 0.) then
+
+              if (Ip /= Np .or. It /= Nt .and. Tt /= 0) then
                  Isv = Npt
                  if (Npt /= Ncol) go to 120
               end if
            end if
+
 ! OUTPUT
            write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
            call OUT1
+
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
            mp    = 0
            mt    = 0
@@ -398,6 +427,7 @@ subroutine DETON
            mdv   = 0
            mson  = 0
            mmach = 0
+
            do i = 1, Nplt
               if (index(Pltvar(i)(2:), '1') /= 0) then
                  if (Pltvar(i)(:3) == 'son') then
@@ -417,10 +447,13 @@ subroutine DETON
                  mmach = i
               end if
            end do
+
            write(IOOUT, '(/" UNBURNED GAS"/)')
+
            Fmt(4) = '13'
            Fmt(5) = ' '
            Fmt(7) = '4,'
+
            do i = 1, Npt
               if (SIunit) then
                  V(i) = pub(i)
@@ -431,21 +464,27 @@ subroutine DETON
               end if
               if (mp > 0) Pltout(i+Iplt, mp) = V(i)
            end do
-           write(IOOUT, Fmt) 'P1, '//unit//'        ', (V(j), j = 1, Npt)
+
+           write(IOOUT, Fmt) 'P1, ' // unit // '        ', (V(j), j = 1, Npt)
+
            Fmt(7) = '2,'
            write(IOOUT, Fmt) ft1, (tub(j), j = 1, Npt)
+
            if (.not. SIunit) write(IOOUT, Fmt) fh1, (h1(j), j = 1, Npt)
            if (SIunit) write(IOOUT, Fmt) fhs1, (h1(j), j = 1, Npt)
-           do i = 1, Npt
+
+           forall(i = 1:Npt)
               V(i) = Wmix
-              Sonvel(i) = (Rr * gm1(i) * tub(i) / Wmix)**.5
-           end do
+              Sonvel(i) = sqrt(Rr * gm1(i) * tub(i) / Wmix)
+           end forall
+
            Fmt(7) = '3,'
            write(IOOUT, Fmt) fm1, (V(j), j = 1, Npt)
            Fmt(7) = '4,'
            write(IOOUT, Fmt) fg1, (gm1(j), j = 1, Npt)
            Fmt(7) = '1,'
            write(IOOUT, Fmt) 'SON VEL1,M/SEC ', (Sonvel(j), j = 1, Npt)
+
            if (Nplt > 0) then
               do i = 1, Npt
                  if (mt > 0)   Pltout(i+Iplt, mt) = tub(i)
@@ -454,12 +493,18 @@ subroutine DETON
                  if (mson > 0) Pltout(i+Iplt, mson) = Sonvel(i)
               end do
            end if
+
            write(IOOUT, '(/" BURNED GAS"/)')
+
            Fmt(4) = Fmt(6)
            call OUT2
+
            if (Trnspt) call OUT4
+
            write(IOOUT, '(/" DETONATION PARAMETERS"/)')
+
            Fmt(7) = '3,'
+
            do i = 1, Npt
               V(i) = Ppp(i) / pub(i)
               Pcp(i) = Ttt(i) / tub(i)
@@ -467,34 +512,49 @@ subroutine DETON
               if (mmach > 0) Pltout(i+Iplt, mmach) = Vmoc(i)
               if (mdv > 0)   Pltout(i+Iplt, mdv) = Sonvel(i)
            end do
+
            write(IOOUT, Fmt) fpp1, (V(j), j = 1, Npt)
            write(IOOUT, Fmt) ftt1, (Pcp(j), j = 1, Npt)
-           do i = 1, Npt
+
+           forall(i = 1:Npt)
               V(i) = Wm(i) / Wmix
-           end do
+           end forall
+
            Fmt(7) = '4,'
            write(IOOUT, Fmt) fmm1, (V(j), j = 1, Npt)
            write(IOOUT, Fmt) frr1, (rrho(j), j = 1, Npt)
            write(IOOUT, Fmt) 'DET MACH NUMBER', (Vmoc(j), j = 1, Npt)
+
            Fmt(7) = '1,'
            write(IOOUT, Fmt) fdv, (Sonvel(j), j = 1, Npt)
+
            Eql = .true.
+
            call OUT3
+
            Iplt = min(Iplt+Npt, 500)
+
            if (Isv == 0 .and. iof == Nof) go to 200
            if (Np == 1 .and. Nt == 1) go to 100
+
            write(IOOUT, '(///)')
+
            Npt = 0
 120        Npt = Npt + 1
+
            if (Isv == 1) Isv = -1
+
            call SETEN
         end if
      end do
   end do
-!     Iplt = min(Iplt + Npt, 500)
+
   Iplt = min(Iplt + Npt - 1, 500)
+
   if (iof < Nof) go to 100
+
 200 Tp = .false.
+
   return
 end subroutine DETON
 
