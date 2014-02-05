@@ -5137,73 +5137,69 @@ subroutine TRANP
 ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
   nmm = Nm - 1
   do i = 1, Nm
-     rtpd(i, i) = 0.d0
-     phi(i, i) = 1.d0
-     psi(i, i) = 1.d0
+     rtpd(i, i) = 0
+     phi(i, i) = 1
+     psi(i, i) = 1
   end do
-  Confro(Npt) = 0.d0
-  Vis(Npt) = 0.d0
+  Confro(Npt) = 0
+  Vis(Npt) = 0
   do i = 1, nmm
      i1 = i + 1
 !DIR$ IVDEP
      do j = i1, Nm
-        sumc = 2.d0/(Eta(i, j)*(Wmol(i)+Wmol(j)))
-        phi(i, j) = sumc*Wmol(j)*Eta(i, i)
-        phi(j, i) = sumc*Wmol(i)*Eta(j, j)
-        sumc = (Wmol(i)+Wmol(j))**2
-        psi(i, j) = phi(i, j) &
-             *(1.d0+2.41d0*(Wmol(i)-Wmol(j))*(Wmol(i)-.142d0* &
-             Wmol(j))/sumc)
-        psi(j, i) = phi(j, i) &
-             *(1.d0+2.41d0*(Wmol(j)-Wmol(i))*(Wmol(j)-.142d0* &
-             Wmol(i))/sumc)
+        sumc = 2 / (Eta(i, j) * (Wmol(i) + Wmol(j)))
+        phi(i, j) = sumc * Wmol(j) * Eta(i, i)
+        phi(j, i) = sumc * Wmol(i) * Eta(j, j)
+        sumc = (Wmol(i) + Wmol(j))**2
+        psi(i, j) = phi(i, j) * (1 + 2.41d0 * (Wmol(i) - Wmol(j)) * (Wmol(i) - 0.142d0 * Wmol(j)) / sumc)
+        psi(j, i) = phi(j, i) * (1 + 2.41d0 * (Wmol(j) - Wmol(i)) * (Wmol(j) - 0.142d0 * Wmol(i)) / sumc)
      end do
   end do
   do i = 1, Nm
-     sumc = 0.d0
-     sumv = 0.d0
+     sumc = 0
+     sumv = 0
      do j = 1, Nm
-        sumc = sumc + psi(i, j)*Xs(j)
-        sumv = sumv + phi(i, j)*Xs(j)
+        sumc = sumc + psi(i, j) * Xs(j)
+        sumv = sumv + phi(i, j) * Xs(j)
      end do
-     Vis(Npt) = Vis(Npt) + Eta(i, i)*Xs(i)/sumv
-     Confro(Npt) = Confro(Npt) + Con(i)*Xs(i)/sumc
+     Vis(Npt) = Vis(Npt) + Eta(i, i) * Xs(i) / sumv
+     Confro(Npt) = Confro(Npt) + Con(i) * Xs(i) / sumc
   end do
   if (Eql .and. Nr > 0) then
 ! CALCULATE REACTION HEAT CAPACITY AND THERMAL CONDUCTIVITY
      m = Nr + 1
      do i = 1, Nr
-        delh(i) = 0.0d0
+        delh(i) = 0
         do k = 1, Lsave
            j = Jcm(k)
-           delh(i) = Stc(i, k)*H0(j) + delh(i)
+           delh(i) = Stc(i, k) * H0(j) + delh(i)
         end do
         nlmm = Lsave + 1
         do k = nlmm, Nm
            j = Ind(k)
-           delh(i) = Stc(i, k)*H0(j) + delh(i)
+           delh(i) = Stc(i, k) * H0(j) + delh(i)
         end do
         G(i, m) = delh(i)
      end do
      do i = 1, maxTr
         do j = 1, maxTr
-           if (abs(Stc(i, j)) < 1.0d-6) Stc(i, j) = 0.0d0
+           if (abs(Stc(i, j)) < 1.0d-6) Stc(i, j) = 0
         end do
      end do
      jj = Nm - 1
      do k = 1, jj
         mm = k + 1
         do m = mm, Nm
-           rtpd(k, m) = Wmol(k)*Wmol(m)/(1.1*Eta(k, m)*(Wmol(k)+Wmol(m)))
-           xskm(k, m) = Xs(k)*Xs(m)
+           rtpd(k, m) = Wmol(k) * Wmol(m) / (1.1 * Eta(k, m) * (Wmol(k) + Wmol(m)))
+           xskm(k, m) = Xs(k) * Xs(m)
            xskm(m, k) = xskm(k, m)
            rtpd(m, k) = rtpd(k, m)
         end do
      end do
      do i = 1, Nr
         do j = i, Nr
-           G(i, j) = 0.0d0
-           gmat(i, j) = 0.0d0
+           G(i, j) = 0
+           gmat(i, j) = 0
         end do
      end do
      do k = 1, jj
@@ -5211,16 +5207,14 @@ subroutine TRANP
         do m = mm, Nm
            if (Xs(k) >= 1.0d-10 .and. Xs(m) >= 1.0d-10) then
               do j = 1, Nr
-                 if ((Stc(j, k) == 0.d0) .and. (Stc(j, m) == 0.d0)) stx(j) &
-                      = 0.d0
-                 if ((Stc(j, k) /= 0.d0) .or. (Stc(j, m) /= 0.d0)) stx(j) &
-                      = Xs(m)*Stc(j, k) - Xs(k)*Stc(j, m)
+                 if ((Stc(j, k) == 0) .and. (Stc(j, m) == 0)) stx(j) = 0
+                 if ((Stc(j, k) /= 0) .or. (Stc(j, m) /= 0)) stx(j) = Xs(m) * Stc(j, k) - Xs(k) * Stc(j, m)
               end do
               do i = 1, Nr
                  do j = i, Nr
-                    stxij(i, j) = stx(i)*stx(j)/xskm(k, m)
+                    stxij(i, j) = stx(i) * stx(j) / xskm(k, m)
                     G(i, j) = G(i, j) + stxij(i, j)
-                    gmat(i, j) = gmat(i, j) + stxij(i, j)*rtpd(k, m)
+                    gmat(i, j) = gmat(i, j) + stxij(i, j) * rtpd(k, m)
                  end do
               end do
            end if
@@ -5236,10 +5230,10 @@ subroutine TRANP
      end do
      Imat = Nr
      call GAUSS
-     cpreac = 0.d0
+     cpreac = 0
      do i = 1, Nr
         G(i, m) = delh(i)
-        cpreac = cpreac + R*delh(i)*X(i)
+        cpreac = cpreac + R * delh(i) * X(i)
 !DIR$ IVDEP
         do j = i, Nr
            G(i, j) = gmat(i, j)
@@ -5247,33 +5241,33 @@ subroutine TRANP
         end do
      end do
      call GAUSS
-     reacon = 0.d0
+     reacon = 0
      do i = 1, Nr
         reacon = reacon + R*delh(i)*X(i)
      end do
-     reacon = .6d0*reacon
+     reacon = 0.6d0 * reacon
   else
-     cpreac = 0.d0
-     reacon = 0.d0
+     cpreac = 0
+     reacon = 0
   end if
 ! CALCULATE OTHER ANSWERS
-  Cpfro(Npt) = 0.d0
-  wtmol = 0.d0
+  Cpfro(Npt) = 0
+  wtmol = 0
   do i = 1, Nm
-     Cpfro(Npt) = Cpfro(Npt) + Xs(i)*Cprr(i)
-     wtmol = wtmol + Xs(i)*Wmol(i)
+     Cpfro(Npt) = Cpfro(Npt) + Xs(i) * Cprr(i)
+     wtmol = wtmol + Xs(i) * Wmol(i)
   end do
-  Cpfro(Npt) = Cpfro(Npt)*R/wtmol
-  Confro(Npt) = Confro(Npt)/1000.d0
-  if (.not. SIunit) Confro(Npt) = Confro(Npt)/4.184d0
-  Vis(Npt) = Vis(Npt)/1000.d0
-  Prfro(Npt) = Vis(Npt)*Cpfro(Npt)/Confro(Npt)
+  Cpfro(Npt) = Cpfro(Npt) * R / wtmol
+  Confro(Npt) = Confro(Npt) / 1000
+  if (.not. SIunit) Confro(Npt) = Confro(Npt) / 4.184d0
+  Vis(Npt) = Vis(Npt) / 1000
+  Prfro(Npt) = Vis(Npt) * Cpfro(Npt) / Confro(Npt)
   if (Eql) then
-     cpreac = cpreac/wtmol
-     reacon = reacon/1000.d0
+     cpreac = cpreac / wtmol
+     reacon = reacon / 1000
      Cpeql(Npt) = cpreac + Cpfro(Npt)
      Coneql(Npt) = Confro(Npt) + reacon
-     Preql(Npt) = Vis(Npt)*Cpeql(Npt)/Coneql(Npt)
+     Preql(Npt) = Vis(Npt) * Cpeql(Npt) / Coneql(Npt)
   end if
 end subroutine TRANP
 
