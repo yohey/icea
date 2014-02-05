@@ -155,6 +155,7 @@ subroutine CPHS
   hcx(2) = Tln * cx(2)
   hcx(1) = -cx(1)
   scx(1) = hcx(1) / 2
+
   forall(i = 4:7)
      hcx(i) = cx(i) * Tt
      scx(i) = cx(i-1) * Tt
@@ -186,16 +187,10 @@ subroutine CPHS
      Cp(1:Ng) = 0
 
      do i = 7, 4, -1
-        forall(j = 1:Ng)
-           Cp(j) = (Cp(j) + Coef(j, i, k)) * Tt
-        end forall
+        forall(j = 1:Ng) Cp(j) = (Cp(j) + Coef(j, i, k)) * Tt
      end do
 
-     do i = 1, 3
-        forall(j = 1:Ng)
-           Cp(j) = Cp(j) + Coef(j, i, k) * cx(i)
-        end forall
-     end do
+     forall(j = 1:Ng) Cp(j) = Cp(j) + sum(Coef(j, 1:3, k) * cx(1:3))
   end if
 
   if (Npr /= 0 .and. k /= 3 .and. Ng /= Ngc) then
@@ -516,9 +511,7 @@ subroutine DETON
            write(IOOUT, Fmt) fpp1, (V(j), j = 1, Npt)
            write(IOOUT, Fmt) ftt1, (Pcp(j), j = 1, Npt)
 
-           forall(i = 1:Npt)
-              V(i) = Wm(i) / Wmix
-           end forall
+           forall(i = 1:Npt) V(i) = Wm(i) / Wmix
 
            Fmt(7) = '4,'
            write(IOOUT, Fmt) fmm1, (V(j), j = 1, Npt)
@@ -629,8 +622,9 @@ subroutine EQLBRM
        lz, maxitn, ncvg, njc, nn, numb
   real(8), save:: aa, ambda, ambda1, bigen, bigneg, delg, dlnt, dpie, ensol, esize, &
        gap, gasfrc, pie, pisave(maxMat-2), siz9, sizeg, &
-       sum, sum1, szgj, tem, tmelt, tsize, ween, xi, xln, xsize, xx(maxMat)
+       sum0, sum1, szgj, tem, tmelt, tsize, ween, xi, xln, xsize, xx(maxMat)
   real(8):: smalno = 1e-6, smnol = -13.815511
+  logical:: mask(Ng)
 
   ixsing = 0
   lsing = 0
@@ -643,109 +637,133 @@ subroutine EQLBRM
   siz9 = Size - 9.2103404d0
   tsize = Size
   xsize = Size + 6.90775528d0
+
   if (Trace /= 0.) then
      maxitn = maxitn + Ngc / 2
      xsize = -log(Trace)
-     if (xsize < Size) xsize = Size + .1
+     if (xsize < Size) xsize = Size + 0.1
   end if
-  if (xsize > 80.) xsize = 80.d0
-  esize = min(80.d0, xsize + 6.90775528d0)
+
+  if (xsize > 80) xsize = 80
+
+  esize = min(80., xsize + 6.90775528d0)
   jcons = 0
-  pie = 0.
+  pie = 0
   i2many = .false.
   Pderiv = .false.
   Convg = .false.
   numb = 0
   cpcalc = .true.
+
   if (Tp) cpcalc = .false.
-  if (Tt /= 0.d0) then
+
+  if (Tt /= 0) then
      if (Npr == 0 .or. (Tt /= T(1) .and. .not. Tp)) go to 400
      k = 1
   else
-     Tt = 3800.d0
+     Tt = 3800
      if (Npr == 0) go to 400
      k = 1
   end if
+
 100 j = Jcond(k)
   jc = j - Ng
   kg = -Ifz(jc)
+
   do i = 1, 9
      kg = kg + 1
      kc = jc + kg
+
      if (Tt <= Temp(2, kc)) then
         if (kg /= 0) then
            Jcond(k) = j + kg
            En(j+kg, Npt) = En(j, Npt)
-           En(j, Npt) = 0.
-           if (Prod(j) /= Prod(j+kg) .and. .not. Short)  &
+           En(j, Npt) = 0
+
+           if (Prod(j) /= Prod(j+kg) .and. .not. Short) &
                 & write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') Prod(j), Prod(j+kg)
         end if
         go to 300
      else if (kc >= Nc .or. Ifz(kc+1) <= Ifz(kc)) then
-        go to 200
+        exit
      end if
   end do
-200 if (.not. Tp) then
-     Tt = Temp(2, kc) - 10.d0
+
+  if (.not. Tp) then
+     Tt = Temp(2, kc) - 10
      k = 1
      go to 100
   end if
+
   write(IOOUT, '(" REMOVE ", A16)') Prod(j)
-  En(j, Npt) = 0.d0
-  Enln(j) = 0.d0
-  Deln(j) = 0.d0
+
+  En(j, Npt) = 0
+  Enln(j) = 0
+  Deln(j) = 0
+
   do i = k, Npr
      Jcond(i) = Jcond(i+1)
   end do
+
   Npr = Npr - 1
+
 300 k = k + 1
+
   if (k <= Npr) go to 100
+
 400 Tln = log(Tt)
+
   if (Vol) Pp = Rr * Enn * Tt / Vv
+
   call CPHS
+
   Tm = log(Pp / Enn)
   le = Nlm
+
   if (Lsave /= 0 .and. Nlm /= Lsave) then
      tem = exp(-tsize)
      do i = Lsave + 1, Nlm
-        do j = 1, Ng
-           if (A(i, j) /= 0.) then
-              En(j, Npt) = tem
-              Enln(j) = -tsize
-           end if
-        end do
+        forall(j = 1:Ng, A(i, j) /= 0)
+           En(j, Npt) = tem
+           Enln(j) = -tsize
+        end forall
      end do
   end if
+
   ls = Nlm
   lelim = 0
   lz = ls
+
   if (Ions) lz = ls - 1
+
   if (Npt == 1 .and. .not. Shock .and. .not. Short) then
      write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))') (Elmt(i), i = 1, Nlm)
   end if
+
   if (Debug(Npt)) then
      do i = 1, Nlm
         cmp(i) = Elmt(i)
      end do
   end if
+
 ! BEGIN ITERATION
 500 if (cpcalc) then
-     Cpsum = 0.d0
-     do j = 1, Ng
-        Cpsum = Cpsum + En(j, Npt) * Cp(j)
-     end do
+     Cpsum = sum(En(1:Ng, Npt) * Cp(1:Ng))
+
      if (Npr /= 0) then
-        do k = 1, Npr
-           j = Jcond(k)
-           Cpsum = Cpsum + En(j, Npt) * Cp(j)
-        end do
+        Cpsum = Cpsum + sum(En(Jcond(1:Npr), Npt) * Cp(Jcond(1:Npr)))
         cpcalc = .false.
      end if
   end if
+
   numb = numb + 1
+
   call MATRIX
+
   iq2 = Iq1 + 1
+
   if (Convg) Imat = Imat - 1
+
   if (Debug(Npt)) then
      if (.not. Convg) then
         write(IOOUT, '(/" ITERATION", I3, 6X, "MATRIX ")') numb
@@ -753,136 +771,154 @@ subroutine EQLBRM
         if (.not. Pderiv) write(IOOUT, '(/" T DERIV MATRIX")')
         if (Pderiv) write(IOOUT, '(/" P DERIV MATRIX")')
      end if
+
      kmat = Imat + 1
+
      do i = 1, Imat
         write(IOOUT, '(3X, 5E15.6)') (G(i, k), k = 1, kmat)
      end do
   end if
+
   Msing = 0
+
   call GAUSS
+
   if (Msing == 0) then
      if (Debug(Npt)) then
         write(IOOUT, '(/" SOLUTION VECTOR", /, 6x, 5A15/8X, 5A15)') (cmp(k), k = 1, le)
         write(IOOUT, '(3X, 5E15.6)') (X(i), i = 1, Imat)
      end if
+
      if (.not. Convg) then
 ! OBTAIN CORRECTIONS TO THE ESTIMATES
         if (Vol) X(iq2) = X(Iq1)
-        if (Tp) X(iq2) = 0.
+        if (Tp) X(iq2) = 0
         dlnt = X(iq2)
-        sum = X(Iq1)
+        sum0 = X(Iq1)
+
         if (Vol) then
-           X(Iq1) = 0.
-           sum = -dlnt
+           X(Iq1) = 0
+           sum0 = -dlnt
         end if
-        do 520 j = 1, Ng
+
+        outerLoop: do j = 1, Ng
            if (lelim /= 0) then
-              Deln(j) = 0.
+              Deln(j) = 0
               do i = lelim, ls
-                 if (A(i, j) /= 0.) go to 520
+                 if (A(i, j) /= 0) cycle outerLoop
               end do
            end if
-           Deln(j) = -Mu(j) + H0(j) * dlnt + sum
+
+           Deln(j) = -Mu(j) + H0(j) * dlnt + sum0
+
+
+!!$           Deln(j) = Deln(j) + sum(A(1:Nlm, j) * X(1:Nlm)) ???
            do k = 1, Nlm
               Deln(j) = Deln(j) + A(k, j) * X(k)
            end do
-           if (pie /= 0.) Deln(j) = Deln(j) + A(ls, j) * pie
-520     continue
+
+           if (pie /= 0) Deln(j) = Deln(j) + A(ls, j) * pie
+        end do outerLoop
+
         if (Npr /= 0) then
-           do k = 1, Npr
-              j = Jcond(k)
-              kk = Nlm + k
-              Deln(j) = X(kk)
-           end do
+           forall(k = 1:Npr) Deln(Jcond(k)) = X(Nlm+k)
         end if
+
 ! CALCULATE CONTROL FACTOR, AMBDA
-        ambda = 1.d0
-        ambda1 = 1.d0
+        ambda = 1
+        ambda1 = 1
         ilamb = 0
         ilamb1 = 0
-        sum = max(abs(X(Iq1)), abs(dlnt))
-        sum = sum*5.
+        sum0 = 5 * max(abs(X(Iq1)), abs(dlnt))
+
         do j = 1, Ng
-           if (Deln(j) > 0.) then
-              if ((Enln(j) - Ennl + Size) <= 0.) then
+           if (Deln(j) > 0) then
+              if ((Enln(j) - Ennl + Size) <= 0) then
+
                  sum1 = abs(Deln(j)-X(Iq1))
+
                  if (sum1 >= siz9) then
                     sum1 = abs(-9.2103404d0 - Enln(j) + Ennl) / sum1
+
                     if (sum1 < ambda1) then
                        ambda1 = sum1
                        ilamb1 = j
                     end if
                  end if
-              else if (Deln(j) > sum) then
-                 sum = Deln(j)
+
+              else if (Deln(j) > sum0) then
+                 sum0 = Deln(j)
                  ilamb = j
               end if
            end if
         end do
-        if (sum > 2.d0) ambda = 2.d0/sum
+
+        if (sum0 > 2) ambda = 2 / sum0
+
         if (ambda1 <= ambda) then
            ambda = ambda1
            ilamb = ilamb1
         end if
+
         if (Debug(Npt)) then
 ! INTERMEDIATE OUTPUT
            write(IOOUT, '(/" T=", E15.8, " ENN=", E15.8, " ENNL=", E15.8, " PP=", E15.8, &
                 & /" LN P/N=", E15.8, " AMBDA=", E15.8)') Tt, Enn, Ennl, Pp, Tm, ambda
-           if (ambda /= 1.d0) then
+
+           if (ambda /= 1) then
               amb = 'ENN'
               if (abs(X(iq2)) > abs(X(Iq1))) amb = 'TEMP'
               if (ilamb /= 0) amb = Prod(ilamb)
               write(IOOUT, '(/" AMBDA SET BY ", A16)') amb
            end if
-           if (Vol) write(IOOUT, '(" VOLUME=", E15.8, "CC/G")') Vv * .001d0
+
+           if (Vol) write(IOOUT, '(" VOLUME=", E15.8, "CC/G")') Vv * 0.001d0
+
            write(IOOUT, '(/24X, "Nj", 12X, "LN Nj", 8X, "DEL LN Nj", 6X, "H0j/RT", /, 41X, &
                 & "S0j/R", 10X, " G0j/RT", 8X, " Gj/RT")')
+
            do j = 1, Ngc
-              write(IOOUT, '(1X, A16, 4E15.6, /35x, 3E15.6)') Prod(j), En(j, Npt), Enln(j), Deln(j), &
-                   H0(j), S(j), H0(j) - S(j), Mu(j)
+              write(IOOUT, '(1X, A16, 4E15.6, /35x, 3E15.6)') &
+                   Prod(j), En(j, Npt), Enln(j), Deln(j), H0(j), S(j), H0(j) - S(j), Mu(j)
            end do
         end if
+
 ! APPLY CORRECTIONS TO ESTIMATES
-        Totn(Npt) = 0.d0
-        do j = 1, Ng
-           Enln(j) = Enln(j) + ambda * Deln(j)
-        end do
-        do 540 j = 1, Ng
-           En(j, Npt) = 0.
-           if (lelim /= 0) then
-              do i = lelim, ls
-                 if (A(i, j) /= 0.) go to 540
-              end do
-           end if
-           if ((Enln(j) - Ennl + tsize) > 0.) then
-              En(j, Npt) = exp(Enln(j))
-              Totn(Npt) = Totn(Npt) + En(j, Npt)
-           end if
-540     continue
+        Totn(Npt) = 0
+
+        forall(j = 1:Ng) Enln(j) = Enln(j) + ambda * Deln(j)
+
+        En(1:Ng, Npt) = 0
+
+        forall(j = 1:Ng, (lelim == 0 .or. all(A(lelim:ls, j) == 0)) .and. (Enln(j) - Ennl + tsize) > 0)
+           En(j, Npt) = exp(Enln(j))
+        end forall
+
+        Totn(Npt) = Totn(Npt) + sum(En(1:Ng, Npt))
+
         if (Ions .and. Elmt(Nlm) == 'E') then
-           do j = 1, Ng
-              if (A(ls, j) /= 0. .and. En(j, Npt) == 0.) then
-                 if ((Enln(j)-Ennl+esize) > 0.) then
-                    En(j, Npt) = exp(Enln(j))
-                    Totn(Npt) = Totn(Npt) + En(j, Npt)
-                 end if
-              end if
-           end do
+           mask = .false.
+           forall(j = 1:Ng, A(ls, j) /= 0 .and. En(j, Npt) == 0 .and. (Enln(j) - Ennl + esize) > 0)
+              En(j, Npt) = exp(Enln(j))
+              mask(j) = .true.
+           end forall
+           Totn(Npt) = Totn(Npt) + sum(En(1:Ng, Npt), mask=mask)
         end if
+
         Sumn = Totn(Npt)
+
         if (Npr /= 0) then
-           do k = 1, Npr
-              j = Jcond(k)
-              En(j, Npt) = En(j, Npt) + ambda * Deln(j)
-              Totn(Npt) = Totn(Npt) + En(j, Npt)
-           end do
+           forall(k = 1:Npr) En(Jcond(k), Npt) = En(Jcond(k), Npt) + ambda * Deln(Jcond(k))
+           Totn(Npt) = Totn(Npt) + sum(En(Jcond(1:Npr), Npt))
         end if
+
         if (.not. Tp) then
            Tln = Tln + ambda * dlnt
            Tt = exp(Tln)
            cpcalc = .true.
            call CPHS
         end if
+
         if (Vol) then
            Enn = Sumn
            Ennl = log(Enn)
@@ -891,129 +927,142 @@ subroutine EQLBRM
            Ennl = Ennl + ambda * X(Iq1)
            Enn = exp(Ennl)
         end if
+
         Tm = log(Pp / Enn)
+
         if (Elmt(Nlm) == 'E') then
 ! CHECK ON REMOVING IONS
-           do j = 1, Ngc
-              if (A(Nlm, j) /= 0.) then
-                 if (En(j, Npt) > 0.) go to 560
-              end if
-           end do
-           pie = X(Nlm)
-           lelim = Nlm
-           Nlm = Nlm - 1
-           go to 500
+           if (all(A(Nlm, 1:Ngc) == 0 .or. En(1:Ngc, Npt) <= 0)) then
+              pie = X(Nlm)
+              lelim = Nlm
+              Nlm = Nlm - 1
+              go to 500
+           end if
         end if
+
 ! TEST FOR CONVERGENCE
-560     if (numb > maxitn) then
+        if (numb > maxitn) then
            write(IOOUT, '(/, I4, " ITERATIONS DID NOT SATISFY CONVERGENCE", /, 15x, &
                 & " REQUIREMENTS FOR THE POINT", I5, " (EQLBRM)")') maxitn, Npt
+
            if (Nc == 0 .or. i2many) go to 1500
+
            i2many = .true.
+
            if (.not. Hp .or. Npt /= 1 .or. Tt > 100.) then
               if (Npr /= 1 .or. Enn > 1.E-4) go to 1500
 ! HIGH TEMPERATURE, INCLUDED CONDENSED CONDITION
               write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
-              Enn = .1
+
+              Enn = 0.1
               Ennl = -2.3025851
               Sumn = Enn
               xi = Ng
               xi = Enn/xi
               xln = log(xi)
-              do j = 1, Ng
+
+              forall(j = 1:Ng)
                  En(j, Npt) = xi
                  Enln(j) = xln
-              end do
+              end forall
+
               j = Jcond(1)
               k = 1
               go to 1000
+
            else
               write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
                    & "VE BEEN INSERTED,", &
                    & /" RESTART WITH insert DATASET (EQLBRM)")')
               go to 1500
            end if
+
         else
-           sum = (X(Iq1) * Enn / Totn(Npt))
-           if (abs(sum) > 0.5E-5) go to 500
-           do j = 1, Ng
-              if (abs(Deln(j)) * En(j, Npt) / Totn(Npt) > 0.5d-5) go to 500
-           end do
-           if (abs(dlnt) > 1.d-04) go to 500
+           if (abs(X(Iq1) * Enn / Totn(Npt)) > 0.5E-5 .or. &
+                any(abs(Deln(1:Ng)) * En(1:Ng, Npt) / Totn(Npt) > 0.5d-5) .or. &
+                abs(dlnt) > 1.d-04) go to 500
+
            if (Npr /= 0) then
               do k = 1, Npr
                  j = Jcond(k)
                  if (abs(Deln(j)/Totn(Npt)) > 0.5d-5) go to 500
-                 if (En(j, Npt) < 0.) go to 700
+                 if (En(j, Npt) < 0) go to 700
               end do
            end if
+
            le = Nlm
-           do i = 1, Nlm
-              if (abs(B0(i)) >= 1.d-06) then
-                 sum = 0.
-                 do j = 1, Ngc
-                    sum = sum + En(j, Npt) * A(i, j)
-                 end do
-                 if (abs(B0(i)-sum) > Bcheck) go to 500
-              end if
-           end do
+
+           if (any(abs(B0(1:Nlm)) >= 1.d-06 .and. &
+                abs(B0(1:Nlm) - sum(spread(En(1:Ngc, Npt), 1, Nlm) * A(1:Nlm, 1:Ngc), DIM=2)) > Bcheck)) go to 500
+
            if (Trace /= 0.) then
               tsize = xsize
-              tem = 1.
+              tem = 1
+
               if (numb /= 1) then
                  lk = lz
                  if (Nlm < lz) lk = Nlm
                  do i = 1, lk
                     if (i /= lsing) then
-                       tem = 0.
-                       if (X(i) /= 0.) then
+                       tem = 0
+                       if (X(i) /= 0) then
                           tem = abs((pisave(i) - X(i)) / X(i))
-                          if (tem > .001) go to 565
+                          if (tem > 0.001) exit
                        end if
                     end if
                  end do
               end if
-565           do i = 1, Nlm
-                 pisave(i) = X(i)
-              end do
-              if (tem > .001) go to 500
+
+              forall(i = 1:Nlm) pisave(i) = X(i)
+
+              if (tem > 0.001) go to 500
+
               if (Ions) then
 ! CHECK ON ELECTRON BALANCE
                  iter = 1
-                 if (pie /= 0.) then
-                    le = Nlm + 1
-                    X(le) = pie
+
+                 if (pie /= 0) then
+                    X(Nlm+1) = pie
                  end if
-566              sum1 = 0.
-                 sum = 0.
+
+566              sum1 = 0
+                 sum0 = 0
                  pie = X(le)
+
                  do j = 1, Ng
-                    if (A(ls, j) /= 0.) then
-                       En(j, Npt) = 0.
-                       tem = 0.
-                       if (Enln(j) > -87.) tem = exp(Enln(j))
-                       if ((Enln(j)-Ennl+tsize) > 0. .and. Elmt(Nlm) == 'E') then
-                          pie = 0.
+                    if (A(ls, j) /= 0) then
+                       En(j, Npt) = 0
+                       tem = 0
+
+                       if (Enln(j) > -87) tem = exp(Enln(j))
+
+                       if ((Enln(j)-Ennl+tsize) > 0 .and. Elmt(Nlm) == 'E') then
+                          pie = 0
                           En(j, Npt) = tem
                        end if
+
                        aa = A(ls, j) * tem
-                       sum = sum + aa
+                       sum0 = sum0 + aa
                        sum1 = sum1 + aa * A(ls, j)
                     end if
                  end do
-                 if (sum1 /= 0.) then
-                    dpie = -sum / sum1
-                    do j = 1, Ng
-                       if (A(ls, j) /= 0.) Enln(j) = Enln(j) + A(ls, j) * dpie
-                    end do
-                    if (Debug(Npt)) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", I4, "  DELTA PI =", E14.7)') iter, dpie
-                    if (abs(dpie) > .0001) then
+
+                 if (sum1 /= 0) then
+                    dpie = -sum0 / sum1
+
+                    forall(j = 1:Ng, A(ls, j) /= 0) Enln(j) = Enln(j) + A(ls, j) * dpie
+
+                    if (Debug(Npt)) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", i4, "  DELTA PI =", e14.7)') iter, dpie
+
+                    if (abs(dpie) > 0.0001) then
                        X(le) = X(le) + dpie
                        iter = iter + 1
+
                        if (iter <= 80) go to 566
                        write(IOOUT, '(/" DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)")')
                        go to 1500
-                    else if (Elmt(Nlm) == 'E' .and. pie /= 0.) then
+
+                    else if (Elmt(Nlm) == 'E' .and. pie /= 0) then
                        Nlm = Nlm - 1
                        newcom = .true.
                     end if
@@ -1021,20 +1070,22 @@ subroutine EQLBRM
               end if
            end if
         end if
+
      else if (.not. Pderiv) then
 ! TEMPERATURE DERIVATIVES--CONVG=T, PDERIV=F
         Dlvtp(Npt) = 1. - X(Iq1)
         Cpr(Npt) = G(iq2, iq2)
-        do j = 1, Iq1
-           Cpr(Npt) = Cpr(Npt) - G(iq2, j) * X(j)
-        end do
+
+        Cpr(Npt) = Cpr(Npt) - sum(G(iq2, 1:Iq1) * X(1:Iq1))
+
 ! PRESSURE DERIVATIVE--CONVG=T, PDERIV=T
         Pderiv = .true.
         go to 500
+
      else
-        Dlvpt(Npt) = -1. + X(Iq1)
+        Dlvpt(Npt) = -1 + X(Iq1)
         if (Jliq == 0) then
-           Gammas(Npt) = -1. / (Dlvpt(Npt) + (Dlvtp(Npt)**2) * Enn / Cpr(Npt))
+           Gammas(Npt) = -1 / (Dlvpt(Npt) + (Dlvtp(Npt)**2) * Enn / Cpr(Npt))
         else
            En(Jsol, Npt) = ensol
            Hsum(Npt) = Hsum(Npt) + En(Jliq, Npt) * (H0(Jliq) - H0(Jsol))
@@ -1044,45 +1095,50 @@ subroutine EQLBRM
         end if
         go to 1400
      end if
+
 ! SINGULAR MATRIX
   else
      if (Convg) then
         write(IOOUT, '(/" DERIVATIVE MATRIX SINGULAR (EQLBRM)")')
-        Dlvpt(Npt) = -1.
-        Dlvtp(Npt) = 1.
+        Dlvpt(Npt) = -1
+        Dlvtp(Npt) = 1
         Cpr(Npt) = Cpsum
-        Gammas(Npt) = -1. / (Dlvpt(Npt) + Dlvtp(Npt)**2 * Enn / Cpr(Npt))
+        Gammas(Npt) = -1 / (Dlvpt(Npt) + Dlvtp(Npt)**2 * Enn / Cpr(Npt))
         go to 1400
+
      else
         write(IOOUT, '(/" SINGULAR MATRIX, ITERATION", I3, "  VARIABLE", I3, "(EQLBRM)")') numb, Msing
         lsing = Msing
         ixsing = ixsing + 1
         if (ixsing <= 8) then
-           xsize = 80.
+           xsize = 80
            tsize = xsize
            if (Msing > Nlm .and. numb < 1 .and. Npr > 1 .and. jdelg > 0) then
-              ween = 1000.
+              ween = 1000
               j = 0
-              do 570 i = 1, Npr
+
+              do i = 1, Npr
                  jcondi = Jcond(i)
                  if (jcondi /= jdelg) then
                     do ll = 1, Nlm
-                       if (A(ll, jdelg) /= 0 .and. A(ll, jcondi) /= 0.) then
+                       if (A(ll, jdelg) /= 0 .and. A(ll, jcondi) /= 0) then
                           if (En(jcondi, Npt) <= ween) then
                              ween = En(jcondi, Npt)
                              j = jcondi
                              k = i
                           end if
-                          go to 570
+                          exit
                        end if
                     end do
                  end if
-570           continue
+              end do
+
               if (j > 0) then
                  write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
                  go to 1000
               end if
-           else if (.not. Hp .or. Npt /= 1 .or. Nc == 0 .or. Tt > 100.) then
+
+           else if (.not. Hp .or. Npt /= 1 .or. Nc == 0 .or. Tt > 100) then
               if (ixsing >= 3) then
                  if (Msing < Iq1) then
                     if (reduce .and. Msing <= Nlm) then
@@ -1095,13 +1151,14 @@ subroutine EQLBRM
                             & /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') Npt, Elmt(Nlm)
                        Nlm = Nlm - 1
                        go to 500
+
                     else if (Msing <= Nlm) then
 ! FIND NEW COMPONENTS
                        if (.not. Ions) go to 1100
                        if (Elmt(Nlm) /= 'E') go to 1100
-                       do j = 1, Ng
-                          if (A(Nlm, j) /= 0.) En(j, Npt) = 0.d0
-                       end do
+
+                       forall(j = 1:Ng, A(Nlm, j) /= 0) En(j, Npt) = 0
+
                        pie = X(Nlm)
                        Nlm = Nlm - 1
                        if (Msing > Nlm) go to 500
@@ -1110,6 +1167,7 @@ subroutine EQLBRM
 ! REMOVE CONDENSED SPECIES TO CORRECT SINGULARITY
                        k = Msing - Nlm
                        j = Jcond(k)
+
                        if (j /= jcons) then
                           jcons = j
                           go to 1000
@@ -1117,17 +1175,12 @@ subroutine EQLBRM
                     end if
                  end if
               end if
-              do 575 jj = 1, Ng
-                 if (Ions) then
-                    if (Elmt(Nlm) /= 'E') then
-                       if (A(ls, jj) /= 0.) go to 575
-                    end if
-                 end if
-                 if (En(jj, Npt) == 0.) then
-                    En(jj, Npt) = smalno
-                    Enln(jj) = smnol
-                 end if
-575           continue
+
+              forall(j = 1:Ng, .not. (Ions .and. Elmt(Nlm) /= 'E' .and. A(ls, j) /= 0) .and. En(j, Npt) == 0)
+                 En(j, Npt) = smalno
+                 Enln(j) = smnol
+              end forall
+
               go to 500
            else
               write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
@@ -1136,19 +1189,17 @@ subroutine EQLBRM
            end if
         end if
      end if
+
      go to 1500
   end if
+
 ! CALCULATE ENTROPY, CHECK ON DELTA S FOR SP PROBLEMS
-600 Ssum(Npt) = 0.
-  do j = 1, Ng
-     Ssum(Npt) = Ssum(Npt) + En(j, Npt) * (S(j) - Enln(j) - Tm)
-  end do
+600 Ssum(Npt) = sum(En(1:Ng, Npt) * (S(1:Ng) - Enln(1:Ng) - Tm))
+
   if (Npr > 0) then
-     do k = 1, Npr
-        j = Jcond(k)
-        Ssum(Npt) = Ssum(Npt) + En(j, Npt) * S(j)
-     end do
+     Ssum(Npt) = Ssum(Npt) + sum(En(Jcond(1:Npr), Npt) * S(Jcond(1:Npr)))
   end if
+
   if (.not. Sp) then
      Convg = .true.
   else
@@ -1244,11 +1295,11 @@ subroutine EQLBRM
            if (En(j, Npt) <= 0.) then
               if (Tt > Temp(1, inc) .or. Temp(1, inc) == Tg(1)) then
                  if (Tt <= Temp(2, inc)) then
-                    sum = 0.
+                    sum0 = 0.
                     do i = 1, Nlm
-                       sum = sum + A(i, j) * X(i)
+                       sum0 = sum0 + A(i, j) * X(i)
                     end do
-                    delg = (H0(j) - S(j) - sum) / Mw(j)
+                    delg = (H0(j) - S(j) - sum0) / Mw(j)
                     if (delg < sizeg .and. delg < 0.) then
                        if (j /= jcons) then
                           sizeg = delg
@@ -1516,7 +1567,7 @@ subroutine EQLBRM
   Nlm = ls
   if (Npr > 0) Gonly = .false.
   return
-end subroutine
+end subroutine EQLBRM
 
 
 
