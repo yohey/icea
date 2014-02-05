@@ -4863,7 +4863,7 @@ subroutine TRANIN
 ! LOCAL VARIABLES
   integer, save:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
   logical, save:: change, elc1, elc2, ion1, ion2, setx
-  real(8), save:: coeff, debye, ekt, enel, enmin, ionic, lamda, omega, prop, qc, ratio, &
+  real(8), save:: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
        stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
        trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
 
@@ -4894,26 +4894,25 @@ subroutine TRANIN
   end if
 ! PICK OUT IMPORTANT SPECIES
   Nm = 0
-  total = 0.d0
-  enmin = 1.0d-11/Wm(Npt)
-  testot = 0.999999999d0/Wm(Npt)
+  total = 0
+  enmin = 1.0d-11 / Wm(Npt)
+  testot = 0.999999999d0 / Wm(Npt)
   do i = 1, Lsave
      j = Jcm(i)
-     if (En(j, Npt) <= 0.d0 .and. j <= Ngc) then
-        if ((Enln(j)-Ennl+25.328436d0) > 0.d0) En(j, Npt) &
-             = exp(Enln(j))
+     if (En(j, Npt) <= 0 .and. j <= Ngc) then
+        if ((Enln(j) - Ennl + 25.328436d0) > 0) En(j, Npt) = exp(Enln(j))
      end if
      Nm = Nm + 1
      Ind(Nm) = j
      total = total + En(j, Npt)
-     if (Mw(j) < 1.0d0) enel = En(j, Npt)
+     if (Mw(j) < 1) enel = En(j, Npt)
      En(j, Npt) = -En(j, Npt)
   end do
-  testen = 1.d0/(Ng*Wm(Npt))
+  testen = 1 / (Ng * Wm(Npt))
   loop = 0
 100 if (total <= testot .and. loop <= Ng) then
      loop = loop + 1
-     testen = testen/10.
+     testen = testen / 10
      do j = 1, Ng
         if (En(j, Npt) >= testen) then
            if (Nm >= maxTr) then
@@ -4937,7 +4936,7 @@ subroutine TRANIN
   do i = 1, Nm
      j = Ind(i)
      Wmol(i) = Mw(j)
-     Xs(i) = En(j, Npt)/total
+     Xs(i) = En(j, Npt) / total
   end do
   if (Npt == Nfz) then
      nms = Nm
@@ -4953,12 +4952,12 @@ subroutine TRANIN
   if (Nr /= 0) then
      do k = 1, maxTr
         do m = 1, maxTr
-           Stc(k, m) = 0.0d0
+           Stc(k, m) = 0
         end do
      end do
      k = 1
      do i = Lsave + 1, Nm
-        Stc(k, i) = -1.0d0
+        Stc(k, i) = -1
         j = Ind(i)
         do m = 1, Lsave
            Stc(k, m) = A(m, j)
@@ -4975,12 +4974,12 @@ subroutine TRANIN
                  if (.not. change) then
                     change = .true.
                     do k = 1, Nm
-                       stcoef(k) = Stc(j, k)/coeff
+                       stcoef(k) = Stc(j, k) / coeff
                     end do
                     go to 210
                  else
                     do k = 1, Nm
-                       Stc(j, k) = (Stc(j, k)/coeff) - stcoef(k)
+                       Stc(j, k) = Stc(j, k) / coeff - stcoef(k)
                     end do
                  end if
               end if
@@ -5000,9 +4999,9 @@ subroutine TRANIN
   end if
 ! FIND TRANSPORT DATA FOR IMPORTANT INTERACTIONS
 300 do i = 1, Nm
-     Con(i) = 0.0
+     Con(i) = 0
      do j = 1, Nm
-        Eta(i, j) = 0.0
+        Eta(i, j) = 0
      end do
   end do
   rewind IOSCH
@@ -5016,16 +5015,14 @@ subroutine TRANIN
               if (k == 2) then
                  kvc = 1
 302              kt = 1
-                 if (trc(2, 1, kvc) /= 0.E0) then
-                    if (trc(2, 2, kvc) /= 0.E0) then
+                 if (trc(2, 1, kvc) /= 0) then
+                    if (trc(2, 2, kvc) /= 0) then
                        if (Tt > trc(2, 1, kvc)) kt = 2
-                       if (trc(2, 3, kvc) /= 0.) then
+                       if (trc(2, 3, kvc) /= 0) then
                           if (Tt > trc(2, 2, kvc)) kt = 3
                        end if
                     end if
-                    prop = EXP(trc(6, kt, kvc) &
-                         +(trc(5, kt, kvc)/Tt+trc(4, kt, kvc)) &
-                         /Tt+trc(3, kt, kvc)*Tln)
+                    prop = exp(trc(6, kt, kvc) + (trc(5, kt, kvc) / Tt + trc(4, kt, kvc)) / Tt + trc(3, kt, kvc) * Tln)
                     if (kvc == 2) then
                        Con(l) = prop
                        go to 400
@@ -5045,7 +5042,7 @@ subroutine TRANIN
            end if
         end do
         go to 400
-350  continue
+350 continue
 400 continue
 ! MAKE ESTIMATES FOR MISSING DATA
 !
@@ -5053,29 +5050,26 @@ subroutine TRANIN
 ! ESTIMATES FOR  E-ION, ION-ION, E-NEUTRAL, ION-NEUTRAL
 ! DEBYE SHIELDING WITH IONIC CUTOFF DISTANCE
   if (Ions) then
-     te = Tt/1000.d0
-     ekt = 4.8032d0**2/(Boltz*te)
-     qc = 100.d0*(ekt**2)
-     xsel = enel/total
+     te = Tt / 1000
+     ekt = 4.8032d0**2 / (Boltz * te)
+     qc = 100 * ekt**2
+     xsel = enel / total
      if (xsel < 1.0d-12) xsel = 1.0d-12
-     debye = ((22.5d0/Pi)*(Rr/Avgdr*100.d0)*(te/xsel))/ekt**3
-     ionic = ((810.d0/(4.0d0*Pi))*(Rr/Avgdr*100d0)*(te/xsel)) &
-          **(2.0/3.0)/ekt**2
-     lamda = sqrt(debye+ionic)
-     lamda = max(lamda, 2.71828183d0)
+     debye = ((22.5d0 / Pi) * (Rr / Avgdr * 100) * (te/xsel)) / ekt**3
+     ionic = ((810 / (4*Pi)) * (Rr / Avgdr * 100d0) * (te/xsel))**(2/3.) / ekt**2
+     lambda = sqrt(debye + ionic)
+     lambda = max(lambda, 2.71828183d0)
   end if
   do i = 1, Nm
      k = Ind(i)
      Cprr(i) = Cp(k)
-     if (.not. (Ions .and. (abs(A(Nlm, k)) == 1.d0) .and.  &
-          (Eta(i, i) == 0.d0))) then
-        if (Eta(i, i) == 0.d0) then
-           omega = log(50.d0*Wmol(i)**4.6/Tt**1.4)
-           omega = max(omega, 1.d0)
-           Eta(i, i) = Viscns*sqrt(Wmol(i)*Tt)/omega
+     if (.not. (Ions .and. (abs(A(Nlm, k)) == 1) .and. (Eta(i, i) == 0))) then
+        if (Eta(i, i) == 0) then
+           omega = log(50 * Wmol(i)**4.6 / Tt**1.4)
+           omega = max(omega, 1.)
+           Eta(i, i) = Viscns * sqrt(Wmol(i) * Tt) / omega
         end if
-        if (Con(i) == 0.d0) Con(i) = Eta(i, i) &
-             *Rr*(.00375d0+.00132d0*(Cprr(i)-2.5d0))/Wmol(i)
+        if (Con(i) == 0) Con(i) = Eta(i, i) * Rr * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
      end if
   end do
   do i = 1, Nm
@@ -5084,47 +5078,42 @@ subroutine TRANIN
         ion2 = .false.
         elc1 = .false.
         elc2 = .false.
-        omega = 0.0
-        if (Eta(i, j) == 0.) Eta(i, j) = Eta(j, i)
-        if (Eta(j, i) == 0.) Eta(j, i) = Eta(i, j)
-        if (Eta(i, j) == 0.) then
+        omega = 0
+        if (Eta(i, j) == 0) Eta(i, j) = Eta(j, i)
+        if (Eta(j, i) == 0) Eta(j, i) = Eta(i, j)
+        if (Eta(i, j) == 0) then
            if (Ions) then
 ! ESTIMATE FOR IONS
               k1 = Ind(i)
               k2 = Ind(j)
-              if (abs(A(Nlm, k1)) == 1.0) ion1 = .true.
-              if (abs(A(Nlm, k2)) == 1.0) ion2 = .true.
-              if (Wmol(i) < 1.0) elc1 = .true.
-              if (Wmol(j) < 1.0) elc2 = .true.
-              if (ion1 .and. ion2) omega = 1.36d0*qc*log(lamda)
-              if ((ion1 .and. elc2) .or. (ion2 .and. elc1)) &
-                   omega = 1.29d0*qc*log(lamda)
-              if ((ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1)) &
-                   omega = EXP(6.776-0.4*Tln)
-              if (omega /= 0.) then
-                 wmred = sqrt(2.0*Tt*Wmol(i)*Wmol(j)/(Wmol(i)+Wmol(j)))
-                 Eta(i, j) = Viscns*wmred*Pi/omega
+              if (abs(A(Nlm, k1)) == 1) ion1 = .true.
+              if (abs(A(Nlm, k2)) == 1) ion2 = .true.
+              if (Wmol(i) < 1) elc1 = .true.
+              if (Wmol(j) < 1) elc2 = .true.
+              if (ion1 .and. ion2) omega = 1.36d0 * qc * log(lambda)
+              if ((ion1 .and. elc2) .or. (ion2 .and. elc1)) omega = 1.29d0 * qc * log(lambda)
+              if ((ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1)) omega = exp(6.776 - 0.4 * Tln)
+              if (omega /= 0) then
+                 wmred = sqrt(2 * Tt * Wmol(i) * Wmol(j) / (Wmol(i) + Wmol(j)))
+                 Eta(i, j) = Viscns * wmred * Pi / omega
                  Eta(j, i) = Eta(i, j)
                  if (i == j) then
                     Cprr(i) = Cp(k1)
-                    Con(i) = Eta(i, i) &
-                         *Rr*(.00375d0+.00132d0*(Cprr(i)-2.5d0)) &
-                         /Wmol(i)
+                    Con(i) = Eta(i, i) * Rr * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
                  end if
                  go to 450
               end if
            end if
 ! ESTIMATE FOR UNLIKE INTERACTIONS FROM RIGID SPHERE ANALOGY
-           ratio = sqrt(Wmol(j)/Wmol(i))
-           Eta(i, j) = 5.656854d0*Eta(i, i) &
-                *SQRT(Wmol(j)/(Wmol(i)+Wmol(j)))
-           Eta(i, j) = Eta(i, j)/(1.d0+sqrt(ratio*Eta(i, i)/Eta(j, j)))**2
+           ratio = sqrt(Wmol(j) / Wmol(i))
+           Eta(i, j) = 5.656854d0 * Eta(i, i) * sqrt(Wmol(j) / (Wmol(i) + Wmol(j)))
+           Eta(i, j) = Eta(i, j) / (1 + sqrt(ratio * Eta(i, i) / Eta(j, j)))**2
            Eta(j, i) = Eta(i, j)
         end if
 450  continue
   end do
   return
-end subroutine
+end subroutine TRANIN
 
 
 
