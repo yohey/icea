@@ -801,11 +801,11 @@ subroutine EQLBRM
            sum0 = -dlnt
         end if
 
-        outerLoop: do j = 1, Ng
+        outerLoop0: do j = 1, Ng
            if (lelim /= 0) then
               Deln(j) = 0
               do i = lelim, ls
-                 if (A(i, j) /= 0) cycle outerLoop
+                 if (A(i, j) /= 0) cycle outerLoop0
               end do
            end if
 
@@ -818,7 +818,7 @@ subroutine EQLBRM
            end do
 
            if (pie /= 0) Deln(j) = Deln(j) + A(ls, j) * pie
-        end do outerLoop
+        end do outerLoop0
 
         if (Npr /= 0) then
            forall(k = 1:Npr) Deln(Jcond(k)) = X(Nlm+k)
@@ -1204,44 +1204,49 @@ subroutine EQLBRM
      Convg = .true.
   else
      tem = Ssum(Npt) - S0
-     if (abs(tem) > .0005) go to 500
-     if (Debug(Npt)) write(IOOUT, '(/" DELTA S/R =", E15.8)') tem
+     if (abs(tem) > 0.0005) go to 500
+     if (Debug(Npt)) write(IOOUT, '(/" DELTA S/R =", e15.8)') tem
      Convg = .true.
   end if
+
 ! CONVERGENCE TESTS ARE SATISFIED, TEST CONDENSED SPECIES.
 700 ncvg = ncvg + 1
+
   if (ncvg > lncvg) then
 ! ERROR, SET TT=0
      write(IOOUT, '(/, I3, " CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED", " SPECIES (EQLBRM)")') lncvg
      go to 1500
   else
      if (.not. Shock) then
-        do il = 1, le
-           xx(il) = X(il)
-        end do
+        forall(il = 1:le) xx(il) = X(il)
+
         if (.not. Short) then
-           if (newcom) write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4A12/(18X, 5A12))') (cmp(k), k = 1, le)
-           write(IOOUT, '(I4, I5, 5F12.3, /(12X, 5F12.3))') Npt, numb, Tt, (xx(il), il = 1, le)
+           if (newcom) write(IOOUT, '(/" POINT ITN", 6x, "T", 10x, 4a12/(18x, 5a12))') (cmp(k), k = 1, le)
+           write(IOOUT, '(i4, i5, 5f12.3, /(12x, 5f12.3))') Npt, numb, Tt, (xx(il), il = 1, le)
         end if
-        if (.not. Tp .and. Npr == 0 .and. Tt <= Tg(1) * .2d0) then
-           write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
-                & "VE BEEN INSERTED,", &
+
+        if (.not. Tp .and. Npr == 0 .and. Tt <= Tg(1) * 0.2d0) then
+           write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", "VE BEEN INSERTED,", &
                 & /" RESTART WITH insert DATASET (EQLBRM)")')
            go to 1500
         end if
+
         newcom = .false.
      end if
+
      if (Npr /= 0) then
-        bigneg = 0.
+        bigneg = 0
         jneg = 0
+
         do k = 1, Npr
            j = Jcond(k)
-           if (En(j, Npt)*Cp(j) <= bigneg) then
+           if (En(j, Npt) * Cp(j) <= bigneg) then
               bigneg = En(j, Npt) * Cp(j)
               jneg = j
               kneg = k
            end if
         end do
+
         if (jneg /= 0) then
            j = jneg
            k = kneg
@@ -1252,55 +1257,64 @@ subroutine EQLBRM
            go to 1000
         end if
      end if
+
      if (Ngc /= Ng .or. Tp) then
         Ng = Ngc
+
         call CPHS
+
         Ng = Ngp1 - 1
         cpcalc = .true.
+
         if (Ngc == Ng) go to 750
+
         call ALLCON
+
         if (Npr /= 0 .and. .not. Tp) then
-           gap = 50.
-           do 710 ipr = 1, Npr
+           gap = 50
+
+           outerLoop1: do ipr = 1, Npr
               j = Jcond(ipr)
               if (j /= Jsol .and. j /= Jliq) then
                  inc = j - Ng
                  kg = -Ifz(inc)
+
                  do iz = 1, 20
                     kg = kg + 1
                     kc = inc + kg
+
                     if (Tt <= Temp(2, kc)) then
                        if (kg /= 0) then
                           jkg = j + kg
-                          if (abs(kg) > 1 .or. Prod(j) == Prod(jkg)) &
-                               go to 740
+                          if (abs(kg) > 1 .or. Prod(j) == Prod(jkg)) go to 740
                           if (jkg == jsw) go to 720
                           if (Tt < Temp(1, inc) - gap .or. Tt > Temp(2, inc) + gap) go to 740
                           go to 720
                        end if
-                       go to 710
+                       cycle outerLoop1
                     else if (Ifz(kc+1) <= Ifz(kc)) then
-                       go to 710
+                       cycle outerLoop1
                     end if
                  end do
                  if (Tt > Temp(2, kc) * 1.2d0) go to 1000
               end if
-710        continue
+           end do outerLoop1
         end if
-        sizeg = 0.
-        szgj = 0.
+
+        sizeg = 0
+        szgj = 0
+
         do inc = 1, Nc
            j = inc + Ng
-           if (Debug(Npt)) write(IOOUT, '(/1X, A15, 2F10.3, 3X, E15.7)') Prod(j), Temp(1, inc), Temp(2, inc), En(j, Npt)
-           if (En(j, Npt) <= 0.) then
+
+           if (Debug(Npt)) write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') Prod(j), Temp(1, inc), Temp(2, inc), En(j, Npt)
+
+           if (En(j, Npt) <= 0) then
               if (Tt > Temp(1, inc) .or. Temp(1, inc) == Tg(1)) then
                  if (Tt <= Temp(2, inc)) then
-                    sum0 = 0.
-                    do i = 1, Nlm
-                       sum0 = sum0 + A(i, j) * X(i)
-                    end do
-                    delg = (H0(j) - S(j) - sum0) / Mw(j)
-                    if (delg < sizeg .and. delg < 0.) then
+                    delg = (H0(j) - S(j) - sum(A(1:Nlm, j) * X(1:Nlm))) / Mw(j)
+
+                    if (delg < sizeg .and. delg < 0) then
                        if (j /= jcons) then
                           sizeg = delg
                           jdelg = j
@@ -1309,81 +1323,93 @@ subroutine EQLBRM
                        end if
                        ipr = ipr - 1
                     end if
+
                     if (Debug(Npt)) write(IOOUT, '(" [G0j-SUM(Aij*PIi)]/Mj =", E15.7, 9X, "MAX NEG DELTA G =", E15.7)') delg, sizeg
                  end if
               end if
            end if
         end do
-        if (sizeg == 0. .and. szgj == 0.) go to 750
-        if (sizeg /= 0.) then
+
+        if (sizeg == 0 .and. szgj == 0) go to 750
+
+        if (sizeg /= 0) then
            j = jdelg
            go to 800
         else
            write(IOOUT, '(/" REINSERTION OF ", A16, " LIKELY TO CAUSE SINGULARITY, ", "(EQLBRM)")') Prod(jcons)
            go to 1500
         end if
+
 720     kk = max(0, kg)
         tmelt = Temp(kk+1, inc)
         Tt = tmelt
         Tln = log(Tt)
         Jsol = min(j, jkg)
         Jliq = Jsol + 1
-        En(jkg, Npt) = .5d0 * En(j, Npt)
+        En(jkg, Npt) = 0.5d0 * En(j, Npt)
         En(j, Npt) = En(jkg, Npt)
         j = jkg
         go to 800
+
 ! WRONG PHASE INCLUDED FOR T INTERVAL, SWITCH EN
 740     En(jkg, Npt) = En(j, Npt)
         Jcond(ipr) = jkg
-        En(j, Npt) = 0.
+        En(j, Npt) = 0
         jsw = j
+
         if (Prod(j) /= Prod(jkg) .and. .not. Short) &
              write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') Prod(j), Prod(jkg)
+
         j = jkg
         go to 900
      end if
+
 ! CONVERGED WITH NO CONDENSED CHANGES.  IF BOTH SOLID & LIQ PRESENT, 
 ! TEMPORARILY REMOVE LIQ TO PREVENT SINGULAR DERIVATIVE MATRIX.
 750  Sumn = Enn
      if (Jsol /= 0) then
         ensol = En(Jsol, Npt)
         En(Jsol, Npt) = En(Jsol, Npt) + En(Jliq, Npt)
-        Dlvtp(Npt) = 0.
-        Cpr(Npt) = 0.
-        Gammas(Npt) = 0.
+        Dlvtp(Npt) = 0
+        Cpr(Npt) = 0
+        Gammas(Npt) = 0
         Pderiv = .true.
+
         do k = 1, Npr
-           if (Jcond(k) == Jliq) go to 760
+           if (Jcond(k) == Jliq) exit
         end do
-760     do i = k, Npr
-           Jcond(i) = Jcond(i+1)
-        end do
+
+        Jcond(k:Npr) = Jcond(k+1:Npr+1)
+
         Npr = Npr - 1
      end if
+
      go to 500
   end if
+
 ! ADD CONDENSED SPECIES
 800 Npr = Npr + 1
-  i = Npr
-  do ix = 2, Npr
-     Jcond(i) = Jcond(i-1)
-     i = i - 1
-  end do
+
+  Jcond(2:Npr) = Jcond(1:Npr-1)
   Jcond(1) = j
-  if (.not. Short) write(IOOUT, '(" ADD ", A16)') Prod(j)
+
+  if (.not. Short) write(IOOUT, '(" ADD ", a16)') Prod(j)
+
 900 inc = j - Ng
   Convg = .false.
   if (Tp) cpcalc = .false.
   numb = -1
   go to 500
+
 ! REMOVE CONDENSED SPECIES
-1000 En(j, Npt) = 0.d0
-  Deln(j) = 0.d0
-  Enln(j) = 0.d0
-  do i = k, Npr
-     Jcond(i) = Jcond(i+1)
-  end do
+1000 En(j, Npt) = 0
+  Deln(j) = 0
+  Enln(j) = 0
+
+  Jcond(k:Npr) = Jcond(k+1:Npr+1)
+
   if (.not. Short) write(IOOUT, '(" REMOVE ", A16)') Prod(j)
+
   Npr = Npr - 1
   do i = 1, Nlm
      if (cmp(i) == Prod(j)) then
@@ -1393,46 +1419,48 @@ subroutine EQLBRM
         go to 1100
      end if
   end do
+
   go to 900
+
 1100 newcom = .false.
   nn = Nlm
+
   if (Elmt(Nlm) == 'E') nn = Nlm - 1
+
 ! FIND ORDER OF SPECIES FOR COMPONENTS - BIGGEST TO SMALLEST
   njc = 0
-  do lc = 1, nn
-     lcs(lc) = 0
-  end do
-1200 bigen = -1.d-35
+  lcs(1:nn) = 0
+
+1200 bigen = -1d-35
+
   do j = 1, Ng
      if (En(j, Npt) > bigen) then
-        if (.not. Ions .or. A(ls, j) == 0.) then
+        if (.not. Ions .or. A(ls, j) == 0) then
            bigen = En(j, Npt)
            jbx = j
         end if
      end if
   end do
+
   if (bigen > 0.) then
      do 1250 lc = 1, nn
         if (jbx == 0) jbx = Jx(lc)
+
         if (A(lc, jbx) > smalno) then
            if (njc /= 0) then
-              do 1205 i = 1, njc
+              do i = 1, njc
                  l = lcs(i)
                  if (l == lc) go to 1250
-                 if (l == 0) go to 1210
+                 if (l == 0) exit
                  j = Jcm(l)
-                 do l = 1, nn
-                    if (A(l, jbx) /= A(l, j)) go to 1205
-                 end do
-                 go to 1250
-1205          continue
+                 if (all(A(1:nn, jbx) == A(1:nn, j))) go to 1250
+              end do
            end if
-1210       do i = 1, nn
-              if (i /= lc) then
-                 jex = Jx(i)
-                 if (abs(A(lc, jbx) * A(i, jex) - A(lc, jex) * A(i, jbx)) <= smalno) go to 1250
-              end if
+
+           do i = 1, nn
+              if (i /= lc .and. abs(A(lc, jbx) * A(i, jx(i)) - A(lc, jx(i)) * A(i, jbx)) <= smalno) go to 1250
            end do
+
            njc = njc + 1
            if (jbx /= Jcm(lc)) newcom = .true.
            Jcm(lc) = jbx
@@ -1440,41 +1468,47 @@ subroutine EQLBRM
            go to 1300
         end if
 1250 continue
+
 1300 En(jbx, Npt) = -En(jbx, Npt)
      if (njc < nn) go to 1200
   end if
-  do j = 1, Ng
-     En(j, Npt) = abs(En(j, Npt))
-  end do
+
+  forall(j = 1:Ng) En(j, Npt) = abs(En(j, Npt))
+
   if (newcom) then
 ! SWITCH COMPONENTS
      do lc = 1, nn
         jb = Jcm(lc)
-        if (A(lc, jb) == 0.) then
+
+        if (A(lc, jb) == 0) then
            jb = Jx(lc)
            Jcm(lc) = jb
         end if
+
         tem = A(lc, jb)
-        if (tem /= 0.) then
+
+        if (tem /= 0) then
            pisave(lc) = H0(jb) - S(jb)
+
            if (jb <= Ng) pisave(lc) = pisave(lc) + Enln(jb) + Tm
            cmp(lc) = trim(Prod(jb))
+
 ! CALCULATE NEW COEFFICIENTS
-           if (tem /= 1.) then
+           if (tem /= 1) then
               B0(lc) = B0(lc) / tem
               B0p(lc, 1) = B0p(lc, 1) / tem
               B0p(lc, 2) = B0p(lc, 2) / tem
-              do j = 1, Nspx
-                 A(lc, j) = A(lc, j) / tem
-              end do
+
+              forall(j = 1:Nspx) A(lc, j) = A(lc, j) / tem
            end if
+
            do i = 1, nn
               if (A(i, jb) /= 0. .and. i /= lc) then
                  tem = A(i, jb)
-                 do j = 1, Nspx
-                    A(i, j) = A(i, j) - A(lc, j) * tem
-                    if (abs(A(i, j)) < 1.E-5) A(i, j) = 0.
-                 end do
+
+                 forall(j = 1:Nspx) A(i, j) = A(i, j) - A(lc, j) * tem
+                 forall(j = 1:Nspx, abs(A(i, j)) < 1.E-5) A(i, j) = 0
+
                  B0(i) = B0(i) - B0(lc) * tem
                  B0p(i, 1) = B0p(i, 1) - B0p(lc, 1) * tem
                  B0p(i, 2) = B0p(i, 2) - B0p(lc, 2) * tem
@@ -1482,22 +1516,27 @@ subroutine EQLBRM
            end do
         end if
      end do
+
      if (Debug(Npt)) then
         write(IOOUT, '(/" NEW COMPONENTS")')
         write(IOOUT, '(/2x, 6A12)') (cmp(k), k = 1, nn)
      end if
   end if
+
   if (Msing /= 0) then
 ! SWITCH ORDER OF MSING AND NLM COMPONENTS
      reduce = .true.
      lelim = Nlm
      lsing = Nlm
+
      if (Msing /= Nlm) then
+
         do j = 1, Nspx
            aa = A(Msing, j)
            A(Msing, j) = A(Nlm, j)
            A(Nlm, j) = aa
         end do
+
         ja = Jcm(Msing)
         Jcm(Msing) = Jcm(Nlm)
         Jcm(Nlm) = ja
@@ -1519,6 +1558,7 @@ subroutine EQLBRM
         aa = pisave(Msing)
         pisave(Msing) = pisave(Nlm)
         pisave(Nlm) = aa
+
         do i = 1, 2
            aa = B0p(Msing, i)
            B0p(Msing, i) = B0p(Nlm, i)
@@ -1528,44 +1568,49 @@ subroutine EQLBRM
   else if (.not. newcom .and. Trace == 0.) then
      go to 600
   end if
+
   Msing = 0
   tsize = xsize
   go to 500
+
 1400 Ttt(Npt) = Tt
   Ppp(Npt) = Pp
   Vlm(Npt) = Rr * Enn * Tt / Pp
   Hsum(Npt) = Hsum(Npt) * Tt
   Wm(Npt) = 1. / Enn
   gasfrc = Enn/Totn(Npt)
-  if (gasfrc < .0001) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", I3, " DUE TO", &
-       & /" LOW MOLE FRACTION OF GASES (", E15.8, ") (EQLBRM)")') Npt, gasfrc
-  if (Trace /= 0.) then
-     do 1450 j = 1, Ng
-        if (lelim /= 0) then
-           do i = lelim, ls
-              if (A(i, j) /= 0.) go to 1450
-           end do
-        end if
-        if (Enln(j) > -87.) En(j, Npt) = exp(Enln(j))
-1450 continue
+
+  if (gasfrc < 0.0001) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", i3, " DUE TO", &
+       & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') Npt, gasfrc
+
+  if (Trace /= 0) then
+     forall(j = 1:Ng, lelim == 0 .or. all(A(lelim:ls, j) == 0) .and. Enln(j) > -87) En(j, Npt) = exp(Enln(j))
   end if
-  if (Debug(Npt)) write(IOOUT, '(/" POINT=", I3, 3X, "P=", E13.6, 3X, "T=", E13.6, /3X, "H/R=", &
-       & E13.6, 3X, "S/R=", E13.6, /3X, "M=", E13.6, 3X, "CP/R=", E13.6, 3X, &
-       & "DLVPT=", E13.6, /3X, "DLVTP=", E13.6, 3X, "GAMMA(S)=", E13.6, 3X, &
-       & "V=", E13.6)') Npt, Pp, Tt, Hsum(Npt), &
-       Ssum(Npt), Wm(Npt), Cpr(Npt), Dlvpt(Npt), &
-       Dlvtp(Npt), Gammas(Npt), Vlm(Npt)
+
+  if (Debug(Npt)) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
+       & e13.6, 3x, "S/R=", e13.6, /3x, "M=", e13.6, 3x, "CP/R=", e13.6, 3x, &
+       & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
+       Npt, Pp, Tt, Hsum(Npt), Ssum(Npt), Wm(Npt), Cpr(Npt), Dlvpt(Npt), Dlvtp(Npt), Gammas(Npt), Vlm(Npt)
+
   if (Tt >= Tg(1) .and. Tt <= Tg(4)) go to 1600
+
   if (Shock) go to 1600
-  write(IOOUT, '(" THE TEMPERATURE=", E12.4, " IS OUT OF RANGE FOR POINT", I5, "(EQLBRM)")') Tt, Npt
-  if (Tt >= Tg(1) * .8d0 .and. Tt <= Tg(4) * 1.1d0) go to 1600
+
+  write(IOOUT, '(" THE TEMPERATURE=", e12.4, " IS OUT OF RANGE FOR POINT", i5, "(EQLBRM)")') Tt, Npt
+
+  if (Tt >= Tg(1) * 0.8d0 .and. Tt <= Tg(4) * 1.1d0) go to 1600
+
   Npt = Npt + 1
-1500 Tt = 0.
+
+1500 Tt = 0
   Npt = Npt - 1
   write(IOOUT, '(/" CALCULATIONS STOPPED AFTER POINT", I3, "(EQLBRM)")') Npt
+
 1600 Lsave = Nlm
   Nlm = ls
+
   if (Npr > 0) Gonly = .false.
+
   return
 end subroutine EQLBRM
 
