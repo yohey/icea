@@ -1632,50 +1632,44 @@ subroutine FROZEN
   dlpm = log(Pp * Wm(Nfz))
   nnn = Npt
   Npt = Nfz
-  do j = 1, Ng
-     if (En(j, Nfz) /= 0.d0) Deln(j) = -(log(En(j, Nfz)) + dlpm)
-  end do
+
+  forall(j = 1:Ng, En(j, Nfz) /= 0) Deln(j) = -(log(En(j, Nfz)) + dlpm)
+
   do iter = 1, 8
-     Ssum(nnn) = 0.d0
-     Cpsum = 0.d0
      call CPHS
-     do j = 1, Ng
-        Cpsum = Cpsum + En(j, Nfz) * Cp(j)
-        Ssum(nnn) = Ssum(nnn) + En(j, Nfz) * (S(j) + Deln(j))
-     end do
+
+     Cpsum = sum(En(1:Ng, Nfz) * Cp(1:Ng))
+     Ssum(nnn) = sum(En(1:Ng, Nfz) * (S(1:Ng) + Deln(1:Ng)))
+
      if (Npr /= 0) then
-        do k = 1, Npr
-           j = Jcond(k)
-           Cpsum = Cpsum + En(j, Nfz) * Cp(j)
-           Ssum(nnn) = Ssum(nnn) + En(j, Nfz) * S(j)
-        end do
+        Cpsum = Cpsum + sum(En(Jcond(1:Npr), Nfz) * Cp(Jcond(1:Npr)))
+        Ssum(nnn) = Ssum(nnn) + sum(En(Jcond(1:Npr), Nfz) * S(Jcond(1:Npr)))
      end if
+
      if (Convg) then
         Npt = nnn
-        Hsum(Npt) = 0.d0
-        do j = 1, Ngc
-           Hsum(Npt) = Hsum(Npt) + En(j, Nfz) * H0(j)
-        end do
-        Hsum(Npt) = Hsum(Npt) * Tt
+
+        Hsum(Npt) = sum(En(1:Ngc, Nfz) * H0(1:Ngc)) * Tt
+
         Ttt(Npt) = Tt
-        Gammas(Npt) = Cpsum/(Cpsum - 1. / Wm(Nfz))
+        Gammas(Npt) = Cpsum / (Cpsum - 1 / Wm(Nfz))
         Vlm(Npt) = Rr * Tt / (Wm(Nfz) * Pp)
         Wm(Npt) = Wm(Nfz)
-        Dlvpt(Npt) = -1.
-        Dlvtp(Npt) = 1.
+        Dlvpt(Npt) = -1
+        Dlvtp(Npt) = 1
         Totn(Npt) = Totn(Nfz)
         Ppp(Npt) = Pp
         Cpr(Npt) = Cpsum
-        if (Tt >= Tg(1) * .8d0) then
-           do i = Ngp1, Ngc
-              if (En(i, Nfz) /= 0.) then
-                 inc = i - Ng
-                 if (Tt < (Temp(1, inc)-50.) .or. Tt > (Temp(2, inc)+50.)) go to 100
-              end if
-           end do
-           go to 200
+
+        if (Tt >= Tg(1) * 0.8d0) then
+           if (all(En(Ngp1:Ngc, Nfz) == 0)) return
+           if (all(Temp(1, Ngp1-Ng:Ngc-Ng) - 50 <= Tt .and. Tt <= Temp(2, Ngp1-Ng:Ngc-Ng) + 50)) return
         end if
-        go to 100
+
+        Tt = 0
+        Npt = Npt - 1
+        return
+
      else
         dlnt = (Ssum(Nfz) - Ssum(nnn)) / Cpsum
         Tln = Tln + dlnt
@@ -1683,10 +1677,13 @@ subroutine FROZEN
         Tt = exp(Tln)
      end if
   end do
+
   write(IOOUT, '(/" FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)")')
-100 Tt = 0.
+
+  Tt = 0
   Npt = Npt - 1
-200 return
+
+  return
 end subroutine FROZEN
 
 
