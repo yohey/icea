@@ -1695,93 +1695,82 @@ subroutine GAUSS
 !***********************************************************************
   use cea
   implicit none
+
 ! LOCAL VARIABLES
   integer, save:: i, imatp1, j, k, nn, nnp1
-  real(8):: bigno = 1e25
-  real(8), save:: coefx(50), tmp
+  real(8), parameter:: bigNo = 1e25
+  real(8), save:: coefx(50)
+  real(8):: tmp(Imat+1)
 
 ! BEGIN ELIMINATION OF NNTH VARIABLE
   imatp1 = Imat + 1
+
   do nn = 1, Imat
      if (nn /= Imat) then
 ! SEARCH FOR MAXIMUM COEFFICIENT IN EACH ROW
         nnp1 = nn + 1
+
         do i = nn, Imat
-           coefx(i) = bigno
-           if (G(i, nn) /= 0.) then
-              coefx(i) = 0.
-              do j = nnp1, imatp1
-                 coefx(i) = max(coefx(i), abs(G(i, j)))
-              end do
-              tmp = abs(G(i, nn))
-              if (bigno * tmp > coefx(i)) then
-                 coefx(i) = coefx(i) / tmp
+           coefx(i) = bigNo
+
+           if (G(i, nn) /= 0) then
+              coefx(i) = maxval(abs(G(i, nnp1:imatp1)))
+
+              if (coefx(i) < bigNo * abs(G(i, nn))) then
+                 coefx(i) = coefx(i) / abs(G(i, nn))
               else
-                 coefx(i) = bigno
+                 coefx(i) = bigNo
               end if
            end if
         end do
-! LOCATE ROW WITH SMALLEST MAXIMUM COEFFICIENT
-        tmp = bigno
-        i = 0
-        do j = nn, Imat
-           if (coefx(j) < tmp) then
-              tmp = coefx(j)
-              i = j
-           end if
-        end do
-        if (i == 0) then
+
+        if (all(coefx(nn:Imat) == bigNo)) then
            Msing = nn
-           go to 99999
+           return
+        end if
+
+! LOCATE ROW WITH SMALLEST MAXIMUM COEFFICIENT
+        tmp(1:1) = minloc(coefx(nn:Imat))
+        i = tmp(1) + nn - 1
+
 ! INDEX I LOCATES EQUATION TO BE USED FOR ELIMINATING THE NTH
 ! VARIABLE FROM THE REMAINING EQUATIONS
 ! INTERCHANGE EQUATIONS I AND NN
-        else if (nn /= i) then
-           do j = nn, imatp1
-              tmp = G(i, j)
-              G(i, j) = G(nn, j)
-              G(nn, j) = tmp
-           end do
+        if (i /= nn) then
+           tmp(nn:imatp1) = G(i, nn:imatp1)
+           G(i, nn:imatp1) = G(nn, nn:imatp1)
+           G(nn, nn:imatp1) = tmp(nn:imatp1)
         end if
+
      else if (G(nn, nn) == 0) then
         Msing = nn
-        go to 99999
+        return
      end if
+
 ! DIVIDE NTH ROW BY NTH DIAGONAL ELEMENT AND ELIMINATE THE NTH
 ! VARIABLE FROM THE REMAINING EQUATIONS
-     k = nn + 1
-     tmp = G(nn, nn)
-     if (tmp == 0.) then
+     if (G(nn, nn) == 0) then
         Msing = nn
-        go to 99999
+        return
      else
-        do j = k, imatp1
-           G(nn, j) = G(nn, j) / tmp
-        end do
-        if (k /= imatp1) then
-           do i = k, Imat
+        forall(j = nn+1:imatp1) G(nn, j) = G(nn, j) / G(nn, nn)
+
+        if (nn + 1 /= imatp1) then
 !DIR$ IVDEP
-              do j = k, imatp1
-                 G(i, j) = G(i, j) - G(i, nn) * G(nn, j)
-              end do
-           end do
+           forall(i = nn+1:Imat, j = nn+1:imatp1) G(i, j) = G(i, j) - G(i, nn) * G(nn, j)
         end if
      end if
   end do
-! BACKSOLVE FOR THE VARIABLES
-  k = Imat
-100 j = k + 1
-  X(k) = 0.0d0
-  tmp = 0.0
-  if (Imat >= j) then
-     do i = j, Imat
-        tmp = tmp + G(k, i) * X(i)
-     end do
-  end if
-  X(k) = G(k, imatp1) - tmp
-  k = k - 1
-  if (k /= 0) go to 100
-99999 return
+
+  ! BACKSOLVE FOR THE VARIABLES
+  do k = Imat, 0, -1
+     X(k) = G(k, imatp1)
+     if (Imat >= k+1) then
+        X(k) = X(k) - sum(G(k, k+1:Imat) * X(k+1:Imat))
+     end if
+  end do
+
+  return
 end subroutine GAUSS
 
 
