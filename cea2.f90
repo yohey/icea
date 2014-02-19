@@ -2818,6 +2818,7 @@ subroutine MATRIX
 !***********************************************************************
   use cea
   implicit none
+
 ! LOCAL VARIABLES
   integer, save:: i, iq, iq2, iq3, isym, j, k, kk, kmat
   real(8), save:: energyl, f, h, ss, sss, term, term1
@@ -2828,16 +2829,11 @@ subroutine MATRIX
   iq3 = iq2 + 1
   kmat = iq3
   if (.not. Convg .and. Tp) kmat = iq2
-  Imat = kmat - 1
-! CLEAR MATRIX STORAGES TO ZERO
-  do i = 1, Imat
-     do k = 1, kmat
-        G(i, k) = 0
-     end do
-  end do
-  G(iq2, Iq1) = 0
+  imat = kmat - 1
+  G = 0
   sss = 0
   Hsum(Npt) = 0
+
 ! BEGIN SET-UP OF ITERATION OR DERIVATIVE MATRIX
   do j = 1, Ng
      Mu(j) = H0(j) - S(j) + Enln(j) + Tm
@@ -2847,12 +2843,11 @@ subroutine MATRIX
         ss = h - f
         term1 = h
         if (kmat == iq2) term1 = f
+
         do i = 1, Nlm
            if (A(i, j) /= 0) then
               term = A(i, j) * En(j, Npt)
-              do k = i, Nlm
-                 G(i, k) = G(i, k) + A(k, j) * term
-              end do
+              forall(k = i:Nlm) G(i, k) = G(i, k) + A(k, j) * term
               G(i, Iq1) = G(i, Iq1) + term
               G(i, iq2) = G(i, iq2) + A(i, j) * term1
               if (.not. (Convg .or. Tp)) then
@@ -2861,6 +2856,7 @@ subroutine MATRIX
               end if
            end if
         end do
+
         if (kmat /= iq2) then
            if (Convg .or. Hp) then
               G(iq2, iq2) = G(iq2, iq2) + H0(j) * h
@@ -2878,43 +2874,48 @@ subroutine MATRIX
         G(Iq1, iq2) = G(Iq1, iq2) + term1
      end if
   end do
+
 ! CONDENSED SPECIES
   if (Npr /= 0) then
      do k = 1, Npr
         j = Jcond(k)
         kk = Nlm + k
         Mu(j) = H0(j) - S(j)
-        do i = 1, Nlm
+
+        forall(i = 1:Nlm)
            G(i, kk) = A(i, j)
            G(i, kmat) = G(i, kmat) - A(i, j) * En(j, Npt)
-        end do
+        end forall
+
         G(kk, iq2) = H0(j)
         G(kk, kmat) = Mu(j)
         Hsum(Npt) = Hsum(Npt) + H0(j) * En(j, Npt)
+
         if (Sp) then
            sss = sss + S(j) * En(j, Npt)
            G(iq2, kk) = S(j)
         end if
      end do
   end if
+
   sss = sss + G(iq2, Iq1)
   Hsum(Npt) = Hsum(Npt) + G(Iq1, iq2)
   G(Iq1, Iq1) = Sumn - Enn
+
 ! REFLECT SYMMETRIC PORTIONS OF THE MATRIX
   isym = Iq1
   if (Hp .or. Convg) isym = iq2
+
   do i = 1, isym
 !DIR$ IVDEP
-     do j = i, isym
-        G(j, i) = G(i, j)
-     end do
+     forall(j = i:isym) G(j, i) = G(i, j)
   end do
+
 ! COMPLETE THE RIGHT HAND SIDE
   if (.not. Convg) then
-     do i = 1, Nlm
-        G(i, kmat) = G(i, kmat) + B0(i) - G(i, Iq1)
-     end do
+     forall(i = 1:Nlm) G(i, kmat) = G(i, kmat) + B0(i) - G(i, Iq1)
      G(Iq1, kmat) = G(Iq1, kmat) + Enn - Sumn
+
 ! COMPLETE ENERGY ROW AND TEMPERATURE COLUMN
      if (kmat /= iq2) then
         if (Sp) energyl = S0 + Enn - Sumn - sss
@@ -2922,36 +2923,39 @@ subroutine MATRIX
         G(iq2, iq3) = G(iq2, iq3) + energyl
         G(iq2, iq2) = G(iq2, iq2) + Cpsum
      end if
+
   else
      if (Pderiv) then
 ! PDERIV = .true.-- SET UP MATRIX TO SOLVE FOR DLVPT
         G(Iq1, iq2) = Enn
-        do i = 1, iq
-           G(i, iq2) = G(i, Iq1)
-        end do
+        forall(i = 1:iq) G(i, iq2) = G(i, Iq1)
      end if
      G(iq2, iq2) = G(iq2, iq2) + Cpsum
   end if
+
   if (Vol .and. .not. Convg) then
 ! CONSTANT VOLUME MATRIX
      if (kmat == iq2) then
-        do i = 1, iq
-           G(i, Iq1) = G(i, iq2)
-        end do
+        forall(i = 1:iq) G(i, Iq1) = G(i, iq2)
      else
+
 !DIR$ IVDEP
-        do i = 1, iq
+        forall(i = 1:iq)
            G(Iq1, i) = G(iq2, i) - G(Iq1, i)
            G(i, Iq1) = G(i, iq2) - G(i, Iq1)
            G(i, iq2) = G(i, iq3)
-        end do
+        end forall
+
         G(Iq1, Iq1) = G(iq2, iq2) - G(Iq1, iq2) - G(iq2, Iq1)
         G(Iq1, iq2) = G(iq2, iq3) - G(Iq1, iq3)
         if (Hp) G(Iq1, iq2) = G(Iq1, iq2) + Enn
      end if
-     kmat = Imat
-     Imat = Imat - 1
+
+     kmat = imat
+     imat = imat - 1
   end if
+
+  return
 end subroutine MATRIX
 
 
@@ -5522,7 +5526,7 @@ subroutine TRANP
         end do
         G(i, m) = delh(i)
      end do
-     Imat = Nr
+     imat = Nr
      call GAUSS
      cpreac = 0
      do i = 1, Nr
