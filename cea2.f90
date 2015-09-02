@@ -3387,7 +3387,7 @@ subroutine OUT1
 
   if (.not. Moles) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
        & " OXIDANT IN TOTAL OXIDANTS")')
-  go to 200
+  return
 
 !***********************************************************************
   entry OUT4
@@ -3439,7 +3439,7 @@ subroutine OUT1
   ! PRANDTL NUMBER
   write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
 
-200 return
+  return
 end subroutine OUT1
 
 
