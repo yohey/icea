@@ -3724,6 +3724,7 @@ subroutine RKTOUT
 !***********************************************************************
   use cea
   implicit none
+
 ! LOCAL VARIABLES
   character(4):: exit(11) = 'EXIT'
   character(15), save:: fi, fiv, fr, z(4)
@@ -3736,19 +3737,27 @@ subroutine RKTOUT
      if (Nfz > 1) write(IOOUT, '(33x, "AFTER POINT", i2)') Nfz
   else
      write(IOOUT, '(/////13x, " THEORETICAL ROCKET PERFORMANCE ASSUMING EQUILIBRIUM")')
-     if (Iopt /= 0) write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
-     if (Iopt == 0) write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
+     if (Iopt /= 0) then
+        write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
+     else
+        write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
+     end if
   end if
+
   if (Ttt(1) == T(It)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
+
   tem = Ppp(1) * 14.696006d0 / 1.01325d0
   write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
+
   i23 = 2
   if (Iopt > 0) then
      if (Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') Subar(1), App(2)
      if (Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') Ma, App(2)
      i23 = 3
   end if
+
   call OUT1
+
   Fmt(4) = Fmt(6)
   nex = Npt - 2
   if (Page1) then
@@ -3760,6 +3769,7 @@ subroutine RKTOUT
   else
      ione = i23
   end if
+
 ! PRESSURE RATIOS
   if (Iopt == 0) then
      write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
@@ -3775,7 +3785,9 @@ subroutine RKTOUT
      call VARFMT(X)
      write(IOOUT, Fmt) 'Pinj/P         ', (X(i), i = 1, Npt)
   end if
+
   call OUT2
+
   mppf  = 0
   mppj  = 0
   mmach = 0
@@ -3783,14 +3795,17 @@ subroutine RKTOUT
   mcf   = 0
   mivac = 0
   misp  = 0
+
   do i = 1, Nplt
      ixfz = index(Pltvar(i)(2:), 'fz')
      ixfr = index(Pltvar(i)(2:), 'fr')
+
      if (ixfz /= 0 .or. ixfr /= 0) then
         if (Eql) cycle
      else if (.not. Eql) then
         cycle
      end if
+
      if (Pltvar(i)(:4) == 'pi/p' .or. Pltvar(i)(:3) == 'pip') then
         if (Iopt == 0) mppf = i
         if (Iopt /= 0) mppj = i
@@ -3806,6 +3821,7 @@ subroutine RKTOUT
         misp = i
      end if
   end do
+
   if (SIunit) then
      agv = 1
      gc = 1
@@ -3819,6 +3835,7 @@ subroutine RKTOUT
      fiv = 'Ivac,LB-SEC/LB'
      fi = 'Isp, LB-SEC/LB'
   end if
+
   do k = 2, Npt
      Spim(k) = sqrt(2 * Rr * (Hsum(1) - Hsum(k))) / agv
 ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
@@ -3831,6 +3848,7 @@ subroutine RKTOUT
      Vmoc(k) = 0
      if (Sonvel(k) /= 0) Vmoc(k) = Spim(k) * agv / Sonvel(k)
   end do
+
 ! MACH NUMBER
   Vmoc(1) = 0
   if (Gammas(i23) == 0) Vmoc(i23) = 0
@@ -3838,6 +3856,7 @@ subroutine RKTOUT
   write(IOOUT, Fmt) 'MACH NUMBER    ', (Vmoc(j), j = 1, Npt)
   if (Trnspt) call OUT4
   write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
+
 ! AREA RATIO
   Fmt(4) = '9x,'
   Fmt(i46) = '9x,'
@@ -3845,23 +3864,28 @@ subroutine RKTOUT
   Fmt(5) = ' '
   Fmt(i57) = ' '
   write(IOOUT, Fmt) 'Ae/At          ', (Aeat(j), j = 2, Npt)
+
 ! C*
   Fmt(i57) = '13'
   Fmt(i68) = Fmt(i68 + 2)
   Fmt(i79) = '1,'
   write(IOOUT, Fmt) fr, (Cstr, j = 2, Npt)
+
 ! CF - THRUST COEFICIENT
   Fmt(i79) = '4,'
   do i = 2, Npt
      X(i) = gc * Spim(i) / Cstr
   end do
   write(IOOUT, Fmt) 'CF             ', (X(j), j = 2, Npt)
+
 ! VACUUM IMPULSE
   Fmt(i57) = '13'
   Fmt(i79) = '1,'
   write(IOOUT, Fmt) fiv, (vaci(j), j = 2, Npt)
+
 ! SPECIFIC IMPULSE
   write(IOOUT, Fmt) fi, (Spim(j), j = 2, Npt)
+
   if (Nplt > 0) then
      Spim(1) = 0
      Aeat(1) = 0
@@ -3879,14 +3903,17 @@ subroutine RKTOUT
         if (misp > 0)  Pltout(i+Iplt-ione, misp)  = Spim(i)
      end do
   end if
+
   write(IOOUT, *)
   Fmt(4) = ' '
   Fmt(5) = '13'
   Fmt(7) = '5,'
+
   if (Iopt /= 0) then
      Fmt(i46) = Fmt(8)
      Fmt(i57) = Fmt(9)
   end if
+
   if (.not. Eql) then
      if (Massf) then
         write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
@@ -3894,25 +3921,33 @@ subroutine RKTOUT
         write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
         ww = 1 / Totn(Nfz)
      end if
+
 ! MOLE (OR MASS) FRACTIONS - FROZEN
      tra = 5.E-6
      if (Trace /= 0) tra = Trace
      line = 0
+
      do k = 1, Ngc
         if (Massf) ww = Mw(k)
         X(line+1) = En(k, Nfz) * ww
+
         if (X(line+1) >= tra) then
            line = line + 1
            z(line) = Prod(k)
         end if
+
         if (line == 3 .or. k == Ngc) then
-           if (line == 0) go to 200
+           if (line == 0) then
+              call OUT3
+              return
+           end if
            write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), X(ln), ln = 1, line)
            line = 0
         end if
      end do
   end if
-200 call OUT3
+
+  call OUT3
   return
 end subroutine RKTOUT
 
