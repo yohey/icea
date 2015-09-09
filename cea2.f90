@@ -3460,22 +3460,17 @@ subroutine REACT
   real(8), save:: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, T1, T2
   real(8):: T1save, T2save
 
-  do k = 1, 2
-     wdone(k) = .false.
-     Wp(k) = 0
-     Hpp(k) = 0
-     Vpls(k) = 0
-     Vmin(k) = 0
-     Am(k) = 0
-     Rh(k) = 0
-     do j = 1, maxEl
-        Elmt(j) = ' '
-        B0p(j, k) = 0
-     end do
-  end do
-  do i = 1, maxEl
-     dat(i) = 0
-  end do
+  wdone = .false.
+  Wp = 0
+  Hpp = 0
+  Vpls = 0
+  Vmin = 0
+  Am = 0
+  Rh = 0
+  Elmt = ' '
+  B0p = 0
+  dat = 0
+
 ! IF OXIDANT, KR = 1
 ! IF FUEL, KR = 2
   do n = 1, Nreac
@@ -3483,11 +3478,13 @@ subroutine REACT
      T1save = 20000
      T2save = 0
      rcoefs = .true.
+
      if (Energy(n) == 'lib' .or. Rnum(n, 1) == 0) then
         Tt = Rtemp(n)
         rewind IOTHM
         read(IOTHM) Tg, ntgas, ntot, nall
-        do 20 itot = 1, nall
+
+        do itot = 1, nall
            if (itot <= ntot) then
               icf = 3
               if (itot > ntgas) icf = 1
@@ -3496,11 +3493,13 @@ subroutine REACT
               read(IOTHM) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, eform
               if (nint > 0) read(IOTHM) ((rcf(i, j), i = 1, 9), j = 1, nint)
            end if
+
            if (sub == Rname(n) .or. sub == '*' // Rname(n)) then
               if (nint == 0) then
                  rcoefs = .false.
                  hOK = .true.
                  Enth(n) = eform * 1000 / Rr
+
                  if (Tt == 0) then
                     Tt = T1
                     Rtemp(n) = T1
@@ -3513,7 +3512,7 @@ subroutine REACT
                                & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') Rname(n), T1, Tt
                           Nlm = 0
                           hOK = .false.
-                          go to 200
+                          return
                        else
                           write(IOOUT, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
                                & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
@@ -3533,18 +3532,21 @@ subroutine REACT
                  endif
                  if (T1save < Tt .and. Tt < T2save) hOK = .true.
               end if
+
               do j = 1, 5
                  if (bb(j) == 0) exit
                  Nfla(n) = j
                  Ratom(n, j) = el(j)
                  Rnum(n, j) = bb(j)
               end do
-              if (Tt == 0.) then
+
+              if (Tt == 0) then
                  if (.not. Hp) go to 50
                  write(IOOUT, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
                  Nlm = 0
-                 go to 200
+                 return
               end if
+
               if (rcoefs .and. hOK) then
                  Tln = log(Tt)
                  l = 1
@@ -3552,21 +3554,26 @@ subroutine REACT
                     if (Tt > Tg(2)) l = 2
                     if (Tt > Tg(3)) l = 3
                  end if
+
                  Enth(n) = (((((rcf(7, l)/5) * Tt + rcf(6, l) / 4) * Tt + rcf(5, l) / 3) * Tt &
                       + rcf(4, l) / 2) * Tt + rcf(3, l)) * Tt - rcf(1, l) / Tt + rcf(2, l) * Tln + rcf(8, l)
+
                  if (Vol .and. ifaz <= 0) Enth(n) = Enth(n) - Tt
               end if
+
               if (hOK) go to 50
            end if
-20      continue
+        end do
+
         if (.not. hOK) then
            write(IOOUT, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
                 & "IS OUTSIDE ITS TEMPERATURE RANGE", f8.2, " TO", f9.2, "K (REACT)")') Tt, Rname(n), T1save, T2save
            Energy(n) = ' '
            Nlm = 0
-           goto 200
+           return
         endif
      end if
+
 50   ifrmla = Nfla(n)
      if (Fox(n)(:1) == 'f') then
         fuel = .true.
@@ -3580,21 +3587,23 @@ subroutine REACT
         kr = 1
         Fox(n) = 'OXIDANT'
      end if
-     do j = 1, maxEl
-        dat(j) = 0
-     end do
+
+     dat = 0
+
 ! STORE ATOMIC SYMBOLS IN ELMT ARRAY.
 ! CALCULATE MOLECULAR WEIGHT.
 ! TEMPORARILY STORE ATOMIC VALENCE IN X.
      rm = 0
-     do 100 jj = 1, ifrmla
+     do jj = 1, ifrmla
         do j = 1, maxEl
            nj = j
            if (Elmt(j) == ' ') exit
            if (Ratom(n, jj) == Elmt(j)) go to 80
         end do
+
         Nlm = nj
         Elmt(j) = Ratom(n, jj)
+
 80      do kk = 1, 100
            if (Symbol(kk) == Ratom(n, jj)) then
               rm = rm + Rnum(n, jj) * Atmwt(kk)
@@ -3604,10 +3613,12 @@ subroutine REACT
               go to 100
            end if
         end do
+
         write(IOOUT, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') Ratom(n, jj)
         Nlm = 0
-        go to 200
-100  continue
+        return
+100  end do
+
      if (Pecwt(n) < 0) then
         Pecwt(n) = 0
         if (.not. Moles .and. .not. wdone(kr)) then
@@ -3618,46 +3629,48 @@ subroutine REACT
         else
            write(IOOUT, '(/" AMOUNT MISSING FOR REACTANT NO.", i2, "(REACT)")') n
            Nlm = 0
-           go to 200
+           return
         end if
      end if
+
 ! ADD CONTRIBUTIONS TO WP(K), HPP(K), AM(K), AND B0P(I, K)
      if (Pecwt(n) > 0) wdone(kr) = .true.
      pcwt = Pecwt(n)
      if (Moles) pcwt = pcwt * rm
      Wp(kr) = Wp(kr) + pcwt
+
      if (rm <= 0) then
         Nlm = 0
-        go to 200
+        return
      else
         Hpp(kr) = Hpp(kr) + Enth(n) * pcwt / rm
         Am(kr) = Am(kr) + pcwt / rm
         if (Dens(n) /= 0) then
            Rh(kr) = Rh(kr) + pcwt / Dens(n)
         else
-           Rh(1) = 0
-           Rh(2) = 0
+           Rh = 0
         end if
-        do j = 1, Nlm
+
+        forall(j = 1:Nlm)
            B0p(j, kr) = dat(j) * pcwt / rm + B0p(j, kr)
-        end do
+        end forall
+
         Rmw(n) = rm
      end if
+
   end do
+
   if (.not. fuel) then
 ! 100 PERCENT OXIDANT, SWITCH INDICES
-     do n = 1, Nreac
-        Fox(n) = ' '
-     end do
+     Fox = ' '
      Wp(2) = Wp(1)
      Wp(1) = 0
      Hpp(2) = Hpp(1)
      Am(2) = Am(1)
      Am(1) = 0
-     do j = 1, Nlm
-        B0p(j, 2) = B0p(j, 1)
-     end do
+     B0p(:, 2) = B0p(:, 1)
   end if
+
   if (Nlm /= 0) then
 ! NORMALIZE HPP(KKR), AM(KR), B0P(I, KR), AND PECWT(N).
 ! CALCULATE V+(KR), AND V-(KR)
@@ -3671,15 +3684,19 @@ subroutine REACT
               if (X(j) < 0) Vmin(kr) = Vmin(kr) + B0p(j, kr) * X(j)
               if (X(j) > 0) Vpls(kr) = Vpls(kr) + B0p(j, kr) * X(j)
            end do
-           if (.not. Moles) then
-              do n = 1, Nreac
-                 if (Fox(n)(:1) /= 'O' .or. kr /= 2) then
-                    if (Fox(n)(:1) == 'O' .or. kr /= 1) Pecwt(n) = Pecwt(n) / Wp(kr)
-                 end if
-              end do
-           end if
         end if
      end do
+
+     if (.not. Moles) then
+        do n = 1, Nreac
+           if (Fox(n)(:1) == 'O') then
+              Pecwt(n) = Pecwt(n) / Wp(1)
+           else
+              Pecwt(n) = Pecwt(n) / Wp(2)
+           end if
+        end do
+     end if
+
      if (.not. Short) then
         if (Moles) then
            write(IOOUT, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
@@ -3693,8 +3710,10 @@ subroutine REACT
                 Fox(n), Rname(n), Pecwt(n), Enth(n), Rtemp(n), Dens(n), (Ratom(n, i), Rnum(n, i), i = 1, Nfla(n))
         end do
      end if
+
   end if
-200 return
+
+  return
 end subroutine REACT
 
 
