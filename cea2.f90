@@ -1763,7 +1763,7 @@ subroutine GAUSS
   end do
 
   ! BACKSOLVE FOR THE VARIABLES
-  do k = Imat, 0, -1
+  do k = Imat, 1, -1
      X(k) = G(k, imatp1)
      if (Imat >= k+1) then
         X(k) = X(k) - sum(G(k, k+1:Imat) * X(k+1:Imat))
