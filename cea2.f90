@@ -5998,11 +5998,11 @@ subroutine VARFMT(Vx)
      vi = abs(Vx(i))
      k = 2*i + 3
      Fmt(k) = '5,'
-     if (vi >= 1.) Fmt(k) = '4,'
-     if (vi >= 10.) Fmt(k) = '3,'
-     if (vi >= 100.) Fmt(k) = '2,'
-     if (vi >= 10000.) Fmt(k) = '1,'
-     if (vi >= 1000000.) Fmt(k) = '0,'
+     if (vi >= 0.99995d0)  Fmt(k) = '4,'
+     if (vi >= 9.99950d0)  Fmt(k) = '3,'
+     if (vi >= 99.9950d0)  Fmt(k) = '2,'
+     if (vi >= 9999.95d0)  Fmt(k) = '1,'
+     if (vi >= 999999.5d0) Fmt(k) = '0,'
   end do
   Fmt(29)(2:) = ' '
 end subroutine VARFMT
