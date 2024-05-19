@@ -2150,11 +2150,11 @@ subroutine INPUT(readOK, caseOK, Ensert)
   use cea
   implicit none
 
-! DUMMY ARGUMENTS
+  ! DUMMY ARGUMENTS
   logical:: caseOK, readOK
   character(15):: Ensert(20)
 
-! LOCAL VARIABLES
+  ! LOCAL VARIABLES
   character(26), parameter:: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   character(15), save:: cin(maxNgc), cx15
   character(4), save:: code, cx4
@@ -2181,107 +2181,116 @@ subroutine INPUT(readOK, caseOK, Ensert)
   SIunit = .true.
   pltdat = .false.
 
-! CALL INFREE TO READ DATASET
-100 call INFREE(readOK, cin, ncin, lcin, dpin)
+  do
+     do
+        ! CALL INFREE TO READ DATASET
+        call INFREE(readOK, cin, ncin, lcin, dpin)
 
-  if (.not. readOK) return
+        if (.not. readOK) return
 
-  code = trim(cin(1))
+        code = trim(cin(1))
 
-  if (code /= '    ') then
-! STORE PRODUCT NAMES FROM 'ONLY' DATASET
-     if (code == 'only') then
-        Nonly = min(maxNgc, ncin-1)
-        forall(i = 1:Nonly) Prod(i) = cin(i+1)
-
-! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
-     else if (code == 'inse') then
-        Nsert = min(20, ncin-1)
-        forall(i = 1:Nsert) Ensert(i) = cin(i+1)
-
-! STORE PRODUCT NAMES FROM 'OMIT' DATASET
-     else if (code == 'omit') then
-! CHECK OMIT DATASET
-        Nomit = min(maxNgc, ncin-1)
-        forall(i = 1:Nomit) Omit(i) = cin(i+1)
-
-! KEYWORD 'THER' READ
-! CALL UTHERM TO CONVERT formatTED THERMODYNAMIC DATA
-     else if (code == 'ther') then
-        Newr = .true.
-        rewind IOTHM
-        call UTHERM(readOK)
-        if (.not. readOK) then
-           write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
-           return
+        if (code == '    ') then
+           cycle
         end if
 
-! KEYWORD 'TRAN' READ
-! CALL UTRAN TO CONVERT formatTED TRANSPORT PROPERTIES
-     else if (code == 'tran') then
-        call UTRAN(readOK)
-        if (.not. readOK) then
-           write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
-           return
-        end if
+        ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
+        if (code == 'only') then
+           Nonly = min(maxNgc, ncin-1)
+           forall(i = 1:Nonly) Prod(i) = cin(i+1)
 
-! PROCESS 'OUTP' DATASET.
-     else if (code == 'outp') then
-        do i = 2, ncin
-           if (lcin(i) < 0) then
-              cx2 = cin(i)(1:2)
-              cx3 = cin(i)(1:3)
-              cx4 = cin(i)(1:4)
+        ! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
+        else if (code == 'inse') then
+           Nsert = min(20, ncin-1)
+           forall(i = 1:Nsert) Ensert(i) = cin(i+1)
 
-              if (cx3 == 'cal') then
-                 SIunit = .false.
+        ! STORE PRODUCT NAMES FROM 'OMIT' DATASET
+        else if (code == 'omit') then
+           ! CHECK OMIT DATASET
+           Nomit = min(maxNgc, ncin-1)
+           forall(i = 1:Nomit) Omit(i) = cin(i+1)
 
-              else if (cx4 == 'tran' .or. cx3 == 'trn') then
-                 Trnspt = .true.
-
-              else if (cx4 == 'trac') then
-                 Trace = dpin(i+1)
-
-              else if (cin(i)(:5) == 'short') then
-                 Short = .true.
-
-              else if (cin(i)(:5) == 'massf') then
-                 Massf = .true.
-
-              else if (cx3 == 'deb' .or. cx3 == 'dbg') then
-                 forall(j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol) Debug(int(dpin(j))) = .true.
-                 forall(j = i+1:ncin, lcin(j) == i) lcin(j) = 0
-
-              else if (cx2 == 'si') then
-                 SIunit = .true.
-
-              else if (pltdat .and. Nplt < 20) then
-                 Nplt = Nplt + 1
-                 Pltvar(Nplt) = cin(i)
-
-              else if (cx2 == 'pl') then
-                 pltdat = .true.
-
-              else
-                 write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cin(i)
-              end if
+        ! KEYWORD 'THER' READ
+        ! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
+        else if (code == 'ther') then
+           Newr = .true.
+           rewind IOTHM
+           call UTHERM(readOK)
+           if (.not. readOK) then
+              write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+              return
            end if
-        end do
 
-! SORT AND STORE DATA FROM 'REAC' DATASET.
-     else if (code == 'reac') then
-        reacts = .true.
-        Moles = .false.
-        Nreac = 0
-        Pecwt(1:maxR) = -1
+        ! KEYWORD 'TRAN' READ
+        ! CALL UTRAN TO CONVERT FORMATTED TRANSPORT PROPERTIES
+        else if (code == 'tran') then
+           call UTRAN(readOK)
+           if (.not. readOK) then
+              write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+              return
+           end if
 
-        i = 1
-140     i = i + 1
-        if (i <= ncin) then
-           if ( lcin(i) /= 0) then
+        ! PROCESS 'OUTP' DATASET.
+        else if (code == 'outp') then
+           do i = 2, ncin
+              if (lcin(i) < 0) then
+                 cx2 = cin(i)(1:2)
+                 cx3 = cin(i)(1:3)
+                 cx4 = cin(i)(1:4)
+
+                 if (cx3 == 'cal') then
+                    SIunit = .false.
+
+                 else if (cx4 == 'tran' .or. cx3 == 'trn') then
+                    Trnspt = .true.
+
+                 else if (cx4 == 'trac') then
+                    Trace = dpin(i+1)
+
+                 else if (cin(i)(:5) == 'short') then
+                    Short = .true.
+
+                 else if (cin(i)(:5) == 'massf') then
+                    Massf = .true.
+
+                 else if (cx3 == 'deb' .or. cx3 == 'dbg') then
+                    forall(j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol) Debug(int(dpin(j))) = .true.
+                    forall(j = i+1:ncin, lcin(j) == i) lcin(j) = 0
+
+                 else if (cx2 == 'si') then
+                    SIunit = .true.
+
+                 else if (pltdat .and. Nplt < 20) then
+                    Nplt = Nplt + 1
+                    Pltvar(Nplt) = cin(i)
+
+                 else if (cx2 == 'pl') then
+                    pltdat = .true.
+
+                 else
+                    write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cin(i)
+                 end if
+              end if
+           end do
+
+        ! SORT AND STORE DATA FROM 'REAC' DATASET.
+        else if (code == 'reac') then
+           reacts = .true.
+           Moles = .false.
+           Nreac = 0
+           Pecwt(1:maxR) = -1
+
+           i = 1
+           do while (i < ncin)
+              i = i + 1
+
+              if (lcin(i) == 0) then
+                 cycle
+              end if
+
               if (lcin(i) > 0) then
                  write(IOOUT, '(/" WARNING!!  LITERAL EXPECTED FOR ", a15, "(INPUT)")') cin(i)
-                 go to 140
+                 cycle
               end if
 
               cx15 = cin(i)
@@ -2290,10 +2299,24 @@ subroutine INPUT(readOK, caseOK, Ensert)
               cx3 = cx15(:3)
               cx4 = cx15(:4)
 
-! NEW REACTANT
-              if (cx2 /= 'na' .and. cx2 /= 'ox' .and. cx2 /= 'fu') then
+              ! NEW REACTANT
+              if (cx2 == 'na' .or. cx2 == 'ox' .or. cx2 == 'fu') then
+                 Nreac = min(Nreac+1, maxR)
+                 Fox(Nreac) = trim(cx15)
+                 i = i + 1
+                 if (lcin(i) < 0) Rname(Nreac) = cin(i)
+                 ifrmla = 0
+                 Nfla(Nreac) = 0
+                 Energy(Nreac) = 'lib'
+                 Enth(Nreac) = 0
+                 Jray(Nreac) = 0
+                 Pecwt(Nreac) = -1
+                 Rnum(Nreac, 1) = 0
+                 Rmw(Nreac) = 0
+                 Rtemp(Nreac) = 0
 
-! LOOK FOR PERCENTS
+              else
+                 ! LOOK FOR PERCENTS
                  if (cx1 == 'm' .or. cx1 == 'w') then
                     if (lcin(i+1) > 0) then
                        i = i + 1
@@ -2310,11 +2333,8 @@ subroutine INPUT(readOK, caseOK, Ensert)
                        write(IOOUT, '(/" MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)")')
                     end if
 
-                    go to 140
-                 end if
-
-! LOOK FOR TEMPERATURES
-                 if (cx1 == 't') then
+                 ! LOOK FOR TEMPERATURES
+                 else if (cx1 == 't') then
                     if (lcin(i+1) > 0) then
                        i = i + 1
                        Rtemp(Nreac) = dpin(i)
@@ -2330,11 +2350,8 @@ subroutine INPUT(readOK, caseOK, Ensert)
                        caseOK = .false.
                     end if
 
-                    go to 140
-                 end if
-
-! LOOK FOR ENTHALPY
-                 if (cx1 == 'h' .or. cx1 == 'u') then
+                 ! LOOK FOR ENTHALPY
+                 else if (cx1 == 'h' .or. cx1 == 'u') then
                     Energy(Nreac) = cx15
 
                     if (lcin(i+1) > 0) then
@@ -2345,22 +2362,16 @@ subroutine INPUT(readOK, caseOK, Ensert)
                        if (index(cin(i-1), 'k') > 0) Enth(Nreac) = Enth(Nreac) * 1000
                     end if
 
-                    go to 140
-                 end if
-
-! LOOK FOR DENSITY
-                 if (cx3 == 'rho' .or. cx3 == 'den') then
+                 ! LOOK FOR DENSITY
+                 else if (cx3 == 'rho' .or. cx3 == 'den') then
                     if (lcin(i+1) > 0) then
                        i = i + 1
                        Dens(Nreac) = dpin(i)
                        if (index(cx15, 'kg') > 0) Dens(Nreac) = Dens(Nreac) / 1000
                     end if
 
-                    go to 140
-                 end if
-
-! CHECK FOR CHEMICAL SYMBOLS IN EXPLODED FORMULA
-                 if ((lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) > 0) then
+                 ! CHECK FOR CHEMICAL SYMBOLS IN EXPLODED FORMULA
+                 else if ((lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) > 0) then
                     Energy(Nreac) = ' '
                     ifrmla = ifrmla + 1
                     Nfla(Nreac) = ifrmla
@@ -2378,468 +2389,452 @@ subroutine INPUT(readOK, caseOK, Ensert)
                     end if
 
                     i = i + 1
-                    go to 140
+
+                 else
+                    write(IOOUT, '(/" WARNING!! ", a15, " NOT RECOGNIZED (INPUT)")') cin(i)
                  end if
-                 write(IOOUT, '(/" WARNING!! ", a15, " NOT RECOGNIZED (INPUT)")') cin(i)
-
-              else
-                 Nreac = min(Nreac+1, maxR)
-                 Fox(Nreac) = trim(cx15)
-                 i = i + 1
-                 if (lcin(i) < 0) Rname(Nreac) = cin(i)
-                 ifrmla = 0
-                 Nfla(Nreac) = 0
-                 Energy(Nreac) = 'lib'
-                 Enth(Nreac) = 0
-                 Jray(Nreac) = 0
-                 Pecwt(Nreac) = -1
-                 Rnum(Nreac, 1) = 0
-                 Rmw(Nreac) = 0
-                 Rtemp(Nreac) = 0
               end if
-           end if
-           go to 140
-        end if
+           end do
 
-! SORT AND STORE INPUT FROM 'PROB' DATASET
-     else if (code == 'prob') then
-        Case = ' '
-        P(1:maxPv) = 0
-        V(1:maxPv) = 0
-        T(1:maxT) = 0
-        P(1) = 1
-        Trace = 0
-        Lsave = 0
-        R = Rr / 4184
-        S0 = 0
-        hr = 1.d30
-        ur = 1.d30
-        Tp = .false.
-        Hp = .false.
-        Sp = .false.
-        Rkt = .false.
-        Shock = .false.
-        Detn = .false.
-        Vol = .false.
-        Ions = .false.
-        Eql = .false.
-        Froz = .false.
-        Fac = .false.
-        Debugf = .false.
-        Acat = 0
-        Ma = 0
-        Nfz = 1
-        Nsub = 0
-        Nsup = 0
-        Npp = 0
-        Tcest = 3800
-        forall(i = 1:Ncol)
-           Pcp(i) = 0
-           Pcp(i+Ncol) = 0
-           Supar(i) = 0
-           Subar(i) = 0
-           Mach1(i) = 0
-           U1(i) = 0
-        end forall
-        Gamma1 = 0
-        phi = .false.
-        eqrats = .false.
-        incd = .false.
-        refl = .false.
-        Shkdbg = .false.
-        Incdeq = .false.
-        Incdfz = .false.
-        Refleq = .false.
-        Reflfz = .false.
-        Np = 0
-        Nt = 1
-        Trnspt = .false.
+        ! SORT AND STORE INPUT FROM 'PROB' DATASET
+        else if (code == 'prob') then
+           Case = ' '
+           P(1:maxPv) = 0
+           V(1:maxPv) = 0
+           T(1:maxT) = 0
+           P(1) = 1
+           Trace = 0
+           Lsave = 0
+           R = Rr / 4184
+           S0 = 0
+           hr = 1.d30
+           ur = 1.d30
+           Tp = .false.
+           Hp = .false.
+           Sp = .false.
+           Rkt = .false.
+           Shock = .false.
+           Detn = .false.
+           Vol = .false.
+           Ions = .false.
+           Eql = .false.
+           Froz = .false.
+           Fac = .false.
+           Debugf = .false.
+           Acat = 0
+           Ma = 0
+           Nfz = 1
+           Nsub = 0
+           Nsup = 0
+           Npp = 0
+           Tcest = 3800
+           forall(i = 1:Ncol)
+              Pcp(i) = 0
+              Pcp(i+Ncol) = 0
+              Supar(i) = 0
+              Subar(i) = 0
+              Mach1(i) = 0
+              U1(i) = 0
+           end forall
+           Gamma1 = 0
+           phi = .false.
+           eqrats = .false.
+           incd = .false.
+           refl = .false.
+           Shkdbg = .false.
+           Incdeq = .false.
+           Incdfz = .false.
+           Refleq = .false.
+           Reflfz = .false.
+           Np = 0
+           Nt = 1
+           Trnspt = .false.
 
-! PROCESS LITERAL VARIABLES IN 'PROB' DATASET THAT DO NOT HAVE
-! ASSOCIATED NUMERICAL DATA.
-        do i = 2, ncin
-           if (lcin(i) < 0) then
-              if (any(lcin(i+1:ncin) == i)) cycle
+           ! PROCESS LITERAL VARIABLES IN 'PROB' DATASET THAT DO NOT HAVE
+           ! ASSOCIATED NUMERICAL DATA.
+           do i = 2, ncin
+              if (lcin(i) < 0) then
+                 if (any(lcin(i+1:ncin) == i)) cycle
 
-              cx15 = cin(i)
-              cx2 = cx15(:2)
-              cx3 = cx15(:3)
-              cx4 = cx15(:4)
+                 cx15 = cin(i)
+                 cx2 = cx15(:2)
+                 cx3 = cx15(:3)
+                 cx4 = cx15(:4)
 
-              if (cx4 == 'case') then
-                 Case = cin(i+1)
-                 lcin(i+1) = 0
+                 if (cx4 == 'case') then
+                    Case = cin(i+1)
+                    lcin(i+1) = 0
 
-              else if (cx2 == 'tp' .or. cx2 == 'pt') then
-                 Tp = .true.
+                 else if (cx2 == 'tp' .or. cx2 == 'pt') then
+                    Tp = .true.
 
-              else if (cx2 == 'hp' .or. cx2 == 'ph') then
-                 Hp = .true.
+                 else if (cx2 == 'hp' .or. cx2 == 'ph') then
+                    Hp = .true.
 
-              else if (cx2 == 'sp' .or. cx2 == 'ps') then
-                 Sp = .true.
+                 else if (cx2 == 'sp' .or. cx2 == 'ps') then
+                    Sp = .true.
 
-              else if (cx2 == 'sv' .or. cx2 == 'vs') then
-                 Sp = .true.
-                 Vol = .true.
+                 else if (cx2 == 'sv' .or. cx2 == 'vs') then
+                    Sp = .true.
+                    Vol = .true.
 
-              else if (cx2 == 'uv' .or. cx2 == 'vu') then
-                 Hp = .true.
-                 Vol = .true.
+                 else if (cx2 == 'uv' .or. cx2 == 'vu') then
+                    Hp = .true.
+                    Vol = .true.
 
-              else if (cx2 == 'tv' .or. cx2 == 'vt') then
-                 Tp = .true.
-                 Vol = .true.
+                 else if (cx2 == 'tv' .or. cx2 == 'vt') then
+                    Tp = .true.
+                    Vol = .true.
 
-              else if (cx2 == 'ro' .or. cx3 == 'rkt') then
-                 Rkt = .true.
+                 else if (cx2 == 'ro' .or. cx3 == 'rkt') then
+                    Rkt = .true.
 
-              else if (cx3 == 'dbg' .or. cx3 == 'deb') then
-                 Debugf = .true.
-                 Shkdbg = .true.
-                 Detdbg = .true.
+                 else if (cx3 == 'dbg' .or. cx3 == 'deb') then
+                    Debugf = .true.
+                    Shkdbg = .true.
+                    Detdbg = .true.
 
-              else if (cx3 == 'fac') then
-                 Rkt = .true.
-                 Eql = .true.
-                 Fac = .true.
-                 Froz = .false.
+                 else if (cx3 == 'fac') then
+                    Rkt = .true.
+                    Eql = .true.
+                    Fac = .true.
+                    Froz = .false.
 
-              else if (cx2 == 'eq') then
-                 Eql = .true.
+                 else if (cx2 == 'eq') then
+                    Eql = .true.
 
-              else if (cx2 == 'fr' .or. cx2 == 'fz') then
-                 Froz = .true.
+                 else if (cx2 == 'fr' .or. cx2 == 'fz') then
+                    Froz = .true.
 
-              else if (cx2 == 'sh') then
-                 Shock = .true.
+                 else if (cx2 == 'sh') then
+                    Shock = .true.
 
-              else if (cx3 == 'inc') then
-                 Shock = .true.
-                 incd = .true.
-                 if (index(cx15, 'eq') > 0) Eql = .true.
-                 if (index(cx15, 'fr') > 0) Froz = .true.
-                 if (index(cx15, 'fz') > 0) Froz = .true.
+                 else if (cx3 == 'inc') then
+                    Shock = .true.
+                    incd = .true.
+                    if (index(cx15, 'eq') > 0) Eql = .true.
+                    if (index(cx15, 'fr') > 0) Froz = .true.
+                    if (index(cx15, 'fz') > 0) Froz = .true.
 
-              else if (cx3 == 'ref') then
-                 Shock = .true.
-                 refl = .true.
-                 if (index(cx15, 'eq') > 0) Eql = .true.
-                 if (index(cx15, 'fr') > 0) Froz = .true.
-                 if (index(cx15, 'fz') > 0) Froz = .true.
+                 else if (cx3 == 'ref') then
+                    Shock = .true.
+                    refl = .true.
+                    if (index(cx15, 'eq') > 0) Eql = .true.
+                    if (index(cx15, 'fr') > 0) Froz = .true.
+                    if (index(cx15, 'fz') > 0) Froz = .true.
 
-              else if (cx3 == 'det') then
-                 Detn = .true.
+                 else if (cx3 == 'det') then
+                    Detn = .true.
 
-              else if (cx4 == 'ions') then
-                 Ions = .true.
+                 else if (cx4 == 'ions') then
+                    Ions = .true.
 
-              else
-                 write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
+                 else
+                    write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
 
+                 end if
+                 lcin(i) = 0
               end if
-              lcin(i) = 0
+           end do
+
+           iv = 2
+           Nof = 0
+           exit
+
+        else if (code(1:3) == 'end') then
+           if (Shock) then
+              if (incd .and. Froz) Incdfz = .true.
+              if (incd .and. Eql) Incdeq = .true.
+              if (refl .and. Froz) Reflfz = .true.
+              if (refl .and. Eql) Refleq = .true.
            end if
-        end do
 
-        iv = 2
-        Nof = 0
-        go to 200
+           Hsub0 = min(hr, ur)
+           Size = 0
 
-     else if (code(1:3) == 'end') then
-        if (Shock) then
-           if (incd .and. Froz) Incdfz = .true.
-           if (incd .and. Eql) Incdeq = .true.
-           if (refl .and. Froz) Reflfz = .true.
-           if (refl .and. Eql) Refleq = .true.
-        end if
+           if (hr > 0.9d30) hr = 0
+           if (ur > 0.9d30) ur = 0
+           if (Trnspt) Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
+           if (SIunit) R = Rr / 1000
+           if (Detn .or. Shock) Newr = .true.
 
-        Hsub0 = min(hr, ur)
-        Size = 0
-
-        if (hr > 0.9d30) hr = 0
-        if (ur > 0.9d30) ur = 0
-        if (Trnspt) Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
-        if (SIunit) R = Rr / 1000
-        if (Detn .or. Shock) Newr = .true.
-
-        if (.not. Short) then
-           write(IOOUT, '(/" OPTIONS: TP=", l1, "  HP=", l1, "  SP=", l1, "  TV=", l1, &
-                & "  UV=", l1, "  SV=", l1, "  DETN=", l1, "  SHOCK=", l1, &
-                & "  REFL=", l1, "  INCD=", l1, /" RKT=", l1, "  FROZ=", l1, &
-                & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
-                & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
-                Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
-                incd, Rkt, Froz, Eql, Ions, SIunit, Debugf, Shkdbg, Detdbg, Trnspt
-           if (T(1) > 0) write(IOOUT, '(/" T,K =", 7f11.4)') (T(jj), jj = 1, Nt)
-           write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') Trace, S0, hr, ur
-           if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
-        end if
-
-        if (Rkt) then
-           if (Nt == 0) Hp = .true.
            if (.not. Short) then
-              write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
-              write(IOOUT, '(/" Pc/P =", 9f11.4)') (Pcp(jj), jj = 1, Npp)
-              write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (Subar(i), i = 1, Nsub)
-              write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (Supar(i), i = 1, Nsup)
-              write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') Nfz, Ma, Acat
+              write(IOOUT, '(/" OPTIONS: TP=", l1, "  HP=", l1, "  SP=", l1, "  TV=", l1, &
+                   & "  UV=", l1, "  SV=", l1, "  DETN=", l1, "  SHOCK=", l1, &
+                   & "  REFL=", l1, "  INCD=", l1, /" RKT=", l1, "  FROZ=", l1, &
+                   & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
+                   & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
+                   Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
+                   incd, Rkt, Froz, Eql, Ions, SIunit, Debugf, Shkdbg, Detdbg, Trnspt
+              if (T(1) > 0) write(IOOUT, '(/" T,K =", 7f11.4)') (T(jj), jj = 1, Nt)
+              write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') Trace, S0, hr, ur
+              if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
            end if
-        else
-           if (.not. Vol .and. .not. Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
-        end if
 
-        if (reacts) call REACT
-        if (Nreac == 0 .or. Nlm <= 0) then
-           write(IOOUT, '(/" ERROR IN REACTANTS DATASET (INPUT)")')
-           caseOK = .false.
-           write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
-           return
-        end if
-
-        if (Nof == 0) then
-           Nof = 1
-           Oxf(1) = 0
-           if (Wp(2) > 0) then
-              Oxf(1) = Wp(1) / Wp(2)
+           if (Rkt) then
+              if (Nt == 0) Hp = .true.
+              if (.not. Short) then
+                 write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
+                 write(IOOUT, '(/" Pc/P =", 9f11.4)') (Pcp(jj), jj = 1, Npp)
+                 write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (Subar(i), i = 1, Nsub)
+                 write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (Supar(i), i = 1, Nsup)
+                 write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') Nfz, Ma, Acat
+              end if
            else
+              if (.not. Vol .and. .not. Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
+           end if
+
+           if (reacts) call REACT
+           if (Nreac == 0 .or. Nlm <= 0) then
+              write(IOOUT, '(/" ERROR IN REACTANTS DATASET (INPUT)")')
               caseOK = .false.
-              write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
               write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
               return
            end if
 
-        else if (phi .or. eqrats) then
-           do i = 1, Nof
-              eratio = Oxf(i)
-              if (eqrats) then
-                 xyz = -eratio * Vmin(2) - Vpls(2)
-                 denmtr = eratio * Vmin(1) + Vpls(1)
+           if (Nof == 0) then
+              Nof = 1
+              Oxf(1) = 0
+              if (Wp(2) > 0) then
+                 Oxf(1) = Wp(1) / Wp(2)
               else
-                 xyz = -Vmin(2) - Vpls(2)
-                 denmtr = eratio * (Vmin(1) + Vpls(1))
-              end if
-
-              if (abs(denmtr) < 1.d-30) then
                  caseOK = .false.
-                 write(IOOUT, '(/" UNABLE TO PROCESS EQUIVALENCE RATIO =", E11.4, "(INPUT)")') eratio
+                 write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
                  write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
                  return
               end if
-              Oxf(i) = xyz / denmtr
-           end do
-        end if
 
-        if (.not. Sp .and. .not. Tp .and. .not. Hp .and. .not. Rkt .and. .not. Detn .and. .not. Shock) then
-           caseOK = .false.
-           write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
+           else if (phi .or. eqrats) then
+              do i = 1, Nof
+                 eratio = Oxf(i)
+                 if (eqrats) then
+                    xyz = -eratio * Vmin(2) - Vpls(2)
+                    denmtr = eratio * Vmin(1) + Vpls(1)
+                 else
+                    xyz = -Vmin(2) - Vpls(2)
+                    denmtr = eratio * (Vmin(1) + Vpls(1))
+                 end if
 
-        else if (Tp .and. T(1) <= 0) then
-           caseOK = .false.
-           write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
-
-        else if (Np <= 0) then
-           caseOK = .false.
-           write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", " DATASET (INPUT)")')
-        end if
-
-        if (.not. (caseOK .and. Nlm > 0)) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
-        return
-
-     else
-        write(IOOUT, '(/" WARNING!!  A KEYWORD IS MISSING (INPUT)")')
-     end if
-  end if
-  go to 100
-
-! PROCESS NUMERICAL DATA FOLLOWING 'PROB' LITERALS
-200 in = 0
-  nmix = 0
-  ii = iv
-  do i = ii, ncin
-     iv = i
-     if (lcin(i) /= 0) then
-        if (lcin(i) < 0) then
-           if (in > 0) exit
-           in = i
-        else
-           if (lcin(i) /= in) exit
-           nmix = nmix + 1
-           mix(nmix) = dpin(i)
-           lcin(i) = 0
-        end if
-     end if
-  end do
-
-  if (nmix <= 0) then
-     if (iv < ncin) go to 200
-     go to 100
-  end if
-
-  cx15 = cin(in)
-  cx1 = cx15(:1)
-  cx2 = cx15(:2)
-  cx3 = cx15(:3)
-  cx4 = cx15(:4)
-
-  if (cx1 == 't') then
-     Nt = nmix
-     if (nmix > maxMix) then
-        Nt = maxMix
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 't', Nt
-     end if
-
-     do i = 1, Nt
-        if (cx4 /= 'tces') then
-           T(i) = mix(i)
-           if (lcin(in) < -1) then
-              if (index(cx15, 'r') > 0) T(i) = T(i) / 1.8d0
-              if (index(cx15, 'c') > 0) T(i) = T(i) + 273.15d0
-              if (index(cx15, 'f') > 0) T(i) = (T(i) - 32) / 1.8d0 + 273.15d0
+                 if (abs(denmtr) < 1.d-30) then
+                    caseOK = .false.
+                    write(IOOUT, '(/" UNABLE TO PROCESS EQUIVALENCE RATIO =", E11.4, "(INPUT)")') eratio
+                    write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+                    return
+                 end if
+                 Oxf(i) = xyz / denmtr
+              end do
            end if
-        end if
-     end do
 
-  else if ((cx2 == 'pc' .or. cx2 == 'pi') .and. index(cx15(3:15), 'p') > 0 .and. index(cx15, 'psi') == 0) then
-     Npp = nmix
-     if (nmix > 2*Ncol) then
-        Npp = 2 * Ncol
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', Npp
-     end if
-     Pcp(1:Npp) = mix(1:Npp)
+           if (.not. Sp .and. .not. Tp .and. .not. Hp .and. .not. Rkt .and. .not. Detn .and. .not. Shock) then
+              caseOK = .false.
+              write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
 
-  else if (cx1 == 'p' .and. cx3 /= 'phi') then
-     Np = nmix
-     if (nmix > maxPv) then
-        Np = maxPv
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'p', Np
-     end if
+           else if (Tp .and. T(1) <= 0) then
+              caseOK = .false.
+              write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
 
-     do i = 1, Np
-        P(i) = mix(i)
-        if (index(cx15, 'psi') /= 0) then
-           P(i) = P(i) / 14.696006d0
+           else if (Np <= 0) then
+              caseOK = .false.
+              write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", " DATASET (INPUT)")')
+           end if
 
-        else if (index(cx15, 'mmh') /= 0) then
-           P(i) = P(i) / 760
+           if (.not. (caseOK .and. Nlm > 0)) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+           return
 
-        else if (index(cx15, 'atm') == 0) then
-           cycle
+        else
+           write(IOOUT, '(/" WARNING!!  A KEYWORD IS MISSING (INPUT)")')
         end if
 
-        P(i) = P(i) * 1.01325d0
      end do
 
-  else if (cx3 == 'rho') then
-     xyz = 1.d02
-     if (index(cx15, 'kg') /= 0) xyz = 1.d05
-     Np = nmix
-     if (nmix > maxPv) then
-        Np = maxPv
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'rho', Np
-     end if
-     V(1:Np) = xyz / mix(1:Np)
+     ! PROCESS NUMERICAL DATA FOLLOWING 'PROB' LITERALS
+     do
+        in = 0
+        nmix = 0
+        ii = iv
+        do i = ii, ncin
+           iv = i
+           if (lcin(i) /= 0) then
+              if (lcin(i) < 0) then
+                 if (in > 0) exit
+                 in = i
+              else
+                 if (lcin(i) /= in) exit
+                 nmix = nmix + 1
+                 mix(nmix) = dpin(i)
+                 lcin(i) = 0
+              end if
+           end if
+        end do
 
-  else if (cx1 == 'v') then
-     xyz = 1.d02
-     if (index(cx15, 'kg') /= 0) xyz = 1.d05
-     Np = nmix
-     if (nmix > maxPv) then
-        Np = maxPv
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'v', Np
-     end if
-     V(1:Np) = mix(1:Np) * xyz
+        if (nmix <= 0) then
+           if (iv < ncin) cycle
+           exit
+        end if
 
-  else if (cx3 == 'nfz' .or. cx3 == 'nfr') then
-     Nfz = int(mix(1))
-     Froz = .true.
+        cx15 = cin(in)
+        cx1 = cx15(:1)
+        cx2 = cx15(:2)
+        cx3 = cx15(:3)
+        cx4 = cx15(:4)
 
-  else if (cx4 == 'tces') then
-     Tcest = mix(1)
+        if (cx1 == 't') then
+           Nt = nmix
+           if (nmix > maxMix) then
+              Nt = maxMix
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 't', Nt
+           end if
 
-  else if (cx4 == 'trac') then
-     Trace = mix(1)
+           do i = 1, Nt
+              if (cx4 /= 'tces') then
+                 T(i) = mix(i)
+                 if (lcin(in) < -1) then
+                    if (index(cx15, 'r') > 0) T(i) = T(i) / 1.8d0
+                    if (index(cx15, 'c') > 0) T(i) = T(i) + 273.15d0
+                    if (index(cx15, 'f') > 0) T(i) = (T(i) - 32) / 1.8d0 + 273.15d0
+                 end if
+              end if
+           end do
 
-  else if (cx3 == 's/r') then
-     S0 = mix(1)
+        else if ((cx2 == 'pc' .or. cx2 == 'pi') .and. index(cx15(3:15), 'p') > 0 .and. index(cx15, 'psi') == 0) then
+           Npp = nmix
+           if (nmix > 2*Ncol) then
+              Npp = 2 * Ncol
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', Npp
+           end if
+           Pcp(1:Npp) = mix(1:Npp)
 
-  else if (cx3 == 'u/r' .or. cx2 == 'ur') then
-     ur = mix(1)
+        else if (cx1 == 'p' .and. cx3 /= 'phi') then
+           Np = nmix
+           if (nmix > maxPv) then
+              Np = maxPv
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'p', Np
+           end if
 
-  else if (cx3 == 'h/r' .or. cx2 == 'hr') then
-     hr = mix(1)
+           do i = 1, Np
+              P(i) = mix(i)
+              if (index(cx15, 'psi') /= 0) then
+                 P(i) = P(i) / 14.696006d0
 
-  else if (cx2 == 'u1') then
-     Nsk = nmix
-     if (nmix > Ncol) then
-        Nsk = Ncol
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', Nsk
-     end if
-     U1(1:Nsk) = mix(1:Nsk)
+              else if (index(cx15, 'mmh') /= 0) then
+                 P(i) = P(i) / 760
 
-  else if (cx4 == 'mach') then
-     Nsk = nmix
-     if (nmix > Ncol) then
-        Nsk = Ncol
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', Nsk
-     end if
-     Mach1(1:Nsk) = mix(1:Nsk)
+              else if (index(cx15, 'atm') == 0) then
+                 cycle
+              end if
 
-  else if (cx3 == 'sub') then
-     Nsub = nmix
-     if (nmix > 13) then
-        Nsub = 13
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'subar', Nsub
-     end if
-     Subar(1:Nsub) = mix(1:Nsub)
+              P(i) = P(i) * 1.01325d0
+           end do
 
-  else if (cx3 == 'sup') then
-     Nsup = nmix
-     if (nmix > 13) then
-        Nsup = 13
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'supar', Nsup
-     end if
-     Supar(1:Nsup) = mix(1:Nsup)
+        else if (cx3 == 'rho') then
+           xyz = 1.d02
+           if (index(cx15, 'kg') /= 0) xyz = 1.d05
+           Np = nmix
+           if (nmix > maxPv) then
+              Np = maxPv
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'rho', Np
+           end if
+           V(1:Np) = xyz / mix(1:Np)
 
-  else if (cx2 == 'ac') then
-     Acat = mix(1)
+        else if (cx1 == 'v') then
+           xyz = 1.d02
+           if (index(cx15, 'kg') /= 0) xyz = 1.d05
+           Np = nmix
+           if (nmix > maxPv) then
+              Np = maxPv
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'v', Np
+           end if
+           V(1:Np) = mix(1:Np) * xyz
 
-  else if (cx4 == 'mdot' .or. cx2 == 'ma') then
-     Ma = mix(1)
+        else if (cx3 == 'nfz' .or. cx3 == 'nfr') then
+           Nfz = int(mix(1))
+           Froz = .true.
 
-  else if (cx4 == 'case') then
-     Case = cin(in+1)
-     lcin(in+1) = 0
+        else if (cx4 == 'tces') then
+           Tcest = mix(1)
 
-  else if (Nof == 0 .and. (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or. cx2 == '%f' .or. cx1 == 'r')) then
-     Nof = nmix
-     if (nmix > maxMix) then
-        Nof = maxMix
-        write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', Nof
-     end if
-     Oxf(1:Nof) = mix(1:Nof)
+        else if (cx4 == 'trac') then
+           Trace = mix(1)
 
-     if (cx3 == 'phi') then
-        phi = .true.
+        else if (cx3 == 's/r') then
+           S0 = mix(1)
 
-     else if (cx1 == 'r') then
-        eqrats = .true.
+        else if (cx3 == 'u/r' .or. cx2 == 'ur') then
+           ur = mix(1)
 
-     else if (cx3 == 'f/a') then
-        forall(k = 1:Nof, Oxf(k) > 0) Oxf(k) = 1/Oxf(k)
+        else if (cx3 == 'h/r' .or. cx2 == 'hr') then
+           hr = mix(1)
 
-     else if (cx4 == '%fue') then
-        forall(k = 1:Nof, Oxf(k) > 0) Oxf(k) = (100 - Oxf(k)) / Oxf(k)
-     end if
+        else if (cx2 == 'u1') then
+           Nsk = nmix
+           if (nmix > Ncol) then
+              Nsk = Ncol
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', Nsk
+           end if
+           U1(1:Nsk) = mix(1:Nsk)
 
-  else
-     write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
+        else if (cx4 == 'mach') then
+           Nsk = nmix
+           if (nmix > Ncol) then
+              Nsk = Ncol
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', Nsk
+           end if
+           Mach1(1:Nsk) = mix(1:Nsk)
 
-  end if
+        else if (cx3 == 'sub') then
+           Nsub = nmix
+           if (nmix > 13) then
+              Nsub = 13
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'subar', Nsub
+           end if
+           Subar(1:Nsub) = mix(1:Nsub)
 
-  if (iv >= ncin) go to 100
+        else if (cx3 == 'sup') then
+           Nsup = nmix
+           if (nmix > 13) then
+              Nsup = 13
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'supar', Nsup
+           end if
+           Supar(1:Nsup) = mix(1:Nsup)
 
-  go to 200
+        else if (cx2 == 'ac') then
+           Acat = mix(1)
+
+        else if (cx4 == 'mdot' .or. cx2 == 'ma') then
+           Ma = mix(1)
+
+        else if (cx4 == 'case') then
+           Case = cin(in+1)
+           lcin(in+1) = 0
+
+        else if (Nof == 0 .and. (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or. cx2 == '%f' .or. cx1 == 'r')) then
+           Nof = nmix
+           if (nmix > maxMix) then
+              Nof = maxMix
+              write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', Nof
+           end if
+           Oxf(1:Nof) = mix(1:Nof)
+
+           if (cx3 == 'phi') then
+              phi = .true.
+
+           else if (cx1 == 'r') then
+              eqrats = .true.
+
+           else if (cx3 == 'f/a') then
+              forall(k = 1:Nof, Oxf(k) > 0) Oxf(k) = 1/Oxf(k)
+
+           else if (cx4 == '%fue') then
+              forall(k = 1:Nof, Oxf(k) > 0) Oxf(k) = (100 - Oxf(k)) / Oxf(k)
+           end if
+
+        else
+           write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
+        end if
+
+        if (iv >= ncin) exit
+     end do
+  end do
 
   return
 end subroutine INPUT
@@ -5736,7 +5731,7 @@ end subroutine TRANP
 subroutine UTHERM(readOK)
 !***********************************************************************
 ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
-! UNformatTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
+! UNFORMATTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
 !
 ! USES SCRATCH I/O UNIT IOSCH.
 !
@@ -5986,7 +5981,7 @@ end subroutine UTHERM
 subroutine UTRAN(readOK)
 !***********************************************************************
 ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
-! UNformatTED ON I/O UNIT IOTRN.  USES SCRATCH I/O UNIT IOSCH.
+! UNFORMATTED ON I/O UNIT IOTRN.  USES SCRATCH I/O UNIT IOSCH.
 !
 ! UTRAN IS CALLED FROM subroutine INPUT AFTER A RECORD WITH 'tran'
 ! IN COLUMNS 1-4 HAS BEEN READ.
