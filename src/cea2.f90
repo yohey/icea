@@ -5295,6 +5295,7 @@ subroutine TRANIN
         go to 300
      end if
   end if
+
 ! PICK OUT IMPORTANT SPECIES
   Nm = 0
   total = 0
@@ -5312,28 +5313,32 @@ subroutine TRANIN
      En(j, Npt) = -En(j, Npt)
   end do
   testen = 1 / (Ng * Wm(Npt))
-  loop = 0
-100 if (total <= testot .and. loop <= Ng) then
-     loop = loop + 1
-     testen = testen / 10
-     do j = 1, Ng
-        if (En(j, Npt) >= testen) then
-           if (Nm >= maxTr) then
-              write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
-                   & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') Nm, Npt
-              go to 200
-           else
-              total = total + En(j, Npt)
-              Nm = Nm + 1
-              Ind(Nm) = j
-              En(j, Npt) = -En(j, Npt)
+
+  if (total <= testot) then
+     outerLoop1: do loop = 1, Ng
+        testen = testen / 10
+
+        do j = 1, Ng
+           if (En(j, Npt) >= testen) then
+              if (Nm >= maxTr) then
+                 write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
+                      & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') Nm, Npt
+                 exit outerLoop1
+              else
+                 total = total + En(j, Npt)
+                 Nm = Nm + 1
+                 Ind(Nm) = j
+                 En(j, Npt) = -En(j, Npt)
+              end if
            end if
-        end if
-     end do
-     if (testen > enmin) go to 100
+        end do
+
+        if (testen <= enmin) exit
+     end do outerLoop1
   end if
+
 ! CALCULATE MOLE FRACTIONS FROM THE EN(J, NPT)
-200 do j = 1, Ng
+  do j = 1, Ng
      En(j, Npt) = abs(En(j, Npt))
   end do
   do i = 1, Nm
@@ -5371,7 +5376,8 @@ subroutine TRANIN
         if (Xs(i) < 1.0d-10) then
            m = 1
            change = .false.
-           do 210 j = 1, Nr
+
+           do j = 1, Nr
               coeff = Stc(j, i)
               if (abs(coeff) > 1.0d-05) then
                  if (.not. change) then
@@ -5379,7 +5385,7 @@ subroutine TRANIN
                     do k = 1, Nm
                        stcoef(k) = Stc(j, k) / coeff
                     end do
-                    go to 210
+                    cycle
                  else
                     do k = 1, Nm
                        Stc(j, k) = Stc(j, k) / coeff - stcoef(k)
@@ -5390,7 +5396,8 @@ subroutine TRANIN
                  stcf(m, k) = Stc(j, k)
               end do
               m = m + 1
-210        continue
+           end do
+
            do ii = 1, Nm
               do j = 1, Nr
                  Stc(j, ii) = stcf(j, ii)
@@ -5400,6 +5407,7 @@ subroutine TRANIN
         end if
      end do
   end if
+
 ! FIND TRANSPORT DATA FOR IMPORTANT INTERACTIONS
 300 do i = 1, Nm
      Con(i) = 0
@@ -5407,46 +5415,58 @@ subroutine TRANIN
         Eta(i, j) = 0
      end do
   end do
+
   rewind IOSCH
-  do 400 ir = 1, Ntape
+
+  outerLoop2: do ir = 1, Ntape
      read(IOSCH) jtape, trc
-     do 350 k = 1, 2
+
+     innerLoop: do k = 1, 2
         do i = 1, Nm
            j = Ind(i)
            if (j == jtape(k)) then
               l = i
               if (k == 2) then
                  kvc = 1
-302              kt = 1
-                 if (trc(2, 1, kvc) /= 0) then
-                    if (trc(2, 2, kvc) /= 0) then
-                       if (Tt > trc(2, 1, kvc)) kt = 2
-                       if (trc(2, 3, kvc) /= 0) then
-                          if (Tt > trc(2, 2, kvc)) kt = 3
+
+                 do
+                    kt = 1
+                    if (trc(2, 1, kvc) /= 0) then
+                       if (trc(2, 2, kvc) /= 0) then
+                          if (Tt > trc(2, 1, kvc)) kt = 2
+                          if (trc(2, 3, kvc) /= 0) then
+                             if (Tt > trc(2, 2, kvc)) kt = 3
+                          end if
                        end if
+
+                       prop = exp(trc(6, kt, kvc) + (trc(5, kt, kvc) / Tt + trc(4, kt, kvc)) / Tt + trc(3, kt, kvc) * Tln)
+
+                       if (kvc == 2) then
+                          Con(l) = prop
+                          cycle outerLoop2
+                       else
+                          Eta(l, m) = prop
+                          if (l /= m) Eta(m, l) = Eta(l, m)
+                       end if
+
+                    else if (kvc == 2) then
+                       cycle outerLoop2
                     end if
-                    prop = exp(trc(6, kt, kvc) + (trc(5, kt, kvc) / Tt + trc(4, kt, kvc)) / Tt + trc(3, kt, kvc) * Tln)
-                    if (kvc == 2) then
-                       Con(l) = prop
-                       go to 400
-                    else
-                       Eta(l, m) = prop
-                       if (l /= m) Eta(m, l) = Eta(l, m)
-                    end if
-                 else if (kvc == 2) then
-                    go to 400
-                 end if
-                 kvc = 2
-                 go to 302
+
+                    kvc = 2
+                 end do
+
               else
                  m = i
-                 go to 350
+                 cycle innerLoop
               end if
            end if
         end do
-        go to 400
-350 continue
-400 continue
+
+        exit
+     end do innerLoop
+  end do outerLoop2
+
 ! MAKE ESTIMATES FOR MISSING DATA
 !
 ! INCLUDES ION CROSS SECTION ESTIMATES
@@ -5475,8 +5495,9 @@ subroutine TRANIN
         if (Con(i) == 0) Con(i) = Eta(i, i) * Rr * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
      end if
   end do
+
   do i = 1, Nm
-     do 450 j = i, Nm
+     do j = i, Nm
         ion1 = .false.
         ion2 = .false.
         elc1 = .false.
@@ -5504,7 +5525,7 @@ subroutine TRANIN
                     Cprr(i) = Cp(k1)
                     Con(i) = Eta(i, i) * Rr * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
                  end if
-                 go to 450
+                 cycle
               end if
            end if
 ! ESTIMATE FOR UNLIKE INTERACTIONS FROM RIGID SPHERE ANALOGY
@@ -5513,8 +5534,9 @@ subroutine TRANIN
            Eta(i, j) = Eta(i, j) / (1 + sqrt(ratio * Eta(i, i) / Eta(j, j)))**2
            Eta(j, i) = Eta(i, j)
         end if
-450  continue
+     end do
   end do
+
   return
 end subroutine TRANIN
 
