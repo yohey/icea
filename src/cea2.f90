@@ -132,12 +132,8 @@ program main
      end if
 
      if (Nplt > 0) then
-        open(IOPLT, file=Pfile, form='formatted')
-        write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
-        do i = 1, Iplt
-           write(IOPLT, '(1x, 1p, 20E12.4)') (Pltout(i, j), j = 1, Nplt)
-        end do
-        write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
+        open(IOPLT, file = Pfile, form = 'formatted')
+        call write_plt_file(IOPLT, Iplt, Nplt, Pltvar, Pltout)
      end if
 
   end do outerLoop
@@ -152,6 +148,23 @@ program main
   stop
 end program main
 
+
+subroutine write_plt_file(IOPLT, Iplt, Nplt, Pltvar, Pltout)
+  implicit none
+
+  integer, intent(in):: IOPLT, Iplt, Nplt
+  character(*), intent(in):: Pltvar(:)
+  real(8), intent(in):: Pltout(:, :)
+  integer:: i, j
+
+  write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
+  do i = 1, Iplt
+     write(IOPLT, '(1x, 1p, 20E12.4)') (Pltout(i, j), j = 1, Nplt)
+  end do
+  write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
+
+  return
+end subroutine write_plt_file
 
 
 subroutine CPHS
