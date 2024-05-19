@@ -5203,7 +5203,7 @@ subroutine THERMP
   Tv = transfer(Tp, Tv)
   Sv = transfer(Sp, Sv)
   Eql = .true.
-  do 100 iof = 1, Nof
+  outerLoop: do iof = 1, Nof
      Oxfl = Oxf(iof)
      call NEWOF
 ! SET ASSIGNED P OR VOLUME
@@ -5214,7 +5214,7 @@ subroutine THERMP
            Vv = V(Ip)
            Tt = T(It)
            call EQLBRM
-           if (Npt == 0) go to 200
+           if (Npt == 0) return
            if (Trnspt .and. Tt /= 0) call TRANP
            Isv = 0
            if (Ip /= Np .or. It /= Nt .and. Tt /= 0) then
@@ -5238,12 +5238,12 @@ subroutine THERMP
            if (Trnspt) call OUT4
            call OUT3
            Iplt = min(Iplt + Npt, 500)
-           if (Isv == 0 .and. iof == Nof) go to 200
+           if (Isv == 0 .and. iof == Nof) return
            write(IOOUT, '(////)')
            Npt = 0
 10         Npt = Npt + 1
            if (.not. Tp .and. Tt /= 0) T(1) = Tt
-           if (Nt == 1 .and. Np == 1) go to 100
+           if (Nt == 1 .and. Np == 1) cycle outerLoop
            if (Ip == 1 .and. It == 1) Isv = -Isv
            if (Nt /= 1) then
               if (It == Nt .or. Tt == 0.) Isv = 0
@@ -5251,8 +5251,9 @@ subroutine THERMP
            call SETEN
         end do
      end do
-100 continue
-200 return
+  end do outerLoop
+
+     return
 end subroutine THERMP
 
 
