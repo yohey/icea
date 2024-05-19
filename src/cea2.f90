@@ -6,7 +6,8 @@
 program main
   use cea
   implicit none
-! LOCAL VARIABLES
+
+  ! LOCAL VARIABLES
   character(15):: ensert(20)
   character(200):: infile, ofile
   character(196):: prefix
@@ -18,21 +19,26 @@ program main
        & "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
        & " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
        & //)')
+
   read(*, '(a)') prefix
+
   ln = index(prefix, ' ') - 1
   infile = prefix(1:ln) // '.inp'
   ofile  = prefix(1:ln) // '.out'
   Pfile  = prefix(1:ln) // '.plt'
+
   inquire(file=infile, exist=ex)
   if (.not. ex) then
      print *, infile, ' DOES NOT EXIST'
-     go to 400
+     error stop
   end if
+
   open(IOINP, file=infile, status='old', form='formatted')
   open(IOOUT, file=ofile, status='unknown', form='formatted')
   open(IOSCH, status='scratch', form='unformatted')
   open(IOTHM, file='thermo.lib', form='unformatted')
   open(IOTRN, file='trans.lib', form='unformatted')
+
   write(IOOUT, '(/" *******************************************************************************")')
   write(IOOUT, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
        & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
@@ -40,22 +46,29 @@ program main
        & " REFS: NASA RP-1311, PART I, 1994", &
        & " AND NASA RP-1311, PART II, 1996")')
   write(IOOUT, '(/" *******************************************************************************")')
+
   readOK = .true.
   Newr = .false.
-100 Iplt = 0
-  Nplt = 0
-  call INPUT(readOK, caseOK, ensert)
-  if (caseOK .and. readOK) then
+
+  outerLoop: do while (readOK)
+     Iplt = 0
+     Nplt = 0
+
+     call INPUT(readOK, caseOK, ensert)
+
+     if ((.not. caseOK) .or. (.not. readOK)) cycle
+
      do iof = 1, Nof
         if (Oxf(iof) == 0. .and. B0p(1, 1) /= 0.) then
            do i = 1, Nlm
               if (B0p(i, 1) == 0. .or. B0p(i, 2) == 0.) then
                  write(IOOUT, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
-                 go to 200
+                 cycle outerLoop
               end if
            end do
         end if
      end do
+
      if (Ions) then
         if (Elmt(Nlm) /= 'E') then
            Nlm = Nlm + 1
@@ -70,10 +83,14 @@ program main
      Jray(1:Nreac) = 0
 
      call SEARCH
-     if (Ngc == 0) go to 300
+
+     if (Ngc == 0) exit outerLoop
+
      Newr = .false.
+
      if (Trnspt) call READTR
-! INITIAL ESTIMATES
+
+     ! INITIAL ESTIMATES
      Npr = 0
      Gonly = .true.
      Enn = 0.1d0
@@ -91,18 +108,19 @@ program main
      Enln(1:Ng) = xln
 
      if (Nc /= 0 .and. Nsert /= 0) then
-        outerLoop: do i = 1, Nsert
+        innerLoop: do i = 1, Nsert
            do j = Ngc, Ngp1, - 1
               if (Prod(j) == ensert(i)) then
                  Npr = Npr + 1
                  Jcond(Npr) = j
                  if (.not. Short) write(IOOUT, '(1X, A16, "INSERTED")') Prod(j)
-                 cycle outerLoop
+                 cycle innerLoop
               end if
            end do
            write(IOOUT, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') ensert(i)
-        end do outerLoop
+        end do innerLoop
      end if
+
      if (Rkt) then
         call ROCKET
      else if (Tp .or. Hp .or. Sp) then
@@ -112,6 +130,7 @@ program main
      else if (Shock) then
         call SHCK
      end if
+
      if (Nplt > 0) then
         open(IOPLT, file=Pfile, form='formatted')
         write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
@@ -120,15 +139,17 @@ program main
         end do
         write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
      end if
-  end if
-200 if (readOK) go to 100
-300 close(IOINP)
+
+  end do outerLoop
+
+  close(IOINP)
   close(IOOUT)
   close(IOSCH)
   close(IOTHM)
   close(IOTRN)
   close(IOPLT)
-400 stop
+
+  stop
 end program main
 
 
