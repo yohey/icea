@@ -5748,139 +5748,151 @@ subroutine UTHERM(readOK)
   tinf = 1.d06
   rewind IOSCH
   read(IOINP, '(4f10.3, a10)') tgl, Thdate
-100 do i = 1, 3
-     fill(i) = .true.
-     do j = 1, 9
-        thermo(j, i) = 0
-     end do
-  end do
-  hform = 0
-  tl(1) = 0
-  tl(2) = 0
-  read(IOINP, '(a15, a65)', END=300, ERR=400) name, notes
-  if (name(:3) == 'END' .or. name(:3) == 'end') then
-     if (index(name, 'ROD') == 0 .and. index(name, 'rod') == 0) go to 300
-     ns = nall
-     go to 100
-  end if
-  read(IOINP, '(i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)', ERR=400) &
-       ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, mwt, hform
-  write(IOOUT, '(" ", a15, 2x, a6, e15.6, 2x, a65)') name, date, hform, notes
-! IF NTL=0, REACTANT WITHOUT COEFFICIENTS
-  if (ntl == 0) then
-     if (ns == 0) go to 300
-     nall = nall + 1
-     read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
-     thermo(1, 1) = hform
-     write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
-     go to 100
-  else if (name == 'Air') then
-     sym(1) = 'N'
-     fno(1) = 1.56168d0
-     sym(2) = 'O'
-     fno(2) = .419590d0
-     sym(3) = 'AR'
-     fno(3) = .009365d0
-     sym(4) = 'C'
-     fno(4) = .000319d0
-  else if (name == 'e-') then
-     mwt = 5.48579903d-04
-  end if
-  do 200 i = 1, ntl
-     read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
-     read(IOINP, '(5d16.8/2d16.8, 16x, 2d16.8)', ERR=400) templ
-     if (ifaz == 0 .and. i > 3) go to 400
-     if (ifaz <= 0) then
-        if (tl(2) > tgl(4)-.01d0) then
-           ifaz = -1
-           namee = '*' // name
-           name = namee(:15)
-        end if
-        if (tl(1) >= tgl(i+1)) go to 200
-        int = i
-        fill(i) = .false.
-     else
-        int = 1
-        if (i > 1) then
-           do k = 1, 7
-              thermo(k, 1) = 0
-           end do
-        end if
-     end if
-     do 150 l = 1, ncoef
-        do k = 1, 7
-           if (expn(l) == real(k-3)) then
-              thermo(k, int) = templ(l)
-              go to 150
-           end if
+
+  do
+     do i = 1, 3
+        fill(i) = .true.
+        do j = 1, 9
+           thermo(j, i) = 0
         end do
-150  continue
-     thermo(8, int) = templ(8)
-     thermo(9, int) = templ(9)
-     if (ifaz > 0) then
-        nall = nall + 1
-        if (ifaz > ifzm1) then
-           inew = inew + 1
-        else
-           inew = i
-        end if
-        write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), inew, tl, mwt, thermo
+     end do
+     hform = 0
+     tl(1) = 0
+     tl(2) = 0
+     read(IOINP, '(a15, a65)', END=300, ERR=400) name, notes
+     if (name(:3) == 'END' .or. name(:3) == 'end') then
+        if (index(name, 'ROD') == 0 .and. index(name, 'rod') == 0) exit
+        ns = nall
+        cycle
      end if
-200 continue
-  ifzm1 = ifaz
-  if (ifaz <= 0) then
-     inew = 0
-     nall = nall + 1
-     if (ifaz <= 0 .and. ns == 0) then
-        ngl = ngl + 1
-        if (fill(3)) then
-           atms = 0
-           do i = 1, 5
-              if (sym(i) == ' ' .or. sym(i) == 'E') go to 210
-              atms = atms + fno(i)
-           end do
-! FOR GASES WITH NO COEFFICIENTS FOR TGL(3)-TGL(4) INTERVAL,
-! CALCULATE ESTIMATED COEFFICIENTS. (STRAIGHT LINE FOR CP/R)
-210        aa = 2.5d0
-           if (atms > 1.9) aa = 4.5d0
-           if (atms > 2.1) aa = 3 * atms - 1.75d0
-           ttl = tl(2)
-           tx = ttl - tinf
-           cpfix = 0
-           templ(8) = 0
-           templ(9) = 0
-           dlt = log(ttl)
-           do k = 7, 1, - 1
-              kk = k - 3
-              if (kk == 0) then
-                 cpfix = cpfix + thermo(k, 2)
-                 templ(8) = templ(8) + thermo(k, 2)
-                 templ(9) = templ(9) + thermo(k, 2) * dlt
-              else
-                 tex = ttl**kk
-                 cpfix = cpfix + thermo(k, 2) * tex
-                 templ(9) = templ(9) + thermo(k, 2) * tex / kk
-                 if (kk == -1) then
-                    templ(8) = templ(8) + thermo(k, 2)*dlt / ttl
-                 else
-                    templ(8) = templ(8) + thermo(k, 2)*tex / (kk + 1)
-                 end if
+     read(IOINP, '(i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)', ERR=400) &
+          ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, mwt, hform
+     write(IOOUT, '(" ", a15, 2x, a6, e15.6, 2x, a65)') name, date, hform, notes
+     ! IF NTL=0, REACTANT WITHOUT COEFFICIENTS
+     if (ntl == 0) then
+        if (ns == 0) exit
+        nall = nall + 1
+        read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
+        thermo(1, 1) = hform
+        write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+        cycle
+     else if (name == 'Air') then
+        sym(1) = 'N'
+        fno(1) = 1.56168d0
+        sym(2) = 'O'
+        fno(2) = .419590d0
+        sym(3) = 'AR'
+        fno(3) = .009365d0
+        sym(4) = 'C'
+        fno(4) = .000319d0
+     else if (name == 'e-') then
+        mwt = 5.48579903d-04
+     end if
+
+     do i = 1, ntl
+        read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
+        read(IOINP, '(5d16.8/2d16.8, 16x, 2d16.8)', ERR=400) templ
+
+        if (ifaz == 0 .and. i > 3) go to 400
+
+        if (ifaz <= 0) then
+           if (tl(2) > tgl(4)-.01d0) then
+              ifaz = -1
+              namee = '*' // name
+              name = namee(:15)
+           end if
+           if (tl(1) >= tgl(i+1)) cycle
+           int = i
+           fill(i) = .false.
+        else
+           int = 1
+           if (i > 1) then
+              do k = 1, 7
+                 thermo(k, 1) = 0
+              end do
+           end if
+        end if
+
+        do l = 1, ncoef
+           do k = 1, 7
+              if (expn(l) == real(k-3)) then
+                 thermo(k, int) = templ(l)
+                 exit
               end if
            end do
-           templ(2) = (cpfix - aa) / tx
-           thermo(4, 3) = templ(2)
-           templ(1) = cpfix - ttl * templ(2)
-           thermo(3, 3) = templ(1)
-           thermo(8, 3) = thermo(8, 2) + ttl * (templ(8) - templ(1) - 0.5 * templ(2) * ttl)
-           thermo(9, 3) = -templ(1) * dlt + thermo(9, 2) + templ(9) - templ(2) * ttl
+        end do
+
+        thermo(8, int) = templ(8)
+        thermo(9, int) = templ(9)
+        if (ifaz > 0) then
+           nall = nall + 1
+           if (ifaz > ifzm1) then
+              inew = inew + 1
+           else
+              inew = i
+           end if
+           write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), inew, tl, mwt, thermo
         end if
+     end do
+
+     ifzm1 = ifaz
+     if (ifaz <= 0) then
+        inew = 0
+        nall = nall + 1
+        if (ifaz <= 0 .and. ns == 0) then
+           ngl = ngl + 1
+           if (fill(3)) then
+              atms = 0
+
+              do i = 1, 5
+                 if (sym(i) == ' ' .or. sym(i) == 'E') exit
+                 atms = atms + fno(i)
+              end do
+
+              ! FOR GASES WITH NO COEFFICIENTS FOR TGL(3)-TGL(4) INTERVAL,
+              ! CALCULATE ESTIMATED COEFFICIENTS. (STRAIGHT LINE FOR CP/R)
+              aa = 2.5d0
+              if (atms > 1.9) aa = 4.5d0
+              if (atms > 2.1) aa = 3 * atms - 1.75d0
+              ttl = tl(2)
+              tx = ttl - tinf
+              cpfix = 0
+              templ(8) = 0
+              templ(9) = 0
+              dlt = log(ttl)
+              do k = 7, 1, - 1
+                 kk = k - 3
+                 if (kk == 0) then
+                    cpfix = cpfix + thermo(k, 2)
+                    templ(8) = templ(8) + thermo(k, 2)
+                    templ(9) = templ(9) + thermo(k, 2) * dlt
+                 else
+                    tex = ttl**kk
+                    cpfix = cpfix + thermo(k, 2) * tex
+                    templ(9) = templ(9) + thermo(k, 2) * tex / kk
+                    if (kk == -1) then
+                       templ(8) = templ(8) + thermo(k, 2)*dlt / ttl
+                    else
+                       templ(8) = templ(8) + thermo(k, 2)*tex / (kk + 1)
+                    end if
+                 end if
+              end do
+              templ(2) = (cpfix - aa) / tx
+              thermo(4, 3) = templ(2)
+              templ(1) = cpfix - ttl * templ(2)
+              thermo(3, 3) = templ(1)
+              thermo(8, 3) = thermo(8, 2) + ttl * (templ(8) - templ(1) - 0.5 * templ(2) * ttl)
+              thermo(9, 3) = -templ(1) * dlt + thermo(9, 2) + templ(9) - templ(2) * ttl
+           end if
+        end if
+        ! WRITE COEFFICIENTS ON SCRATCH I/O UNIT IOSCH
+        write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
      end if
-! WRITE COEFFICIENTS ON SCRATCH I/O UNIT IOSCH
-     write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
-  end if
-  go to 100
+  end do
+
 ! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IOSCH & ADD TO IOTHM.
 300 rewind IOSCH
+
   if (ns == 0) ns = nall
   write(IOTHM) tgl, ngl, ns, nall, Thdate
 ! WRITE GASEOUS PRODUCTS ON IOTHM
@@ -5903,9 +5915,12 @@ subroutine UTHERM(readOK)
         end if
      end do
   end if
+
   return
+
 400 write(IOOUT, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
   readOK = .false.
+
   return
 end subroutine UTHERM
 
