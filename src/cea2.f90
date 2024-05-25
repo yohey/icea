@@ -1987,11 +1987,11 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   use cea
   implicit none
 ! DUMMY ARGUMENTS
-  character(15):: Cin(maxNgc)
-  integer:: Ncin
-  integer:: Lcin(maxNgc)
-  logical:: readOK
-  real(8):: Dpin(maxNgc)
+  character(15), intent(out):: Cin(maxNgc)
+  integer, intent(out):: Ncin
+  integer, intent(out):: Lcin(maxNgc)
+  logical, intent(out):: readOK
+  real(8), intent(out):: Dpin(maxNgc)
 ! LOCAL VARIABLES
   character(1), parameter:: nums(13) = ['+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
   character(2), parameter:: numg(24) = &
@@ -2010,7 +2010,8 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   kcin = 0
   Dpin(1) = 0
 
-100 nb = 1
+  do
+  nb = 1
   nx = 0
   cnum = ' '
   Cin(Ncin) = ' '
@@ -2018,7 +2019,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   nch1 = 1
 
 ! READ CHARACTERS, ONE AT A TIME
-  read(IOINP, '(132a1)', END=500, ERR=500) ch1
+  read(IOINP, '(132a1)', END = 500, ERR = 500) ch1
 
 ! FIND FIRST AND LAST NON-BLANK CHARACTER
   do i = 132, 1, - 1
@@ -2033,7 +2034,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
 
   if (nch1 == 1 .or. ch1(ich1) == '#' .or. ch1(ich1) == '!') then
      write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
-     go to 100
+     cycle
   end if
 
   w1 = ch1(ich1) // ch1(ich1+1) // ch1(ich1+2) // ch1(ich1+3)
@@ -2066,7 +2067,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
 
   write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
 
-  do 400 i = ich1, nch1
+  do i = ich1, nch1
      cx = ch1(i)
 
 ! LOOK FOR DELIMITER STRINGS
@@ -2098,7 +2099,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
 310        nb = 1
         end if
 
-        if (i < nch1 .or. Lcin(Ncin) < 0) go to 400
+        if (i < nch1 .or. Lcin(Ncin) < 0) cycle
      end if
 
      if (nb == 1. .and. nx > 0) then
@@ -2126,7 +2127,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
 
      nb = nb + 1
 
-400 continue
+  end do
 
   if (nx > 0) then
      Ncin = Ncin + 1
@@ -2134,7 +2135,7 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
      Dpin(Ncin) = 0
   end if
 
-  go to 100
+  end do
 
 500 readOK = .false.
 
