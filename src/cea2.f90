@@ -1986,13 +1986,13 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
 !***********************************************************************
   use cea
   implicit none
-! DUMMY ARGUMENTS
+  ! DUMMY ARGUMENTS
   character(15), intent(out):: Cin(maxNgc)
   integer, intent(out):: Ncin
   integer, intent(out):: Lcin(maxNgc)
   logical, intent(out):: readOK
   real(8), intent(out):: Dpin(maxNgc)
-! LOCAL VARIABLES
+  ! LOCAL VARIABLES
   character(1), parameter:: nums(13) = ['+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
   character(2), parameter:: numg(24) = &
        [character(2):: '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', &
@@ -2011,129 +2011,129 @@ subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
   Dpin(1) = 0
 
   do
-  nb = 1
-  nx = 0
-  cnum = ' '
-  Cin(Ncin) = ' '
-  ch1(1) = ' '
-  nch1 = 1
+     nb = 1
+     nx = 0
+     cnum = ' '
+     Cin(Ncin) = ' '
+     ch1(1) = ' '
+     nch1 = 1
 
-! READ CHARACTERS, ONE AT A TIME
-  read(IOINP, '(132a1)', END = 500, ERR = 500) ch1
+     ! READ CHARACTERS, ONE AT A TIME
+     read(IOINP, '(132a1)', END = 500, ERR = 500) ch1
 
-! FIND FIRST AND LAST NON-BLANK CHARACTER
-  do i = 132, 1, - 1
-     nch1 = i
-     if (ch1(i) /= ' ' .and. ch1(i) /= '	') exit
-  end do
+     ! FIND FIRST AND LAST NON-BLANK CHARACTER
+     do i = 132, 1, - 1
+        nch1 = i
+        if (ch1(i) /= ' ' .and. ch1(i) /= '	') exit
+     end do
 
-  do i = 1, nch1
-     ich1 = i
-     if (ch1(i) /= ' ' .and. ch1(i) /= '	') exit
-  end do
+     do i = 1, nch1
+        ich1 = i
+        if (ch1(i) /= ' ' .and. ch1(i) /= '	') exit
+     end do
 
-  if (nch1 == 1 .or. ch1(ich1) == '#' .or. ch1(ich1) == '!') then
-     write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
-     cycle
-  end if
+     if (nch1 == 1 .or. ch1(ich1) == '#' .or. ch1(ich1) == '!') then
+        write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
+        cycle
+     end if
 
-  w1 = ch1(ich1) // ch1(ich1+1) // ch1(ich1+2) // ch1(ich1+3)
+     w1 = ch1(ich1) // ch1(ich1+1) // ch1(ich1+2) // ch1(ich1+3)
 
-! IS STRING A KEYWORD SIGNALLING START OR END OF DATASET?
-  if (w1 == 'ther' .or. w1 == 'tran' .or. w1 == 'prob' .or.  &
-       w1 == 'reac' .or. w1 == 'outp' .or. w1 == 'omit' .or.  &
-       w1 == 'only' .or. w1 == 'inse' .or. w1(1:3) == 'end') then
-     if (Ncin == 1) then
-        Cin(Ncin) = w1
-        if (w1(1:3) == 'end' .or. w1 == 'ther' .or. w1 == 'tran') then
-           write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
+     ! IS STRING A KEYWORD SIGNALLING START OR END OF DATASET?
+     if (w1 == 'ther' .or. w1 == 'tran' .or. w1 == 'prob' .or.  &
+          w1 == 'reac' .or. w1 == 'outp' .or. w1 == 'omit' .or.  &
+          w1 == 'only' .or. w1 == 'inse' .or. w1(1:3) == 'end') then
+        if (Ncin == 1) then
+           Cin(Ncin) = w1
+           if (w1(1:3) == 'end' .or. w1 == 'ther' .or. w1 == 'tran') then
+              write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
+              return
+           end if
+           ich1 = ich1 + 4
+           nx = 4
+           Lcin(1) = -4
+        else
+
+           ! KEYWORD READ FOR NEXT DATASET. END PROCESSING
+           backspace IOINP
+           if (nx == 0) Ncin = Ncin - 1
            return
         end if
-        ich1 = ich1 + 4
-        nx = 4
-        Lcin(1) = -4
-     else
 
-! KEYWORD READ FOR NEXT DATASET. END PROCESSING
-        backspace IOINP
-        if (nx == 0) Ncin = Ncin - 1
-        return
+     else if (Ncin == 1) then
+        write(IOOUT, '(/" FATAL ERROR IN INPUT format (INFREE)")')
+        go to 500
      end if
 
-  else if (Ncin == 1) then
-     write(IOOUT, '(/" FATAL ERROR IN INPUT format (INFREE)")')
-     go to 500
-  end if
+     write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
 
-  write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
+     do i = ich1, nch1
+        cx = ch1(i)
 
-  do i = ich1, nch1
-     cx = ch1(i)
+        ! LOOK FOR DELIMITER STRINGS
+        if (cx == ',' .and. (Lcin(Ncin) > 0 .or. nx == 0)) cx = ' '
+        if (cx == '=' .and. (Lcin(Ncin) < 0 .or. nx == 0)) cx = ' '
+        if (cx /= ' ' .and. cx /= '	') then
 
-! LOOK FOR DELIMITER STRINGS
-     if (cx == ',' .and. (Lcin(Ncin) > 0 .or. nx == 0)) cx = ' '
-     if (cx == '=' .and. (Lcin(Ncin) < 0 .or. nx == 0)) cx = ' '
-     if (cx /= ' ' .and. cx /= '	') then
+           ! LOOK FOR CHARACTER STRINGS
+           nx = nx + 1
+           if (Ncin > 1) then
+              cnum(nx:nx) = cx
+              if (nx <= 15) Cin(Ncin) = trim(cnum)
+              if (nx == 1) then
 
-! LOOK FOR CHARACTER STRINGS
-        nx = nx + 1
-        if (Ncin > 1) then
-           cnum(nx:nx) = cx
-           if (nx <= 15) Cin(Ncin) = trim(cnum)
-           if (nx == 1) then
+                 ! IS THIS A NUMERIC?
+                 do j = 1, 13
+                    if (ch1(i) == nums(j)) then
+                       Lcin(Ncin) = kcin
+                       go to 310
+                    end if
+                 end do
 
-! IS THIS A NUMERIC?
-              do j = 1, 13
-                 if (ch1(i) == nums(j)) then
-                    Lcin(Ncin) = kcin
-                    go to 310
-                 end if
-              end do
+                 Lcin(Ncin) = -1
+                 kcin = Ncin
+              else if (Lcin(Ncin) < 0) then
+                 Lcin(Ncin) = -nx
+              end if
 
-              Lcin(Ncin) = -1
-              kcin = Ncin
-           else if (Lcin(Ncin) < 0) then
-              Lcin(Ncin) = -nx
+310           nb = 1
            end if
 
-310        nb = 1
+           if (i < nch1 .or. Lcin(Ncin) < 0) cycle
         end if
 
-        if (i < nch1 .or. Lcin(Ncin) < 0) cycle
-     end if
+        if (nb == 1. .and. nx > 0) then
+           if (Ncin > 0 .and. Lcin(Ncin) > 0) then
 
-     if (nb == 1. .and. nx > 0) then
-        if (Ncin > 0 .and. Lcin(Ncin) > 0) then
+              ! CONVERT NUMERIC CHARACTER STRINGS TO real(8) VARIABLES (DPIN)
+              fmtl(2) = numg(min(24, nx))
 
-! CONVERT NUMERIC CHARACTER STRINGS TO real(8) VARIABLES (DPIN)
-           fmtl(2) = numg(min(24, nx))
+              ! INTERNAL READ TO CONVERT TO NUMERIC
+              read(cnum, fmtl, ERR=320) Dpin(Ncin)
+           end if
 
-! INTERNAL READ TO CONVERT TO NUMERIC
-           read(cnum, fmtl, ERR=320) Dpin(Ncin)
+           go to 340
+
+320        if (Cin(Ncin-1)(:4) /= 'case') write(IOOUT, '(/" WARNING!!  UNACCEPTABLE NUMBER ", a15, " (INFREE)")') Cin(i)
+           Lcin(Ncin) = 0
+
+340        Ncin = Ncin + 1
+           Cin(Ncin) = ' '
+           Lcin(Ncin) = 0
+           Dpin(Ncin) = 0
+           nx = 0
+           cnum = ' '
         end if
 
-        go to 340
+        nb = nb + 1
 
-320     if (Cin(Ncin-1)(:4) /= 'case') write(IOOUT, '(/" WARNING!!  UNACCEPTABLE NUMBER ", a15, " (INFREE)")') Cin(i)
-        Lcin(Ncin) = 0
+     end do
 
-340     Ncin = Ncin + 1
-        Cin(Ncin) = ' '
+     if (nx > 0) then
+        Ncin = Ncin + 1
         Lcin(Ncin) = 0
         Dpin(Ncin) = 0
-        nx = 0
-        cnum = ' '
      end if
-
-     nb = nb + 1
-
-  end do
-
-  if (nx > 0) then
-     Ncin = Ncin + 1
-     Lcin(Ncin) = 0
-     Dpin(Ncin) = 0
-  end if
 
   end do
 
