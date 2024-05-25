@@ -176,8 +176,8 @@ subroutine CPHS
 ! LOCAL VARIABLES
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
-  real(8), save:: scx(7)
-  integer, save:: i, ij, j, jj, k
+  real(8):: scx(7)
+  integer:: i, ij, j, jj, k
 
   k = 1
   if (Tt > Tg(2)) k = 2
@@ -300,9 +300,9 @@ subroutine DETON
   character(15):: fmm1 = 'M/M1'
   character(15):: frr1 = 'RHO/RHO1'
   character(15):: fdv  = 'DET VEL,M/SEC'
-  character(3), save:: unit
-  integer, save:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt
-  real(8), save:: a11, a12, a21, a22, alam, alpha, amm, b1, b2, cpl(Ncol), d, gam, &
+  character(3):: unit
+  integer:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt
+  real(8):: a11, a12, a21, a22, alam, alpha, amm, b1, b2, cpl(Ncol), d, gam, &
        gm1(Ncol), h1(Ncol), p1, pp1, pub(Ncol), rk, rr1, rrho(Ncol), T1, &
        tem, tt1, tub(Ncol), ud, x1, x2
 
@@ -600,8 +600,8 @@ subroutine EFMT(Fone, Aa, Vx)
 ! LOCAL VARIABLES
   character(4), parameter:: fmix(5) = [character(4):: 'I3,', '6.4,', 'I2,', '9X,', '5.3,']
   character(4):: frmt(8) = [character(4):: '(1H ', ',A15', ',', '9X,', '13(F', '6.4,', 'I2,', '1X))']
-  integer, save:: i, j, j1, ne(Ncol)
-  real(8), save:: ee, fe, w(Ncol)
+  integer:: i, j, j1, ne(Ncol)
+  real(8):: ee, fe, w(Ncol)
 
 
   frmt(6) = fmix(2)
@@ -647,10 +647,10 @@ subroutine EQLBRM
   use cea
   implicit none
 ! LOCAL VARIABLES
-  character(12), save:: ae, cmp(maxEl)
-  character(16), save:: amb
+  character(12):: ae, cmp(maxEl)
+  character(16):: amb
   logical, save:: cpcalc, i2many, newcom, reduce
-  integer, save:: i, il, ilamb, ilamb1, inc, ipr, iq2, iter, ix, ixsing, iz, j, ja, jb, &
+  integer:: i, il, ilamb, ilamb1, inc, ipr, iq2, iter, ix, ixsing, iz, j, ja, jb, &
        jbx, jc, jcondi, jcons, jdelg, jex, jj, jkg, jneg, jsw, k, kc, kg, kk, &
        kmat, kneg, l, lc, lcs(maxEl), le, lelim, lk, ll, lncvg, ls, lsing, &
        lz, maxitn, ncvg, njc, nn, numb
@@ -1658,8 +1658,8 @@ subroutine FROZEN
   use cea
   implicit none
 ! LOCAL VARIABLES
-  integer, save:: i, inc, iter, j, k, nnn
-  real(8), save:: dlnt, dlpm
+  integer:: i, inc, iter, j, k, nnn
+  real(8):: dlnt, dlpm
 
   Convg = .false.
   Tln = log(Tt)
@@ -1731,9 +1731,9 @@ subroutine GAUSS
   implicit none
 
 ! LOCAL VARIABLES
-  integer, save:: i, imatp1, j, k, nn, nnp1
+  integer:: i, imatp1, j, k, nn, nnp1
   real(8), parameter:: bigNo = 1e25
-  real(8), save:: coefx(50)
+  real(8):: coefx(50)
   real(8):: tmp(Imat+1)
 
 ! BEGIN ELIMINATION OF NNTH VARIABLE
@@ -1818,11 +1818,11 @@ subroutine HCALC
   implicit none
 
 ! LOCAL VARIABLES
-  character(6), save:: date(maxNgc)
-  character(2), save:: el(5)
-  character(15), save:: sub
+  character(6):: date(maxNgc)
+  character(2):: el(5)
+  character(15):: sub
   integer, save:: i, icf, ifaz, itot, j, k, l, m, n, nall, nint, ntgas, ntot
-  real(8), save:: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), Tsave
+  real(8):: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), Tsave
 
   Tsave = Tt
 
@@ -2157,14 +2157,14 @@ subroutine INPUT(readOK, caseOK, Ensert)
 
   ! LOCAL VARIABLES
   character(26), parameter:: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  character(15), save:: cin(maxNgc), cx15
-  character(4), save:: code, cx4
-  character(1), save:: cx1
-  character(2), save:: cx2
-  character(3), save:: cx3
-  logical, save:: eqrats, incd, phi, pltdat, reacts, refl
-  integer, save:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
-  real(8), save:: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
+  character(15):: cin(maxNgc), cx15
+  character(4):: code, cx4
+  character(1):: cx1
+  character(2):: cx2
+  character(3):: cx3
+  logical:: eqrats, incd, phi, pltdat, reacts, refl
+  integer:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
+  real(8):: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
 
 
   write(IOOUT, '(/, /)')
@@ -2850,8 +2850,8 @@ subroutine MATRIX
   implicit none
 
 ! LOCAL VARIABLES
-  integer, save:: i, iq, iq2, iq3, isym, j, k, kk, kmat
-  real(8), save:: energyl, f, h, ss, sss, term, term1
+  integer:: i, iq, iq2, iq3, isym, j, k, kk, kmat
+  real(8):: energyl, f, h, ss, sss, term, term1
 
   iq = Nlm + Npr
   Iq1 = iq + 1
@@ -2998,8 +2998,8 @@ subroutine NEWOF
   implicit none
 
 ! LOCAL VARIABLES
-  integer, save:: i, j
-  real(8), save:: assval, bigb, bratio, dbi, smalb, tem, v1, v2
+  integer:: i, j
+  real(8):: assval, bigb, bratio, dbi, smalb, tem, v1, v2
 
   if (.not. Short) write(IOOUT, '(/" O/F = ", f10.6)') Oxfl
   Eqrat = 0
@@ -3481,13 +3481,13 @@ subroutine REACT
   use cea
   implicit none
 ! LOCAL VARIABLES
-  character(6), save:: date
-  character(2), save:: el(5)
-  character(15), save:: sub
-  integer, save:: i, icf, ifaz, ifrmla, itot, j, jj, k, kk, kr, l, n, nall, nint, nj, ntgas, ntot
-  logical, save:: fuel, rcoefs, wdone(2)
+  character(6):: date
+  character(2):: el(5)
+  character(15):: sub
+  integer:: i, icf, ifaz, ifrmla, itot, j, jj, k, kk, kr, l, n, nall, nint, nj, ntgas, ntot
+  logical:: fuel, rcoefs, wdone(2)
   logical:: hOK
-  real(8), save:: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, T1, T2
+  real(8):: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, T1, T2
   real(8):: T1save, T2save
 
   wdone = .false.
@@ -3757,9 +3757,9 @@ subroutine RKTOUT
 
 ! LOCAL VARIABLES
   character(4):: exit(11) = 'EXIT'
-  character(15), save:: fi, fiv, fr, z(4)
+  character(15):: fi, fiv, fr, z(4)
   integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, misp, mivac, mmach, mppf, mppj, nex
-  real(8), save:: agv, aw, gc, tem, tra, vaci(Ncol), ww
+  real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
 
   if (.not. Eql) then
@@ -3990,11 +3990,11 @@ subroutine ROCKET
   use cea
   implicit none
 ! LOCAL VARIABLES
-  integer, save:: i, i01, i12, iof, iplt1, iplte, ipp, isub, isup1, isupsv, itnum, &
+  integer:: i, i01, i12, iof, iplt1, iplte, ipp, isub, isup1, isupsv, itnum, &
        itrot, nar, nipp, niter, nn, npr1, nptth
-  logical, save:: done, seql, thi
+  logical:: done, seql, thi
   real(8):: a1l = -1.26505, b1 = 1.0257, c1 = -1.2318, pa = 1e5
-  real(8), save:: acatsv, aeatl, appl, aratio, asq, check, cprf, dd, dh, &
+  real(8):: acatsv, aeatl, appl, aratio, asq, check, cprf, dd, dh, &
        dlnp, dlnpe, dlt, dp, eln, mat, msq, p1, pcpa, pcplt, pinf, pinj, &
        pinjas, pjrat, ppa, pr, pracat, prat, pratsv, pvg, test, tmelt, usq
 
@@ -4549,12 +4549,12 @@ subroutine SEARCH
   use cea
   implicit none
 ! LOCAL VARIABLES
-  character(16), save:: bin(2, 40), pure(6), spece(2)
-  character(6), save:: date(maxNgc)
-  character(2), save:: el(5)
-  character(15), save:: sub
-  integer, save:: i, i5, ifaz, ii, ir, itot, j, jj(2), jk, k, lineb, nall, ne, nint, npure, nrec, ntgas, ntot
-  real(8), save:: b(5), t1, t2, thermo(9, 3), trdata(36)
+  character(16):: bin(2, 40), pure(6), spece(2)
+  character(6):: date(maxNgc)
+  character(2):: el(5)
+  character(15):: sub
+  integer:: i, i5, ifaz, ii, ir, itot, j, jj(2), jk, k, lineb, nall, ne, nint, npure, nrec, ntgas, ntot
+  real(8):: b(5), t1, t2, thermo(9, 3), trdata(36)
 
   Nc = 0
   ne = 0
@@ -4856,10 +4856,10 @@ subroutine SHCK
   use cea
   implicit none
 ! LOCAL VARIABLES
-  character(1), save:: cr12, cr52
-  integer, save:: i, iof, it1, it2, itr, j, n
-  logical, save:: refl, seql, srefl
-  real(8), save:: ax, axx, b2, cormax, gg, hs, m2m1(Ncol), mis(13), mu12rt, p1, p21, &
+  character(1):: cr12, cr52
+  integer:: i, iof, it1, it2, itr, j, n
+  logical:: refl, seql, srefl
+  real(8):: ax, axx, b2, cormax, gg, hs, m2m1(Ncol), mis(13), mu12rt, p1, p21, &
        p21l, p2p1(Ncol), pmn, rho12, rho52, rrho(Ncol), sg(78), T1, T21, &
        t21l, t2t1(Ncol), ttmax, u1u2(Ncol), uis(13), utwo(Ncol), uu, wmx, ww
 
@@ -5226,7 +5226,7 @@ subroutine THERMP
   use cea
   implicit none
 ! LOCAL VARIABLES
-  integer, save:: iof
+  integer:: iof
   logical:: Uv, Tv, Sv
 
   Uv = transfer(Hp, Uv)
@@ -5295,9 +5295,9 @@ subroutine TRANIN
   use cea
   implicit none
 ! LOCAL VARIABLES
-  integer, save:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
-  logical, save:: change, elc1, elc2, ion1, ion2, setx
-  real(8), save:: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
+  integer:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
+  logical:: change, elc1, elc2, ion1, ion2, setx
+  real(8):: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
        stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
        trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
 
@@ -5584,8 +5584,8 @@ subroutine TRANP
   use cea
   implicit none
 ! LOCAL VARIABLES
-  integer, save:: i, i1, j, jj, k, m, mm, nlmm, nmm
-  real(8), save:: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
+  integer:: i, i1, j, jj, k, m, mm, nlmm, nmm
+  real(8):: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
        psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
        stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
 
@@ -6059,8 +6059,8 @@ subroutine VARFMT(Vx)
 ! DUMMY ARGUMENTS
   real(8), intent(in):: Vx(Ncol)
 ! LOCAL VARIABLES
-  integer, save:: i, k
-  real(8), save:: vi
+  integer:: i, k
+  real(8):: vi
 
   do i = 1, Npt
      vi = abs(Vx(i))
