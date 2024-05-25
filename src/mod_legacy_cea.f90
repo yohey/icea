@@ -7,7 +7,7 @@
 !    The variable Ncol set the number of columns in the output.  It may
 !    be increased for wider paper or smaller fonts.
 !
-module cea
+module mod_legacy_cea
   implicit none
 
   integer, parameter:: maxNgc = 600
@@ -161,4 +161,4 @@ module cea
      end subroutine write_plt_file
 
   end interface
-end module cea
+end module mod_legacy_cea
