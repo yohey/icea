@@ -174,11 +174,11 @@ subroutine CPHS
 !***********************************************************************
   use mod_legacy_cea
   implicit none
-! LOCAL VARIABLES
-  real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
-  real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
-  real(8):: scx(7)
   integer:: i, ij, j, jj, k
+
+  cx(:) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
+  hcx(:) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
+  scx(:) = 0d0
 
   k = 1
   if (Tt > Tg(2)) k = 2
@@ -254,8 +254,16 @@ subroutine CPHS
   end if
 
   return
+end subroutine CPHS
 
-  entry ALLCON
+
+subroutine ALLCON
+!***********************************************************************
+! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
+!***********************************************************************
+  use mod_legacy_cea
+  implicit none
+  integer:: i, j, jj
 
   do jj = 1, Nc
      j = jj + Ng
@@ -280,7 +288,7 @@ subroutine CPHS
   end do
 
   return
-end subroutine CPHS
+end subroutine ALLCON
 
 
 

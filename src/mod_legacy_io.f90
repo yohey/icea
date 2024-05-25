@@ -732,7 +732,7 @@ contains
     character(2), parameter:: numg(24) = &
          [character(2):: '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', &
          '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24']
-    character(1):: ch1(132), cx
+    character(1):: ch1(132), cx_
     character(24):: cnum
     character(3):: fmtl(3)
     character(4):: w1
@@ -803,17 +803,17 @@ contains
        write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
 
        do i = ich1, nch1
-          cx = ch1(i)
+          cx_ = ch1(i)
 
           ! LOOK FOR DELIMITER STRINGS
-          if (cx == ',' .and. (Lcin(Ncin) > 0 .or. nx == 0)) cx = ' '
-          if (cx == '=' .and. (Lcin(Ncin) < 0 .or. nx == 0)) cx = ' '
-          if (cx /= ' ' .and. cx /= '	') then
+          if (cx_ == ',' .and. (Lcin(Ncin) > 0 .or. nx == 0)) cx_ = ' '
+          if (cx_ == '=' .and. (Lcin(Ncin) < 0 .or. nx == 0)) cx_ = ' '
+          if (cx_ /= ' ' .and. cx_ /= '	') then
 
              ! LOOK FOR CHARACTER STRINGS
              nx = nx + 1
              if (Ncin > 1) then
-                cnum(nx:nx) = cx
+                cnum(nx:nx) = cx_
                 if (nx <= 15) Cin(Ncin) = trim(cnum)
                 if (nx == 1) then
 

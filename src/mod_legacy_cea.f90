@@ -95,6 +95,11 @@ module mod_legacy_cea
   real(8):: Coneql(Ncol), Confro(Ncol), Cpeql(Ncol), Cpfro(Ncol), &
        Preql(Ncol), Prfro(Ncol), Vis(Ncol)
 
+  ! for subroutine CPHS and ALLCON
+  real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
+  real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
+  real(8):: scx(7)
+
 
 !***********************************************************************
 ! FUNDAMENTAL CONSTANTS FROM:  COHEN, E.RICHARD & TAYLOR, BARRY N.,
