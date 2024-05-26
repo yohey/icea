@@ -59,7 +59,7 @@ program main
      Iplt = 0
      Nplt = 0
 
-     call INPUT(readOK, caseOK, ensert)
+     call INPUT(cea(icase), readOK, caseOK, ensert)
 
      if ((.not. caseOK) .or. (.not. readOK)) cycle
 
@@ -3612,42 +3612,42 @@ subroutine SHCK(cea)
   if (.not. Short) then
      write(IOOUT, '(/"   *** INPUT FOR SHOCK PROBLEMS ***")')
      write(IOOUT, '(/" INCDEQ =", L2, "   REFLEQ =", L2, "   INCDFZ =", L2, "    REFLFZ =", L2)') &
-          Incdeq, Refleq, Incdfz, Reflfz
+          cea%Incdeq, cea%Refleq, cea%Incdfz, cea%Reflfz
   end if
-  if (Refleq .or. Reflfz) srefl = .true.
-  seql = Incdeq
+  if (cea%Refleq .or. cea%Reflfz) srefl = .true.
+  seql = cea%Incdeq
   if (T(1) == 0) T(1) = Rtemp(1)
-  do i = 1, Nsk
-     uis(i) = U1(i)
-     mis(i) = Mach1(i)
-     if (Mach1(i) == 0 .and. U1(i) == 0) exit
+  do i = 1, cea%Nsk
+     uis(i) = cea%U1(i)
+     mis(i) = cea%Mach1(i)
+     if (cea%Mach1(i) == 0 .and. cea%U1(i) == 0) exit
   end do
-  if (Nsk > Ncol) then
+  if (cea%Nsk > Ncol) then
      write(IOOUT, '(/" WARNING!!  ONLY ", I2, " u1 OR mach1 VALUES ALLOWED (SHCK)")') Ncol
-     Nsk = Ncol
+     cea%Nsk = Ncol
   end if
   if (.not. Short) then
-     write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (U1(i), i = 1, Nsk)
-     write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (Mach1(i), i = 1, Nsk)
+     write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (cea%U1(i), i = 1, cea%Nsk)
+     write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (cea%Mach1(i), i = 1, cea%Nsk)
   end if
   iof = 0
 200 iof = iof + 1
   Oxfl = Oxf(iof)
   call NEWOF(cea)
-  Incdeq = seql
+  cea%Incdeq = seql
 300 refl = .false.
   it2 = 2
   it1 = 1
   Pp = P(1)
   Tt = T(1)
-  if (.not. Incdeq) then
+  if (.not. cea%Incdeq) then
 ! FROZEN
-     do n = 1, Nsk
+     do n = 1, cea%Nsk
         Dlvtp(n) = 1
         Dlvpt(n) = -1
      end do
   end if
-  do Npt = 1, Nsk
+  do Npt = 1, cea%Nsk
      Ppp(Npt) = P(Npt)
      Ttt(Npt) = T(Npt)
      if (Npt > 1) then
@@ -3666,19 +3666,19 @@ subroutine SHCK(cea)
         write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') Tt, Npt
         go to 1000
      end if
-350  if (Cpmix /= 0) Gamma1 = Cpmix / (Cpmix - 1/Wmix)
-     A1 = sqrt(R0 * Gamma1 * Tt / Wmix)
-     if (U1(Npt) == 0) U1(Npt) = A1 * Mach1(Npt)
-     if (Mach1(Npt) == 0.) Mach1(Npt) = U1(Npt) / A1
+350  if (Cpmix /= 0) cea%Gamma1 = Cpmix / (Cpmix - 1/Wmix)
+     cea%A1 = sqrt(R0 * cea%Gamma1 * Tt / Wmix)
+     if (cea%U1(Npt) == 0) cea%U1(Npt) = cea%A1 * cea%Mach1(Npt)
+     if (cea%Mach1(Npt) == 0.) cea%Mach1(Npt) = cea%U1(Npt) / cea%A1
      Wm(Npt) = Wmix
      Cpr(Npt) = Cpmix
-     Gammas(Npt) = Gamma1
+     Gammas(Npt) = cea%Gamma1
      Vlm(Npt) = R0 * Tt / (Wmix * Pp)
   end do
-  Npt = Nsk
+  Npt = cea%Nsk
 ! OUTPUT--1ST CONDITION
   write(IOOUT, '(////25X, "SHOCK WAVE PARAMETERS ASSUMING")')
-  if (.not. Incdeq) then
+  if (.not. cea%Incdeq) then
      write(IOOUT, '(/, 17X, " FROZEN COMPOSITION FOR INCIDENT SHOCKED CONDITI1ONS"//)')
   else
      write(IOOUT, '(/, 16X, " EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED CONDITIONS"//)')
@@ -3689,15 +3689,15 @@ subroutine SHCK(cea)
   cea%fmt(4) = '13'
   cea%fmt(5) = ' '
   cea%fmt(7) = '4,'
-  write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (Mach1(j), j = 1, Npt)
+  write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%Mach1(j), j = 1, Npt)
   cea%fmt(7) = '2,'
-  write(IOOUT, cea%fmt) 'U1, M/SEC      ', (U1(j), j = 1, Npt)
+  write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%U1(j), j = 1, Npt)
   call OUT2(cea)
 ! BEGIN CALCULATIONS FOR 2ND CONDITION
-  if (Incdeq) Eql = .true.
+  if (cea%Incdeq) Eql = .true.
   Npt = 1
-400 Gamma1 = Gammas(Npt)
-  uu = U1(Npt)
+400 cea%Gamma1 = Gammas(Npt)
+  uu = cea%U1(Npt)
   wmx = Wm(Npt)
   p1 = Ppp(Npt)
   T1 = Ttt(Npt)
@@ -3710,11 +3710,11 @@ subroutine SHCK(cea)
      b2 = (-1 - mu12rt - T21) / 2
      p21 = -b2 + sqrt(b2**2 - T21)
   else
-     p21 = (2 * Gamma1 * Mach1(Npt)**2 - Gamma1 + 1) / (Gamma1 + 1)
+     p21 = (2 * cea%Gamma1 * cea%Mach1(Npt)**2 - cea%Gamma1 + 1) / (cea%Gamma1 + 1)
 ! THE FOLLOWING IMPROVED FORMULATION FOR THE INITIAL ESTIMATE FOR THE
 ! 2ND CONDITION WAS MADE AND TESTED BY S. GORDON 7/10/89.
      if (.not. Eql) then
-        T21 = p21 * (2 / Mach1(Npt)**2 + Gamma1 - 1) / (Gamma1 + 1)
+        T21 = p21 * (2 / cea%Mach1(Npt)**2 + cea%Gamma1 - 1) / (cea%Gamma1 + 1)
      else
         Pp = p21 * p1
         Tp = .false.
@@ -3731,14 +3731,14 @@ subroutine SHCK(cea)
   T21 = min(T21, ttmax)
   t21l = log(T21)
   itr = 1
-500 if (Shkdbg) write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
+500 if (cea%Shkdbg) write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
        & "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, T21, rho52
   Tt = T21 * T1
   Pp = p21 * p1
   if (.not. Eql) then
 ! FROZEN
      Tln = log(Tt)
-     if (.not. Incdeq) then
+     if (.not. cea%Incdeq) then
         call HCALC
         if (Tt == 0) go to 600
         Hsum(Npt) = Hsub0
@@ -3774,7 +3774,7 @@ subroutine SHCK(cea)
   X(3) = G(1, 1) * G(2, 2) - G(1, 2) * G(2, 1)
   X(1) = (G(1, 3) * G(2, 2) - G(2, 3) * G(1, 2)) / X(3)
   X(2) = (G(1, 1) * G(2, 3) - G(2, 1) * G(1, 3)) / X(3)
-  if (Shkdbg) then
+  if (cea%Shkdbg) then
      write(IOOUT, '(/" G(I,J)  ", 3E15.8)') G(1, 1), G(1, 2), G(1, 3)
      write(IOOUT, '(/" G(I,J)  ", 3E15.8)') G(2, 1), G(2, 2), G(2, 3)
      write(IOOUT, '(/" X       ", 2E15.8)') X(1), X(2)
@@ -3797,12 +3797,12 @@ subroutine SHCK(cea)
      t21l = t21l + X(2)
      p21 = exp(p21l)
      T21 = exp(t21l)
-     if (Shkdbg) write(IOOUT, '(/" MAX.COR.=", e13.6, " X(1)=", e13.6, " X(2)=", e13.6)') cormax, X(1), X(2)
+     if (cea%Shkdbg) write(IOOUT, '(/" MAX.COR.=", e13.6, " X(1)=", e13.6, " X(2)=", e13.6)') cormax, X(1), X(2)
      if (itr /= 1 .or. T21 < ttmax) then
         itr = itr + 1
         if (itr < 61) go to 500
         write(IOOUT, '(/6x, " WARNING!!  NO CONVERGENCE FOR u1=", F8.1, &
-             & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') U1(Npt)
+             & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') cea%U1(Npt)
      else
         Tt = 0
         Npt = Npt - 1
@@ -3824,7 +3824,7 @@ subroutine SHCK(cea)
         Ttt(Npt) = Tt
         Gammas(Npt) = Cpr(Npt) / (Cpr(Npt) - 1 / wmx)
         Vlm(Npt) = R0 * Tt / (wmx * Pp)
-        if (Incdeq) then
+        if (cea%Incdeq) then
            Ssum(Npt) = 0
            do j = 1, Ngc
               pmn = Pp * wmx * En(j, Npt)
@@ -3838,15 +3838,15 @@ subroutine SHCK(cea)
        & "FOR POINT", I5, " (SHCK)")') Tt, Npt
   Tt = 0
 800 if (Npt < 1) go to 1000
-  Nsk = Npt
+  cea%Nsk = Npt
 900 if (Trnspt) call TRANP(cea)
   Isv = 0
-  if (Npt < Nsk) Isv = Npt
+  if (Npt < cea%Nsk) Isv = Npt
   if (Npt == 1) Isv = -1
   Npt = Npt + 1
   if (Eql) call SETEN
-  if (Npt <= Nsk) go to 400
-  Npt = Nsk
+  if (Npt <= cea%Nsk) go to 400
+  Npt = cea%Nsk
   if (refl) then
      if (.not. Eql) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--FROZEN")')
      if (Eql) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM")')
@@ -3875,7 +3875,7 @@ subroutine SHCK(cea)
   if (.not. Eql) then
 ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
      cea%fmt(7) = '5,'
-     if (.not. Incdeq) then
+     if (.not. cea%Incdeq) then
         if (Massf) then
            write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MASS'
         else
@@ -3902,9 +3902,9 @@ subroutine SHCK(cea)
         it2 = 5
         it1 = 2
         Eql = .true.
-        if (Reflfz) then
+        if (cea%Reflfz) then
            Eql = .false.
-           if (Refleq) then
+           if (cea%Refleq) then
               j = 0
               do i = 1, Npt
                  j = j + 1
@@ -3924,7 +3924,7 @@ subroutine SHCK(cea)
         end if
         Npt = 1
         go to 400
-     else if (.not. Eql .and. Refleq) then
+     else if (.not. Eql .and. cea%Refleq) then
         j = 1
         do i = 1, Npt
            u1u2(i) = sg(j)
@@ -3940,8 +3940,8 @@ subroutine SHCK(cea)
         go to 400
      end if
   end if
-  if (Incdeq .and. Incdfz) then
-     Incdeq = .false.
+  if (cea%Incdeq .and. cea%Incdfz) then
+     cea%Incdeq = .false.
      Eql = .false.
      go to 300
   else if (iof >= Nof) then
@@ -3950,9 +3950,9 @@ subroutine SHCK(cea)
         Rtemp(n) = T(1)
      end do
   else
-     do i = 1, Nsk
-        U1(i) = uis(i)
-        Mach1(i) = mis(i)
+     do i = 1, cea%Nsk
+        cea%U1(i) = uis(i)
+        cea%Mach1(i) = mis(i)
      end do
      go to 200
   end if
@@ -4063,7 +4063,7 @@ subroutine TRANIN(cea)
            end do
         end if
         go to 300
-     else if (.not. Incdeq) then
+     else if (.not. cea%Incdeq) then
         if (Npt <= 1) then
            cea%Nm = Nreac
            do i = 1, cea%Nm

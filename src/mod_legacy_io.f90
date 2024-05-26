@@ -8,16 +8,16 @@ module mod_legacy_io
 
 contains
 
-  subroutine INPUT(readOK, caseOK, Ensert)
+  subroutine INPUT(cea, readOK, caseOK, Ensert)
     !***********************************************************************
     ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
     !***********************************************************************
     use mod_legacy_cea
     implicit none
 
-    ! DUMMY ARGUMENTS
-    logical:: caseOK, readOK
-    character(15):: Ensert(20)
+    type(CEA_Problem), intent(inout):: cea
+    logical, intent(out):: caseOK, readOK
+    character(15), intent(out):: Ensert(20)
 
     ! LOCAL VARIABLES
     character(26), parameter:: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -298,19 +298,19 @@ contains
                 Pcp(i+Ncol) = 0
                 Supar(i) = 0
                 Subar(i) = 0
-                Mach1(i) = 0
-                U1(i) = 0
+                cea%Mach1(i) = 0
+                cea%U1(i) = 0
              end forall
-             Gamma1 = 0
+             cea%Gamma1 = 0
              phi = .false.
              eqrats = .false.
              incd = .false.
              refl = .false.
-             Shkdbg = .false.
-             Incdeq = .false.
-             Incdfz = .false.
-             Refleq = .false.
-             Reflfz = .false.
+             cea%Shkdbg = .false.
+             cea%Incdeq = .false.
+             cea%Incdfz = .false.
+             cea%Refleq = .false.
+             cea%Reflfz = .false.
              Np = 0
              Nt = 1
              Trnspt = .false.
@@ -356,7 +356,7 @@ contains
 
                    else if (cx3 == 'dbg' .or. cx3 == 'deb') then
                       Debugf = .true.
-                      Shkdbg = .true.
+                      cea%Shkdbg = .true.
                       Detdbg = .true.
 
                    else if (cx3 == 'fac') then
@@ -408,10 +408,10 @@ contains
 
           else if (code(1:3) == 'end') then
              if (Shock) then
-                if (incd .and. Froz) Incdfz = .true.
-                if (incd .and. Eql) Incdeq = .true.
-                if (refl .and. Froz) Reflfz = .true.
-                if (refl .and. Eql) Refleq = .true.
+                if (incd .and. Froz) cea%Incdfz = .true.
+                if (incd .and. Eql) cea%Incdeq = .true.
+                if (refl .and. Froz) cea%Reflfz = .true.
+                if (refl .and. Eql) cea%Refleq = .true.
              end if
 
              Hsub0 = min(hr, ur)
@@ -430,7 +430,7 @@ contains
                      & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
                      & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
                      Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
-                     incd, Rkt, Froz, Eql, Ions, SIunit, Debugf, Shkdbg, Detdbg, Trnspt
+                     incd, Rkt, Froz, Eql, Ions, SIunit, Debugf, cea%Shkdbg, Detdbg, Trnspt
                 if (T(1) > 0) write(IOOUT, '(/" T,K =", 7f11.4)') (T(jj), jj = 1, Nt)
                 write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') Trace, S0, hr, ur
                 if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
@@ -631,20 +631,20 @@ contains
              hr = mix(1)
 
           else if (cx2 == 'u1') then
-             Nsk = nmix
+             cea%Nsk = nmix
              if (nmix > Ncol) then
-                Nsk = Ncol
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', Nsk
+                cea%Nsk = Ncol
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', cea%Nsk
              end if
-             U1(1:Nsk) = mix(1:Nsk)
+             cea%U1(1:cea%Nsk) = mix(1:cea%Nsk)
 
           else if (cx4 == 'mach') then
-             Nsk = nmix
+             cea%Nsk = nmix
              if (nmix > Ncol) then
-                Nsk = Ncol
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', Nsk
+                cea%Nsk = Ncol
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', cea%Nsk
              end if
-             Mach1(1:Nsk) = mix(1:Nsk)
+             cea%Mach1(1:cea%Nsk) = mix(1:cea%Nsk)
 
           else if (cx3 == 'sub') then
              Nsub = nmix
