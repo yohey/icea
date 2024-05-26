@@ -2,6 +2,10 @@ module mod_legacy_io
   use mod_cea
   implicit none
 
+  character(15), private:: fc
+  integer, private:: ione, mcond, mcondf, mpn, mpnf, mvis
+  real(8), private:: pfuel, phi, tem
+
 contains
 
   subroutine INPUT(readOK, caseOK, Ensert)
@@ -721,12 +725,14 @@ contains
     !***********************************************************************
     use mod_legacy_cea
     implicit none
+
     ! DUMMY ARGUMENTS
     character(15), intent(out):: Cin(maxNgc)
     integer, intent(out):: Ncin
     integer, intent(out):: Lcin(maxNgc)
     logical, intent(out):: readOK
     real(8), intent(out):: Dpin(maxNgc)
+
     ! LOCAL VARIABLES
     character(1), parameter:: nums(13) = ['+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
     character(2), parameter:: numg(24) = &
@@ -881,24 +887,14 @@ contains
   subroutine OUT1
     !***********************************************************************
     ! OUT1 WRITES REACTANT AND FUEL-OXIDANT RATIO INformatION.
-    ! ENTRY OUT2 WRITES THERMODYNAMIC PROPERTIES.
-    ! ENTRY OUT3 WRITES MOLE FRACTIONS.
-    ! ENTRY OUT4 WRITES TRANSPORT PROPERTIES.
     !
     ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
     !***********************************************************************
     use mod_legacy_cea
     implicit none
 
-    ! LOCAL VARIABLES
-    character(15), save:: fc, fgi, fh, fp, frh, fs, fu
-    character(4), save:: mamo
-    integer, save:: i, im, ione, j, k, kin, m, mcond, mcondf, mcp, mdvp, mdvt, meq, mfa, &
-         mg, mgam, mh, mie, mm, mmw, mof, mp, mpf, mph, mpn, mpnf, mrho, ms, &
-         mson, mt, mvis, n, notuse
-    logical, save:: kOK
-    real(8), save:: pfactor, pfuel, phi, rho, tem, tra, vnum
-
+    integer:: i, n
+    real(8):: rho
 
     write(IOOUT, '(" CASE = ", a15)') Case
 
@@ -943,9 +939,21 @@ contains
     write(IOOUT, '(/" O/F=", F11.5, 2X, "%FUEL=", F10.6, 2X, "R,EQ.RATIO=", F9.6, 2X, "PHI,EQ.RATIO=", F9.6)') &
          Oxfl, pfuel, Eqrat, phi
     return
+  end subroutine OUT1
 
+
+  subroutine OUT2
     !***********************************************************************
-    entry OUT2
+    ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
+    !***********************************************************************
+    use mod_legacy_cea
+    implicit none
+
+    character(15):: fgi, fh, fp, frh, fs, fu
+    integer:: i, j
+    integer, save:: mcp, mdvp, mdvt, meq, mfa, mg, mgam, mh, mie, mm, mmw, mof, mp, mpf, mph, mrho, ms, mson, mt
+    real(8):: pfactor, vnum
+
     ione = 0
     if (Rkt .and. .not. Page1) then
        ione = 2
@@ -1164,9 +1172,22 @@ contains
     end do
     write(IOOUT, Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)
     return
+  end subroutine OUT2
 
+
+  subroutine OUT3
     !***********************************************************************
-    entry OUT3
+    ! OUT3 WRITES MOLE FRACTIONS.
+    !***********************************************************************
+    use mod_legacy_cea
+    implicit none
+
+    character(4):: mamo
+    logical:: kOK
+    integer:: i, k, m, im, kin
+    integer, save:: notuse
+    real(8):: tra
+
     tra = 5.d-6
     if (Trace /= 0.) tra = Trace
 
@@ -1239,9 +1260,18 @@ contains
     if (.not. Moles) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
          & " OXIDANT IN TOTAL OXIDANTS")')
     return
+  end subroutine OUT3
 
+
+  subroutine OUT4
     !***********************************************************************
-    entry OUT4
+    ! OUT4 WRITES TRANSPORT PROPERTIES.
+    !***********************************************************************
+    use mod_legacy_cea
+    implicit none
+
+    integer:: i, j
+
     write(IOOUT, *)
     write(IOOUT, '(" TRANSPORT PROPERTIES (GASES ONLY)")')
     if (SIunit) then
@@ -1291,7 +1321,7 @@ contains
     write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
 
     return
-  end subroutine OUT1
+  end subroutine OUT4
 
 end module mod_legacy_io
 !!$
