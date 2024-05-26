@@ -156,14 +156,4 @@ module mod_legacy_cea
        '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
        'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0', ')'/
 
-
-  interface
-     subroutine write_plt_file(IOPLT, Iplt, Nplt, Pltvar, Pltout)
-       implicit none
-       integer, intent(in):: IOPLT, Iplt, Nplt
-       character(*), intent(in):: Pltvar(:)
-       real(8), intent(in):: Pltout(:, :)
-     end subroutine write_plt_file
-
-  end interface
 end module mod_legacy_cea
