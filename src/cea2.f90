@@ -3266,13 +3266,14 @@ subroutine SEARCH
 !***********************************************************************
   use mod_legacy_cea
   implicit none
-! LOCAL VARIABLES
-  character(16):: bin(2, 40), pure(6), spece(2)
+
+  ! LOCAL VARIABLES
   character(6):: date(maxNgc)
   character(2):: el(5)
   character(15):: sub
-  integer:: i, i5, ifaz, ii, ir, itot, j, jj(2), jk, k, lineb, nall, ne, nint, npure, nrec, ntgas, ntot
-  real(8):: b(5), t1, t2, thermo(9, 3), trdata(36)
+  integer:: i, j, k, ii
+  integer:: i5, ifaz, itot, nall, ne, nint, ntgas, ntot
+  real(8):: b(5), t1, t2, thermo(9, 3)
 
   Nc = 0
   ne = 0
@@ -3414,7 +3415,7 @@ subroutine SEARCH
      write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
           & //, 13x, "FATAL ERROR (SEARCH)")') Elmt(ii)
      Ngc = 0
-     go to 600
+     return
 300 continue
 ! WRITE POSSIBLE PRODUCT LIST
   if (.not. Short) then
@@ -3427,12 +3428,23 @@ subroutine SEARCH
         write(IOOUT, '(3(2X, A6, 2X, A15))') (date(j), Prod(j), j = i, i5)
      end do
   end if
-  go to 600
+  return
+
 400 write(IOOUT, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
   Ngc = 0
-  go to 600
-! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
-  entry READTR
+  return
+end subroutine
+
+
+subroutine READTR
+  ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
+  use mod_legacy_cea
+  implicit none
+
+  character(16):: bin(2, 40), pure(6), spece(2)
+  integer:: i, j, k, jj(2), jk, ir, lineb, npure, nrec
+  real(8):: trdata(36)
+
   rewind IOTRN
   rewind IOSCH
   Ntape = 0
@@ -3483,8 +3495,8 @@ subroutine SEARCH
      end do
   end if
   write(IOOUT, *)
-600 return
-end subroutine SEARCH
+  return
+end subroutine
 
 
 
