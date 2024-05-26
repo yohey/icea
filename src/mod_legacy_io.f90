@@ -1323,6 +1323,33 @@ contains
     return
   end subroutine OUT4
 
+
+  subroutine VARFMT(Vx)
+    !***********************************************************************
+    ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-format IN
+    ! VARIABLE format FMT.
+    !***********************************************************************
+    use mod_legacy_cea
+    implicit none
+    ! DUMMY ARGUMENTS
+    real(8), intent(in):: Vx(Ncol)
+    ! LOCAL VARIABLES
+    integer:: i, k
+    real(8):: vi
+
+    do i = 1, Npt
+       vi = abs(Vx(i))
+       k = 2*i + 3
+       Fmt(k) = '5,'
+       if (vi >= 0.99995d0)  Fmt(k) = '4,'
+       if (vi >= 9.99950d0)  Fmt(k) = '3,'
+       if (vi >= 99.9950d0)  Fmt(k) = '2,'
+       if (vi >= 9999.95d0)  Fmt(k) = '1,'
+       if (vi >= 999999.5d0) Fmt(k) = '0,'
+    end do
+    Fmt(29)(2:) = ' '
+  end subroutine VARFMT
+
 end module mod_legacy_io
 !!$
 !!$
