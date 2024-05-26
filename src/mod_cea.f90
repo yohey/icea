@@ -8,6 +8,17 @@ module mod_cea
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0', ')']
   end type CEA_Problem
 
+  ! Atomic Symbols
+  character(2), parameter:: atomic_symbol(100) = ['H ', 'D ', 'HE', 'LI', 'BE', 'B ', 'C ', 'N ', 'O ', 'F ', &
+                                                  'NE', 'NA', 'MG', 'AL', 'SI', 'P ', 'S ', 'CL', 'AR', 'K ', 'CA', 'SC', &
+                                                  'TI', 'V ', 'CR', 'MN', 'FE', 'CO', 'NI', 'CU', 'ZN', 'GA', 'GE', 'AS', &
+                                                  'SE', 'BR', 'KR', 'RB', 'SR', 'Y ', 'ZR', 'NB', 'MO', 'TC', 'RU', 'RH', &
+                                                  'PD', 'AG', 'CD', 'IN', 'SN', 'SB', 'TE', 'I ', 'XE', 'CS', 'BA', 'LA', &
+                                                  'CE', 'PR', 'ND', 'PM', 'SM', 'EU', 'GD', 'TB', 'DY', 'HO', 'ER', 'TM', &
+                                                  'YB', 'LU', 'HF', 'TA', 'W ', 'RE', 'OS', 'IR', 'PT', 'AU', 'HG', 'TL', &
+                                                  'PB', 'BI', 'PO', 'AT', 'RN', 'FR', 'RA', 'AC', 'TH', 'PA', 'U ', 'NP', &
+                                                  'PU', 'AM', 'CM', 'BK', 'CF', 'ES']
+
   ! Atomic Maxx - Coplen, T. B., Atomic Weights of the Elements 1999.
   !               J. Phys. Chem. Ref. Data, vol. 30, No. 3, 2001, pp. 701--712.
   real(8), parameter:: atomic_mass(100) = [  1.007940d0,    2.014102d0,   4.002602d0,   6.941000d0,   9.0121820d0, &

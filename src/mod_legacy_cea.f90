@@ -108,16 +108,5 @@ module mod_legacy_cea
 !***********************************************************************
 
   real(8), parameter:: Rr = 8314.51d0, Pi = 3.14159265d0, Avgdr = 6.0221367d0, Boltz = 1.380658d0
-! ATOMIC SYMBOLS
-  character(2):: Symbol(100)
-  data Symbol/'H ', 'D ', 'HE', 'LI', 'BE', 'B ', 'C ', 'N ', 'O ', 'F ', &
-       'NE', 'NA', 'MG', 'AL', 'SI', 'P ', 'S ', 'CL', 'AR', 'K ', 'CA', 'SC', &
-       'TI', 'V ', 'CR', 'MN', 'FE', 'CO', 'NI', 'CU', 'ZN', 'GA', 'GE', 'AS', &
-       'SE', 'BR', 'KR', 'RB', 'SR', 'Y ', 'ZR', 'NB', 'MO', 'TC', 'RU', 'RH', &
-       'PD', 'AG', 'CD', 'IN', 'SN', 'SB', 'TE', 'I ', 'XE', 'CS', 'BA', 'LA', &
-       'CE', 'PR', 'ND', 'PM', 'SM', 'EU', 'GD', 'TB', 'DY', 'HO', 'ER', 'TM', &
-       'YB', 'LU', 'HF', 'TA', 'W ', 'RE', 'OS', 'IR', 'PT', 'AU', 'HG', 'TL', &
-       'PB', 'BI', 'PO', 'AT', 'RN', 'FR', 'RA', 'AC', 'TH', 'PA', 'U ', 'NP', &
-       'PU', 'AM', 'CM', 'BK', 'CF', 'ES'/
 
 end module mod_legacy_cea

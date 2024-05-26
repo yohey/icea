@@ -2342,7 +2342,7 @@ subroutine REACT
         Elmt(j) = Ratom(n, jj)
 
 80      do kk = 1, 100
-           if (Symbol(kk) == Ratom(n, jj)) then
+           if (atomic_symbol(kk) == Ratom(n, jj)) then
               rm = rm + Rnum(n, jj) * atomic_mass(kk)
               Atwt(j) = atomic_mass(kk)
               X(j) = atomic_valence(kk)
@@ -3391,7 +3391,7 @@ subroutine SEARCH
            A(i, Nspx) = 1
            Prod(Nspx) = Elmt(i)
            do k = 1, 100
-              if (Elmt(i) == Symbol(k)) then
+              if (Elmt(i) == atomic_symbol(k)) then
                  Mw(Nspx) = atomic_mass(k)
                  Atwt(i) = atomic_mass(k)
                  Cp(Nspx) = 2.5d0
