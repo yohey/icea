@@ -410,7 +410,7 @@ subroutine DETON(cea)
               tt1 = tt1 * exp(x2 * alam)
 
               Tt = T1 * tt1
-              ud = rr1 * sqrt(Rr * gam * Tt/Wm(Npt))
+              ud = rr1 * sqrt(R0 * gam * Tt/Wm(Npt))
 
               if (Detdbg) write(IOOUT, '(/" ITER =", i2, 5x, "P/P1 =", e15.8, /7x, "T/T1 =", e15.8, 5x, &
                    & "RHO/RHO1 =", e15.8, /7x, "DEL LN P/P1 =", e15.8, 5x, &
@@ -425,7 +425,7 @@ subroutine DETON(cea)
                     Vmoc(Npt) = 0
                  else
                     gm1(Npt) = cpl(Npt) / (cpl(Npt) - R / Wmix)
-                    Vmoc(Npt) = ud / sqrt(Rr * gm1(Npt) * T1 / Wmix)
+                    Vmoc(Npt) = ud / sqrt(R0 * gm1(Npt) * T1 / Wmix)
                  end if
               else
                  write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
@@ -503,7 +503,7 @@ subroutine DETON(cea)
 
            forall(i = 1:Npt)
               V(i) = Wmix
-              Sonvel(i) = sqrt(Rr * gm1(i) * tub(i) / Wmix)
+              Sonvel(i) = sqrt(R0 * gm1(i) * tub(i) / Wmix)
            end forall
 
            cea%fmt(7) = '3,'
@@ -643,6 +643,7 @@ subroutine EQLBRM
 !***********************************************************************
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
+  use mod_cea
   use mod_legacy_cea
   implicit none
 ! LOCAL VARIABLES
@@ -746,7 +747,7 @@ subroutine EQLBRM
 
 400 Tln = log(Tt)
 
-  if (Vol) Pp = Rr * Enn * Tt / Vv
+  if (Vol) Pp = R0 * Enn * Tt / Vv
 
   call CPHS
 
@@ -955,7 +956,7 @@ subroutine EQLBRM
         if (Vol) then
            Enn = Sumn
            Ennl = log(Enn)
-           if (Vol) Pp = Rr * Tt * Enn / Vv
+           if (Vol) Pp = R0 * Tt * Enn / Vv
         else
            Ennl = Ennl + ambda * X(Iq1)
            Enn = exp(Ennl)
@@ -1608,7 +1609,7 @@ subroutine EQLBRM
 
 1400 Ttt(Npt) = Tt
   Ppp(Npt) = Pp
-  Vlm(Npt) = Rr * Enn * Tt / Pp
+  Vlm(Npt) = R0 * Enn * Tt / Pp
   Hsum(Npt) = Hsum(Npt) * Tt
   Wm(Npt) = 1. / Enn
   gasfrc = Enn/Totn(Npt)
@@ -1654,6 +1655,7 @@ subroutine FROZEN
 ! CALCULATE PROPERTIES WITH FROZEN COMPOSITION AT ASSIGNED ENTROPY
 ! AND PRESSURE.  CALLED FROM ROCKET.
 !***********************************************************************
+  use mod_cea
   use mod_legacy_cea
   implicit none
 ! LOCAL VARIABLES
@@ -1686,7 +1688,7 @@ subroutine FROZEN
 
         Ttt(Npt) = Tt
         Gammas(Npt) = Cpsum / (Cpsum - 1 / Wm(Nfz))
-        Vlm(Npt) = Rr * Tt / (Wm(Nfz) * Pp)
+        Vlm(Npt) = R0 * Tt / (Wm(Nfz) * Pp)
         Wm(Npt) = Wm(Nfz)
         Dlvpt(Npt) = -1
         Dlvtp(Npt) = 1
@@ -2235,7 +2237,7 @@ subroutine REACT
               if (nint == 0) then
                  rcoefs = .false.
                  hOK = .true.
-                 Enth(n) = eform * 1000 / Rr
+                 Enth(n) = eform * 1000 / R0
 
                  if (Tt == 0) then
                     Tt = T1
@@ -2577,9 +2579,9 @@ subroutine RKTOUT(cea)
   end if
 
   do k = 2, Npt
-     Spim(k) = sqrt(2 * Rr * (Hsum(1) - Hsum(k))) / agv
+     Spim(k) = sqrt(2 * R0 * (Hsum(1) - Hsum(k))) / agv
 ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
-     aw = Rr * Ttt(k) / (Ppp(k) * Wm(k) * Spim(k) * agv**2)
+     aw = R0 * Ttt(k) / (Ppp(k) * Wm(k) * Spim(k) * agv**2)
      if (k == i23) then
         if (Iopt == 0) Cstr = gc * Ppp(1) * aw
         if (Iopt /= 0) Cstr = gc * Ppp(1) / App(2) * aw
@@ -2878,7 +2880,7 @@ subroutine ROCKET(cea)
      go to 600
 ! INITIALIZE FOR THROAT
 400  if (ipp > nipp) then
-        usq = 2 * (Hsum(1) - Hsum(Npt)) * Rr
+        usq = 2 * (Hsum(1) - Hsum(Npt)) * R0
         if (ipp > nptth) go to 600
 ! THROAT
         if (.not. thi) then
@@ -3027,7 +3029,7 @@ subroutine ROCKET(cea)
            go to 900
         else
 ! IMPROVED PCP ESTIMATES.
-           asq = Gammas(Npt) * Enn * Rr * Tt
+           asq = Gammas(Npt) * Enn * R0 * Tt
            dlnpe = Gammas(Npt) * usq / (usq - asq)
            go to 850
         end if
@@ -3084,7 +3086,7 @@ subroutine ROCKET(cea)
               itnum = 0
               ppa = Ppp(4) * pa
               pinj = ppa + 1.d05 * usq / Vlm(4)
-              mat = pa / (Awt * Rr)
+              mat = pa / (Awt * R0)
               Acat = mat / Ma
               prat = (b1 + c1 * Acat) / (1 + a1l * Acat)
               test = (pinj - pinjas) / pinjas
@@ -3656,13 +3658,13 @@ subroutine SHCK(cea)
         go to 1000
      end if
 350  if (Cpmix /= 0) Gamma1 = Cpmix / (Cpmix - 1/Wmix)
-     A1 = sqrt(Rr * Gamma1 * Tt / Wmix)
+     A1 = sqrt(R0 * Gamma1 * Tt / Wmix)
      if (U1(Npt) == 0) U1(Npt) = A1 * Mach1(Npt)
      if (Mach1(Npt) == 0.) Mach1(Npt) = U1(Npt) / A1
      Wm(Npt) = Wmix
      Cpr(Npt) = Cpmix
      Gammas(Npt) = Gamma1
-     Vlm(Npt) = Rr * Tt / (Wmix * Pp)
+     Vlm(Npt) = R0 * Tt / (Wmix * Pp)
   end do
   Npt = Nsk
 ! OUTPUT--1ST CONDITION
@@ -3692,7 +3694,7 @@ subroutine SHCK(cea)
   T1 = Ttt(Npt)
   hs = Hsum(Npt)
   if (refl) uu = u1u2(Npt)
-  mu12rt = wmx * uu**2 / (Rr * T1)
+  mu12rt = wmx * uu**2 / (R0 * T1)
   if (refl) then
 ! REFLECTED--SUBSCRIPTS 2=1, 5=2, P52=P21
      T21 = 2
@@ -3708,7 +3710,7 @@ subroutine SHCK(cea)
         Pp = p21 * p1
         Tp = .false.
         Hp = .true.
-        Hsub0 = hs + uu**2 / (2 * Rr)
+        Hsub0 = hs + uu**2 / (2 * R0)
         call EQLBRM
         T21 = Ttt(Npt) / T1
         Hp = .false.
@@ -3759,7 +3761,7 @@ subroutine SHCK(cea)
   G(2, 2) = -gg * Dlvtp(Npt) - Tt * Cpr(Npt)
   gg = 1 - rho12**2
   if (refl) gg = (rho52 + 1) / (rho52 - 1)
-  G(2, 3) = Hsum(Npt) - hs - uu**2 * gg / (2 * Rr)
+  G(2, 3) = Hsum(Npt) - hs - uu**2 * gg / (2 * R0)
   X(3) = G(1, 1) * G(2, 2) - G(1, 2) * G(2, 1)
   X(1) = (G(1, 3) * G(2, 2) - G(2, 3) * G(1, 2)) / X(3)
   X(2) = (G(1, 1) * G(2, 3) - G(2, 1) * G(1, 3)) / X(3)
@@ -3812,7 +3814,7 @@ subroutine SHCK(cea)
         Ppp(Npt) = Pp
         Ttt(Npt) = Tt
         Gammas(Npt) = Cpr(Npt) / (Cpr(Npt) - 1 / wmx)
-        Vlm(Npt) = Rr * Tt / (wmx * Pp)
+        Vlm(Npt) = R0 * Tt / (wmx * Pp)
         if (Incdeq) then
            Ssum(Npt) = 0
            do j = 1, Ngc
@@ -4027,6 +4029,7 @@ subroutine TRANIN
 !***********************************************************************
 ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
 !***********************************************************************
+  use mod_cea
   use mod_legacy_cea
   implicit none
 ! LOCAL VARIABLES
@@ -4244,8 +4247,8 @@ subroutine TRANIN
      qc = 100 * ekt**2
      xsel = enel / total
      if (xsel < 1.0d-12) xsel = 1.0d-12
-     debye = ((22.5d0 / Pi) * (Rr / Avgdr * 100) * (te/xsel)) / ekt**3
-     ionic = ((810 / (4*Pi)) * (Rr / Avgdr * 100d0) * (te/xsel))**(2/3.) / ekt**2
+     debye = ((22.5d0 / pi) * (R0 / Avgdr * 100) * (te/xsel)) / ekt**3
+     ionic = ((810 / (4*pi)) * (R0 / Avgdr * 100d0) * (te/xsel))**(2/3.) / ekt**2
      lambda = sqrt(debye + ionic)
      lambda = max(lambda, 2.71828183d0)
   end if
@@ -4258,7 +4261,7 @@ subroutine TRANIN
            omega = max(omega, 1.)
            Eta(i, i) = Viscns * sqrt(Wmol(i) * Tt) / omega
         end if
-        if (Con(i) == 0) Con(i) = Eta(i, i) * Rr * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
+        if (Con(i) == 0) Con(i) = Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
      end if
   end do
 
@@ -4285,11 +4288,11 @@ subroutine TRANIN
               if ((ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1)) omega = exp(6.776 - 0.4 * Tln)
               if (omega /= 0) then
                  wmred = sqrt(2 * Tt * Wmol(i) * Wmol(j) / (Wmol(i) + Wmol(j)))
-                 Eta(i, j) = Viscns * wmred * Pi / omega
+                 Eta(i, j) = Viscns * wmred * pi / omega
                  Eta(j, i) = Eta(i, j)
                  if (i == j) then
                     Cprr(i) = Cp(k1)
-                    Con(i) = Eta(i, i) * Rr * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
+                    Con(i) = Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
                  end if
                  cycle
               end if

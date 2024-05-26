@@ -221,7 +221,7 @@ contains
 
                       if (lcin(i+1) > 0) then
                          i = i + 1
-                         Enth(Nreac) = dpin(i) * 1000 / Rr
+                         Enth(Nreac) = dpin(i) * 1000 / R0
 
                          if (index(cin(i-1), 'c') > 0) Enth(Nreac) = Enth(Nreac) * 4.184d0
                          if (index(cin(i-1), 'k') > 0) Enth(Nreac) = Enth(Nreac) * 1000
@@ -270,7 +270,7 @@ contains
              P(1) = 1
              Trace = 0
              Lsave = 0
-             R = Rr / 4184
+             R = R0 / 4184
              S0 = 0
              hr = 1.d30
              ur = 1.d30
@@ -420,7 +420,7 @@ contains
              if (hr > 0.9d30) hr = 0
              if (ur > 0.9d30) ur = 0
              if (Trnspt) Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
-             if (SIunit) R = Rr / 1000
+             if (SIunit) R = R0 / 1000
              if (Detn .or. Shock) Newr = .true.
 
              if (.not. Short) then
@@ -1116,7 +1116,7 @@ contains
 
     ! INTERNAL ENERGY
     do i = 1, Npt
-       X(i) = (Hsum(i) - Ppp(i) * Vlm(i) / Rr) * R
+       X(i) = (Hsum(i) - Ppp(i) * Vlm(i) / R0) * R
        if (Nplt /= 0 .and. i > ione .and. mie > 0) Pltout(i+Iplt-ione, mie) = X(i)
     end do
     call VARFMT(cea, X)
@@ -1169,7 +1169,7 @@ contains
     ! SONIC VELOCITY
     cea%fmt(7) = '1,'
     do i = 1, Npt
-       Sonvel(i) = sqrt(Rr * Gammas(i) * Ttt(i) / Wm(i))
+       Sonvel(i) = sqrt(R0 * Gammas(i) * Ttt(i) / Wm(i))
        if (Nplt /= 0 .and. i > ione .and. mson > 0) Pltout(i+Iplt-ione, mson) = Sonvel(i)
     end do
     write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)

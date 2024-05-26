@@ -100,13 +100,4 @@ module mod_legacy_cea
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
   real(8):: scx(7)
 
-
-!***********************************************************************
-! FUNDAMENTAL CONSTANTS FROM:  COHEN, E.RICHARD & TAYLOR, BARRY N.,
-! THE 1986 CODATA RECOMMENDED VALUES OF THE FUNDAMENTAL PHYSICAL
-! CONSTANTS, J.PHYS.CHEM.REF.DATA, VOL.17, NO.4, 1988, PP 1795-1803.
-!***********************************************************************
-
-  real(8), parameter:: Rr = 8314.51d0, Pi = 3.14159265d0, Avgdr = 6.0221367d0, Boltz = 1.380658d0
-
 end module mod_legacy_cea

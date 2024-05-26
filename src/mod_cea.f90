@@ -8,6 +8,16 @@ module mod_cea
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0', ')']
   end type CEA_Problem
 
+  !***********************************************************************
+  ! Fundamental constants from:  Cohen, E. Richard & Taylor, Barry N.,
+  ! The 1986 codata recommended values of the fundamental physical
+  ! constants, J. Phys. Chem. Ref. Data, vol. 17, No. 4, 1988, pp. 1795--1803.
+  !***********************************************************************
+  real(8), parameter:: R0 = 8314.51d0
+  real(8), parameter:: pi = 3.14159265d0
+  real(8), parameter:: Avgdr = 6.0221367d0
+  real(8), parameter:: Boltz = 1.380658d0
+
   ! Atomic Symbols
   character(2), parameter:: atomic_symbol(100) = ['H ', 'D ', 'HE', 'LI', 'BE', 'B ', 'C ', 'N ', 'O ', 'F ', &
                                                   'NE', 'NA', 'MG', 'AL', 'SI', 'P ', 'S ', 'CL', 'AR', 'K ', 'CA', 'SC', &
