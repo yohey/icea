@@ -2343,9 +2343,9 @@ subroutine REACT
 
 80      do kk = 1, 100
            if (Symbol(kk) == Ratom(n, jj)) then
-              rm = rm + Rnum(n, jj) * Atmwt(kk)
-              Atwt(j) = Atmwt(kk)
-              X(j) = Valence(kk)
+              rm = rm + Rnum(n, jj) * atomic_mass(kk)
+              Atwt(j) = atomic_mass(kk)
+              X(j) = atomic_valence(kk)
               dat(j) = dat(j) + Rnum(n, jj)
               go to 100
            end if
@@ -3260,6 +3260,7 @@ subroutine SEARCH
 !***********************************************************************
 ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
 !***********************************************************************
+  use mod_cea
   use mod_legacy_cea
   implicit none
 
@@ -3391,8 +3392,8 @@ subroutine SEARCH
            Prod(Nspx) = Elmt(i)
            do k = 1, 100
               if (Elmt(i) == Symbol(k)) then
-                 Mw(Nspx) = Atmwt(k)
-                 Atwt(i) = Atmwt(k)
+                 Mw(Nspx) = atomic_mass(k)
+                 Atwt(i) = atomic_mass(k)
                  Cp(Nspx) = 2.5d0
                  go to 210
               end if
