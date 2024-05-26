@@ -2184,6 +2184,7 @@ subroutine REACT
 !***********************************************************************
 ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
 !***********************************************************************
+  use mod_cea
   use mod_legacy_cea
   implicit none
 ! LOCAL VARIABLES
@@ -2344,7 +2345,7 @@ subroutine REACT
            if (Symbol(kk) == Ratom(n, jj)) then
               rm = rm + Rnum(n, jj) * Atmwt(kk)
               Atwt(j) = Atmwt(kk)
-              X(j) = Valnce(kk)
+              X(j) = Valence(kk)
               dat(j) = dat(j) + Rnum(n, jj)
               go to 100
            end if
