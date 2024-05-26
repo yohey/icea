@@ -1291,18 +1291,18 @@ contains
     if (Nplt > 0) then
        do i = 1, Npt
           if (i > ione) then
-             if (mvis > 0) Pltout(i+Iplt-ione, mvis) = Vis(i)
-             if (mcond > 0) Pltout(i+Iplt-ione, mcond) = Coneql(i)
-             if (mpn > 0) Pltout(i+Iplt-ione, mpn) = Preql(i)
-             if (mcondf > 0) Pltout(i+Iplt-ione, mcondf) = Confro(i)
-             if (mpnf > 0) Pltout(i+Iplt-ione, mpnf) = Prfro(i)
+             if (mvis > 0) Pltout(i+Iplt-ione, mvis) = cea%Vis(i)
+             if (mcond > 0) Pltout(i+Iplt-ione, mcond) = cea%Coneql(i)
+             if (mpn > 0) Pltout(i+Iplt-ione, mpn) = cea%Preql(i)
+             if (mcondf > 0) Pltout(i+Iplt-ione, mcondf) = cea%Confro(i)
+             if (mpnf > 0) Pltout(i+Iplt-ione, mpnf) = cea%Prfro(i)
           end if
        end do
     end if
 
-    call VARFMT(cea, Vis)
+    call VARFMT(cea, cea%Vis)
 
-    write(IOOUT, cea%fmt) 'VISC,MILLIPOISE', (Vis(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'VISC,MILLIPOISE', (cea%Vis(j), j = 1, Npt)
 
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
@@ -1311,20 +1311,20 @@ contains
     if (Eql) then
        write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
-       write(IOOUT, cea%fmt) fc, (Cpeql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) fc, (cea%Cpeql(j), j = 1, Npt)
        ! CONDUCTIVITY
-       write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (Coneql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Coneql(j), j = 1, Npt)
        ! PRANDTL NUMBER
-       write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (Preql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Preql(j), j = 1, Npt)
     end if
 
     write(IOOUT, '(/"  WITH FROZEN REACTIONS"/)')
     ! SPECIFIC HEAT
-    write(IOOUT, cea%fmt) fc, (Cpfro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fc, (cea%Cpfro(j), j = 1, Npt)
     ! CONDUCTIVITY
-    write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (Confro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Confro(j), j = 1, Npt)
     ! PRANDTL NUMBER
-    write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Prfro(j), j = 1, Npt)
 
     return
   end subroutine OUT4

@@ -433,7 +433,7 @@ subroutine DETON(cea)
                  Tt = 0
               end if
 
-              if (Trnspt) call TRANP
+              if (Trnspt) call TRANP(cea)
 
               Isv = 0
 
@@ -2812,7 +2812,7 @@ subroutine ROCKET(cea)
         pinjas = P(Ip) * pa
         pinj = pinjas
         if (Npt <= 2) then
-           if (Npt == 1 .and. Trnspt) call TRANP
+           if (Npt == 1 .and. Trnspt) call TRANP(cea)
            if (Npt == 2) pinf = Ppp(2)
         end if
         if (Npt /= 1) go to 400
@@ -2938,7 +2938,7 @@ subroutine ROCKET(cea)
            go to 550
         end if
      else
-        if (.not. Fac .and. Trnspt) call TRANP
+        if (.not. Fac .and. Trnspt) call TRANP(cea)
         if (Npt == Nfz) Eql = seql
         Tp = .false.
         Hp = .false.
@@ -2965,7 +2965,7 @@ subroutine ROCKET(cea)
      Aeat(Npt) = Enn * Ttt(Npt) / (Pp * sqrt(usq) * Awt)
      if (Tt == 0) go to 1150
      if (Area) go to 750
-     if (Trnspt .and. (.not. Fac .or. done .or. Npt > 2)) call TRANP
+     if (Trnspt .and. (.not. Fac .or. done .or. Npt > 2)) call TRANP(cea)
      if (Npt == Nfz) Eql = seql
      if (Fac) then
         if (Npt == nptth) then
@@ -3116,7 +3116,7 @@ subroutine ROCKET(cea)
            end if
         end if
      end if
-950  if (Trnspt) call TRANP
+950  if (Trnspt) call TRANP(cea)
      if (Npt == Nfz) Eql = seql
 1000 itnum = 0
      if (Nsub > i01) then
@@ -3830,7 +3830,7 @@ subroutine SHCK(cea)
   Tt = 0
 800 if (Npt < 1) go to 1000
   Nsk = Npt
-900 if (Trnspt) call TRANP
+900 if (Trnspt) call TRANP(cea)
   Isv = 0
   if (Npt < Nsk) Isv = Npt
   if (Npt == 1) Isv = -1
@@ -3982,7 +3982,7 @@ subroutine THERMP(cea)
            Tt = T(It)
            call EQLBRM
            if (Npt == 0) return
-           if (Trnspt .and. Tt /= 0) call TRANP
+           if (Trnspt .and. Tt /= 0) call TRANP(cea)
            Isv = 0
            if (Ip /= Np .or. It /= Nt .and. Tt /= 0) then
               Isv = Npt
@@ -4311,7 +4311,7 @@ end subroutine TRANIN
 
 
 
-subroutine TRANP
+subroutine TRANP(cea)
 !***********************************************************************
 ! CALCULATES GAS TRANSPORT PROPERTIES
 !
@@ -4321,6 +4321,9 @@ subroutine TRANP
 !***********************************************************************
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   integer:: i, i1, j, jj, k, m, mm, nlmm, nmm
   real(8):: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
@@ -4335,8 +4338,8 @@ subroutine TRANP
      phi(i, i) = 1
      psi(i, i) = 1
   end do
-  Confro(Npt) = 0
-  Vis(Npt) = 0
+  cea%Confro(Npt) = 0
+  cea%Vis(Npt) = 0
   do i = 1, nmm
      i1 = i + 1
 !DIR$ IVDEP
@@ -4356,8 +4359,8 @@ subroutine TRANP
         sumc = sumc + psi(i, j) * Xs(j)
         sumv = sumv + phi(i, j) * Xs(j)
      end do
-     Vis(Npt) = Vis(Npt) + Eta(i, i) * Xs(i) / sumv
-     Confro(Npt) = Confro(Npt) + Con(i) * Xs(i) / sumc
+     cea%Vis(Npt) = cea%Vis(Npt) + Eta(i, i) * Xs(i) / sumv
+     cea%Confro(Npt) = cea%Confro(Npt) + Con(i) * Xs(i) / sumc
   end do
   if (Eql .and. Nr > 0) then
 ! CALCULATE REACTION HEAT CAPACITY AND THERMAL CONDUCTIVITY
@@ -4445,23 +4448,23 @@ subroutine TRANP
      reacon = 0
   end if
 ! CALCULATE OTHER ANSWERS
-  Cpfro(Npt) = 0
+  cea%Cpfro(Npt) = 0
   wtmol = 0
   do i = 1, Nm
-     Cpfro(Npt) = Cpfro(Npt) + Xs(i) * Cprr(i)
+     cea%Cpfro(Npt) = cea%Cpfro(Npt) + Xs(i) * Cprr(i)
      wtmol = wtmol + Xs(i) * Wmol(i)
   end do
-  Cpfro(Npt) = Cpfro(Npt) * R / wtmol
-  Confro(Npt) = Confro(Npt) / 1000
-  if (.not. SIunit) Confro(Npt) = Confro(Npt) / 4.184d0
-  Vis(Npt) = Vis(Npt) / 1000
-  Prfro(Npt) = Vis(Npt) * Cpfro(Npt) / Confro(Npt)
+  cea%Cpfro(Npt) = cea%Cpfro(Npt) * R / wtmol
+  cea%Confro(Npt) = cea%Confro(Npt) / 1000
+  if (.not. SIunit) cea%Confro(Npt) = cea%Confro(Npt) / 4.184d0
+  cea%Vis(Npt) = cea%Vis(Npt) / 1000
+  cea%Prfro(Npt) = cea%Vis(Npt) * cea%Cpfro(Npt) / cea%Confro(Npt)
   if (Eql) then
      cpreac = cpreac / wtmol
      reacon = reacon / 1000
-     Cpeql(Npt) = cpreac + Cpfro(Npt)
-     Coneql(Npt) = Confro(Npt) + reacon
-     Preql(Npt) = Vis(Npt) * Cpeql(Npt) / Coneql(Npt)
+     cea%Cpeql(Npt) = cpreac + cea%Cpfro(Npt)
+     cea%Coneql(Npt) = cea%Confro(Npt) + reacon
+     cea%Preql(Npt) = cea%Vis(Npt) * cea%Cpeql(Npt) / cea%Coneql(Npt)
   end if
 end subroutine TRANP
 

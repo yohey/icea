@@ -1,7 +1,32 @@
 module mod_cea
   implicit none
 
+  integer, parameter:: maxNgc = 600
+  integer, parameter:: maxNc  = 300
+  integer, parameter:: Ncol   = 8
+  integer, parameter:: maxMat = 50
+  integer, parameter:: maxTr  = 40
+  integer, parameter:: maxR   = 24
+  integer, parameter:: maxEl  = 20
+  integer, parameter:: maxNg  = 500
+  integer, parameter:: maxMix = 52
+  integer, parameter:: maxT   = 51
+  integer, parameter:: maxPv  = 26
+
+  ! The following parameters set the input/output unit numbers.
+  ! These numbers are also defined in the manual, part 2 p. 39,
+  ! and may be adjusted as desired.
+  integer, parameter:: ioinp =  7
+  integer, parameter:: ioout =  8
+  integer, parameter:: iosch = 13
+  integer, parameter:: iothm = 14
+  integer, parameter:: ioplt = 15
+  integer, parameter:: iotrn = 18
+  !***********************************************************************
+
   type:: CEA_Problem
+     real(8):: Coneql(Ncol), Confro(Ncol), Cpeql(Ncol), Cpfro(Ncol), Preql(Ncol), Prfro(Ncol), Vis(Ncol)
+
      ! Information used in variable output format
      character(4):: fmt(30) = [character(4):: '(1X', ',A15', ',', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &

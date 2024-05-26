@@ -8,31 +8,9 @@
 !    be increased for wider paper or smaller fonts.
 !
 module mod_legacy_cea
+  use mod_cea
   implicit none
 
-  integer, parameter:: maxNgc = 600
-  integer, parameter:: maxNc  = 300
-  integer, parameter:: Ncol   = 8
-  integer, parameter:: maxMat = 50
-  integer, parameter:: maxTr  = 40
-  integer, parameter:: maxR   = 24
-  integer, parameter:: maxEl  = 20
-  integer, parameter:: maxNg  = 500
-  integer, parameter:: maxMix = 52
-  integer, parameter:: maxT   = 51
-  integer, parameter:: maxPv  = 26
-
-!  The following parameters set the input/output unit numbers.  These
-!    numbers are also defined in the manual, part2 p39, and may be 
-!    adjusted as desired.
-
-  integer, parameter:: ioinp =  7
-  integer, parameter:: ioout =  8
-  integer, parameter:: iosch = 13
-  integer, parameter:: iothm = 14
-  integer, parameter:: ioplt = 15
-  integer, parameter:: iotrn = 18
-!***********************************************************************
   real(8):: Enn, Ennl, Enlsav, Ensave, Sumn
   real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)
   real(8):: En(maxNgc, Ncol)
@@ -91,9 +69,6 @@ module mod_legacy_cea
   integer:: Ind(maxTr), Jcm(maxEl)
   real(8):: Cprr(maxTr), Con(maxTr), Wmol(maxTr), Xs(maxTr)
   real(8):: Eta(maxTr, maxTr), Stc(maxTr, maxTr)
-
-  real(8):: Coneql(Ncol), Confro(Ncol), Cpeql(Ncol), Cpfro(Ncol), &
-       Preql(Ncol), Prfro(Ncol), Vis(Ncol)
 
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
