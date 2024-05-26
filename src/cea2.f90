@@ -478,9 +478,9 @@ subroutine DETON(cea)
 
            write(IOOUT, '(/" UNBURNED GAS"/)')
 
-           cea%Fmt(4) = '13'
-           cea%Fmt(5) = ' '
-           cea%Fmt(7) = '4,'
+           cea%fmt(4) = '13'
+           cea%fmt(5) = ' '
+           cea%fmt(7) = '4,'
 
            do i = 1, Npt
               if (SIunit) then
@@ -493,25 +493,25 @@ subroutine DETON(cea)
               if (mp > 0) Pltout(i+Iplt, mp) = V(i)
            end do
 
-           write(IOOUT, cea%Fmt) 'P1, ' // unit // '        ', (V(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (V(j), j = 1, Npt)
 
-           cea%Fmt(7) = '2,'
-           write(IOOUT, cea%Fmt) ft1, (tub(j), j = 1, Npt)
+           cea%fmt(7) = '2,'
+           write(IOOUT, cea%fmt) ft1, (tub(j), j = 1, Npt)
 
-           if (.not. SIunit) write(IOOUT, cea%Fmt) fh1, (h1(j), j = 1, Npt)
-           if (SIunit) write(IOOUT, cea%Fmt) fhs1, (h1(j), j = 1, Npt)
+           if (.not. SIunit) write(IOOUT, cea%fmt) fh1, (h1(j), j = 1, Npt)
+           if (SIunit) write(IOOUT, cea%fmt) fhs1, (h1(j), j = 1, Npt)
 
            forall(i = 1:Npt)
               V(i) = Wmix
               Sonvel(i) = sqrt(Rr * gm1(i) * tub(i) / Wmix)
            end forall
 
-           cea%Fmt(7) = '3,'
-           write(IOOUT, cea%Fmt) fm1, (V(j), j = 1, Npt)
-           cea%Fmt(7) = '4,'
-           write(IOOUT, cea%Fmt) fg1, (gm1(j), j = 1, Npt)
-           cea%Fmt(7) = '1,'
-           write(IOOUT, cea%Fmt) 'SON VEL1,M/SEC ', (Sonvel(j), j = 1, Npt)
+           cea%fmt(7) = '3,'
+           write(IOOUT, cea%fmt) fm1, (V(j), j = 1, Npt)
+           cea%fmt(7) = '4,'
+           write(IOOUT, cea%fmt) fg1, (gm1(j), j = 1, Npt)
+           cea%fmt(7) = '1,'
+           write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (Sonvel(j), j = 1, Npt)
 
            if (Nplt > 0) then
               do i = 1, Npt
@@ -524,14 +524,14 @@ subroutine DETON(cea)
 
            write(IOOUT, '(/" BURNED GAS"/)')
 
-           cea%Fmt(4) = cea%Fmt(6)
+           cea%fmt(4) = cea%fmt(6)
            call OUT2(cea)
 
            if (Trnspt) call OUT4(cea)
 
            write(IOOUT, '(/" DETONATION PARAMETERS"/)')
 
-           cea%Fmt(7) = '3,'
+           cea%fmt(7) = '3,'
 
            do i = 1, Npt
               V(i) = Ppp(i) / pub(i)
@@ -541,18 +541,18 @@ subroutine DETON(cea)
               if (mdv > 0)   Pltout(i+Iplt, mdv) = Sonvel(i)
            end do
 
-           write(IOOUT, cea%Fmt) fpp1, (V(j), j = 1, Npt)
-           write(IOOUT, cea%Fmt) ftt1, (Pcp(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) fpp1, (V(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) ftt1, (Pcp(j), j = 1, Npt)
 
            forall(i = 1:Npt) V(i) = Wm(i) / Wmix
 
-           cea%Fmt(7) = '4,'
-           write(IOOUT, cea%Fmt) fmm1, (V(j), j = 1, Npt)
-           write(IOOUT, cea%Fmt) frr1, (rrho(j), j = 1, Npt)
-           write(IOOUT, cea%Fmt) 'DET MACH NUMBER', (Vmoc(j), j = 1, Npt)
+           cea%fmt(7) = '4,'
+           write(IOOUT, cea%fmt) fmm1, (V(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) frr1, (rrho(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) 'DET MACH NUMBER', (Vmoc(j), j = 1, Npt)
 
-           cea%Fmt(7) = '1,'
-           write(IOOUT, cea%Fmt) fdv, (Sonvel(j), j = 1, Npt)
+           cea%fmt(7) = '1,'
+           write(IOOUT, cea%fmt) fdv, (Sonvel(j), j = 1, Npt)
 
            Eql = .true.
 
@@ -2498,7 +2498,7 @@ subroutine RKTOUT(cea)
 
   call OUT1
 
-  cea%Fmt(4) = cea%Fmt(6)
+  cea%fmt(4) = cea%fmt(6)
   nex = Npt - 2
   if (Page1) then
      ione = 0
@@ -2514,7 +2514,7 @@ subroutine RKTOUT(cea)
   if (Iopt == 0) then
      write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
      call VARFMT(cea, App)
-     write(IOOUT, cea%Fmt) 'Pinf/P         ', (App(j), j = 1, Npt)
+     write(IOOUT, cea%fmt) 'Pinf/P         ', (App(j), j = 1, Npt)
   else
      nex = nex - 1
      write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
@@ -2523,7 +2523,7 @@ subroutine RKTOUT(cea)
         X(i) = Ppp(1) / Ppp(i)
      end do
      call VARFMT(cea, X)
-     write(IOOUT, cea%Fmt) 'Pinj/P         ', (X(i), i = 1, Npt)
+     write(IOOUT, cea%fmt) 'Pinj/P         ', (X(i), i = 1, Npt)
   end if
 
   call OUT2(cea)
@@ -2592,39 +2592,39 @@ subroutine RKTOUT(cea)
 ! MACH NUMBER
   Vmoc(1) = 0
   if (Gammas(i23) == 0) Vmoc(i23) = 0
-  cea%Fmt(7) = '3,'
-  write(IOOUT, cea%Fmt) 'MACH NUMBER    ', (Vmoc(j), j = 1, Npt)
+  cea%fmt(7) = '3,'
+  write(IOOUT, cea%fmt) 'MACH NUMBER    ', (Vmoc(j), j = 1, Npt)
   if (Trnspt) call OUT4(cea)
   write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
 
 ! AREA RATIO
-  cea%Fmt(4) = '9x,'
-  cea%Fmt(i46) = '9x,'
+  cea%fmt(4) = '9x,'
+  cea%fmt(i46) = '9x,'
   call VARFMT(cea, Aeat)
-  cea%Fmt(5) = ' '
-  cea%Fmt(i57) = ' '
-  write(IOOUT, cea%Fmt) 'Ae/At          ', (Aeat(j), j = 2, Npt)
+  cea%fmt(5) = ' '
+  cea%fmt(i57) = ' '
+  write(IOOUT, cea%fmt) 'Ae/At          ', (Aeat(j), j = 2, Npt)
 
 ! C*
-  cea%Fmt(i57) = '13'
-  cea%Fmt(i68) = cea%Fmt(i68 + 2)
-  cea%Fmt(i79) = '1,'
-  write(IOOUT, cea%Fmt) fr, (Cstr, j = 2, Npt)
+  cea%fmt(i57) = '13'
+  cea%fmt(i68) = cea%fmt(i68 + 2)
+  cea%fmt(i79) = '1,'
+  write(IOOUT, cea%fmt) fr, (Cstr, j = 2, Npt)
 
 ! CF - THRUST COEFICIENT
-  cea%Fmt(i79) = '4,'
+  cea%fmt(i79) = '4,'
   do i = 2, Npt
      X(i) = gc * Spim(i) / Cstr
   end do
-  write(IOOUT, cea%Fmt) 'CF             ', (X(j), j = 2, Npt)
+  write(IOOUT, cea%fmt) 'CF             ', (X(j), j = 2, Npt)
 
 ! VACUUM IMPULSE
-  cea%Fmt(i57) = '13'
-  cea%Fmt(i79) = '1,'
-  write(IOOUT, cea%Fmt) fiv, (vaci(j), j = 2, Npt)
+  cea%fmt(i57) = '13'
+  cea%fmt(i79) = '1,'
+  write(IOOUT, cea%fmt) fiv, (vaci(j), j = 2, Npt)
 
 ! SPECIFIC IMPULSE
-  write(IOOUT, cea%Fmt) fi, (Spim(j), j = 2, Npt)
+  write(IOOUT, cea%fmt) fi, (Spim(j), j = 2, Npt)
 
   if (Nplt > 0) then
      Spim(1) = 0
@@ -2645,13 +2645,13 @@ subroutine RKTOUT(cea)
   end if
 
   write(IOOUT, *)
-  cea%Fmt(4) = ' '
-  cea%Fmt(5) = '13'
-  cea%Fmt(7) = '5,'
+  cea%fmt(4) = ' '
+  cea%fmt(5) = '13'
+  cea%fmt(7) = '5,'
 
   if (Iopt /= 0) then
-     cea%Fmt(i46) = cea%Fmt(8)
-     cea%Fmt(i57) = cea%Fmt(9)
+     cea%fmt(i46) = cea%fmt(8)
+     cea%fmt(i57) = cea%fmt(9)
   end if
 
   if (.not. Eql) then
@@ -3675,12 +3675,12 @@ subroutine SHCK(cea)
   Eql = .false.
   call OUT1
   write(IOOUT, '(/" INITIAL GAS (1)")')
-  cea%Fmt(4) = '13'
-  cea%Fmt(5) = ' '
-  cea%Fmt(7) = '4,'
-  write(IOOUT, cea%Fmt) 'MACH NUMBER1   ', (Mach1(j), j = 1, Npt)
-  cea%Fmt(7) = '2,'
-  write(IOOUT, cea%Fmt) 'U1, M/SEC      ', (U1(j), j = 1, Npt)
+  cea%fmt(4) = '13'
+  cea%fmt(5) = ' '
+  cea%fmt(7) = '4,'
+  write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (Mach1(j), j = 1, Npt)
+  cea%fmt(7) = '2,'
+  write(IOOUT, cea%fmt) 'U1, M/SEC      ', (U1(j), j = 1, Npt)
   call OUT2(cea)
 ! BEGIN CALCULATIONS FOR 2ND CONDITION
   if (Incdeq) Eql = .true.
@@ -3847,23 +3847,23 @@ subroutine SHCK(cea)
      cr12 = '1'
      cr52 = '2'
   end if
-  cea%Fmt(7) = '2,'
-  write(IOOUT, cea%Fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, Npt)
+  cea%fmt(7) = '2,'
+  write(IOOUT, cea%fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, Npt)
   call OUT2(cea)
   if (Trnspt) call OUT4(cea)
   write(IOOUT, *)
-  cea%Fmt(7) = '3,'
-  write(IOOUT, cea%Fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, Npt)
-  write(IOOUT, cea%Fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, Npt)
-  cea%Fmt(7) = '4,'
-  write(IOOUT, cea%Fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, Npt)
-  write(IOOUT, cea%Fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, Npt)
-  cea%Fmt(7) = '2,'
-  if (.not. refl) write(IOOUT, cea%Fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, Npt)
-  if (refl) write(IOOUT, cea%Fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, Npt)
+  cea%fmt(7) = '3,'
+  write(IOOUT, cea%fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, Npt)
+  write(IOOUT, cea%fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, Npt)
+  cea%fmt(7) = '4,'
+  write(IOOUT, cea%fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, Npt)
+  write(IOOUT, cea%fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, Npt)
+  cea%fmt(7) = '2,'
+  if (.not. refl) write(IOOUT, cea%fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, Npt)
+  if (refl) write(IOOUT, cea%fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, Npt)
   if (.not. Eql) then
 ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
-     cea%Fmt(7) = '5,'
+     cea%fmt(7) = '5,'
      if (.not. Incdeq) then
         if (Massf) then
            write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MASS'

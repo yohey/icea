@@ -1077,7 +1077,7 @@ contains
        fc = 'Cp, CAL/(G)(K)'
     end if
 
-    cea%Fmt(4) = cea%Fmt(6)
+    cea%fmt(4) = cea%fmt(6)
 
     ! PRESSURE
     call VARFMT(cea, Ppp)
@@ -1090,29 +1090,29 @@ contains
        end if
     end do
 
-    write(IOOUT, cea%Fmt) fp, (X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fp, (X(j), j = 1, Npt)
 
     ! TEMPERATURE
-    cea%Fmt(4) = '13'
-    cea%Fmt(5) = ' '
-    cea%Fmt(7) = '2,'
-    write(IOOUT, cea%Fmt) 'T, K            ', (Ttt(j), j = 1, Npt)
+    cea%fmt(4) = '13'
+    cea%fmt(5) = ' '
+    cea%fmt(7) = '2,'
+    write(IOOUT, cea%fmt) 'T, K            ', (Ttt(j), j = 1, Npt)
 
     ! DENSITY
     do i = 1, Npt
        if (Vlm(i) /= 0) X(i) = vnum / Vlm(i)
        if (Nplt /= 0 .and. i > ione .and. mrho > 0) Pltout(i+Iplt-ione, mrho) = X(i)
     end do
-    call EFMT(cea%Fmt(4), frh, X)
+    call EFMT(cea%fmt(4), frh, X)
 
     ! ENTHALPY
     do i = 1, Npt
        X(i) = Hsum(i) * R
        if (Nplt /= 0 .and. i > ione .and. mh > 0) Pltout(i+Iplt-ione, mh) = X(i)
     end do
-    cea%Fmt(4) = cea%Fmt(6)
+    cea%fmt(4) = cea%fmt(6)
     call VARFMT(cea, X)
-    write(IOOUT, cea%Fmt) fh, (X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fh, (X(j), j = 1, Npt)
 
     ! INTERNAL ENERGY
     do i = 1, Npt
@@ -1120,7 +1120,7 @@ contains
        if (Nplt /= 0 .and. i > ione .and. mie > 0) Pltout(i+Iplt-ione, mie) = X(i)
     end do
     call VARFMT(cea, X)
-    write(IOOUT, cea%Fmt) fu, (X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fu, (X(j), j = 1, Npt)
 
     ! GIBBS ENERGY
     do i = 1, Npt
@@ -1137,42 +1137,42 @@ contains
        end if
     end do
     call VARFMT(cea, X)
-    write(IOOUT, cea%Fmt) fgi, (X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fgi, (X(j), j = 1, Npt)
 
     ! ENTROPY
-    cea%Fmt(4) = '13'
-    cea%Fmt(5) = ' '
-    cea%Fmt(7) = '4,'
-    write(IOOUT, cea%Fmt) fs, (Ssum(j) * R, j = 1, Npt)
+    cea%fmt(4) = '13'
+    cea%fmt(5) = ' '
+    cea%fmt(7) = '4,'
+    write(IOOUT, cea%fmt) fs, (Ssum(j) * R, j = 1, Npt)
     write(IOOUT, *)
 
     ! MOLECULAR WEIGHT
-    cea%Fmt(7) = '3,'
-    write(IOOUT, cea%Fmt) 'M, (1/n)        ', (Wm(j), j = 1, Npt)
-    if (.not. Gonly) write(IOOUT, cea%Fmt) 'MW, MOL WT      ', (1/Totn(j), j = 1, Npt)
+    cea%fmt(7) = '3,'
+    write(IOOUT, cea%fmt) 'M, (1/n)        ', (Wm(j), j = 1, Npt)
+    if (.not. Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/Totn(j), j = 1, Npt)
 
     ! (DLV/DLP)T
-    cea%Fmt(7) = '5,'
-    if (Eql) write(IOOUT, cea%Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j = 1, Npt)
+    cea%fmt(7) = '5,'
+    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (Dlvpt(j), j = 1, Npt)
 
     ! (DLV/DLT)P
-    cea%Fmt(7) = '4,'
-    if (Eql) write(IOOUT, cea%Fmt) '(dLV/dLT)p      ', (Dlvtp(j), j = 1, Npt)
+    cea%fmt(7) = '4,'
+    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (Dlvtp(j), j = 1, Npt)
 
     ! HEAT CAPACITY
-    write(IOOUT, cea%Fmt) fc, (Cpr(j) * R, j = 1, Npt)
+    write(IOOUT, cea%fmt) fc, (Cpr(j) * R, j = 1, Npt)
 
     ! GAMMA(S)
-    cea%Fmt(7) = '4,'
-    write(IOOUT, cea%Fmt) 'GAMMAs          ', (Gammas(j), j = 1, Npt)
+    cea%fmt(7) = '4,'
+    write(IOOUT, cea%fmt) 'GAMMAs          ', (Gammas(j), j = 1, Npt)
 
     ! SONIC VELOCITY
-    cea%Fmt(7) = '1,'
+    cea%fmt(7) = '1,'
     do i = 1, Npt
        Sonvel(i) = sqrt(Rr * Gammas(i) * Ttt(i) / Wm(i))
        if (Nplt /= 0 .and. i > ione .and. mson > 0) Pltout(i+Iplt-ione, mson) = Sonvel(i)
     end do
-    write(IOOUT, cea%Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)
     return
   end subroutine OUT2
 
@@ -1243,7 +1243,7 @@ contains
              if (Trace == 0) then
                 write(IOOUT, '(1x, A15, F9.5, 12F9.5)') Prod(k), (X(i), i = 1, Npt)
              else
-                call EFMT(cea%Fmt(4), Prod(k), X)
+                call EFMT(cea%fmt(4), Prod(k), X)
              end if
              if (Prod(k) == Omit(notuse)) notuse = notuse - 1
           else if (Prod(k) /= Prod(k-1)) then
@@ -1287,7 +1287,7 @@ contains
     end if
 
     ! TRANSPORT PROPERTIES
-    cea%Fmt(4) = cea%Fmt(6)
+    cea%fmt(4) = cea%fmt(6)
     if (Nplt > 0) then
        do i = 1, Npt
           if (i > ione) then
@@ -1302,29 +1302,29 @@ contains
 
     call VARFMT(cea, Vis)
 
-    write(IOOUT, cea%Fmt) 'VISC,MILLIPOISE', (Vis(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'VISC,MILLIPOISE', (Vis(j), j = 1, Npt)
 
-    cea%Fmt(4) = '13'
-    cea%Fmt(5) = ' '
-    cea%Fmt(7) = '4,'
+    cea%fmt(4) = '13'
+    cea%fmt(5) = ' '
+    cea%fmt(7) = '4,'
 
     if (Eql) then
        write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
-       write(IOOUT, cea%Fmt) fc, (Cpeql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) fc, (Cpeql(j), j = 1, Npt)
        ! CONDUCTIVITY
-       write(IOOUT, cea%Fmt) 'CONDUCTIVITY    ', (Coneql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (Coneql(j), j = 1, Npt)
        ! PRANDTL NUMBER
-       write(IOOUT, cea%Fmt) 'PRANDTL NUMBER  ', (Preql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (Preql(j), j = 1, Npt)
     end if
 
     write(IOOUT, '(/"  WITH FROZEN REACTIONS"/)')
     ! SPECIFIC HEAT
-    write(IOOUT, cea%Fmt) fc, (Cpfro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fc, (Cpfro(j), j = 1, Npt)
     ! CONDUCTIVITY
-    write(IOOUT, cea%Fmt) 'CONDUCTIVITY    ', (Confro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (Confro(j), j = 1, Npt)
     ! PRANDTL NUMBER
-    write(IOOUT, cea%Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
 
     return
   end subroutine OUT4
@@ -1349,14 +1349,14 @@ contains
     do i = 1, Npt
        vi = abs(Vx(i))
        k = 2*i + 3
-       cea%Fmt(k) = '5,'
-       if (vi >= 0.99995d0)  cea%Fmt(k) = '4,'
-       if (vi >= 9.99950d0)  cea%Fmt(k) = '3,'
-       if (vi >= 99.9950d0)  cea%Fmt(k) = '2,'
-       if (vi >= 9999.95d0)  cea%Fmt(k) = '1,'
-       if (vi >= 999999.5d0) cea%Fmt(k) = '0,'
+       cea%fmt(k) = '5,'
+       if (vi >= 0.99995d0)  cea%fmt(k) = '4,'
+       if (vi >= 9.99950d0)  cea%fmt(k) = '3,'
+       if (vi >= 99.9950d0)  cea%fmt(k) = '2,'
+       if (vi >= 9999.95d0)  cea%fmt(k) = '1,'
+       if (vi >= 999999.5d0) cea%fmt(k) = '0,'
     end do
-    cea%Fmt(29)(2:) = ' '
+    cea%fmt(29)(2:) = ' '
   end subroutine VARFMT
 
 
