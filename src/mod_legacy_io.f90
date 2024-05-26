@@ -277,27 +277,27 @@ contains
              Tp = .false.
              Hp = .false.
              Sp = .false.
-             Rkt = .false.
+             cea%Rkt = .false.
              Shock = .false.
              Detn = .false.
              Vol = .false.
              Ions = .false.
              Eql = .false.
-             Froz = .false.
-             Fac = .false.
-             Debugf = .false.
-             Acat = 0
-             Ma = 0
-             Nfz = 1
-             Nsub = 0
-             Nsup = 0
-             Npp = 0
-             Tcest = 3800
+             cea%Froz = .false.
+             cea%Fac = .false.
+             cea%Debugf = .false.
+             cea%Acat = 0
+             cea%Ma = 0
+             cea%Nfz = 1
+             cea%Nsub = 0
+             cea%Nsup = 0
+             cea%Npp = 0
+             cea%Tcest = 3800
              forall(i = 1:Ncol)
-                Pcp(i) = 0
-                Pcp(i+Ncol) = 0
-                Supar(i) = 0
-                Subar(i) = 0
+                cea%Pcp(i) = 0
+                cea%Pcp(i+Ncol) = 0
+                cea%Supar(i) = 0
+                cea%Subar(i) = 0
                 cea%Mach1(i) = 0
                 cea%U1(i) = 0
              end forall
@@ -352,24 +352,24 @@ contains
                       Vol = .true.
 
                    else if (cx2 == 'ro' .or. cx3 == 'rkt') then
-                      Rkt = .true.
+                      cea%Rkt = .true.
 
                    else if (cx3 == 'dbg' .or. cx3 == 'deb') then
-                      Debugf = .true.
+                      cea%Debugf = .true.
                       cea%Shkdbg = .true.
                       Detdbg = .true.
 
                    else if (cx3 == 'fac') then
-                      Rkt = .true.
+                      cea%Rkt = .true.
                       Eql = .true.
-                      Fac = .true.
-                      Froz = .false.
+                      cea%Fac = .true.
+                      cea%Froz = .false.
 
                    else if (cx2 == 'eq') then
                       Eql = .true.
 
                    else if (cx2 == 'fr' .or. cx2 == 'fz') then
-                      Froz = .true.
+                      cea%Froz = .true.
 
                    else if (cx2 == 'sh') then
                       Shock = .true.
@@ -378,15 +378,15 @@ contains
                       Shock = .true.
                       incd = .true.
                       if (index(cx15, 'eq') > 0) Eql = .true.
-                      if (index(cx15, 'fr') > 0) Froz = .true.
-                      if (index(cx15, 'fz') > 0) Froz = .true.
+                      if (index(cx15, 'fr') > 0) cea%Froz = .true.
+                      if (index(cx15, 'fz') > 0) cea%Froz = .true.
 
                    else if (cx3 == 'ref') then
                       Shock = .true.
                       refl = .true.
                       if (index(cx15, 'eq') > 0) Eql = .true.
-                      if (index(cx15, 'fr') > 0) Froz = .true.
-                      if (index(cx15, 'fz') > 0) Froz = .true.
+                      if (index(cx15, 'fr') > 0) cea%Froz = .true.
+                      if (index(cx15, 'fz') > 0) cea%Froz = .true.
 
                    else if (cx3 == 'det') then
                       Detn = .true.
@@ -408,9 +408,9 @@ contains
 
           else if (code(1:3) == 'end') then
              if (Shock) then
-                if (incd .and. Froz) cea%Incdfz = .true.
+                if (incd .and. cea%Froz) cea%Incdfz = .true.
                 if (incd .and. Eql) cea%Incdeq = .true.
-                if (refl .and. Froz) cea%Reflfz = .true.
+                if (refl .and. cea%Froz) cea%Reflfz = .true.
                 if (refl .and. Eql) cea%Refleq = .true.
              end if
 
@@ -430,20 +430,20 @@ contains
                      & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
                      & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
                      Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
-                     incd, Rkt, Froz, Eql, Ions, SIunit, Debugf, cea%Shkdbg, Detdbg, Trnspt
+                     incd, cea%Rkt, cea%Froz, Eql, Ions, SIunit, cea%Debugf, cea%Shkdbg, Detdbg, Trnspt
                 if (T(1) > 0) write(IOOUT, '(/" T,K =", 7f11.4)') (T(jj), jj = 1, Nt)
                 write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') Trace, S0, hr, ur
                 if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
              end if
 
-             if (Rkt) then
+             if (cea%Rkt) then
                 if (Nt == 0) Hp = .true.
                 if (.not. Short) then
                    write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
-                   write(IOOUT, '(/" Pc/P =", 9f11.4)') (Pcp(jj), jj = 1, Npp)
-                   write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (Subar(i), i = 1, Nsub)
-                   write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (Supar(i), i = 1, Nsup)
-                   write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') Nfz, Ma, Acat
+                   write(IOOUT, '(/" Pc/P =", 9f11.4)') (cea%Pcp(jj), jj = 1, cea%Npp)
+                   write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
+                   write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
+                   write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
                 end if
              else
                 if (.not. Vol .and. .not. Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
@@ -490,7 +490,7 @@ contains
                 end do
              end if
 
-             if (.not. Sp .and. .not. Tp .and. .not. Hp .and. .not. Rkt .and. .not. Detn .and. .not. Shock) then
+             if (.not. Sp .and. .not. Tp .and. .not. Hp .and. .not. cea%Rkt .and. .not. Detn .and. .not. Shock) then
                 caseOK = .false.
                 write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
 
@@ -562,12 +562,12 @@ contains
              end do
 
           else if ((cx2 == 'pc' .or. cx2 == 'pi') .and. index(cx15(3:15), 'p') > 0 .and. index(cx15, 'psi') == 0) then
-             Npp = nmix
+             cea%Npp = nmix
              if (nmix > 2*Ncol) then
-                Npp = 2 * Ncol
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', Npp
+                cea%Npp = 2 * Ncol
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', cea%Npp
              end if
-             Pcp(1:Npp) = mix(1:Npp)
+             cea%Pcp(1:cea%Npp) = mix(1:cea%Npp)
 
           else if (cx1 == 'p' .and. cx3 /= 'phi') then
              Np = nmix
@@ -612,11 +612,11 @@ contains
              V(1:Np) = mix(1:Np) * xyz
 
           else if (cx3 == 'nfz' .or. cx3 == 'nfr') then
-             Nfz = int(mix(1))
-             Froz = .true.
+             cea%Nfz = int(mix(1))
+             cea%Froz = .true.
 
           else if (cx4 == 'tces') then
-             Tcest = mix(1)
+             cea%Tcest = mix(1)
 
           else if (cx4 == 'trac') then
              Trace = mix(1)
@@ -647,26 +647,26 @@ contains
              cea%Mach1(1:cea%Nsk) = mix(1:cea%Nsk)
 
           else if (cx3 == 'sub') then
-             Nsub = nmix
+             cea%Nsub = nmix
              if (nmix > 13) then
-                Nsub = 13
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'subar', Nsub
+                cea%Nsub = 13
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'subar', cea%Nsub
              end if
-             Subar(1:Nsub) = mix(1:Nsub)
+             cea%Subar(1:cea%Nsub) = mix(1:cea%Nsub)
 
           else if (cx3 == 'sup') then
-             Nsup = nmix
+             cea%Nsup = nmix
              if (nmix > 13) then
-                Nsup = 13
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'supar', Nsup
+                cea%Nsup = 13
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'supar', cea%Nsup
              end if
-             Supar(1:Nsup) = mix(1:Nsup)
+             cea%Supar(1:cea%Nsup) = mix(1:cea%Nsup)
 
           else if (cx2 == 'ac') then
-             Acat = mix(1)
+             cea%Acat = mix(1)
 
           else if (cx4 == 'mdot' .or. cx2 == 'ma') then
-             Ma = mix(1)
+             cea%Ma = mix(1)
 
           else if (cx4 == 'case') then
              Case = cin(in+1)
@@ -957,9 +957,9 @@ contains
     real(8):: pfactor, vnum
 
     ione = 0
-    if (Rkt .and. .not. Page1) then
+    if (cea%Rkt .and. .not. cea%Page1) then
        ione = 2
-       if (Iopt /= 0) ione = 3
+       if (cea%Iopt /= 0) ione = 3
     end if
 
     ! SET MXX ARRAY FOR PLOTTING PARAMETERS
@@ -1169,10 +1169,10 @@ contains
     ! SONIC VELOCITY
     cea%fmt(7) = '1,'
     do i = 1, Npt
-       Sonvel(i) = sqrt(R0 * Gammas(i) * Ttt(i) / Wm(i))
-       if (Nplt /= 0 .and. i > ione .and. mson > 0) Pltout(i+Iplt-ione, mson) = Sonvel(i)
+       cea%Sonvel(i) = sqrt(R0 * Gammas(i) * Ttt(i) / Wm(i))
+       if (Nplt /= 0 .and. i > ione .and. mson > 0) Pltout(i+Iplt-ione, mson) = cea%Sonvel(i)
     end do
-    write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, Npt)
     return
   end subroutine OUT2
 

@@ -25,6 +25,11 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     integer:: Iopt, Isup, Nfz, Npp, Nsub, Nsup
+     logical:: Area, Debugf, Fac, Froz, Page1, Rkt
+     real(8):: Acat, Awt, Cstr, Tcest, Ma
+     real(8):: Aeat(Ncol), App(Ncol), Pcp(2*Ncol), Sonvel(Ncol), Spim(Ncol), Subar(13), Supar(13), Vmoc(Ncol)
+
      integer:: Nsk
      logical:: Incdeq, Incdfz, Refleq, Reflfz, Shkdbg
      real(8):: U1(Ncol), Mach1(Ncol), A1, Gamma1

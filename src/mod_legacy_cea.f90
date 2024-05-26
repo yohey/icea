@@ -55,12 +55,6 @@ module mod_legacy_cea
   real(8):: Cft(maxNc, 9), Coef(maxNg, 9, 3), Temp(2, maxNc)
   real(8):: Cp(maxNgc), H0(maxNgc), Mu(maxNgc), Mw(maxNgc), S(maxNgc), Tg(4)
 
-  integer:: Iopt, Isup, Nfz, Npp, Nsub, Nsup
-  logical:: Area, Debugf, Fac, Froz, Page1, Rkt
-  real(8):: Acat, Awt, Cstr, Tcest, Ma
-  real(8):: Aeat(Ncol), App(Ncol), Pcp(2*Ncol), Sonvel(Ncol), Spim(Ncol), &
-       Subar(13), Supar(13), Vmoc(Ncol)
-
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
