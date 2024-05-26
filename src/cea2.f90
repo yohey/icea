@@ -8,7 +8,9 @@ program main
   use mod_legacy_io
   implicit none
 
-  ! LOCAL VARIABLES
+  integer:: icase = 0
+  type(CEA_Problem):: cea(255)
+
   character(15):: ensert(20)
   character(200):: infile, ofile
   character(196):: prefix
@@ -52,6 +54,8 @@ program main
   Newr = .false.
 
   outerLoop: do while (readOK)
+     icase = icase + 1
+
      Iplt = 0
      Nplt = 0
 
@@ -123,13 +127,13 @@ program main
      end if
 
      if (Rkt) then
-        call ROCKET
+        call ROCKET(cea(icase))
      else if (Tp .or. Hp .or. Sp) then
-        call THERMP
+        call THERMP(cea(icase))
      else if (Detn) then
-        call DETON
+        call DETON(cea(icase))
      else if (Shock) then
-        call SHCK
+        call SHCK(cea(icase))
      end if
 
      if (Nplt > 0) then
@@ -274,13 +278,16 @@ end subroutine ALLCON
 
 
 
-subroutine DETON
+subroutine DETON(cea)
 !***********************************************************************
 ! CHAPMAN-JOUGUET DETONATIONS.
 !***********************************************************************
   use mod_legacy_cea
   use mod_legacy_io
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   character(15):: ft1  = 'T1, K'
   character(15):: fh1  = 'H1, CAL/G'
@@ -471,9 +478,9 @@ subroutine DETON
 
            write(IOOUT, '(/" UNBURNED GAS"/)')
 
-           Fmt(4) = '13'
-           Fmt(5) = ' '
-           Fmt(7) = '4,'
+           cea%Fmt(4) = '13'
+           cea%Fmt(5) = ' '
+           cea%Fmt(7) = '4,'
 
            do i = 1, Npt
               if (SIunit) then
@@ -486,25 +493,25 @@ subroutine DETON
               if (mp > 0) Pltout(i+Iplt, mp) = V(i)
            end do
 
-           write(IOOUT, Fmt) 'P1, ' // unit // '        ', (V(j), j = 1, Npt)
+           write(IOOUT, cea%Fmt) 'P1, ' // unit // '        ', (V(j), j = 1, Npt)
 
-           Fmt(7) = '2,'
-           write(IOOUT, Fmt) ft1, (tub(j), j = 1, Npt)
+           cea%Fmt(7) = '2,'
+           write(IOOUT, cea%Fmt) ft1, (tub(j), j = 1, Npt)
 
-           if (.not. SIunit) write(IOOUT, Fmt) fh1, (h1(j), j = 1, Npt)
-           if (SIunit) write(IOOUT, Fmt) fhs1, (h1(j), j = 1, Npt)
+           if (.not. SIunit) write(IOOUT, cea%Fmt) fh1, (h1(j), j = 1, Npt)
+           if (SIunit) write(IOOUT, cea%Fmt) fhs1, (h1(j), j = 1, Npt)
 
            forall(i = 1:Npt)
               V(i) = Wmix
               Sonvel(i) = sqrt(Rr * gm1(i) * tub(i) / Wmix)
            end forall
 
-           Fmt(7) = '3,'
-           write(IOOUT, Fmt) fm1, (V(j), j = 1, Npt)
-           Fmt(7) = '4,'
-           write(IOOUT, Fmt) fg1, (gm1(j), j = 1, Npt)
-           Fmt(7) = '1,'
-           write(IOOUT, Fmt) 'SON VEL1,M/SEC ', (Sonvel(j), j = 1, Npt)
+           cea%Fmt(7) = '3,'
+           write(IOOUT, cea%Fmt) fm1, (V(j), j = 1, Npt)
+           cea%Fmt(7) = '4,'
+           write(IOOUT, cea%Fmt) fg1, (gm1(j), j = 1, Npt)
+           cea%Fmt(7) = '1,'
+           write(IOOUT, cea%Fmt) 'SON VEL1,M/SEC ', (Sonvel(j), j = 1, Npt)
 
            if (Nplt > 0) then
               do i = 1, Npt
@@ -517,14 +524,14 @@ subroutine DETON
 
            write(IOOUT, '(/" BURNED GAS"/)')
 
-           Fmt(4) = Fmt(6)
-           call OUT2
+           cea%Fmt(4) = cea%Fmt(6)
+           call OUT2(cea)
 
-           if (Trnspt) call OUT4
+           if (Trnspt) call OUT4(cea)
 
            write(IOOUT, '(/" DETONATION PARAMETERS"/)')
 
-           Fmt(7) = '3,'
+           cea%Fmt(7) = '3,'
 
            do i = 1, Npt
               V(i) = Ppp(i) / pub(i)
@@ -534,22 +541,22 @@ subroutine DETON
               if (mdv > 0)   Pltout(i+Iplt, mdv) = Sonvel(i)
            end do
 
-           write(IOOUT, Fmt) fpp1, (V(j), j = 1, Npt)
-           write(IOOUT, Fmt) ftt1, (Pcp(j), j = 1, Npt)
+           write(IOOUT, cea%Fmt) fpp1, (V(j), j = 1, Npt)
+           write(IOOUT, cea%Fmt) ftt1, (Pcp(j), j = 1, Npt)
 
            forall(i = 1:Npt) V(i) = Wm(i) / Wmix
 
-           Fmt(7) = '4,'
-           write(IOOUT, Fmt) fmm1, (V(j), j = 1, Npt)
-           write(IOOUT, Fmt) frr1, (rrho(j), j = 1, Npt)
-           write(IOOUT, Fmt) 'DET MACH NUMBER', (Vmoc(j), j = 1, Npt)
+           cea%Fmt(7) = '4,'
+           write(IOOUT, cea%Fmt) fmm1, (V(j), j = 1, Npt)
+           write(IOOUT, cea%Fmt) frr1, (rrho(j), j = 1, Npt)
+           write(IOOUT, cea%Fmt) 'DET MACH NUMBER', (Vmoc(j), j = 1, Npt)
 
-           Fmt(7) = '1,'
-           write(IOOUT, Fmt) fdv, (Sonvel(j), j = 1, Npt)
+           cea%Fmt(7) = '1,'
+           write(IOOUT, cea%Fmt) fdv, (Sonvel(j), j = 1, Npt)
 
            Eql = .true.
 
-           call OUT3
+           call OUT3(cea)
 
            Iplt = min(Iplt+Npt, 500)
 
@@ -2447,13 +2454,15 @@ end subroutine REACT
 
 
 
-subroutine RKTOUT
+subroutine RKTOUT(cea)
 !***********************************************************************
 ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
 !***********************************************************************
   use mod_legacy_cea
   use mod_legacy_io
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
 
 ! LOCAL VARIABLES
   character(4):: exit(11) = 'EXIT'
@@ -2488,7 +2497,7 @@ subroutine RKTOUT
 
   call OUT1
 
-  Fmt(4) = Fmt(6)
+  cea%Fmt(4) = cea%Fmt(6)
   nex = Npt - 2
   if (Page1) then
      ione = 0
@@ -2503,8 +2512,8 @@ subroutine RKTOUT
 ! PRESSURE RATIOS
   if (Iopt == 0) then
      write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
-     call VARFMT(App)
-     write(IOOUT, Fmt) 'Pinf/P         ', (App(j), j = 1, Npt)
+     call VARFMT(cea, App)
+     write(IOOUT, cea%Fmt) 'Pinf/P         ', (App(j), j = 1, Npt)
   else
      nex = nex - 1
      write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
@@ -2512,11 +2521,11 @@ subroutine RKTOUT
      do i = 2, Npt
         X(i) = Ppp(1) / Ppp(i)
      end do
-     call VARFMT(X)
-     write(IOOUT, Fmt) 'Pinj/P         ', (X(i), i = 1, Npt)
+     call VARFMT(cea, X)
+     write(IOOUT, cea%Fmt) 'Pinj/P         ', (X(i), i = 1, Npt)
   end if
 
-  call OUT2
+  call OUT2(cea)
 
   mppf  = 0
   mppj  = 0
@@ -2582,39 +2591,39 @@ subroutine RKTOUT
 ! MACH NUMBER
   Vmoc(1) = 0
   if (Gammas(i23) == 0) Vmoc(i23) = 0
-  Fmt(7) = '3,'
-  write(IOOUT, Fmt) 'MACH NUMBER    ', (Vmoc(j), j = 1, Npt)
-  if (Trnspt) call OUT4
+  cea%Fmt(7) = '3,'
+  write(IOOUT, cea%Fmt) 'MACH NUMBER    ', (Vmoc(j), j = 1, Npt)
+  if (Trnspt) call OUT4(cea)
   write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
 
 ! AREA RATIO
-  Fmt(4) = '9x,'
-  Fmt(i46) = '9x,'
-  call VARFMT(Aeat)
-  Fmt(5) = ' '
-  Fmt(i57) = ' '
-  write(IOOUT, Fmt) 'Ae/At          ', (Aeat(j), j = 2, Npt)
+  cea%Fmt(4) = '9x,'
+  cea%Fmt(i46) = '9x,'
+  call VARFMT(cea, Aeat)
+  cea%Fmt(5) = ' '
+  cea%Fmt(i57) = ' '
+  write(IOOUT, cea%Fmt) 'Ae/At          ', (Aeat(j), j = 2, Npt)
 
 ! C*
-  Fmt(i57) = '13'
-  Fmt(i68) = Fmt(i68 + 2)
-  Fmt(i79) = '1,'
-  write(IOOUT, Fmt) fr, (Cstr, j = 2, Npt)
+  cea%Fmt(i57) = '13'
+  cea%Fmt(i68) = cea%Fmt(i68 + 2)
+  cea%Fmt(i79) = '1,'
+  write(IOOUT, cea%Fmt) fr, (Cstr, j = 2, Npt)
 
 ! CF - THRUST COEFICIENT
-  Fmt(i79) = '4,'
+  cea%Fmt(i79) = '4,'
   do i = 2, Npt
      X(i) = gc * Spim(i) / Cstr
   end do
-  write(IOOUT, Fmt) 'CF             ', (X(j), j = 2, Npt)
+  write(IOOUT, cea%Fmt) 'CF             ', (X(j), j = 2, Npt)
 
 ! VACUUM IMPULSE
-  Fmt(i57) = '13'
-  Fmt(i79) = '1,'
-  write(IOOUT, Fmt) fiv, (vaci(j), j = 2, Npt)
+  cea%Fmt(i57) = '13'
+  cea%Fmt(i79) = '1,'
+  write(IOOUT, cea%Fmt) fiv, (vaci(j), j = 2, Npt)
 
 ! SPECIFIC IMPULSE
-  write(IOOUT, Fmt) fi, (Spim(j), j = 2, Npt)
+  write(IOOUT, cea%Fmt) fi, (Spim(j), j = 2, Npt)
 
   if (Nplt > 0) then
      Spim(1) = 0
@@ -2635,13 +2644,13 @@ subroutine RKTOUT
   end if
 
   write(IOOUT, *)
-  Fmt(4) = ' '
-  Fmt(5) = '13'
-  Fmt(7) = '5,'
+  cea%Fmt(4) = ' '
+  cea%Fmt(5) = '13'
+  cea%Fmt(7) = '5,'
 
   if (Iopt /= 0) then
-     Fmt(i46) = Fmt(8)
-     Fmt(i57) = Fmt(9)
+     cea%Fmt(i46) = cea%Fmt(8)
+     cea%Fmt(i57) = cea%Fmt(9)
   end if
 
   if (.not. Eql) then
@@ -2668,7 +2677,7 @@ subroutine RKTOUT
 
         if (line == 3 .or. k == Ngc) then
            if (line == 0) then
-              call OUT3
+              call OUT3(cea)
               return
            end if
            write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), X(ln), ln = 1, line)
@@ -2677,18 +2686,22 @@ subroutine RKTOUT
      end do
   end if
 
-  call OUT3
+  call OUT3(cea)
   return
 end subroutine RKTOUT
 
 
 
-subroutine ROCKET
+subroutine ROCKET(cea)
 !***********************************************************************
 ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
 !***********************************************************************
+  use mod_cea
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   integer:: i, i01, i12, iof, iplt1, iplte, ipp, isub, isup1, isupsv, itnum, &
        itrot, nar, nipp, niter, nn, npr1, nptth
@@ -3127,7 +3140,7 @@ subroutine ROCKET
            Gammas(Nfz) = cprf / (cprf - 1 / Wm(Nfz))
         end if
      end if
-     call RKTOUT
+     call RKTOUT(cea)
      Iplt = Iplt + Npt
      if (.not. Page1) then
         Iplt = Iplt - 2
@@ -3561,13 +3574,16 @@ end subroutine SETEN
 
 
 
-subroutine SHCK
+subroutine SHCK(cea)
 !***********************************************************************
 ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
 !***********************************************************************
   use mod_legacy_cea
   use mod_legacy_io
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   character(1):: cr12, cr52
   integer:: i, iof, it1, it2, itr, j, n
@@ -3657,13 +3673,13 @@ subroutine SHCK
   Eql = .false.
   call OUT1
   write(IOOUT, '(/" INITIAL GAS (1)")')
-  Fmt(4) = '13'
-  Fmt(5) = ' '
-  Fmt(7) = '4,'
-  write(IOOUT, Fmt) 'MACH NUMBER1   ', (Mach1(j), j = 1, Npt)
-  Fmt(7) = '2,'
-  write(IOOUT, Fmt) 'U1, M/SEC      ', (U1(j), j = 1, Npt)
-  call OUT2
+  cea%Fmt(4) = '13'
+  cea%Fmt(5) = ' '
+  cea%Fmt(7) = '4,'
+  write(IOOUT, cea%Fmt) 'MACH NUMBER1   ', (Mach1(j), j = 1, Npt)
+  cea%Fmt(7) = '2,'
+  write(IOOUT, cea%Fmt) 'U1, M/SEC      ', (U1(j), j = 1, Npt)
+  call OUT2(cea)
 ! BEGIN CALCULATIONS FOR 2ND CONDITION
   if (Incdeq) Eql = .true.
   Npt = 1
@@ -3829,23 +3845,23 @@ subroutine SHCK
      cr12 = '1'
      cr52 = '2'
   end if
-  Fmt(7) = '2,'
-  write(IOOUT, Fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, Npt)
-  call OUT2
-  if (Trnspt) call OUT4
+  cea%Fmt(7) = '2,'
+  write(IOOUT, cea%Fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, Npt)
+  call OUT2(cea)
+  if (Trnspt) call OUT4(cea)
   write(IOOUT, *)
-  Fmt(7) = '3,'
-  write(IOOUT, Fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, Npt)
-  write(IOOUT, Fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, Npt)
-  Fmt(7) = '4,'
-  write(IOOUT, Fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, Npt)
-  write(IOOUT, Fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, Npt)
-  Fmt(7) = '2,'
-  if (.not. refl) write(IOOUT, Fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, Npt)
-  if (refl) write(IOOUT, Fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, Npt)
+  cea%Fmt(7) = '3,'
+  write(IOOUT, cea%Fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, Npt)
+  write(IOOUT, cea%Fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, Npt)
+  cea%Fmt(7) = '4,'
+  write(IOOUT, cea%Fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, Npt)
+  write(IOOUT, cea%Fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, Npt)
+  cea%Fmt(7) = '2,'
+  if (.not. refl) write(IOOUT, cea%Fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, Npt)
+  if (refl) write(IOOUT, cea%Fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, Npt)
   if (.not. Eql) then
 ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
-     Fmt(7) = '5,'
+     cea%Fmt(7) = '5,'
      if (.not. Incdeq) then
         if (Massf) then
            write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MASS'
@@ -3860,11 +3876,11 @@ subroutine SHCK
         end do
      else
         Eql = .true.
-        call OUT3
+        call OUT3(cea)
         Eql = .false.
      end if
   else
-     call OUT3
+     call OUT3(cea)
   end if
   Iplt = min(Iplt + Npt, 500)
   if (srefl) then
@@ -3932,13 +3948,16 @@ end subroutine SHCK
 
 
 
-subroutine THERMP
+subroutine THERMP(cea)
 !***********************************************************************
 ! ASSIGNED THERMODYNAMIC STATES.  HP, SP, TP, UV, SV, AND TV PROBLEMS.
 !***********************************************************************
   use mod_legacy_cea
   use mod_legacy_io
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   integer:: iof
   logical:: Uv, Tv, Sv
@@ -3978,9 +3997,9 @@ subroutine THERMP
            end if
            call OUT1
            write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
-           call OUT2
-           if (Trnspt) call OUT4
-           call OUT3
+           call OUT2(cea)
+           if (Trnspt) call OUT4(cea)
+           call OUT3(cea)
            Iplt = min(Iplt + Npt, 500)
            if (Isv == 0 .and. iof == Nof) return
            write(IOOUT, '(////)')

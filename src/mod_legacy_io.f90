@@ -942,12 +942,14 @@ contains
   end subroutine OUT1
 
 
-  subroutine OUT2
+  subroutine OUT2(cea)
     !***********************************************************************
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
     use mod_legacy_cea
     implicit none
+
+    type(CEA_Problem), intent(inout):: cea
 
     character(15):: fgi, fh, fp, frh, fs, fu
     integer:: i, j
@@ -1075,10 +1077,10 @@ contains
        fc = 'Cp, CAL/(G)(K)'
     end if
 
-    Fmt(4) = Fmt(6)
+    cea%Fmt(4) = cea%Fmt(6)
 
     ! PRESSURE
-    call VARFMT(Ppp)
+    call VARFMT(cea, Ppp)
 
     do i = 1, Npt
        X(i) = Ppp(i) * pfactor
@@ -1088,37 +1090,37 @@ contains
        end if
     end do
 
-    write(IOOUT, Fmt) fp, (X(j), j = 1, Npt)
+    write(IOOUT, cea%Fmt) fp, (X(j), j = 1, Npt)
 
     ! TEMPERATURE
-    Fmt(4) = '13'
-    Fmt(5) = ' '
-    Fmt(7) = '2,'
-    write(IOOUT, Fmt) 'T, K            ', (Ttt(j), j = 1, Npt)
+    cea%Fmt(4) = '13'
+    cea%Fmt(5) = ' '
+    cea%Fmt(7) = '2,'
+    write(IOOUT, cea%Fmt) 'T, K            ', (Ttt(j), j = 1, Npt)
 
     ! DENSITY
     do i = 1, Npt
        if (Vlm(i) /= 0) X(i) = vnum / Vlm(i)
        if (Nplt /= 0 .and. i > ione .and. mrho > 0) Pltout(i+Iplt-ione, mrho) = X(i)
     end do
-    call EFMT(Fmt(4), frh, X)
+    call EFMT(cea%Fmt(4), frh, X)
 
     ! ENTHALPY
     do i = 1, Npt
        X(i) = Hsum(i) * R
        if (Nplt /= 0 .and. i > ione .and. mh > 0) Pltout(i+Iplt-ione, mh) = X(i)
     end do
-    Fmt(4) = Fmt(6)
-    call VARFMT(X)
-    write(IOOUT, Fmt) fh, (X(j), j = 1, Npt)
+    cea%Fmt(4) = cea%Fmt(6)
+    call VARFMT(cea, X)
+    write(IOOUT, cea%Fmt) fh, (X(j), j = 1, Npt)
 
     ! INTERNAL ENERGY
     do i = 1, Npt
        X(i) = (Hsum(i) - Ppp(i) * Vlm(i) / Rr) * R
        if (Nplt /= 0 .and. i > ione .and. mie > 0) Pltout(i+Iplt-ione, mie) = X(i)
     end do
-    call VARFMT(X)
-    write(IOOUT, Fmt) fu, (X(j), j = 1, Npt)
+    call VARFMT(cea, X)
+    write(IOOUT, cea%Fmt) fu, (X(j), j = 1, Npt)
 
     ! GIBBS ENERGY
     do i = 1, Npt
@@ -1134,53 +1136,55 @@ contains
           if (mdvp > 0) Pltout(i+Iplt-ione, mdvp) = Dlvpt(i)
        end if
     end do
-    call VARFMT(X)
-    write(IOOUT, Fmt) fgi, (X(j), j = 1, Npt)
+    call VARFMT(cea, X)
+    write(IOOUT, cea%Fmt) fgi, (X(j), j = 1, Npt)
 
     ! ENTROPY
-    Fmt(4) = '13'
-    Fmt(5) = ' '
-    Fmt(7) = '4,'
-    write(IOOUT, Fmt) fs, (Ssum(j) * R, j = 1, Npt)
+    cea%Fmt(4) = '13'
+    cea%Fmt(5) = ' '
+    cea%Fmt(7) = '4,'
+    write(IOOUT, cea%Fmt) fs, (Ssum(j) * R, j = 1, Npt)
     write(IOOUT, *)
 
     ! MOLECULAR WEIGHT
-    Fmt(7) = '3,'
-    write(IOOUT, Fmt) 'M, (1/n)        ', (Wm(j), j = 1, Npt)
-    if (.not. Gonly) write(IOOUT, Fmt) 'MW, MOL WT      ', (1/Totn(j), j = 1, Npt)
+    cea%Fmt(7) = '3,'
+    write(IOOUT, cea%Fmt) 'M, (1/n)        ', (Wm(j), j = 1, Npt)
+    if (.not. Gonly) write(IOOUT, cea%Fmt) 'MW, MOL WT      ', (1/Totn(j), j = 1, Npt)
 
     ! (DLV/DLP)T
-    Fmt(7) = '5,'
-    if (Eql) write(IOOUT, Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j = 1, Npt)
+    cea%Fmt(7) = '5,'
+    if (Eql) write(IOOUT, cea%Fmt) '(dLV/dLP)t      ', (Dlvpt(j), j = 1, Npt)
 
     ! (DLV/DLT)P
-    Fmt(7) = '4,'
-    if (Eql) write(IOOUT, Fmt) '(dLV/dLT)p      ', (Dlvtp(j), j = 1, Npt)
+    cea%Fmt(7) = '4,'
+    if (Eql) write(IOOUT, cea%Fmt) '(dLV/dLT)p      ', (Dlvtp(j), j = 1, Npt)
 
     ! HEAT CAPACITY
-    write(IOOUT, Fmt) fc, (Cpr(j) * R, j = 1, Npt)
+    write(IOOUT, cea%Fmt) fc, (Cpr(j) * R, j = 1, Npt)
 
     ! GAMMA(S)
-    Fmt(7) = '4,'
-    write(IOOUT, Fmt) 'GAMMAs          ', (Gammas(j), j = 1, Npt)
+    cea%Fmt(7) = '4,'
+    write(IOOUT, cea%Fmt) 'GAMMAs          ', (Gammas(j), j = 1, Npt)
 
     ! SONIC VELOCITY
-    Fmt(7) = '1,'
+    cea%Fmt(7) = '1,'
     do i = 1, Npt
        Sonvel(i) = sqrt(Rr * Gammas(i) * Ttt(i) / Wm(i))
        if (Nplt /= 0 .and. i > ione .and. mson > 0) Pltout(i+Iplt-ione, mson) = Sonvel(i)
     end do
-    write(IOOUT, Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)
+    write(IOOUT, cea%Fmt) 'SON VEL,M/SEC   ', (Sonvel(j), j = 1, Npt)
     return
   end subroutine OUT2
 
 
-  subroutine OUT3
+  subroutine OUT3(cea)
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
     use mod_legacy_cea
     implicit none
+
+    type(CEA_Problem), intent(inout):: cea
 
     character(4):: mamo
     logical:: kOK
@@ -1239,7 +1243,7 @@ contains
              if (Trace == 0) then
                 write(IOOUT, '(1x, A15, F9.5, 12F9.5)') Prod(k), (X(i), i = 1, Npt)
              else
-                call EFMT(Fmt(4), Prod(k), X)
+                call EFMT(cea%Fmt(4), Prod(k), X)
              end if
              if (Prod(k) == Omit(notuse)) notuse = notuse - 1
           else if (Prod(k) /= Prod(k-1)) then
@@ -1263,12 +1267,14 @@ contains
   end subroutine OUT3
 
 
-  subroutine OUT4
+  subroutine OUT4(cea)
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
     use mod_legacy_cea
     implicit none
+
+    type(CEA_Problem), intent(inout):: cea
 
     integer:: i, j
 
@@ -1281,7 +1287,7 @@ contains
     end if
 
     ! TRANSPORT PROPERTIES
-    Fmt(4) = Fmt(6)
+    cea%Fmt(4) = cea%Fmt(6)
     if (Nplt > 0) then
        do i = 1, Npt
           if (i > ione) then
@@ -1294,43 +1300,46 @@ contains
        end do
     end if
 
-    call VARFMT(Vis)
+    call VARFMT(cea, Vis)
 
-    write(IOOUT, Fmt) 'VISC,MILLIPOISE', (Vis(j), j = 1, Npt)
+    write(IOOUT, cea%Fmt) 'VISC,MILLIPOISE', (Vis(j), j = 1, Npt)
 
-    Fmt(4) = '13'
-    Fmt(5) = ' '
-    Fmt(7) = '4,'
+    cea%Fmt(4) = '13'
+    cea%Fmt(5) = ' '
+    cea%Fmt(7) = '4,'
 
     if (Eql) then
        write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
-       write(IOOUT, Fmt) fc, (Cpeql(j), j = 1, Npt)
+       write(IOOUT, cea%Fmt) fc, (Cpeql(j), j = 1, Npt)
        ! CONDUCTIVITY
-       write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Coneql(j), j = 1, Npt)
+       write(IOOUT, cea%Fmt) 'CONDUCTIVITY    ', (Coneql(j), j = 1, Npt)
        ! PRANDTL NUMBER
-       write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Preql(j), j = 1, Npt)
+       write(IOOUT, cea%Fmt) 'PRANDTL NUMBER  ', (Preql(j), j = 1, Npt)
     end if
 
     write(IOOUT, '(/"  WITH FROZEN REACTIONS"/)')
     ! SPECIFIC HEAT
-    write(IOOUT, Fmt) fc, (Cpfro(j), j = 1, Npt)
+    write(IOOUT, cea%Fmt) fc, (Cpfro(j), j = 1, Npt)
     ! CONDUCTIVITY
-    write(IOOUT, Fmt) 'CONDUCTIVITY    ', (Confro(j), j = 1, Npt)
+    write(IOOUT, cea%Fmt) 'CONDUCTIVITY    ', (Confro(j), j = 1, Npt)
     ! PRANDTL NUMBER
-    write(IOOUT, Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
+    write(IOOUT, cea%Fmt) 'PRANDTL NUMBER  ', (Prfro(j), j = 1, Npt)
 
     return
   end subroutine OUT4
 
 
-  subroutine VARFMT(Vx)
+  subroutine VARFMT(cea, Vx)
     !***********************************************************************
     ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-format IN
     ! VARIABLE format FMT.
     !***********************************************************************
     use mod_legacy_cea
     implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+
     ! DUMMY ARGUMENTS
     real(8), intent(in):: Vx(Ncol)
     ! LOCAL VARIABLES
@@ -1340,14 +1349,14 @@ contains
     do i = 1, Npt
        vi = abs(Vx(i))
        k = 2*i + 3
-       Fmt(k) = '5,'
-       if (vi >= 0.99995d0)  Fmt(k) = '4,'
-       if (vi >= 9.99950d0)  Fmt(k) = '3,'
-       if (vi >= 99.9950d0)  Fmt(k) = '2,'
-       if (vi >= 9999.95d0)  Fmt(k) = '1,'
-       if (vi >= 999999.5d0) Fmt(k) = '0,'
+       cea%Fmt(k) = '5,'
+       if (vi >= 0.99995d0)  cea%Fmt(k) = '4,'
+       if (vi >= 9.99950d0)  cea%Fmt(k) = '3,'
+       if (vi >= 99.9950d0)  cea%Fmt(k) = '2,'
+       if (vi >= 9999.95d0)  cea%Fmt(k) = '1,'
+       if (vi >= 999999.5d0) cea%Fmt(k) = '0,'
     end do
-    Fmt(29)(2:) = ' '
+    cea%Fmt(29)(2:) = ' '
   end subroutine VARFMT
 
 
