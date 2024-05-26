@@ -65,11 +65,6 @@ module mod_legacy_cea
   logical:: Incdeq, Incdfz, Refleq, Reflfz, Shkdbg
   real(8):: U1(Ncol), Mach1(Ncol), A1, Gamma1
 
-  integer:: Nm, Nr, Ntape
-  integer:: Ind(maxTr), Jcm(maxEl)
-  real(8):: Cprr(maxTr), Con(maxTr), Wmol(maxTr), Xs(maxTr)
-  real(8):: Eta(maxTr, maxTr), Stc(maxTr, maxTr)
-
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]

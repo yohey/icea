@@ -25,6 +25,11 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     integer:: Nm, Nr, Ntape
+     integer:: Ind(maxTr), Jcm(maxEl)
+     real(8):: Cprr(maxTr), Con(maxTr), Wmol(maxTr), Xs(maxTr)
+     real(8):: Eta(maxTr, maxTr), Stc(maxTr, maxTr)
+
      real(8):: Coneql(Ncol), Confro(Ncol), Cpeql(Ncol), Cpfro(Ncol), Preql(Ncol), Prfro(Ncol), Vis(Ncol)
 
      ! Information used in variable output format

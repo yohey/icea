@@ -87,13 +87,13 @@ program main
 
      Jray(1:Nreac) = 0
 
-     call SEARCH
+     call SEARCH(cea(icase))
 
      if (Ngc == 0) exit outerLoop
 
      Newr = .false.
 
-     if (Trnspt) call READTR
+     if (Trnspt) call READTR(cea(icase))
 
      ! INITIAL ESTIMATES
      Npr = 0
@@ -319,7 +319,7 @@ subroutine DETON(cea)
   iof = iof + 1
   Oxfl = Oxf(iof)
 
-  call NEWOF
+  call NEWOF(cea)
 
 ! BEGIN T LOOP.
   do It = 1, Nt
@@ -350,7 +350,7 @@ subroutine DETON(cea)
         Tp = .false.
         Hp = .true.
 
-        call EQLBRM
+        call EQLBRM(cea)
 
         Hsub0 = h1(Npt) / R
         Hp = .false.
@@ -381,7 +381,7 @@ subroutine DETON(cea)
 110        itr = itr + 1
            Pp = p1 * pp1
 
-           call EQLBRM
+           call EQLBRM(cea)
 
            if (Npt == 0) go to 200
 
@@ -639,13 +639,16 @@ end subroutine EFMT
 
 
 
-subroutine EQLBRM
+subroutine EQLBRM(cea)
 !***********************************************************************
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
   use mod_cea
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   character(12):: ae, cmp(maxEl)
   character(16):: amb
@@ -1486,7 +1489,7 @@ subroutine EQLBRM
                  l = lcs(i)
                  if (l == lc) go to 1250
                  if (l == 0) exit
-                 j = Jcm(l)
+                 j = cea%Jcm(l)
                  if (all(A(1:nn, jbx) == A(1:nn, j))) go to 1250
               end do
            end if
@@ -1496,8 +1499,8 @@ subroutine EQLBRM
            end do
 
            njc = njc + 1
-           if (jbx /= Jcm(lc)) newcom = .true.
-           Jcm(lc) = jbx
+           if (jbx /= cea%Jcm(lc)) newcom = .true.
+           cea%Jcm(lc) = jbx
            lcs(njc) = lc
            go to 1300
         end if
@@ -1512,11 +1515,11 @@ subroutine EQLBRM
   if (newcom) then
 ! SWITCH COMPONENTS
      do lc = 1, nn
-        jb = Jcm(lc)
+        jb = cea%Jcm(lc)
 
         if (A(lc, jb) == 0) then
            jb = Jx(lc)
-           Jcm(lc) = jb
+           cea%Jcm(lc) = jb
         end if
 
         tem = A(lc, jb)
@@ -1571,9 +1574,9 @@ subroutine EQLBRM
            A(Nlm, j) = aa
         end do
 
-        ja = Jcm(Msing)
-        Jcm(Msing) = Jcm(Nlm)
-        Jcm(Nlm) = ja
+        ja = cea%Jcm(Msing)
+        cea%Jcm(Msing) = cea%Jcm(Nlm)
+        cea%Jcm(Nlm) = ja
         ae = cmp(Msing)
         cmp(Msing) = cmp(Nlm)
         cmp(Nlm) = ae
@@ -2114,12 +2117,14 @@ end subroutine MATRIX
 
 
 
-subroutine NEWOF
+subroutine NEWOF(cea)
 !***********************************************************************
 ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
 !***********************************************************************
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
 
 ! LOCAL VARIABLES
   integer:: i, j
@@ -2173,7 +2178,7 @@ subroutine NEWOF
   end if
 
   do i = 1, Nlm
-     j = Jcm(i)
+     j = cea%Jcm(i)
      if (.not. Short) write(IOOUT, '(1x, a16, 3e20.8)') Prod(j), B0p(i, 2), B0p(i, 1), B0(i)
   end do
 
@@ -2775,7 +2780,7 @@ subroutine ROCKET(cea)
      Hp = .true.
   end if
   Sp = .false.
-  call NEWOF
+  call NEWOF(cea)
   if (T(1) /= 0) Tt = T(1)
 ! LOOP FOR CHAMBER PRESSURES
 200 do Ip = 1, Np
@@ -2800,7 +2805,7 @@ subroutine ROCKET(cea)
 ! LOOP FOR OUTPUT COLUMNS
 250  nar = Npt
      if (Eql) then
-        call EQLBRM
+        call EQLBRM(cea)
         if (Npt == Nfz) cprf = Cpsum
      else
         call FROZEN
@@ -3258,13 +3263,15 @@ end subroutine ROCKET
 
 
 
-subroutine SEARCH
+subroutine SEARCH(cea)
 !***********************************************************************
 ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
 !***********************************************************************
   use mod_cea
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
 
   ! LOCAL VARIABLES
   character(6):: date(maxNgc)
@@ -3361,7 +3368,7 @@ subroutine SEARCH
               if (Elmt(i) == el(1)) then
                  ne = ne + 1
                  Jx(i) = Ngc
-                 Jcm(i) = Ngc
+                 cea%Jcm(i) = Ngc
                  go to 150
               end if
            end do
@@ -3401,7 +3408,7 @@ subroutine SEARCH
               end if
            end do
 210        Jx(i) = Nspx
-           Jcm(i) = Nspx
+           cea%Jcm(i) = Nspx
         end if
      end do
   end if
@@ -3435,10 +3442,12 @@ subroutine SEARCH
 end subroutine
 
 
-subroutine READTR
+subroutine READTR(cea)
   ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
 
   character(16):: bin(2, 40), pure(6), spece(2)
   integer:: i, j, k, jj(2), jk, ir, lineb, npure, nrec
@@ -3446,7 +3455,7 @@ subroutine READTR
 
   rewind IOTRN
   rewind IOSCH
-  Ntape = 0
+  cea%Ntape = 0
   npure = 0
   lineb = 1
   if (.not. Short) write(IOOUT, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
@@ -3480,7 +3489,7 @@ subroutine READTR
      end do
      go to 550
 500  write(IOSCH) jj, trdata
-     Ntape = Ntape + 1
+     cea%Ntape = cea%Ntape + 1
 550  if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
         if (.not. Short) write(IOOUT, '(4(2x, A16))') (pure(jk), jk = 1, npure)
         npure = 0
@@ -3495,7 +3504,7 @@ subroutine READTR
   end if
   write(IOOUT, *)
   return
-end subroutine
+end subroutine READTR
 
 
 
@@ -3624,7 +3633,7 @@ subroutine SHCK(cea)
   iof = 0
 200 iof = iof + 1
   Oxfl = Oxf(iof)
-  call NEWOF
+  call NEWOF(cea)
   Incdeq = seql
 300 refl = .false.
   it2 = 2
@@ -3711,7 +3720,7 @@ subroutine SHCK(cea)
         Tp = .false.
         Hp = .true.
         Hsub0 = hs + uu**2 / (2 * R0)
-        call EQLBRM
+        call EQLBRM(cea)
         T21 = Ttt(Npt) / T1
         Hp = .false.
         Tp = .true.
@@ -3744,7 +3753,7 @@ subroutine SHCK(cea)
         Hsum(Npt) = Hsum(Npt) * Tt
      end if
   else
-     call EQLBRM
+     call EQLBRM(cea)
      if (Tt == 0) go to 800
   end if
   rho12 = wmx * T21 / (Wm(Npt) * p21)
@@ -3972,7 +3981,7 @@ subroutine THERMP(cea)
   Eql = .true.
   outerLoop: do iof = 1, Nof
      Oxfl = Oxf(iof)
-     call NEWOF
+     call NEWOF(cea)
 ! SET ASSIGNED P OR VOLUME
      do Ip = 1, Np
         Pp = P(Ip)
@@ -3980,7 +3989,7 @@ subroutine THERMP(cea)
         do It = 1, Nt
            Vv = V(Ip)
            Tt = T(It)
-           call EQLBRM
+           call EQLBRM(cea)
            if (Npt == 0) return
            if (Trnspt .and. Tt /= 0) call TRANP(cea)
            Isv = 0
@@ -4025,13 +4034,16 @@ end subroutine THERMP
 
 
 
-subroutine TRANIN
+subroutine TRANIN(cea)
 !***********************************************************************
 ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
 !***********************************************************************
   use mod_cea
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   integer:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
   logical:: change, elc1, elc2, ion1, ion2, setx
@@ -4043,22 +4055,22 @@ subroutine TRANIN
      if (.not. Shock) then
         if (.not. setx) then
            setx = .true.
-           Nm = nms
-           do i = 1, Nm
-              Xs(i) = xss(i)
-              Wmol(i) = wmols(i)
-              Ind(i) = inds(i)
+           cea%Nm = nms
+           do i = 1, cea%Nm
+              cea%Xs(i) = xss(i)
+              cea%Wmol(i) = wmols(i)
+              cea%Ind(i) = inds(i)
            end do
         end if
         go to 300
      else if (.not. Incdeq) then
         if (Npt <= 1) then
-           Nm = Nreac
-           do i = 1, Nm
+           cea%Nm = Nreac
+           do i = 1, cea%Nm
               j = Jray(i)
-              Ind(i) = j
-              Wmol(i) = Mw(j)
-              Xs(i) = En(j, 1)*Wm(1)
+              cea%Ind(i) = j
+              cea%Wmol(i) = Mw(j)
+              cea%Xs(i) = En(j, 1)*Wm(1)
            end do
         end if
         go to 300
@@ -4066,17 +4078,17 @@ subroutine TRANIN
   end if
 
 ! PICK OUT IMPORTANT SPECIES
-  Nm = 0
+  cea%Nm = 0
   total = 0
   enmin = 1.0d-11 / Wm(Npt)
   testot = 0.999999999d0 / Wm(Npt)
   do i = 1, Lsave
-     j = Jcm(i)
+     j = cea%Jcm(i)
      if (En(j, Npt) <= 0 .and. j <= Ngc) then
         if ((Enln(j) - Ennl + 25.328436d0) > 0) En(j, Npt) = exp(Enln(j))
      end if
-     Nm = Nm + 1
-     Ind(Nm) = j
+     cea%Nm = cea%Nm + 1
+     cea%Ind(cea%Nm) = j
      total = total + En(j, Npt)
      if (Mw(j) < 1) enel = En(j, Npt)
      En(j, Npt) = -En(j, Npt)
@@ -4089,14 +4101,14 @@ subroutine TRANIN
 
         do j = 1, Ng
            if (En(j, Npt) >= testen) then
-              if (Nm >= maxTr) then
+              if (cea%Nm >= maxTr) then
                  write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
-                      & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') Nm, Npt
+                      & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') cea%Nm, Npt
                  exit outerLoop1
               else
                  total = total + En(j, Npt)
-                 Nm = Nm + 1
-                 Ind(Nm) = j
+                 cea%Nm = cea%Nm + 1
+                 cea%Ind(cea%Nm) = j
                  En(j, Npt) = -En(j, Npt)
               end if
            end if
@@ -4110,89 +4122,89 @@ subroutine TRANIN
   do j = 1, Ng
      En(j, Npt) = abs(En(j, Npt))
   end do
-  do i = 1, Nm
-     j = Ind(i)
-     Wmol(i) = Mw(j)
-     Xs(i) = En(j, Npt) / total
+  do i = 1, cea%Nm
+     j = cea%Ind(i)
+     cea%Wmol(i) = Mw(j)
+     cea%Xs(i) = En(j, Npt) / total
   end do
   if (Npt == Nfz) then
-     nms = Nm
-     do i = 1, Nm
-        xss(i) = Xs(i)
-        wmols(i) = Wmol(i)
-        inds(i) = Ind(i)
+     nms = cea%Nm
+     do i = 1, cea%Nm
+        xss(i) = cea%Xs(i)
+        wmols(i) = cea%Wmol(i)
+        inds(i) = cea%Ind(i)
      end do
      setx = .false.
   end if
 ! REWRITE REACTIONS TO ELIMINATE TRACE ELEMENTS
-  Nr = Nm - Lsave
-  if (Nr /= 0) then
+  cea%Nr = cea%Nm - Lsave
+  if (cea%Nr /= 0) then
      do k = 1, maxTr
         do m = 1, maxTr
-           Stc(k, m) = 0
+           cea%Stc(k, m) = 0
         end do
      end do
      k = 1
-     do i = Lsave + 1, Nm
-        Stc(k, i) = -1
-        j = Ind(i)
+     do i = Lsave + 1, cea%Nm
+        cea%Stc(k, i) = -1
+        j = cea%Ind(i)
         do m = 1, Lsave
-           Stc(k, m) = A(m, j)
+           cea%Stc(k, m) = A(m, j)
         end do
         k = k + 1
      end do
-     do i = 1, Nm
-        if (Xs(i) < 1.0d-10) then
+     do i = 1, cea%Nm
+        if (cea%Xs(i) < 1.0d-10) then
            m = 1
            change = .false.
 
-           do j = 1, Nr
-              coeff = Stc(j, i)
+           do j = 1, cea%Nr
+              coeff = cea%Stc(j, i)
               if (abs(coeff) > 1.0d-05) then
                  if (.not. change) then
                     change = .true.
-                    do k = 1, Nm
-                       stcoef(k) = Stc(j, k) / coeff
+                    do k = 1, cea%Nm
+                       stcoef(k) = cea%Stc(j, k) / coeff
                     end do
                     cycle
                  else
-                    do k = 1, Nm
-                       Stc(j, k) = Stc(j, k) / coeff - stcoef(k)
+                    do k = 1, cea%Nm
+                       cea%Stc(j, k) = cea%Stc(j, k) / coeff - stcoef(k)
                     end do
                  end if
               end if
-              do k = 1, Nm
-                 stcf(m, k) = Stc(j, k)
+              do k = 1, cea%Nm
+                 stcf(m, k) = cea%Stc(j, k)
               end do
               m = m + 1
            end do
 
-           do ii = 1, Nm
-              do j = 1, Nr
-                 Stc(j, ii) = stcf(j, ii)
+           do ii = 1, cea%Nm
+              do j = 1, cea%Nr
+                 cea%Stc(j, ii) = stcf(j, ii)
               end do
            end do
-           Nr = m - 1
+           cea%Nr = m - 1
         end if
      end do
   end if
 
 ! FIND TRANSPORT DATA FOR IMPORTANT INTERACTIONS
-300 do i = 1, Nm
-     Con(i) = 0
-     do j = 1, Nm
-        Eta(i, j) = 0
+300 do i = 1, cea%Nm
+     cea%Con(i) = 0
+     do j = 1, cea%Nm
+        cea%Eta(i, j) = 0
      end do
   end do
 
   rewind IOSCH
 
-  outerLoop2: do ir = 1, Ntape
+  outerLoop2: do ir = 1, cea%Ntape
      read(IOSCH) jtape, trc
 
      innerLoop: do k = 1, 2
-        do i = 1, Nm
-           j = Ind(i)
+        do i = 1, cea%Nm
+           j = cea%Ind(i)
            if (j == jtape(k)) then
               l = i
               if (k == 2) then
@@ -4211,11 +4223,11 @@ subroutine TRANIN
                        prop = exp(trc(6, kt, kvc) + (trc(5, kt, kvc) / Tt + trc(4, kt, kvc)) / Tt + trc(3, kt, kvc) * Tln)
 
                        if (kvc == 2) then
-                          Con(l) = prop
+                          cea%Con(l) = prop
                           cycle outerLoop2
                        else
-                          Eta(l, m) = prop
-                          if (l /= m) Eta(m, l) = Eta(l, m)
+                          cea%Eta(l, m) = prop
+                          if (l /= m) cea%Eta(m, l) = cea%Eta(l, m)
                        end if
 
                     else if (kvc == 2) then
@@ -4252,56 +4264,56 @@ subroutine TRANIN
      lambda = sqrt(debye + ionic)
      lambda = max(lambda, 2.71828183d0)
   end if
-  do i = 1, Nm
-     k = Ind(i)
-     Cprr(i) = Cp(k)
-     if (.not. (Ions .and. (abs(A(Nlm, k)) == 1) .and. (Eta(i, i) == 0))) then
-        if (Eta(i, i) == 0) then
-           omega = log(50 * Wmol(i)**4.6 / Tt**1.4)
+  do i = 1, cea%Nm
+     k = cea%Ind(i)
+     cea%Cprr(i) = Cp(k)
+     if (.not. (Ions .and. (abs(A(Nlm, k)) == 1) .and. (cea%Eta(i, i) == 0))) then
+        if (cea%Eta(i, i) == 0) then
+           omega = log(50 * cea%Wmol(i)**4.6 / Tt**1.4)
            omega = max(omega, 1.)
-           Eta(i, i) = Viscns * sqrt(Wmol(i) * Tt) / omega
+           cea%Eta(i, i) = Viscns * sqrt(cea%Wmol(i) * Tt) / omega
         end if
-        if (Con(i) == 0) Con(i) = Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
+        if (cea%Con(i) == 0) cea%Con(i) = cea%Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (cea%Cprr(i) - 2.5d0)) / cea%Wmol(i)
      end if
   end do
 
-  do i = 1, Nm
-     do j = i, Nm
+  do i = 1, cea%Nm
+     do j = i, cea%Nm
         ion1 = .false.
         ion2 = .false.
         elc1 = .false.
         elc2 = .false.
         omega = 0
-        if (Eta(i, j) == 0) Eta(i, j) = Eta(j, i)
-        if (Eta(j, i) == 0) Eta(j, i) = Eta(i, j)
-        if (Eta(i, j) == 0) then
+        if (cea%Eta(i, j) == 0) cea%Eta(i, j) = cea%Eta(j, i)
+        if (cea%Eta(j, i) == 0) cea%Eta(j, i) = cea%Eta(i, j)
+        if (cea%Eta(i, j) == 0) then
            if (Ions) then
 ! ESTIMATE FOR IONS
-              k1 = Ind(i)
-              k2 = Ind(j)
+              k1 = cea%Ind(i)
+              k2 = cea%Ind(j)
               if (abs(A(Nlm, k1)) == 1) ion1 = .true.
               if (abs(A(Nlm, k2)) == 1) ion2 = .true.
-              if (Wmol(i) < 1) elc1 = .true.
-              if (Wmol(j) < 1) elc2 = .true.
+              if (cea%Wmol(i) < 1) elc1 = .true.
+              if (cea%Wmol(j) < 1) elc2 = .true.
               if (ion1 .and. ion2) omega = 1.36d0 * qc * log(lambda)
               if ((ion1 .and. elc2) .or. (ion2 .and. elc1)) omega = 1.29d0 * qc * log(lambda)
               if ((ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1)) omega = exp(6.776 - 0.4 * Tln)
               if (omega /= 0) then
-                 wmred = sqrt(2 * Tt * Wmol(i) * Wmol(j) / (Wmol(i) + Wmol(j)))
-                 Eta(i, j) = Viscns * wmred * pi / omega
-                 Eta(j, i) = Eta(i, j)
+                 wmred = sqrt(2 * Tt * cea%Wmol(i) * cea%Wmol(j) / (cea%Wmol(i) + cea%Wmol(j)))
+                 cea%Eta(i, j) = Viscns * wmred * pi / omega
+                 cea%Eta(j, i) = cea%Eta(i, j)
                  if (i == j) then
-                    Cprr(i) = Cp(k1)
-                    Con(i) = Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
+                    cea%Cprr(i) = Cp(k1)
+                    cea%Con(i) = cea%Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (cea%Cprr(i) - 2.5d0)) / cea%Wmol(i)
                  end if
                  cycle
               end if
            end if
 ! ESTIMATE FOR UNLIKE INTERACTIONS FROM RIGID SPHERE ANALOGY
-           ratio = sqrt(Wmol(j) / Wmol(i))
-           Eta(i, j) = 5.656854d0 * Eta(i, i) * sqrt(Wmol(j) / (Wmol(i) + Wmol(j)))
-           Eta(i, j) = Eta(i, j) / (1 + sqrt(ratio * Eta(i, i) / Eta(j, j)))**2
-           Eta(j, i) = Eta(i, j)
+           ratio = sqrt(cea%Wmol(j) / cea%Wmol(i))
+           cea%Eta(i, j) = 5.656854d0 * cea%Eta(i, i) * sqrt(cea%Wmol(j) / (cea%Wmol(i) + cea%Wmol(j)))
+           cea%Eta(i, j) = cea%Eta(i, j) / (1 + sqrt(ratio * cea%Eta(i, i) / cea%Eta(j, j)))**2
+           cea%Eta(j, i) = cea%Eta(i, j)
         end if
      end do
   end do
@@ -4330,10 +4342,10 @@ subroutine TRANP(cea)
        psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
        stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
 
-  call TRANIN
+  call TRANIN(cea)
 ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
-  nmm = Nm - 1
-  do i = 1, Nm
+  nmm = cea%Nm - 1
+  do i = 1, cea%Nm
      rtpd(i, i) = 0
      phi(i, i) = 1
      psi(i, i) = 1
@@ -4343,72 +4355,72 @@ subroutine TRANP(cea)
   do i = 1, nmm
      i1 = i + 1
 !DIR$ IVDEP
-     do j = i1, Nm
-        sumc = 2 / (Eta(i, j) * (Wmol(i) + Wmol(j)))
-        phi(i, j) = sumc * Wmol(j) * Eta(i, i)
-        phi(j, i) = sumc * Wmol(i) * Eta(j, j)
-        sumc = (Wmol(i) + Wmol(j))**2
-        psi(i, j) = phi(i, j) * (1 + 2.41d0 * (Wmol(i) - Wmol(j)) * (Wmol(i) - 0.142d0 * Wmol(j)) / sumc)
-        psi(j, i) = phi(j, i) * (1 + 2.41d0 * (Wmol(j) - Wmol(i)) * (Wmol(j) - 0.142d0 * Wmol(i)) / sumc)
+     do j = i1, cea%Nm
+        sumc = 2 / (cea%Eta(i, j) * (cea%Wmol(i) + cea%Wmol(j)))
+        phi(i, j) = sumc * cea%Wmol(j) * cea%Eta(i, i)
+        phi(j, i) = sumc * cea%Wmol(i) * cea%Eta(j, j)
+        sumc = (cea%Wmol(i) + cea%Wmol(j))**2
+        psi(i, j) = phi(i, j) * (1 + 2.41d0 * (cea%Wmol(i) - cea%Wmol(j)) * (cea%Wmol(i) - 0.142d0 * cea%Wmol(j)) / sumc)
+        psi(j, i) = phi(j, i) * (1 + 2.41d0 * (cea%Wmol(j) - cea%Wmol(i)) * (cea%Wmol(j) - 0.142d0 * cea%Wmol(i)) / sumc)
      end do
   end do
-  do i = 1, Nm
+  do i = 1, cea%Nm
      sumc = 0
      sumv = 0
-     do j = 1, Nm
-        sumc = sumc + psi(i, j) * Xs(j)
-        sumv = sumv + phi(i, j) * Xs(j)
+     do j = 1, cea%Nm
+        sumc = sumc + psi(i, j) * cea%Xs(j)
+        sumv = sumv + phi(i, j) * cea%Xs(j)
      end do
-     cea%Vis(Npt) = cea%Vis(Npt) + Eta(i, i) * Xs(i) / sumv
-     cea%Confro(Npt) = cea%Confro(Npt) + Con(i) * Xs(i) / sumc
+     cea%Vis(Npt) = cea%Vis(Npt) + cea%Eta(i, i) * cea%Xs(i) / sumv
+     cea%Confro(Npt) = cea%Confro(Npt) + cea%Con(i) * cea%Xs(i) / sumc
   end do
-  if (Eql .and. Nr > 0) then
+  if (Eql .and. cea%Nr > 0) then
 ! CALCULATE REACTION HEAT CAPACITY AND THERMAL CONDUCTIVITY
-     m = Nr + 1
-     do i = 1, Nr
+     m = cea%Nr + 1
+     do i = 1, cea%Nr
         delh(i) = 0
         do k = 1, Lsave
-           j = Jcm(k)
-           delh(i) = Stc(i, k) * H0(j) + delh(i)
+           j = cea%Jcm(k)
+           delh(i) = cea%Stc(i, k) * H0(j) + delh(i)
         end do
         nlmm = Lsave + 1
-        do k = nlmm, Nm
-           j = Ind(k)
-           delh(i) = Stc(i, k) * H0(j) + delh(i)
+        do k = nlmm, cea%Nm
+           j = cea%Ind(k)
+           delh(i) = cea%Stc(i, k) * H0(j) + delh(i)
         end do
         G(i, m) = delh(i)
      end do
      do i = 1, maxTr
         do j = 1, maxTr
-           if (abs(Stc(i, j)) < 1.0d-6) Stc(i, j) = 0
+           if (abs(cea%Stc(i, j)) < 1.0d-6) cea%Stc(i, j) = 0
         end do
      end do
-     jj = Nm - 1
+     jj = cea%Nm - 1
      do k = 1, jj
         mm = k + 1
-        do m = mm, Nm
-           rtpd(k, m) = Wmol(k) * Wmol(m) / (1.1 * Eta(k, m) * (Wmol(k) + Wmol(m)))
-           xskm(k, m) = Xs(k) * Xs(m)
+        do m = mm, cea%Nm
+           rtpd(k, m) = cea%Wmol(k) * cea%Wmol(m) / (1.1 * cea%Eta(k, m) * (cea%Wmol(k) + cea%Wmol(m)))
+           xskm(k, m) = cea%Xs(k) * cea%Xs(m)
            xskm(m, k) = xskm(k, m)
            rtpd(m, k) = rtpd(k, m)
         end do
      end do
-     do i = 1, Nr
-        do j = i, Nr
+     do i = 1, cea%Nr
+        do j = i, cea%Nr
            G(i, j) = 0
            gmat(i, j) = 0
         end do
      end do
      do k = 1, jj
         mm = k + 1
-        do m = mm, Nm
-           if (Xs(k) >= 1.0d-10 .and. Xs(m) >= 1.0d-10) then
-              do j = 1, Nr
-                 if ((Stc(j, k) == 0) .and. (Stc(j, m) == 0)) stx(j) = 0
-                 if ((Stc(j, k) /= 0) .or. (Stc(j, m) /= 0)) stx(j) = Xs(m) * Stc(j, k) - Xs(k) * Stc(j, m)
+        do m = mm, cea%Nm
+           if (cea%Xs(k) >= 1.0d-10 .and. cea%Xs(m) >= 1.0d-10) then
+              do j = 1, cea%Nr
+                 if ((cea%Stc(j, k) == 0) .and. (cea%Stc(j, m) == 0)) stx(j) = 0
+                 if ((cea%Stc(j, k) /= 0) .or. (cea%Stc(j, m) /= 0)) stx(j) = cea%Xs(m) * cea%Stc(j, k) - cea%Xs(k) * cea%Stc(j, m)
               end do
-              do i = 1, Nr
-                 do j = i, Nr
+              do i = 1, cea%Nr
+                 do j = i, cea%Nr
                     stxij(i, j) = stx(i) * stx(j) / xskm(k, m)
                     G(i, j) = G(i, j) + stxij(i, j)
                     gmat(i, j) = gmat(i, j) + stxij(i, j) * rtpd(k, m)
@@ -4417,29 +4429,29 @@ subroutine TRANP(cea)
            end if
         end do
      end do
-     m = 1 + Nr
-     do i = 1, Nr
+     m = 1 + cea%Nr
+     do i = 1, cea%Nr
 !DIR$ IVDEP
-        do j = i, Nr
+        do j = i, cea%Nr
            G(j, i) = G(i, j)
         end do
         G(i, m) = delh(i)
      end do
-     imat = Nr
+     imat = cea%Nr
      call GAUSS
      cpreac = 0
-     do i = 1, Nr
+     do i = 1, cea%Nr
         G(i, m) = delh(i)
         cpreac = cpreac + R * delh(i) * X(i)
 !DIR$ IVDEP
-        do j = i, Nr
+        do j = i, cea%Nr
            G(i, j) = gmat(i, j)
            G(j, i) = G(i, j)
         end do
      end do
      call GAUSS
      reacon = 0
-     do i = 1, Nr
+     do i = 1, cea%Nr
         reacon = reacon + R*delh(i)*X(i)
      end do
      reacon = 0.6d0 * reacon
@@ -4450,9 +4462,9 @@ subroutine TRANP(cea)
 ! CALCULATE OTHER ANSWERS
   cea%Cpfro(Npt) = 0
   wtmol = 0
-  do i = 1, Nm
-     cea%Cpfro(Npt) = cea%Cpfro(Npt) + Xs(i) * Cprr(i)
-     wtmol = wtmol + Xs(i) * Wmol(i)
+  do i = 1, cea%Nm
+     cea%Cpfro(Npt) = cea%Cpfro(Npt) + cea%Xs(i) * cea%Cprr(i)
+     wtmol = wtmol + cea%Xs(i) * cea%Wmol(i)
   end do
   cea%Cpfro(Npt) = cea%Cpfro(Npt) * R / wtmol
   cea%Confro(Npt) = cea%Confro(Npt) / 1000
