@@ -1184,7 +1184,7 @@ contains
     use mod_legacy_cea
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Problem), intent(in):: cea
 
     character(4):: mamo
     logical:: kOK
@@ -1225,7 +1225,7 @@ contains
           kin = 0
           do i = 1, Npt
              if (Massf) then
-                tem = Mw(k)
+                tem = cea%Mw(k)
              else
                 tem = 1 / Totn(i)
              end if

@@ -25,6 +25,10 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     real(8):: Cpsum
+     real(8):: Cft(maxNc, 9), Coef(maxNg, 9, 3), Temp(2, maxNc)
+     real(8):: Cp(maxNgc), H0(maxNgc), Mu(maxNgc), Mw(maxNgc), S(maxNgc) !, Tg(4)
+
      integer:: Iopt, Isup, Nfz, Npp, Nsub, Nsup
      logical:: Area, Debugf, Fac, Froz, Page1, Rkt
      real(8):: Acat, Awt, Cstr, Tcest, Ma

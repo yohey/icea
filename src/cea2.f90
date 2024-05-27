@@ -56,6 +56,12 @@ program main
   outerLoop: do while (readOK)
      icase = icase + 1
 
+     !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
+     if (icase > 2) then
+        cea(icase)%Mu(:) = cea(icase-1)%Mu(:)
+     end if
+     !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
+
      Iplt = 0
      Nplt = 0
 
@@ -154,12 +160,15 @@ program main
 end program main
 
 
-subroutine CPHS
+subroutine CPHS(cea)
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
   integer:: i, ij, j, jj, k
 
   cx(:) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
@@ -182,60 +191,60 @@ subroutine CPHS
      scx(i) = cx(i-1) * Tt
   end forall
 
-  H0(1:Ng) = 0
-  S(1:Ng) = 0
+  cea%H0(1:Ng) = 0
+  cea%S(1:Ng) = 0
 
   do i = 7, 4, -1
      forall(j = 1:Ng)
-        S(j) = (S(j) + Coef(j, i, k)) * scx(i)
-        H0(j) = (H0(j) + Coef(j, i, k)) * hcx(i)
+        cea%S(j) = (cea%S(j) + cea%Coef(j, i, k)) * scx(i)
+        cea%H0(j) = (cea%H0(j) + cea%Coef(j, i, k)) * hcx(i)
      end forall
   end do
 
   do i = 1, 3
      forall(j = 1:Ng)
-        S(j) = S(j) + Coef(j, i, k) * scx(i)
-        H0(j) = H0(j) + Coef(j, i, k) * hcx(i)
+        cea%S(j) = cea%S(j) + cea%Coef(j, i, k) * scx(i)
+        cea%H0(j) = cea%H0(j) + cea%Coef(j, i, k) * hcx(i)
      end forall
   end do
 
   forall(j = 1:Ng)
-     S(j) = S(j) + Coef(j, 9, k)
-     H0(j) = H0(j) + Coef(j, 8, k) * cx(2)
+     cea%S(j) = cea%S(j) + cea%Coef(j, 9, k)
+     cea%H0(j) = cea%H0(j) + cea%Coef(j, 8, k) * cx(2)
   end forall
 
   if (.not. Tp .or. Convg) then
-     Cp(1:Ng) = 0
+     cea%Cp(1:Ng) = 0
 
      do i = 7, 4, -1
-        forall(j = 1:Ng) Cp(j) = (Cp(j) + Coef(j, i, k)) * Tt
+        forall(j = 1:Ng) cea%Cp(j) = (cea%Cp(j) + cea%Coef(j, i, k)) * Tt
      end do
 
-     forall(j = 1:Ng) Cp(j) = Cp(j) + sum(Coef(j, 1:3, k) * cx(1:3))
+     forall(j = 1:Ng) cea%Cp(j) = cea%Cp(j) + sum(cea%Coef(j, 1:3, k) * cx(1:3))
   end if
 
   if (Npr /= 0 .and. k /= 3 .and. Ng /= Ngc) then
      do ij = 1, Npr
         j = Jcond(ij)
         jj = Jcond(ij) - Ng
-        Cp(j) = 0
-        H0(j) = 0
-        S(j) = 0
+        cea%Cp(j) = 0
+        cea%H0(j) = 0
+        cea%S(j) = 0
 
         do i = 7, 4, -1
-           S(j) = (S(j) + Cft(jj, i)) * scx(i)
-           H0(j) = (H0(j) + Cft(jj, i)) * hcx(i)
-           Cp(j) = (Cp(j) + Cft(jj, i)) * Tt
+           cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * scx(i)
+           cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * hcx(i)
+           cea%Cp(j) = (cea%Cp(j) + cea%Cft(jj, i)) * Tt
         end do
 
         do i = 1, 3
-           S(j) = S(j) + Cft(jj, i) * scx(i)
-           H0(j) = H0(j) + Cft(jj, i) * hcx(i)
-           Cp(j) = Cp(j) + Cft(jj, i) * cx(i)
+           cea%S(j) = cea%S(j) + cea%Cft(jj, i) * scx(i)
+           cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * hcx(i)
+           cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cx(i)
         end do
 
-        S(j) = S(j) + Cft(jj, 9)
-        H0(j) = H0(j) + Cft(jj, 8) * cx(2)
+        cea%S(j) = cea%S(j) + cea%Cft(jj, 9)
+        cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cx(2)
      end do
   end if
 
@@ -243,34 +252,37 @@ subroutine CPHS
 end subroutine CPHS
 
 
-subroutine ALLCON
+subroutine ALLCON(cea)
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
   integer:: i, j, jj
 
   do jj = 1, Nc
      j = jj + Ng
-     Cp(j) = 0
-     H0(j) = 0
-     S(j) = 0
+     cea%Cp(j) = 0
+     cea%H0(j) = 0
+     cea%S(j) = 0
 
      do i = 7, 4, -1
-        S(j) = (S(j) + Cft(jj, i)) * scx(i)
-        H0(j) = (H0(j) + Cft(jj, i)) * hcx(i)
-        Cp(j) = (Cp(j) + Cft(jj, i)) * Tt
+        cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * scx(i)
+        cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * hcx(i)
+        cea%Cp(j) = (cea%Cp(j) + cea%Cft(jj, i)) * Tt
      end do
 
      do i = 1, 3
-        S(j) = S(j) + Cft(jj, i) * scx(i)
-        H0(j) = H0(j) + Cft(jj, i) * hcx(i)
-        Cp(j) = Cp(j) + Cft(jj, i) * cx(i)
+        cea%S(j) = cea%S(j) + cea%Cft(jj, i) * scx(i)
+        cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * hcx(i)
+        cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cx(i)
      end do
 
-     S(j) = S(j) + Cft(jj, 9)
-     H0(j) = H0(j) + Cft(jj, 8) * cx(2)
+     cea%S(j) = cea%S(j) + cea%Cft(jj, 9)
+     cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cx(2)
   end do
 
   return
@@ -331,7 +343,7 @@ subroutine DETON(cea)
         Tt = T1
         Pp = p1
 
-        call HCALC
+        call HCALC(cea)
 
         if (Tt == 0) return
         if (Detdbg) call OUT1
@@ -711,7 +723,7 @@ subroutine EQLBRM(cea)
      kg = kg + 1
      kc = jc + kg
 
-     if (Tt <= Temp(2, kc)) then
+     if (Tt <= cea%Temp(2, kc)) then
         if (kg /= 0) then
            Jcond(k) = j + kg
            En(j+kg, Npt) = En(j, Npt)
@@ -727,7 +739,7 @@ subroutine EQLBRM(cea)
   end do
 
   if (.not. Tp) then
-     Tt = Temp(2, kc) - 10
+     Tt = cea%Temp(2, kc) - 10
      k = 1
      go to 100
   end if
@@ -752,7 +764,7 @@ subroutine EQLBRM(cea)
 
   if (Vol) Pp = R0 * Enn * Tt / Vv
 
-  call CPHS
+  call CPHS(cea)
 
   Tm = log(Pp / Enn)
   le = Nlm
@@ -785,17 +797,17 @@ subroutine EQLBRM(cea)
 
 ! BEGIN ITERATION
 500 if (cpcalc) then
-     Cpsum = sum(En(1:Ng, Npt) * Cp(1:Ng))
+     cea%Cpsum = sum(En(1:Ng, Npt) * cea%Cp(1:Ng))
 
      if (Npr /= 0) then
-        Cpsum = Cpsum + sum(En(Jcond(1:Npr), Npt) * Cp(Jcond(1:Npr)))
+        cea%Cpsum = cea%Cpsum + sum(En(Jcond(1:Npr), Npt) * cea%Cp(Jcond(1:Npr)))
         cpcalc = .false.
      end if
   end if
 
   numb = numb + 1
 
-  call MATRIX
+  call MATRIX(cea)
 
   iq2 = Iq1 + 1
 
@@ -846,7 +858,7 @@ subroutine EQLBRM(cea)
               end do
            end if
 
-           Deln(j) = -Mu(j) + H0(j) * dlnt + sum0
+           Deln(j) = -cea%Mu(j) + cea%H0(j) * dlnt + sum0
 
 
 !!$           Deln(j) = Deln(j) + sum(A(1:Nlm, j) * X(1:Nlm)) ???
@@ -916,7 +928,7 @@ subroutine EQLBRM(cea)
 
            do j = 1, Ngc
               write(IOOUT, '(1X, A16, 4E15.6, /35x, 3E15.6)') &
-                   Prod(j), En(j, Npt), Enln(j), Deln(j), H0(j), S(j), H0(j) - S(j), Mu(j)
+                   Prod(j), En(j, Npt), Enln(j), Deln(j), cea%H0(j), cea%S(j), cea%H0(j) - cea%S(j), cea%Mu(j)
            end do
         end if
 
@@ -953,7 +965,7 @@ subroutine EQLBRM(cea)
            Tln = Tln + ambda * dlnt
            Tt = exp(Tln)
            cpcalc = .true.
-           call CPHS
+           call CPHS(cea)
         end if
 
         if (Vol) then
@@ -1125,7 +1137,7 @@ subroutine EQLBRM(cea)
            Gammas(Npt) = -1 / (Dlvpt(Npt) + (Dlvtp(Npt)**2) * Enn / Cpr(Npt))
         else
            En(Jsol, Npt) = ensol
-           Hsum(Npt) = Hsum(Npt) + En(Jliq, Npt) * (H0(Jliq) - H0(Jsol))
+           Hsum(Npt) = Hsum(Npt) + En(Jliq, Npt) * (cea%H0(Jliq) - cea%H0(Jsol))
            Gammas(Npt) = -1. / Dlvpt(Npt)
            Npr = Npr + 1
            Jcond(Npr) = Jliq
@@ -1139,7 +1151,7 @@ subroutine EQLBRM(cea)
         write(IOOUT, '(/" DERIVATIVE MATRIX SINGULAR (EQLBRM)")')
         Dlvpt(Npt) = -1
         Dlvtp(Npt) = 1
-        Cpr(Npt) = Cpsum
+        Cpr(Npt) = cea%Cpsum
         Gammas(Npt) = -1 / (Dlvpt(Npt) + Dlvtp(Npt)**2 * Enn / Cpr(Npt))
         go to 1400
 
@@ -1231,10 +1243,10 @@ subroutine EQLBRM(cea)
   end if
 
 ! CALCULATE ENTROPY, CHECK ON DELTA S FOR SP PROBLEMS
-600 Ssum(Npt) = sum(En(1:Ng, Npt) * (S(1:Ng) - Enln(1:Ng) - Tm))
+600 Ssum(Npt) = sum(En(1:Ng, Npt) * (cea%S(1:Ng) - Enln(1:Ng) - Tm))
 
   if (Npr > 0) then
-     Ssum(Npt) = Ssum(Npt) + sum(En(Jcond(1:Npr), Npt) * S(Jcond(1:Npr)))
+     Ssum(Npt) = Ssum(Npt) + sum(En(Jcond(1:Npr), Npt) * cea%S(Jcond(1:Npr)))
   end if
 
   if (.not. Sp) then
@@ -1277,8 +1289,8 @@ subroutine EQLBRM(cea)
 
         do k = 1, Npr
            j = Jcond(k)
-           if (En(j, Npt) * Cp(j) <= bigneg) then
-              bigneg = En(j, Npt) * Cp(j)
+           if (En(j, Npt) * cea%Cp(j) <= bigneg) then
+              bigneg = En(j, Npt) * cea%Cp(j)
               jneg = j
               kneg = k
            end if
@@ -1298,14 +1310,14 @@ subroutine EQLBRM(cea)
      if (Ngc /= Ng .or. Tp) then
         Ng = Ngc
 
-        call CPHS
+        call CPHS(cea)
 
         Ng = Ngp1 - 1
         cpcalc = .true.
 
         if (Ngc == Ng) go to 750
 
-        call ALLCON
+        call ALLCON(cea)
 
         if (Npr /= 0 .and. .not. Tp) then
            gap = 50
@@ -1320,12 +1332,12 @@ subroutine EQLBRM(cea)
                     kg = kg + 1
                     kc = inc + kg
 
-                    if (Tt <= Temp(2, kc)) then
+                    if (Tt <= cea%Temp(2, kc)) then
                        if (kg /= 0) then
                           jkg = j + kg
                           if (abs(kg) > 1 .or. Prod(j) == Prod(jkg)) go to 740
                           if (jkg == jsw) go to 720
-                          if (Tt < Temp(1, inc) - gap .or. Tt > Temp(2, inc) + gap) go to 740
+                          if (Tt < cea%Temp(1, inc) - gap .or. Tt > cea%Temp(2, inc) + gap) go to 740
                           go to 720
                        end if
                        cycle outerLoop1
@@ -1333,7 +1345,7 @@ subroutine EQLBRM(cea)
                        cycle outerLoop1
                     end if
                  end do
-                 if (Tt > Temp(2, kc) * 1.2d0) go to 1000
+                 if (Tt > cea%Temp(2, kc) * 1.2d0) go to 1000
               end if
            end do outerLoop1
         end if
@@ -1344,12 +1356,12 @@ subroutine EQLBRM(cea)
         do inc = 1, Nc
            j = inc + Ng
 
-           if (Debug(Npt)) write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') Prod(j), Temp(1, inc), Temp(2, inc), En(j, Npt)
+           if (Debug(Npt)) write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), En(j, Npt)
 
            if (En(j, Npt) <= 0) then
-              if (Tt > Temp(1, inc) .or. Temp(1, inc) == Tg(1)) then
-                 if (Tt <= Temp(2, inc)) then
-                    delg = (H0(j) - S(j) - sum(A(1:Nlm, j) * X(1:Nlm))) / Mw(j)
+              if (Tt > cea%Temp(1, inc) .or. cea%Temp(1, inc) == Tg(1)) then
+                 if (Tt <= cea%Temp(2, inc)) then
+                    delg = (cea%H0(j) - cea%S(j) - sum(A(1:Nlm, j) * X(1:Nlm))) / cea%Mw(j)
 
                     if (delg < sizeg .and. delg < 0) then
                        if (j /= jcons) then
@@ -1378,7 +1390,7 @@ subroutine EQLBRM(cea)
         end if
 
 720     kk = max(0, kg)
-        tmelt = Temp(kk+1, inc)
+        tmelt = cea%Temp(kk+1, inc)
         Tt = tmelt
         Tln = log(Tt)
         Jsol = min(j, jkg)
@@ -1525,7 +1537,7 @@ subroutine EQLBRM(cea)
         tem = A(lc, jb)
 
         if (tem /= 0) then
-           pisave(lc) = H0(jb) - S(jb)
+           pisave(lc) = cea%H0(jb) - cea%S(jb)
 
            if (jb <= Ng) pisave(lc) = pisave(lc) + Enln(jb) + Tm
            cmp(lc) = trim(Prod(jb))
@@ -1677,34 +1689,34 @@ subroutine FROZEN(cea)
   forall(j = 1:Ng, En(j, cea%Nfz) /= 0) Deln(j) = -(log(En(j, cea%Nfz)) + dlpm)
 
   do iter = 1, 8
-     call CPHS
+     call CPHS(cea)
 
-     Cpsum = sum(En(1:Ng, cea%Nfz) * Cp(1:Ng))
-     Ssum(nnn) = sum(En(1:Ng, cea%Nfz) * (S(1:Ng) + Deln(1:Ng)))
+     cea%Cpsum = sum(En(1:Ng, cea%Nfz) * cea%Cp(1:Ng))
+     Ssum(nnn) = sum(En(1:Ng, cea%Nfz) * (cea%S(1:Ng) + Deln(1:Ng)))
 
      if (Npr /= 0) then
-        Cpsum = Cpsum + sum(En(Jcond(1:Npr), cea%Nfz) * Cp(Jcond(1:Npr)))
-        Ssum(nnn) = Ssum(nnn) + sum(En(Jcond(1:Npr), cea%Nfz) * S(Jcond(1:Npr)))
+        cea%Cpsum = cea%Cpsum + sum(En(Jcond(1:Npr), cea%Nfz) * cea%Cp(Jcond(1:Npr)))
+        Ssum(nnn) = Ssum(nnn) + sum(En(Jcond(1:Npr), cea%Nfz) * cea%S(Jcond(1:Npr)))
      end if
 
      if (Convg) then
         Npt = nnn
 
-        Hsum(Npt) = sum(En(1:Ngc, cea%Nfz) * H0(1:Ngc)) * Tt
+        Hsum(Npt) = sum(En(1:Ngc, cea%Nfz) * cea%H0(1:Ngc)) * Tt
 
         Ttt(Npt) = Tt
-        Gammas(Npt) = Cpsum / (Cpsum - 1 / Wm(cea%Nfz))
+        Gammas(Npt) = cea%Cpsum / (cea%Cpsum - 1 / Wm(cea%Nfz))
         Vlm(Npt) = R0 * Tt / (Wm(cea%Nfz) * Pp)
         Wm(Npt) = Wm(cea%Nfz)
         Dlvpt(Npt) = -1
         Dlvtp(Npt) = 1
         Totn(Npt) = Totn(cea%Nfz)
         Ppp(Npt) = Pp
-        Cpr(Npt) = Cpsum
+        Cpr(Npt) = cea%Cpsum
 
         if (Tt >= Tg(1) * 0.8d0) then
            if (all(En(Ngp1:Ngc, cea%Nfz) == 0)) return
-           if (all(Temp(1, Ngp1-Ng:Ngc-Ng) - 50 <= Tt .and. Tt <= Temp(2, Ngp1-Ng:Ngc-Ng) + 50)) return
+           if (all(cea%Temp(1, Ngp1-Ng:Ngc-Ng) - 50 <= Tt .and. Tt <= cea%Temp(2, Ngp1-Ng:Ngc-Ng) + 50)) return
         end if
 
         Tt = 0
@@ -1712,7 +1724,7 @@ subroutine FROZEN(cea)
         return
 
      else
-        dlnt = (Ssum(cea%Nfz) - Ssum(nnn)) / Cpsum
+        dlnt = (Ssum(cea%Nfz) - Ssum(nnn)) / cea%Cpsum
         Tln = Tln + dlnt
         if (abs(dlnt) < 0.5d-4) Convg = .true.
         Tt = exp(Tln)
@@ -1816,13 +1828,15 @@ end subroutine GAUSS
 
 
 
-subroutine HCALC
+subroutine HCALC(cea)
 !***********************************************************************
 ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
 ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
 !***********************************************************************
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
 
 ! LOCAL VARIABLES
   character(6):: date(maxNgc)
@@ -1881,9 +1895,9 @@ subroutine HCALC
               icf = 3
               if (itot > ntgas) icf = 1
               read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j = 1, 5), ifaz, &
-                   T1, T2, Mw(Nspr), ((thermo(l, m), l = 1, 9), m = 1, icf)
+                   T1, T2, cea%Mw(Nspr), ((thermo(l, m), l = 1, 9), m = 1, icf)
            else
-              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j = 1, 5), ifaz, T1, T2, Mw(Nspr), er
+              read(IOTHM) sub, nint, date(Nspr), (el(j), bb(j), j = 1, 5), ifaz, T1, T2, cea%Mw(Nspr), er
               if (nint /= 0) then
                  read(IOTHM) ((thermo(i, j), i = 1, 9), j = 1, nint)
                  icf = nint
@@ -1902,7 +1916,7 @@ subroutine HCALC
                  Jray(n) = Nspr
                  j = Nspr
 
-                 forall(l = 1:icf, m = 1:9) Coef(j, m, l) = thermo(m, l)
+                 forall(l = 1:icf, m = 1:9) cea%Coef(j, m, l) = thermo(m, l)
                  go to 50
 
               else
@@ -1944,24 +1958,26 @@ subroutine HCALC
         if (Tt > Tg(3) .and. ifaz < 0) l = 3
      end if
 
-     S(j) = Coef(j, 7, l) / 4 * Tt**4 + Coef(j, 6, l) / 3 * Tt**3 + Coef(j, 5, l) / 2 * Tt**2 + Coef(j, 4, l) * Tt &
-          - Coef(j, 1, l) * 0.5d0 / Tt**2 - Coef(j, 2, l) / Tt + Coef(j, 3, l) * Tln + Coef(j, 9, l)
+     cea%S(j) = cea%Coef(j, 7, l) / 4 * Tt**4 + cea%Coef(j, 6, l) / 3 * Tt**3 + cea%Coef(j, 5, l) / 2 * Tt**2 &
+          + cea%Coef(j, 4, l) * Tt - cea%Coef(j, 1, l) * 0.5d0 / Tt**2 - cea%Coef(j, 2, l) / Tt &
+          + cea%Coef(j, 3, l) * Tln + cea%Coef(j, 9, l)
 
-     H0(j) = Coef(j, 7, l) / 5 * Tt**4 + Coef(j, 6, l) / 4 * Tt**3 + Coef(j, 5, l) / 3 * Tt**2 + Coef(j, 4, l) / 2 * Tt &
-          - Coef(j, 1, l) / Tt**2 + (Coef(j, 2, l) * Tln + Coef(j, 8, l)) / Tt + Coef(j, 3, l)
+     cea%H0(j) = cea%Coef(j, 7, l) / 5 * Tt**4 + cea%Coef(j, 6, l) / 4 * Tt**3 + cea%Coef(j, 5, l) / 3 * Tt**2 &
+          + cea%Coef(j, 4, l) / 2 * Tt - cea%Coef(j, 1, l) / Tt**2 + (cea%Coef(j, 2, l) * Tln &
+          + cea%Coef(j, 8, l)) / Tt + cea%Coef(j, 3, l)
 
-     Cp(j) = Coef(j, 7, l) * Tt**4 + Coef(j, 6, l) * Tt**3 + Coef(j, 5, l) * Tt**2 + Coef(j, 4, l) * Tt &
-          + Coef(j, 1, l) / Tt**2 + Coef(j, 2, l) / Tt + Coef(j, 3, l)
+     cea%Cp(j) = cea%Coef(j, 7, l) * Tt**4 + cea%Coef(j, 6, l) * Tt**3 + cea%Coef(j, 5, l) * Tt**2 + cea%Coef(j, 4, l) * Tt &
+          + cea%Coef(j, 1, l) / Tt**2 + cea%Coef(j, 2, l) / Tt + cea%Coef(j, 3, l)
 
-     if (abs(H0(j)) < 0.01) H0(j) = 0
+     if (abs(cea%H0(j)) < 0.01) cea%H0(j) = 0
 
 ! ADD CONTRIBUTION TO CP, H, AND S OF TOTAL REACTANT.
-     Cpmix = Cpmix + Cp(j) * enj
+     Cpmix = Cpmix + cea%Cp(j) * enj
 
 ! FOR CONDENSED SPECIES:  SJ = S(J)
-     sj = S(j) - log(enj) - Tm
+     sj = cea%S(j) - log(enj) - Tm
      Ssum(Npt) = Ssum(Npt) + enj * sj
-     er = H0(j) * enj * Tt
+     er = cea%H0(j) * enj * Tt
      Hsub0 = Hsub0 + er
      Hpp(k) = Hpp(k) + er
   end do
@@ -1972,12 +1988,14 @@ subroutine HCALC
 end subroutine HCALC
 
 
-subroutine MATRIX
+subroutine MATRIX(cea)
 !***********************************************************************
 ! SET UP ITERATION OR DERIVATIVE MATRIX.
 !***********************************************************************
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
 
 ! LOCAL VARIABLES
   integer:: i, iq, iq2, iq3, isym, j, k, kk, kmat
@@ -1996,10 +2014,10 @@ subroutine MATRIX
 
 ! BEGIN SET-UP OF ITERATION OR DERIVATIVE MATRIX
   do j = 1, Ng
-     Mu(j) = H0(j) - S(j) + Enln(j) + Tm
+     cea%Mu(j) = cea%H0(j) - cea%S(j) + Enln(j) + Tm
      if (En(j, Npt) /= 0) then
-        h = H0(j) * En(j, Npt)
-        f = Mu(j) * En(j, Npt)
+        h = cea%H0(j) * En(j, Npt)
+        f = cea%Mu(j) * En(j, Npt)
         ss = h - f
         term1 = h
         if (kmat == iq2) term1 = f
@@ -2019,15 +2037,15 @@ subroutine MATRIX
 
         if (kmat /= iq2) then
            if (Convg .or. Hp) then
-              G(iq2, iq2) = G(iq2, iq2) + H0(j) * h
+              G(iq2, iq2) = G(iq2, iq2) + cea%H0(j) * h
               if (.not. Convg) then
-                 G(iq2, iq3) = G(iq2, iq3) + H0(j) * f
+                 G(iq2, iq3) = G(iq2, iq3) + cea%H0(j) * f
                  G(Iq1, iq3) = G(Iq1, iq3) + f
               end if
            else
               G(iq2, Iq1) = G(iq2, Iq1) + ss
-              G(iq2, iq2) = G(iq2, iq2) + H0(j) * ss
-              G(iq2, iq3) = G(iq2, iq3) + Mu(j) * ss
+              G(iq2, iq2) = G(iq2, iq2) + cea%H0(j) * ss
+              G(iq2, iq3) = G(iq2, iq3) + cea%Mu(j) * ss
               G(Iq1, iq3) = G(Iq1, iq3) + f
            end if
         end if
@@ -2040,20 +2058,20 @@ subroutine MATRIX
      do k = 1, Npr
         j = Jcond(k)
         kk = Nlm + k
-        Mu(j) = H0(j) - S(j)
+        cea%Mu(j) = cea%H0(j) - cea%S(j)
 
         forall(i = 1:Nlm)
            G(i, kk) = A(i, j)
            G(i, kmat) = G(i, kmat) - A(i, j) * En(j, Npt)
         end forall
 
-        G(kk, iq2) = H0(j)
-        G(kk, kmat) = Mu(j)
-        Hsum(Npt) = Hsum(Npt) + H0(j) * En(j, Npt)
+        G(kk, iq2) = cea%H0(j)
+        G(kk, kmat) = cea%Mu(j)
+        Hsum(Npt) = Hsum(Npt) + cea%H0(j) * En(j, Npt)
 
         if (Sp) then
-           sss = sss + S(j) * En(j, Npt)
-           G(iq2, kk) = S(j)
+           sss = sss + cea%S(j) * En(j, Npt)
+           G(iq2, kk) = cea%S(j)
         end if
      end do
   end if
@@ -2081,7 +2099,7 @@ subroutine MATRIX
         if (Sp) energyl = S0 + Enn - Sumn - sss
         if (Hp) energyl = Hsub0/Tt - Hsum(Npt)
         G(iq2, iq3) = G(iq2, iq3) + energyl
-        G(iq2, iq2) = G(iq2, iq2) + Cpsum
+        G(iq2, iq2) = G(iq2, iq2) + cea%Cpsum
      end if
 
   else
@@ -2090,7 +2108,7 @@ subroutine MATRIX
         G(Iq1, iq2) = Enn
         forall(i = 1:iq) G(i, iq2) = G(i, Iq1)
      end if
-     G(iq2, iq2) = G(iq2, iq2) + Cpsum
+     G(iq2, iq2) = G(iq2, iq2) + cea%Cpsum
   end if
 
   if (Vol .and. .not. Convg) then
@@ -2190,13 +2208,16 @@ end subroutine NEWOF
 
 
 
-subroutine REACT
+subroutine REACT(cea)
 !***********************************************************************
 ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
 !***********************************************************************
   use mod_cea
   use mod_legacy_cea
   implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+
 ! LOCAL VARIABLES
   character(6):: date
   character(2):: el(5)
@@ -2678,7 +2699,7 @@ subroutine RKTOUT(cea)
      line = 0
 
      do k = 1, Ngc
-        if (Massf) ww = Mw(k)
+        if (Massf) ww = cea%Mw(k)
         X(line+1) = En(k, cea%Nfz) * ww
 
         if (X(line+1) >= tra) then
@@ -2809,7 +2830,7 @@ subroutine ROCKET(cea)
 250  nar = Npt
      if (Eql) then
         call EQLBRM(cea)
-        if (Npt == cea%Nfz) cprf = Cpsum
+        if (Npt == cea%Nfz) cprf = cea%Cpsum
      else
         call FROZEN(cea)
      end if
@@ -3290,8 +3311,8 @@ subroutine SEARCH(cea)
      Jx(i) = 0
   end do
   do j = 1, maxNgc
-     S(j) = 0
-     H0(j) = 0
+     cea%S(j) = 0
+     cea%H0(j) = 0
      Deln(j) = 0
      do i = 1, Nlm
         A(i, j) = 0
@@ -3314,9 +3335,9 @@ subroutine SEARCH(cea)
   do 200 itot = 1, ntot
      if (itot > ntgas) then
         read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j = 1, 5), Ifz(Nc), &
-             Temp(1, Nc), Temp(2, Nc), Mw(Ngc), (Cft(Nc, k), k = 1, 9)
+             cea%Temp(1, Nc), cea%Temp(2, Nc), cea%Mw(Ngc), (cea%Cft(Nc, k), k = 1, 9)
      else
-        read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j = 1, 5), ifaz, T1, T2, Mw(Ngc), thermo
+        read(IOTHM) sub, nint, date(Ngc), (el(j), b(j), j = 1, 5), ifaz, T1, T2, cea%Mw(Ngc), thermo
      end if
      if (Nonly /= 0) then
         i = 1
@@ -3362,7 +3383,7 @@ subroutine SEARCH(cea)
         if (Ng > maxNg) go to 400
         do i = 1, 3
            do j = 1, 9
-              Coef(Ng, j, i) = thermo(j, i)
+              cea%Coef(Ng, j, i) = thermo(j, i)
            end do
         end do
 ! IF SPECIES IS AN ATOMIC GAS, STORE INDEX IN JX
@@ -3404,9 +3425,9 @@ subroutine SEARCH(cea)
            Prod(Nspx) = Elmt(i)
            do k = 1, 100
               if (Elmt(i) == atomic_symbol(k)) then
-                 Mw(Nspx) = atomic_mass(k)
+                 cea%Mw(Nspx) = atomic_mass(k)
                  Atwt(i) = atomic_mass(k)
-                 Cp(Nspx) = 2.5d0
+                 cea%Cp(Nspx) = 2.5d0
                  go to 210
               end if
            end do
@@ -3663,7 +3684,7 @@ subroutine SHCK(cea)
      Pp = Ppp(Npt)
      Tt = Ttt(Npt)
      if (Tt >= Tg(1) * 0.8d0) then
-        call HCALC
+        call HCALC(cea)
         Hsum(Npt) = Hsub0
      else
         write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') Tt, Npt
@@ -3742,16 +3763,16 @@ subroutine SHCK(cea)
 ! FROZEN
      Tln = log(Tt)
      if (.not. cea%Incdeq) then
-        call HCALC
+        call HCALC(cea)
         if (Tt == 0) go to 600
         Hsum(Npt) = Hsub0
         Cpr(Npt) = Cpmix
      else
-        call CPHS
-        Cpr(Npt) = Cpsum
+        call CPHS(cea)
+        Cpr(Npt) = cea%Cpsum
         Hsum(Npt) = 0
         do j = 1, Ng
-           Hsum(Npt) = Hsum(Npt) + H0(j) * En(j, Npt)
+           Hsum(Npt) = Hsum(Npt) + cea%H0(j) * En(j, Npt)
         end do
         Hsum(Npt) = Hsum(Npt) * Tt
      end if
@@ -3831,7 +3852,7 @@ subroutine SHCK(cea)
            Ssum(Npt) = 0
            do j = 1, Ngc
               pmn = Pp * wmx * En(j, Npt)
-              if (En(j, Npt) > 0) Ssum(Npt) = Ssum(Npt) + En(j, Npt) * (S(j) - log(pmn))
+              if (En(j, Npt) > 0) Ssum(Npt) = Ssum(Npt) + En(j, Npt) * (cea%S(j) - log(pmn))
            end do
         end if
      end if
@@ -3887,7 +3908,7 @@ subroutine SHCK(cea)
         end if
         do n = 1, Nreac
            j = Jray(n)
-           if (Massf) ww = Mw(j)
+           if (Massf) ww = cea%Mw(j)
            write(IOOUT, '(" ", A16, F8.5, 12F9.5)') Prod(j), (En(j, i) * ww, i = 1, Npt)
         end do
      else
@@ -4072,7 +4093,7 @@ subroutine TRANIN(cea)
            do i = 1, cea%Nm
               j = Jray(i)
               cea%Ind(i) = j
-              cea%Wmol(i) = Mw(j)
+              cea%Wmol(i) = cea%Mw(j)
               cea%Xs(i) = En(j, 1)*Wm(1)
            end do
         end if
@@ -4093,7 +4114,7 @@ subroutine TRANIN(cea)
      cea%Nm = cea%Nm + 1
      cea%Ind(cea%Nm) = j
      total = total + En(j, Npt)
-     if (Mw(j) < 1) enel = En(j, Npt)
+     if (cea%Mw(j) < 1) enel = En(j, Npt)
      En(j, Npt) = -En(j, Npt)
   end do
   testen = 1 / (Ng * Wm(Npt))
@@ -4127,7 +4148,7 @@ subroutine TRANIN(cea)
   end do
   do i = 1, cea%Nm
      j = cea%Ind(i)
-     cea%Wmol(i) = Mw(j)
+     cea%Wmol(i) = cea%Mw(j)
      cea%Xs(i) = En(j, Npt) / total
   end do
   if (Npt == cea%Nfz) then
@@ -4269,7 +4290,7 @@ subroutine TRANIN(cea)
   end if
   do i = 1, cea%Nm
      k = cea%Ind(i)
-     cea%Cprr(i) = Cp(k)
+     cea%Cprr(i) = cea%Cp(k)
      if (.not. (Ions .and. (abs(A(Nlm, k)) == 1) .and. (cea%Eta(i, i) == 0))) then
         if (cea%Eta(i, i) == 0) then
            omega = log(50 * cea%Wmol(i)**4.6 / Tt**1.4)
@@ -4306,7 +4327,7 @@ subroutine TRANIN(cea)
                  cea%Eta(i, j) = Viscns * wmred * pi / omega
                  cea%Eta(j, i) = cea%Eta(i, j)
                  if (i == j) then
-                    cea%Cprr(i) = Cp(k1)
+                    cea%Cprr(i) = cea%Cp(k1)
                     cea%Con(i) = cea%Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (cea%Cprr(i) - 2.5d0)) / cea%Wmol(i)
                  end if
                  cycle
@@ -4384,12 +4405,12 @@ subroutine TRANP(cea)
         delh(i) = 0
         do k = 1, Lsave
            j = cea%Jcm(k)
-           delh(i) = cea%Stc(i, k) * H0(j) + delh(i)
+           delh(i) = cea%Stc(i, k) * cea%H0(j) + delh(i)
         end do
         nlmm = Lsave + 1
         do k = nlmm, cea%Nm
            j = cea%Ind(k)
-           delh(i) = cea%Stc(i, k) * H0(j) + delh(i)
+           delh(i) = cea%Stc(i, k) * cea%H0(j) + delh(i)
         end do
         G(i, m) = delh(i)
      end do
