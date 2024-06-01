@@ -1255,7 +1255,7 @@ contains
        end do
     end if
 
-    write(IOOUT, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') Tg(4)
+    write(IOOUT, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') cea%Tg(4)
     if (.not. Short) then
        write(IOOUT, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", a4, &
             & " FRACTIONS", /"    WERE LESS THAN", 1pe13.6, &

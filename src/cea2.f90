@@ -177,8 +177,8 @@ subroutine CPHS(cea)
   scx(:) = 0d0
 
   k = 1
-  if (Tt > Tg(2)) k = 2
-  if (Tt > Tg(3)) k = 3
+  if (Tt > cea%Tg(2)) k = 2
+  if (Tt > cea%Tg(3)) k = 3
   cx(2) = 1 / Tt
   cx(1) = cx(2)**2
   scx(3) = Tln
@@ -1275,7 +1275,7 @@ subroutine EQLBRM(cea)
            write(IOOUT, '(i4, i5, 5f12.3, /(12x, 5f12.3))') Npt, numb, Tt, (xx(il), il = 1, le)
         end if
 
-        if (.not. Tp .and. Npr == 0 .and. Tt <= Tg(1) * 0.2d0) then
+        if (.not. Tp .and. Npr == 0 .and. Tt <= cea%Tg(1) * 0.2d0) then
            write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", "VE BEEN INSERTED,", &
                 & /" RESTART WITH insert DATASET (EQLBRM)")')
            go to 1500
@@ -1360,7 +1360,7 @@ subroutine EQLBRM(cea)
            if (Debug(Npt)) write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), En(j, Npt)
 
            if (En(j, Npt) <= 0) then
-              if (Tt > cea%Temp(1, inc) .or. cea%Temp(1, inc) == Tg(1)) then
+              if (Tt > cea%Temp(1, inc) .or. cea%Temp(1, inc) == cea%Tg(1)) then
                  if (Tt <= cea%Temp(2, inc)) then
                     delg = (cea%H0(j) - cea%S(j) - sum(A(1:Nlm, j) * X(1:Nlm))) / cea%Mw(j)
 
@@ -1642,13 +1642,13 @@ subroutine EQLBRM(cea)
        & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
        Npt, Pp, Tt, Hsum(Npt), Ssum(Npt), Wm(Npt), Cpr(Npt), Dlvpt(Npt), Dlvtp(Npt), Gammas(Npt), Vlm(Npt)
 
-  if (Tt >= Tg(1) .and. Tt <= Tg(4)) go to 1600
+  if (Tt >= cea%Tg(1) .and. Tt <= cea%Tg(4)) go to 1600
 
   if (Shock) go to 1600
 
   write(IOOUT, '(" THE TEMPERATURE=", e12.4, " IS OUT OF RANGE FOR POINT", i5, "(EQLBRM)")') Tt, Npt
 
-  if (Tt >= Tg(1) * 0.8d0 .and. Tt <= Tg(4) * 1.1d0) go to 1600
+  if (Tt >= cea%Tg(1) * 0.8d0 .and. Tt <= cea%Tg(4) * 1.1d0) go to 1600
 
   Npt = Npt + 1
 
@@ -1715,7 +1715,7 @@ subroutine FROZEN(cea)
         Ppp(Npt) = Pp
         Cpr(Npt) = cea%Cpsum
 
-        if (Tt >= Tg(1) * 0.8d0) then
+        if (Tt >= cea%Tg(1) * 0.8d0) then
            if (all(En(Ngp1:Ngc, cea%Nfz) == 0)) return
            if (all(cea%Temp(1, Ngp1-Ng:Ngc-Ng) - 50 <= Tt .and. Tt <= cea%Temp(2, Ngp1-Ng:Ngc-Ng) + 50)) return
         end if
@@ -1888,7 +1888,7 @@ subroutine HCALC(cea)
 ! SEARCH THERMO.LIB FOR SPECIES.
         rewind IOTHM
 
-        read(IOTHM) Tg, ntgas, ntot, nall
+        read(IOTHM) cea%Tg, ntgas, ntot, nall
 
         Nspr = Nspr + 1
         do itot = 1, nall
@@ -1955,8 +1955,8 @@ subroutine HCALC(cea)
      l = 1
 
      if (ifaz <= 0) then
-        if (Tt > Tg(2)) l = 2
-        if (Tt > Tg(3) .and. ifaz < 0) l = 3
+        if (Tt > cea%Tg(2)) l = 2
+        if (Tt > cea%Tg(3) .and. ifaz < 0) l = 3
      end if
 
      cea%S(j) = cea%Coef(j, 7, l) / 4 * Tt**4 + cea%Coef(j, 6, l) / 3 * Tt**3 + cea%Coef(j, 5, l) / 2 * Tt**2 &
@@ -2251,7 +2251,7 @@ subroutine REACT(cea)
      if (Energy(n) == 'lib' .or. cea%Rnum(n, 1) == 0) then
         Tt = cea%Rtemp(n)
         rewind IOTHM
-        read(IOTHM) Tg, ntgas, ntot, nall
+        read(IOTHM) cea%Tg, ntgas, ntot, nall
 
         do itot = 1, nall
            if (itot <= ntot) then
@@ -2293,7 +2293,7 @@ subroutine REACT(cea)
                  end if
               else
                  if (ifaz <= 0) then
-                    T1save = min(T1save, 0.8d0 * Tg(1))
+                    T1save = min(T1save, 0.8d0 * cea%Tg(1))
                     T2save = max(T2save, 1.2d0 * T2)
                  else
                     T1save = min(T1save, T1 - 0.001d0)
@@ -2320,8 +2320,8 @@ subroutine REACT(cea)
                  Tln = log(Tt)
                  l = 1
                  if (ifaz <= 0) then
-                    if (Tt > Tg(2)) l = 2
-                    if (Tt > Tg(3)) l = 3
+                    if (Tt > cea%Tg(2)) l = 2
+                    if (Tt > cea%Tg(3)) l = 3
                  end if
 
                  cea%Enth(n) = (((((rcf(7, l)/5) * Tt + rcf(6, l) / 4) * Tt + rcf(5, l) / 3) * Tt &
@@ -3329,7 +3329,7 @@ subroutine SEARCH(cea)
 !   NGC =    NG + NC
 !   THDATE = DATE READ FROM THERMO.INP FILE
   rewind IOTHM
-  read(IOTHM) Tg, ntgas, ntot, nall, Thdate
+  read(IOTHM) cea%Tg, ntgas, ntot, nall, Thdate
   Ngc = 1
   Nc = 1
 ! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
@@ -3684,7 +3684,7 @@ subroutine SHCK(cea)
      end if
      Pp = Ppp(Npt)
      Tt = Ttt(Npt)
-     if (Tt >= Tg(1) * 0.8d0) then
+     if (Tt >= cea%Tg(1) * 0.8d0) then
         call HCALC(cea)
         Hsum(Npt) = Hsub0
      else
@@ -3752,7 +3752,7 @@ subroutine SHCK(cea)
      end if
   end if
   p21l = log(p21)
-  ttmax = 1.05 * Tg(4) / T1
+  ttmax = 1.05 * cea%Tg(4) / T1
   T21 = min(T21, ttmax)
   t21l = log(T21)
   itr = 1
@@ -3842,7 +3842,7 @@ subroutine SHCK(cea)
   t2t1(Npt) = T21
   utwo(Npt) = uu * rho12
   u1u2(Npt) = uu - utwo(Npt)
-  if (Tt >= Tg(1) * 0.8d0 .and. Tt <= Tg(4) * 1.1d0) then
+  if (Tt >= cea%Tg(1) * 0.8d0 .and. Tt <= cea%Tg(4) * 1.1d0) then
      if (.not. Eql) then
 ! FROZEN
         Ppp(Npt) = Pp
