@@ -62,7 +62,7 @@ contains
           ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
           if (code == 'only') then
              Nonly = min(maxNgc, ncin-1)
-             forall(i = 1:Nonly) Prod(i) = cin(i+1)
+             forall(i = 1:Nonly) cea%Prod(i) = cin(i+1)
 
              ! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
           else if (code == 'inse') then
@@ -73,14 +73,14 @@ contains
           else if (code == 'omit') then
              ! CHECK OMIT DATASET
              Nomit = min(maxNgc, ncin-1)
-             forall(i = 1:Nomit) Omit(i) = cin(i+1)
+             forall(i = 1:Nomit) cea%Omit(i) = cin(i+1)
 
              ! KEYWORD 'THER' READ
              ! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
           else if (code == 'ther') then
              Newr = .true.
              rewind IOTHM
-             call UTHERM(readOK)
+             call UTHERM(cea, readOK)
              if (.not. readOK) then
                 write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 return
@@ -127,7 +127,7 @@ contains
 
                    else if (pltdat .and. Nplt < 20) then
                       Nplt = Nplt + 1
-                      Pltvar(Nplt) = cin(i)
+                      cea%Pltvar(Nplt) = cin(i)
 
                    else if (cx2 == 'pl') then
                       pltdat = .true.
@@ -167,12 +167,12 @@ contains
                 ! NEW REACTANT
                 if (cx2 == 'na' .or. cx2 == 'ox' .or. cx2 == 'fu') then
                    cea%Nreac = min(cea%Nreac+1, maxR)
-                   Fox(cea%Nreac) = trim(cx15)
+                   cea%Fox(cea%Nreac) = trim(cx15)
                    i = i + 1
-                   if (lcin(i) < 0) Rname(cea%Nreac) = cin(i)
+                   if (lcin(i) < 0) cea%Rname(cea%Nreac) = cin(i)
                    ifrmla = 0
                    Nfla(cea%Nreac) = 0
-                   Energy(cea%Nreac) = 'lib'
+                   cea%Energy(cea%Nreac) = 'lib'
                    cea%Enth(cea%Nreac) = 0
                    cea%Jray(cea%Nreac) = 0
                    cea%Pecwt(cea%Nreac) = -1
@@ -217,7 +217,7 @@ contains
 
                       ! LOOK FOR ENTHALPY
                    else if (cx1 == 'h' .or. cx1 == 'u') then
-                      Energy(cea%Nreac) = cx15
+                      cea%Energy(cea%Nreac) = cx15
 
                       if (lcin(i+1) > 0) then
                          i = i + 1
@@ -237,7 +237,7 @@ contains
 
                       ! CHECK FOR CHEMICAL SYMBOLS IN EXPLODED FORMULA
                    else if ((lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) > 0) then
-                      Energy(cea%Nreac) = ' '
+                      cea%Energy(cea%Nreac) = ' '
                       ifrmla = ifrmla + 1
                       Nfla(cea%Nreac) = ifrmla
 
@@ -246,7 +246,7 @@ contains
                          if (ix > 0) cx2(2:2) = uc(ix:ix)
                       end if
 
-                      Ratom(cea%Nreac, ifrmla) = cx2
+                      cea%Ratom(cea%Nreac, ifrmla) = cx2
                       if (lcin(i+1) == i) then
                          cea%Rnum(cea%Nreac, ifrmla) = dpin(i+1)
                       else
@@ -263,7 +263,7 @@ contains
 
              ! SORT AND STORE INPUT FROM 'PROB' DATASET
           else if (code == 'prob') then
-             Case = ' '
+             cea%Case = ' '
              P(1:maxPv) = 0
              V(1:maxPv) = 0
              T(1:maxT) = 0
@@ -327,7 +327,7 @@ contains
                    cx4 = cx15(:4)
 
                    if (cx4 == 'case') then
-                      Case = cin(i+1)
+                      cea%Case = cin(i+1)
                       lcin(i+1) = 0
 
                    else if (cx2 == 'tp' .or. cx2 == 'pt') then
@@ -669,7 +669,7 @@ contains
              cea%Ma = mix(1)
 
           else if (cx4 == 'case') then
-             Case = cin(in+1)
+             cea%Case = cin(in+1)
              lcin(in+1) = 0
 
           else if (Nof == 0 .and. (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or. cx2 == '%f' .or. cx1 == 'r')) then
@@ -898,7 +898,7 @@ contains
     integer:: i, n
     real(8):: rho
 
-    write(IOOUT, '(" CASE = ", a15)') Case
+    write(IOOUT, '(" CASE = ", a15)') cea%Case
 
     if (Moles) then
        write(IOOUT, '(/13X, "REACTANT", 20x, a11, "      ENERGY", 6x, "TEMP")') '   MOLES   '
@@ -911,14 +911,14 @@ contains
     end if
 
     do n = 1, cea%Nreac
-       write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') Fox(n), Rname(n), cea%Pecwt(n), cea%Enth(n)*R, cea%Rtemp(n)
+       write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') cea%Fox(n), cea%Rname(n), cea%Pecwt(n), cea%Enth(n)*R, cea%Rtemp(n)
     end do
 
     phi = 0
     tem = (Vpls(1) + Vmin(1)) * Oxfl
     if (ABS(tem) >= 1.d-3) phi = -(Vmin(2) + Vpls(2)) / tem
 
-    if (Fox(1) == 'NAME') then
+    if (cea%Fox(1) == 'NAME') then
        pfuel = 0
     else
        pfuel = 100 / (1 + Oxfl)
@@ -991,60 +991,60 @@ contains
     mpnf   = 0
 
     do 100 i = 1, Nplt
-       if (index(Pltvar(i)(2:), '1') == 0) then
-          if (index(Pltvar(i)(1:), 'dlnt') /= 0) then
+       if (index(cea%Pltvar(i)(2:), '1') == 0) then
+          if (index(cea%Pltvar(i)(1:), 'dlnt') /= 0) then
              mdvt = i
-          else if (index(Pltvar(i)(1:), 'dlnp') /= 0) then
+          else if (index(cea%Pltvar(i)(1:), 'dlnp') /= 0) then
              mdvp = i
-          else if (Pltvar(i)(:4) == 'pran') then
-             if (index(Pltvar(i)(3:), 'fz') /= 0 .or. index(Pltvar(i)(3:), 'fr') /= 0) then
+          else if (cea%Pltvar(i)(:4) == 'pran') then
+             if (index(cea%Pltvar(i)(3:), 'fz') /= 0 .or. index(cea%Pltvar(i)(3:), 'fr') /= 0) then
                 mpnf = i
              else
                 mpn = i
              end if
-          else if (Pltvar(i)(:4) == 'cond') then
-             if (index(Pltvar(i)(3:), 'fz') /= 0 .or. index(Pltvar(i)(3:), 'fr') /= 0) then
+          else if (cea%Pltvar(i)(:4) == 'cond') then
+             if (index(cea%Pltvar(i)(3:), 'fz') /= 0 .or. index(cea%Pltvar(i)(3:), 'fr') /= 0) then
                 mcondf = i
              else
                 mcond = i
              end if
-          else if (Pltvar(i)(:3) == 'phi') then
+          else if (cea%Pltvar(i)(:3) == 'phi') then
              mph = i
-          else if (Pltvar(i)(:2) == 'p ') then
+          else if (cea%Pltvar(i)(:2) == 'p ') then
              mp = i
-          else if (Pltvar(i)(:1) == 't') then
+          else if (cea%Pltvar(i)(:1) == 't') then
              mt = i
-          else if (Pltvar(i)(:3) == 'rho') then
+          else if (cea%Pltvar(i)(:3) == 'rho') then
              mrho = i
-          else if (Pltvar(i)(:1) == 'h') then
+          else if (cea%Pltvar(i)(:1) == 'h') then
              mh = i
-          else if (Pltvar(i)(:1) == 'u') then
+          else if (cea%Pltvar(i)(:1) == 'u') then
              mie = i
-          else if (Pltvar(i)(:3) == 'gam') then
+          else if (cea%Pltvar(i)(:3) == 'gam') then
              mgam = i
-          else if (Pltvar(i)(:3) == 'son') then
+          else if (cea%Pltvar(i)(:3) == 'son') then
              mson = i
-          else if (Pltvar(i)(:2) == 'g ') then
+          else if (cea%Pltvar(i)(:2) == 'g ') then
              mg = i
-          else if (Pltvar(i)(:2) == 's ') then
+          else if (cea%Pltvar(i)(:2) == 's ') then
              ms = i
-          else if (Pltvar(i)(:1) == 'm' .and. Pltvar(i)(:2) /= 'ma') then
-             if (.not. Gonly .and. Pltvar(i)(:2) == 'mw') then
+          else if (cea%Pltvar(i)(:1) == 'm' .and. cea%Pltvar(i)(:2) /= 'ma') then
+             if (.not. Gonly .and. cea%Pltvar(i)(:2) == 'mw') then
                 mmw = i
              else
                 mm = i
              end if
-          else if (Pltvar(i)(:2) == 'cp') then
+          else if (cea%Pltvar(i)(:2) == 'cp') then
              mcp = i
-          else if (Pltvar(i)(:3) == 'vis') then
+          else if (cea%Pltvar(i)(:3) == 'vis') then
              mvis = i
-          else if (Pltvar(i)(:3) == 'o/f') then
+          else if (cea%Pltvar(i)(:3) == 'o/f') then
              mof = i
-          else if (Pltvar(i)(:2) == '%f') then
+          else if (cea%Pltvar(i)(:2) == '%f') then
              mpf = i
-          else if (Pltvar(i)(:3) == 'f/a') then
+          else if (cea%Pltvar(i)(:3) == 'f/a') then
              mfa = i
-          else if (Pltvar(i)(:1) == 'r') then
+          else if (cea%Pltvar(i)(:1) == 'r') then
              meq = i
           end if
        end if
@@ -1211,13 +1211,13 @@ contains
        do k = 1, Ngc
           kOK = .true.
 
-          if (k > Ng .and. k < Ngc .and. Prod(k) == Prod(k+1)) then
+          if (k > Ng .and. k < Ngc .and. cea%Prod(k) == cea%Prod(k+1)) then
              kOK = .false.
              im = 0
           else
              do m = 1, Nplt
                 im = 0
-                if (Pltvar(m) == Prod(k) .or. '*' // Pltvar(m) == Prod(k)) then
+                if (cea%Pltvar(m) == cea%Prod(k) .or. '*' // cea%Pltvar(m) == cea%Prod(k)) then
                    im = m
                    exit
                 end if
@@ -1234,7 +1234,7 @@ contains
              if (k <= Ng) then
                 X(i) = En(k, i) * tem
              else
-                if (Prod(k) /= Prod(k-1)) X(i) = 0
+                if (cea%Prod(k) /= cea%Prod(k-1)) X(i) = 0
                 if (En(k, i) > 0) X(i) = En(k, i) * tem
              end if
              if (Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+Iplt-ione, im) = X(i)
@@ -1243,14 +1243,14 @@ contains
 
           if (kin == 1) then
              if (Trace == 0) then
-                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') Prod(k), (X(i), i = 1, Npt)
+                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (X(i), i = 1, Npt)
              else
-                call EFMT(cea%fmt(4), Prod(k), X)
+                call EFMT(cea%fmt(4), cea%Prod(k), X)
              end if
-             if (Prod(k) == Omit(notuse)) notuse = notuse - 1
-          else if (Prod(k) /= Prod(k-1)) then
+             if (cea%Prod(k) == cea%Omit(notuse)) notuse = notuse - 1
+          else if (cea%Prod(k) /= cea%Prod(k-1)) then
              notuse = notuse + 1
-             Omit(notuse) = Prod(k)
+             cea%Omit(notuse) = cea%Prod(k)
           end if
        end do
     end if
@@ -1260,7 +1260,7 @@ contains
        write(IOOUT, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", a4, &
             & " FRACTIONS", /"    WERE LESS THAN", 1pe13.6, &
             & " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
-       write(IOOUT, '(5(1x, a15))') (Omit(i), i = 1, notuse)
+       write(IOOUT, '(5(1x, a15))') (cea%Omit(i), i = 1, notuse)
     end if
 
     if (.not. Moles) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &

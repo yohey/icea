@@ -13,6 +13,7 @@ program main
 
   character(15):: ensert(20)
   character(200):: infile, ofile
+  character(200):: Pfile
   character(196):: prefix
   logical:: caseOK, ex, readOK
   integer:: i, inc, iof, j, ln, n
@@ -82,13 +83,13 @@ program main
      end do
 
      if (Ions) then
-        if (Elmt(Nlm) /= 'E') then
+        if (cea(icase)%Elmt(Nlm) /= 'E') then
            Nlm = Nlm + 1
-           Elmt(Nlm) = 'E'
+           cea(icase)%Elmt(Nlm) = 'E'
            B0p(Nlm, 1) = 0
            B0p(Nlm, 2) = 0
         end if
-     else if (Elmt(Nlm) == 'E') then
+     else if (cea(icase)%Elmt(Nlm) == 'E') then
         Nlm = Nlm - 1
      end if
 
@@ -122,10 +123,10 @@ program main
      if (Nc /= 0 .and. Nsert /= 0) then
         innerLoop: do i = 1, Nsert
            do j = Ngc, Ngp1, - 1
-              if (Prod(j) == ensert(i)) then
+              if (cea(icase)%Prod(j) == ensert(i)) then
                  Npr = Npr + 1
                  Jcond(Npr) = j
-                 if (.not. Short) write(IOOUT, '(1X, A16, "INSERTED")') Prod(j)
+                 if (.not. Short) write(IOOUT, '(1X, A16, "INSERTED")') cea(icase)%Prod(j)
                  cycle innerLoop
               end if
            end do
@@ -145,7 +146,7 @@ program main
 
      if (Nplt > 0) then
         open(IOPLT, file = Pfile, form = 'formatted')
-        call write_plt_file(IOPLT, Iplt, Nplt, Pltvar, cea(icase)%Pltout)
+        call write_plt_file(IOPLT, Iplt, Nplt, cea(icase)%Pltvar, cea(icase)%Pltout)
      end if
 
   end do outerLoop
@@ -470,21 +471,21 @@ subroutine DETON(cea)
            mmach = 0
 
            do i = 1, Nplt
-              if (index(Pltvar(i)(2:), '1') /= 0) then
-                 if (Pltvar(i)(:3) == 'son') then
+              if (index(cea%Pltvar(i)(2:), '1') /= 0) then
+                 if (cea%Pltvar(i)(:3) == 'son') then
                     mson = i
-                 else if (Pltvar(i)(:3) == 'gam') then
+                 else if (cea%Pltvar(i)(:3) == 'gam') then
                     mgam = i
-                 else if (Pltvar(i)(:1) == 'h') then
+                 else if (cea%Pltvar(i)(:1) == 'h') then
                     mh = i
-                 else if (Pltvar(i)(:1) == 't') then
+                 else if (cea%Pltvar(i)(:1) == 't') then
                     mt = i
-                 else if (Pltvar(i)(:1) == 'p') then
+                 else if (cea%Pltvar(i)(:1) == 'p') then
                     mp = i
                  end if
-              else if (index(Pltvar(i), 'vel') /= 0) then
+              else if (index(cea%Pltvar(i), 'vel') /= 0) then
                  mdv = i
-              else if (index(Pltvar(i), 'mach') /= 0) then
+              else if (index(cea%Pltvar(i), 'mach') /= 0) then
                  mmach = i
               end if
            end do
@@ -730,8 +731,8 @@ subroutine EQLBRM(cea)
            En(j+kg, Npt) = En(j, Npt)
            En(j, Npt) = 0
 
-           if (Prod(j) /= Prod(j+kg) .and. .not. Short) &
-                & write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') Prod(j), Prod(j+kg)
+           if (cea%Prod(j) /= cea%Prod(j+kg) .and. .not. Short) &
+                & write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') cea%Prod(j), cea%Prod(j+kg)
         end if
         go to 300
      else if (kc >= Nc .or. Ifz(kc+1) <= Ifz(kc)) then
@@ -745,7 +746,7 @@ subroutine EQLBRM(cea)
      go to 100
   end if
 
-  write(IOOUT, '(" REMOVE ", A16)') Prod(j)
+  write(IOOUT, '(" REMOVE ", A16)') cea%Prod(j)
 
   En(j, Npt) = 0
   Enln(j) = 0
@@ -787,12 +788,12 @@ subroutine EQLBRM(cea)
   if (Ions) lz = ls - 1
 
   if (Npt == 1 .and. .not. Shock .and. .not. Short) then
-     write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))') (Elmt(i), i = 1, Nlm)
+     write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))') (cea%Elmt(i), i = 1, Nlm)
   end if
 
   if (Debug(Npt)) then
      do i = 1, Nlm
-        cmp(i) = Elmt(i)
+        cmp(i) = cea%Elmt(i)
      end do
   end if
 
@@ -918,7 +919,7 @@ subroutine EQLBRM(cea)
            if (ambda /= 1) then
               amb = 'ENN'
               if (abs(X(iq2)) > abs(X(Iq1))) amb = 'TEMP'
-              if (ilamb /= 0) amb = Prod(ilamb)
+              if (ilamb /= 0) amb = cea%Prod(ilamb)
               write(IOOUT, '(/" AMBDA SET BY ", A16)') amb
            end if
 
@@ -929,7 +930,7 @@ subroutine EQLBRM(cea)
 
            do j = 1, Ngc
               write(IOOUT, '(1X, A16, 4E15.6, /35x, 3E15.6)') &
-                   Prod(j), En(j, Npt), Enln(j), Deln(j), cea%H0(j), cea%S(j), cea%H0(j) - cea%S(j), cea%Mu(j)
+                   cea%Prod(j), En(j, Npt), Enln(j), Deln(j), cea%H0(j), cea%S(j), cea%H0(j) - cea%S(j), cea%Mu(j)
            end do
         end if
 
@@ -946,7 +947,7 @@ subroutine EQLBRM(cea)
 
         cea%Totn(Npt) = cea%Totn(Npt) + sum(En(1:Ng, Npt))
 
-        if (Ions .and. Elmt(Nlm) == 'E') then
+        if (Ions .and. cea%Elmt(Nlm) == 'E') then
            mask = .false.
            forall(j = 1:Ng, A(ls, j) /= 0 .and. En(j, Npt) == 0 .and. (Enln(j) - Ennl + esize) > 0)
               En(j, Npt) = exp(Enln(j))
@@ -980,7 +981,7 @@ subroutine EQLBRM(cea)
 
         Tm = log(Pp / Enn)
 
-        if (Elmt(Nlm) == 'E') then
+        if (cea%Elmt(Nlm) == 'E') then
 ! CHECK ON REMOVING IONS
            if (all(A(Nlm, 1:Ngc) == 0 .or. En(1:Ngc, Npt) <= 0)) then
               pie = X(Nlm)
@@ -1086,7 +1087,7 @@ subroutine EQLBRM(cea)
 
                        if (Enln(j) > -87) tem = exp(Enln(j))
 
-                       if ((Enln(j)-Ennl+tsize) > 0 .and. Elmt(Nlm) == 'E') then
+                       if ((Enln(j)-Ennl+tsize) > 0 .and. cea%Elmt(Nlm) == 'E') then
                           pie = 0
                           En(j, Npt) = tem
                        end if
@@ -1112,7 +1113,7 @@ subroutine EQLBRM(cea)
                        write(IOOUT, '(/" DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)")')
                        go to 1500
 
-                    else if (Elmt(Nlm) == 'E' .and. pie /= 0) then
+                    else if (cea%Elmt(Nlm) == 'E' .and. pie /= 0) then
                        Nlm = Nlm - 1
                        newcom = .true.
                     end if
@@ -1198,14 +1199,14 @@ subroutine EQLBRM(cea)
                             & " SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.", &
                             & / &
                             & " IT MAY BE NECESSARY TO RERUN WITH INSERTED CONDENSED SPECIES", &
-                            & /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') Npt, Elmt(Nlm)
+                            & /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') Npt, cea%Elmt(Nlm)
                        Nlm = Nlm - 1
                        go to 500
 
                     else if (Msing <= Nlm) then
 ! FIND NEW COMPONENTS
                        if (.not. Ions) go to 1100
-                       if (Elmt(Nlm) /= 'E') go to 1100
+                       if (cea%Elmt(Nlm) /= 'E') go to 1100
 
                        forall(j = 1:Ng, A(Nlm, j) /= 0) En(j, Npt) = 0
 
@@ -1226,7 +1227,7 @@ subroutine EQLBRM(cea)
                  end if
               end if
 
-              forall(j = 1:Ng, .not. (Ions .and. Elmt(Nlm) /= 'E' .and. A(ls, j) /= 0) .and. En(j, Npt) == 0)
+              forall(j = 1:Ng, .not. (Ions .and. cea%Elmt(Nlm) /= 'E' .and. A(ls, j) /= 0) .and. En(j, Npt) == 0)
                  En(j, Npt) = smalno
                  Enln(j) = smnol
               end forall
@@ -1336,7 +1337,7 @@ subroutine EQLBRM(cea)
                     if (Tt <= cea%Temp(2, kc)) then
                        if (kg /= 0) then
                           jkg = j + kg
-                          if (abs(kg) > 1 .or. Prod(j) == Prod(jkg)) go to 740
+                          if (abs(kg) > 1 .or. cea%Prod(j) == cea%Prod(jkg)) go to 740
                           if (jkg == jsw) go to 720
                           if (Tt < cea%Temp(1, inc) - gap .or. Tt > cea%Temp(2, inc) + gap) go to 740
                           go to 720
@@ -1357,7 +1358,7 @@ subroutine EQLBRM(cea)
         do inc = 1, Nc
            j = inc + Ng
 
-           if (Debug(Npt)) write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), En(j, Npt)
+           if (Debug(Npt)) write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') cea%Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), En(j, Npt)
 
            if (En(j, Npt) <= 0) then
               if (Tt > cea%Temp(1, inc) .or. cea%Temp(1, inc) == cea%Tg(1)) then
@@ -1386,7 +1387,7 @@ subroutine EQLBRM(cea)
            j = jdelg
            go to 800
         else
-           write(IOOUT, '(/" REINSERTION OF ", A16, " LIKELY TO CAUSE SINGULARITY, ", "(EQLBRM)")') Prod(jcons)
+           write(IOOUT, '(/" REINSERTION OF ", A16, " LIKELY TO CAUSE SINGULARITY, ", "(EQLBRM)")') cea%Prod(jcons)
            go to 1500
         end if
 
@@ -1407,8 +1408,8 @@ subroutine EQLBRM(cea)
         En(j, Npt) = 0
         jsw = j
 
-        if (Prod(j) /= Prod(jkg) .and. .not. Short) &
-             write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') Prod(j), Prod(jkg)
+        if (cea%Prod(j) /= cea%Prod(jkg) .and. .not. Short) &
+             write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') cea%Prod(j), cea%Prod(jkg)
 
         j = jkg
         go to 900
@@ -1443,7 +1444,7 @@ subroutine EQLBRM(cea)
   Jcond(2:Npr) = Jcond(1:Npr-1)
   Jcond(1) = j
 
-  if (.not. Short) write(IOOUT, '(" ADD ", a16)') Prod(j)
+  if (.not. Short) write(IOOUT, '(" ADD ", a16)') cea%Prod(j)
 
 900 inc = j - Ng
   Convg = .false.
@@ -1458,11 +1459,11 @@ subroutine EQLBRM(cea)
 
   Jcond(k:Npr) = Jcond(k+1:Npr+1)
 
-  if (.not. Short) write(IOOUT, '(" REMOVE ", A16)') Prod(j)
+  if (.not. Short) write(IOOUT, '(" REMOVE ", A16)') cea%Prod(j)
 
   Npr = Npr - 1
   do i = 1, Nlm
-     if (cmp(i) == Prod(j)) then
+     if (cmp(i) == cea%Prod(j)) then
         numb = -1
         Convg = .false.
         if (Tp) cpcalc = .false.
@@ -1475,7 +1476,7 @@ subroutine EQLBRM(cea)
 1100 newcom = .false.
   nn = Nlm
 
-  if (Elmt(Nlm) == 'E') nn = Nlm - 1
+  if (cea%Elmt(Nlm) == 'E') nn = Nlm - 1
 
 ! FIND ORDER OF SPECIES FOR COMPONENTS - BIGGEST TO SMALLEST
   njc = 0
@@ -1541,7 +1542,7 @@ subroutine EQLBRM(cea)
            pisave(lc) = cea%H0(jb) - cea%S(jb)
 
            if (jb <= Ng) pisave(lc) = pisave(lc) + Enln(jb) + Tm
-           cmp(lc) = trim(Prod(jb))
+           cmp(lc) = trim(cea%Prod(jb))
 
 ! CALCULATE NEW COEFFICIENTS
            if (tem /= 1) then
@@ -1593,9 +1594,9 @@ subroutine EQLBRM(cea)
         ae = cmp(Msing)
         cmp(Msing) = cmp(Nlm)
         cmp(Nlm) = ae
-        ae = Elmt(Msing)
-        Elmt(Msing) = Elmt(Nlm)
-        Elmt(Nlm) = trim(ae)
+        ae = cea%Elmt(Msing)
+        cea%Elmt(Msing) = cea%Elmt(Nlm)
+        cea%Elmt(Nlm) = trim(ae)
         ja = Jx(Msing)
         Jx(Msing) = Jx(Nlm)
         Jx(Nlm) = ja
@@ -1864,7 +1865,7 @@ subroutine HCALC(cea)
   Nspr = Nspx
   do n = 1, cea%Nreac
      k = 2
-     if (Fox(n)(:1) == 'O' .or. Fox(n)(:1) == 'o') k = 1
+     if (cea%Fox(n)(:1) == 'O' .or. cea%Fox(n)(:1) == 'o') k = 1
      if (Tt == 0) Tt = cea%Rtemp(n)
 
      j = cea%Jray(n)
@@ -1873,7 +1874,7 @@ subroutine HCALC(cea)
 ! SEARCH FOR REACTANT IN STORED THERMO SPECIES. STORE INDEX IN JRAY(N).
         ifaz = 0
         do j = 1, Ngc
-           if (Rname(n) == Prod(j) .or. '*' // Rname(n) == Prod(j)) then
+           if (cea%Rname(n) == cea%Prod(j) .or. '*' // cea%Rname(n) == cea%Prod(j)) then
               cea%Jray(n) = j
               if (j > Ng) then
                  write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
@@ -1905,12 +1906,12 @@ subroutine HCALC(cea)
               end if
            end if
 
-           if (sub == Rname(n) .or. sub == '*' // Rname(n)) then
+           if (sub == cea%Rname(n) .or. sub == '*' // cea%Rname(n)) then
               if (ifaz <= 0 .and. nint > 0) then
                  do j = 1, 5
                     if (bb(j) == 0) exit
                     Nfla(n) = j
-                    Ratom(n, j) = el(j)
+                    cea%Ratom(n, j) = el(j)
                     cea%Rnum(n, j) = bb(j)
                  end do
 
@@ -1922,7 +1923,7 @@ subroutine HCALC(cea)
 
               else
                  if (ifaz > 0) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
-                 if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') Rname(n)
+                 if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') cea%Rname(n)
                  Tt = 0
                  Cpmix = 0
                  return
@@ -1932,9 +1933,9 @@ subroutine HCALC(cea)
 
         Nspr = Nspr - 1
         write(IOOUT, '(/" ERROR IN DATA FOR ", a15, " CHECK NAME AND TEMPERATURE", &
-             & " RANGE IN", /, " thermo.inp (HCALC)")') Rname(n)
+             & " RANGE IN", /, " thermo.inp (HCALC)")') cea%Rname(n)
 
-        Energy(n) = ' '
+        cea%Energy(n) = ' '
         Tt = 0
         Cpmix = 0
 
@@ -2201,7 +2202,7 @@ subroutine NEWOF(cea)
 
   do i = 1, Nlm
      j = cea%Jcm(i)
-     if (.not. Short) write(IOOUT, '(1x, a16, 3e20.8)') Prod(j), B0p(i, 2), B0p(i, 1), B0(i)
+     if (.not. Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), B0p(i, 2), B0p(i, 1), B0(i)
   end do
 
   return
@@ -2236,7 +2237,7 @@ subroutine REACT(cea)
   Vmin = 0
   Am = 0
   Rh = 0
-  Elmt = ' '
+  cea%Elmt = ' '
   B0p = 0
   dat = 0
 
@@ -2248,7 +2249,7 @@ subroutine REACT(cea)
      T2save = 0
      rcoefs = .true.
 
-     if (Energy(n) == 'lib' .or. cea%Rnum(n, 1) == 0) then
+     if (cea%Energy(n) == 'lib' .or. cea%Rnum(n, 1) == 0) then
         Tt = cea%Rtemp(n)
         rewind IOTHM
         read(IOTHM) cea%Tg, ntgas, ntot, nall
@@ -2263,7 +2264,7 @@ subroutine REACT(cea)
               if (nint > 0) read(IOTHM) ((rcf(i, j), i = 1, 9), j = 1, nint)
            end if
 
-           if (sub == Rname(n) .or. sub == '*' // Rname(n)) then
+           if (sub == cea%Rname(n) .or. sub == '*' // cea%Rname(n)) then
               if (nint == 0) then
                  rcoefs = .false.
                  hOK = .true.
@@ -2278,14 +2279,14 @@ subroutine REACT(cea)
                        if (dift > 10) then
                           write(IOOUT, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
                                & f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", f8.2, &
-                               & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') Rname(n), T1, Tt
+                               & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, Tt
                           Nlm = 0
                           hOK = .false.
                           return
                        else
                           write(IOOUT, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
                                & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
-                               & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') Rname(n), T1, Tt
+                               & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, Tt
                           Tt = T1
                           cea%Rtemp(n) = T1
                        end if
@@ -2305,7 +2306,7 @@ subroutine REACT(cea)
               do j = 1, 5
                  if (bb(j) == 0) exit
                  Nfla(n) = j
-                 Ratom(n, j) = el(j)
+                 cea%Ratom(n, j) = el(j)
                  cea%Rnum(n, j) = bb(j)
               end do
 
@@ -2336,25 +2337,25 @@ subroutine REACT(cea)
 
         if (.not. hOK) then
            write(IOOUT, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
-                & "IS OUTSIDE ITS TEMPERATURE RANGE", f8.2, " TO", f9.2, "K (REACT)")') Tt, Rname(n), T1save, T2save
-           Energy(n) = ' '
+                & "IS OUTSIDE ITS TEMPERATURE RANGE", f8.2, " TO", f9.2, "K (REACT)")') Tt, cea%Rname(n), T1save, T2save
+           cea%Energy(n) = ' '
            Nlm = 0
            return
         endif
      end if
 
 50   ifrmla = Nfla(n)
-     if (Fox(n)(:1) == 'f') then
+     if (cea%Fox(n)(:1) == 'f') then
         fuel = .true.
         kr = 2
-        Fox(n) = 'FUEL'
-     else if (Fox(n)(:4) == 'name') then
+        cea%Fox(n) = 'FUEL'
+     else if (cea%Fox(n)(:4) == 'name') then
         fuel = .true.
         kr = 2
-        Fox(n) = 'NAME'
+        cea%Fox(n) = 'NAME'
      else
         kr = 1
-        Fox(n) = 'OXIDANT'
+        cea%Fox(n) = 'OXIDANT'
      end if
 
      dat = 0
@@ -2366,15 +2367,15 @@ subroutine REACT(cea)
      do jj = 1, ifrmla
         do j = 1, maxEl
            nj = j
-           if (Elmt(j) == ' ') exit
-           if (Ratom(n, jj) == Elmt(j)) go to 80
+           if (cea%Elmt(j) == ' ') exit
+           if (cea%Ratom(n, jj) == cea%Elmt(j)) go to 80
         end do
 
         Nlm = nj
-        Elmt(j) = Ratom(n, jj)
+        cea%Elmt(j) = cea%Ratom(n, jj)
 
 80      do kk = 1, 100
-           if (atomic_symbol(kk) == Ratom(n, jj)) then
+           if (atomic_symbol(kk) == cea%Ratom(n, jj)) then
               rm = rm + cea%Rnum(n, jj) * atomic_mass(kk)
               Atwt(j) = atomic_mass(kk)
               X(j) = atomic_valence(kk)
@@ -2383,7 +2384,7 @@ subroutine REACT(cea)
            end if
         end do
 
-        write(IOOUT, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') Ratom(n, jj)
+        write(IOOUT, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') cea%Ratom(n, jj)
         Nlm = 0
         return
 100  end do
@@ -2431,7 +2432,7 @@ subroutine REACT(cea)
 
   if (.not. fuel) then
 ! 100 PERCENT OXIDANT, SWITCH INDICES
-     Fox = ' '
+     cea%Fox = ' '
      Wp(2) = Wp(1)
      Wp(1) = 0
      Hpp(2) = Hpp(1)
@@ -2458,7 +2459,7 @@ subroutine REACT(cea)
 
      if (.not. Moles) then
         do n = 1, cea%Nreac
-           if (Fox(n)(:1) == 'O') then
+           if (cea%Fox(n)(:1) == 'O') then
               cea%Pecwt(n) = cea%Pecwt(n) / Wp(1)
            else
               cea%Pecwt(n) = cea%Pecwt(n) / Wp(2)
@@ -2476,7 +2477,7 @@ subroutine REACT(cea)
         end if
         do n = 1, cea%Nreac
            write(IOOUT, '(1x, a1, ": ", a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))') &
-                Fox(n), Rname(n), cea%Pecwt(n), cea%Enth(n), cea%Rtemp(n), cea%Dens(n), (Ratom(n, i), cea%Rnum(n, i), i = 1, Nfla(n))
+                cea%Fox(n), cea%Rname(n), cea%Pecwt(n), cea%Enth(n), cea%Rtemp(n), cea%Dens(n), (cea%Ratom(n, i), cea%Rnum(n, i), i = 1, Nfla(n))
         end do
      end if
 
@@ -2569,8 +2570,8 @@ subroutine RKTOUT(cea)
   misp  = 0
 
   do i = 1, Nplt
-     ixfz = index(Pltvar(i)(2:), 'fz')
-     ixfr = index(Pltvar(i)(2:), 'fr')
+     ixfz = index(cea%Pltvar(i)(2:), 'fz')
+     ixfr = index(cea%Pltvar(i)(2:), 'fr')
 
      if (ixfz /= 0 .or. ixfr /= 0) then
         if (Eql) cycle
@@ -2578,18 +2579,18 @@ subroutine RKTOUT(cea)
         cycle
      end if
 
-     if (Pltvar(i)(:4) == 'pi/p' .or. Pltvar(i)(:3) == 'pip') then
+     if (cea%Pltvar(i)(:4) == 'pi/p' .or. cea%Pltvar(i)(:3) == 'pip') then
         if (cea%Iopt == 0) mppf = i
         if (cea%Iopt /= 0) mppj = i
-     else if (Pltvar(i)(:4) == 'mach') then
+     else if (cea%Pltvar(i)(:4) == 'mach') then
         mmach = i
-     else if (Pltvar(i)(:2) == 'ae') then
+     else if (cea%Pltvar(i)(:2) == 'ae') then
         mae = i
-     else if (Pltvar(i)(:2) == 'cf') then
+     else if (cea%Pltvar(i)(:2) == 'cf') then
         mcf = i
-     else if (Pltvar(i)(:4) == 'ivac') then
+     else if (cea%Pltvar(i)(:4) == 'ivac') then
         mivac = i
-     else if (Pltvar(i)(:3) == 'isp') then
+     else if (cea%Pltvar(i)(:3) == 'isp') then
         misp = i
      end if
   end do
@@ -2705,7 +2706,7 @@ subroutine RKTOUT(cea)
 
         if (X(line+1) >= tra) then
            line = line + 1
-           z(line) = Prod(k)
+           z(line) = cea%Prod(k)
         end if
 
         if (line == 3 .or. k == Ngc) then
@@ -3329,7 +3330,7 @@ subroutine SEARCH(cea)
 !   NGC =    NG + NC
 !   THDATE = DATE READ FROM THERMO.INP FILE
   rewind IOTHM
-  read(IOTHM) cea%Tg, ntgas, ntot, nall, Thdate
+  read(IOTHM) cea%Tg, ntgas, ntot, nall, cea%Thdate
   Ngc = 1
   Nc = 1
 ! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
@@ -3342,30 +3343,30 @@ subroutine SEARCH(cea)
      end if
      if (Nonly /= 0) then
         i = 1
-20      if (Prod(i) /= sub .and. '*' // Prod(i) /= sub) then
+20      if (cea%Prod(i) /= sub .and. '*' // cea%Prod(i) /= sub) then
            i = i + 1
            if (i <= Nonly) go to 20
            go to 200
         else
-           if (sub == Prod(Ngc-1)) then
+           if (sub == cea%Prod(Ngc-1)) then
               Nonly = Nonly + 1
               do k = Nonly, i+1, -1
-                 Prod(k) = Prod(k-1)
+                 cea%Prod(k) = cea%Prod(k-1)
               end do
            else
-              Prod(i) = Prod(Ngc)
+              cea%Prod(i) = cea%Prod(Ngc)
            end if
-           Prod(Ngc) = sub
+           cea%Prod(Ngc) = sub
         end if
      else if (Nomit /= 0) then
         do i = 1, Nomit
-           if (Omit(i) == sub .or. '*' // Omit(i) == sub) go to 200
+           if (cea%Omit(i) == sub .or. '*' // cea%Omit(i) == sub) go to 200
         end do
      end if
      do 50 k = 1, 5
         if (b(k) == 0) go to 100
         do i = 1, Nlm
-           if (Elmt(i) == el(k)) then
+           if (cea%Elmt(i) == el(k)) then
               A(i, Ngc) = b(k)
               go to 50
            end if
@@ -3375,7 +3376,7 @@ subroutine SEARCH(cea)
         end do
         go to 200
 50   continue
-100  Prod(Ngc) = sub
+100  cea%Prod(Ngc) = sub
      if (itot > ntgas) then
         Nc = Nc + 1
         if (Nc > maxNc) go to 400
@@ -3390,7 +3391,7 @@ subroutine SEARCH(cea)
 ! IF SPECIES IS AN ATOMIC GAS, STORE INDEX IN JX
         if (b(2) == 0 .and. b(1) == 1) then
            do i = 1, Nlm
-              if (Elmt(i) == el(1)) then
+              if (cea%Elmt(i) == el(1)) then
                  ne = ne + 1
                  Jx(i) = Ngc
                  cea%Jcm(i) = Ngc
@@ -3409,7 +3410,7 @@ subroutine SEARCH(cea)
   Ngp1 = Ng + 1
   if (Ngc < Nonly) then
      do k = Ngc+1, Nonly
-        write(IOOUT, '(/" WARNING!!  ", a15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') Prod(k)
+        write(IOOUT, '(/" WARNING!!  ", a15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') cea%Prod(k)
      end do
   end if
 ! FIND MISSING ELEMENTS (IF ANY) FOR COMPONENTS
@@ -3423,9 +3424,9 @@ subroutine SEARCH(cea)
               A(k, Nspx) = 0
            end do
            A(i, Nspx) = 1
-           Prod(Nspx) = Elmt(i)
+           cea%Prod(Nspx) = cea%Elmt(i)
            do k = 1, 100
-              if (Elmt(i) == atomic_symbol(k)) then
+              if (cea%Elmt(i) == atomic_symbol(k)) then
                  cea%Mw(Nspx) = atomic_mass(k)
                  Atwt(i) = atomic_mass(k)
                  cea%Cp(Nspx) = 2.5d0
@@ -3444,7 +3445,7 @@ subroutine SEARCH(cea)
         ii = i
      end do
      write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
-          & //, 13x, "FATAL ERROR (SEARCH)")') Elmt(ii)
+          & //, 13x, "FATAL ERROR (SEARCH)")') cea%Elmt(ii)
      Ngc = 0
      return
 300 continue
@@ -3452,11 +3453,11 @@ subroutine SEARCH(cea)
   if (.not. Short) then
      write(IOOUT, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &
           & /" (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)", &
-          & /"  LAST thermo.inp UPDATE: ", a10, /)') Thdate
+          & /"  LAST thermo.inp UPDATE: ", a10, /)') cea%Thdate
      do i = 1, Ngc, 3
         i5 = i + 2
         if (Ngc < i5) i5 = Ngc
-        write(IOOUT, '(3(2X, A6, 2X, A15))') (date(j), Prod(j), j = i, i5)
+        write(IOOUT, '(3(2X, A6, 2X, A15))') (date(j), cea%Prod(j), j = i, i5)
      end do
   end if
   return
@@ -3489,7 +3490,7 @@ subroutine READTR(cea)
      read(IOTRN) spece, trdata
      k = 1
 450  do j = 1, Ng
-        if (spece(k) == Prod(j) .or. '*' // spece(k) == Prod(j)) then
+        if (spece(k) == cea%Prod(j) .or. '*' // spece(k) == cea%Prod(j)) then
            jj(k) = j
            if (k == 2) then
 ! STORE NAMES FOR BINARIES IN BIN ARRAY.
@@ -3913,7 +3914,7 @@ subroutine SHCK(cea)
         do n = 1, cea%Nreac
            j = cea%Jray(n)
            if (Massf) ww = cea%Mw(j)
-           write(IOOUT, '(" ", A16, F8.5, 12F9.5)') Prod(j), (En(j, i) * ww, i = 1, Npt)
+           write(IOOUT, '(" ", A16, F8.5, 12F9.5)') cea%Prod(j), (En(j, i) * ww, i = 1, Npt)
         end do
      else
         Eql = .true.
@@ -4510,7 +4511,7 @@ end subroutine TRANP
 
 
 
-subroutine UTHERM(readOK)
+subroutine UTHERM(cea, readOK)
 !***********************************************************************
 ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
 ! UNFORMATTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
@@ -4561,9 +4562,12 @@ subroutine UTHERM(readOK)
 !***********************************************************************
   use mod_legacy_cea
   implicit none
-! DUMMY ARGUMENTS
+
+  ! DUMMY ARGUMENTS
+  type(CEA_Problem), intent(inout):: cea
   logical:: readOK
-! LOCAL VARIABLES
+
+  ! LOCAL VARIABLES
   character(15):: name
   character(16):: namee
   character(65):: notes
@@ -4581,7 +4585,7 @@ subroutine UTHERM(readOK)
   inew = 0
   tinf = 1.d06
   rewind IOSCH
-  read(IOINP, '(4f10.3, a10)') tgl, Thdate
+  read(IOINP, '(4f10.3, a10)') tgl, cea%Thdate
 
   do
      do i = 1, 3
@@ -4728,7 +4732,7 @@ subroutine UTHERM(readOK)
 300 rewind IOSCH
 
   if (ns == 0) ns = nall
-  write(IOTHM) tgl, ngl, ns, nall, Thdate
+  write(IOTHM) tgl, ngl, ns, nall, cea%Thdate
 ! WRITE GASEOUS PRODUCTS ON IOTHM
   if (ngl /= 0) then
      do i = 1, ns

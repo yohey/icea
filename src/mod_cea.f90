@@ -25,6 +25,11 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     character(2):: Elmt(maxEl), Ratom(maxR, 12)
+     character(8):: Fox(maxR)
+     character(10):: Thdate
+     character(15):: Case, Energy(maxR), Omit(0:maxNgc), Pltvar(20), Prod(0:maxNgc), Rname(maxR)
+
      real(8):: Cpr(Ncol), Dlvpt(Ncol), Dlvtp(Ncol), Gammas(Ncol), Hsum(Ncol)
      real(8):: Ppp(Ncol), Ssum(Ncol), Totn(Ncol), Ttt(Ncol), Vlm(Ncol), Wm(Ncol)
      real(8):: Pltout(500, 20)

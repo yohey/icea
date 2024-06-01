@@ -34,13 +34,6 @@ module mod_legacy_cea
   real(8):: Atwt(maxEl), B0(maxEl), X(maxMat)
   real(8):: A(maxEl, maxNgc), G(maxMat, maxMat+1)
 
-  character(2):: Elmt(maxEl), Ratom(maxR, 12)
-  character(8):: Fox(maxR)
-  character(10):: Thdate
-  character(15):: Case, Energy(maxR), Omit(0:maxNgc), Pltvar(20), &
-       Prod(0:maxNgc), Rname(maxR)
-  character(200):: Pfile
-
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
