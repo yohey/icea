@@ -1050,11 +1050,11 @@ contains
        end if
 100 continue
     do i = Iplt + 1, Iplt + Npt
-       if (mof > 0) Pltout(i, mof) = Oxfl
-       if (mpf > 0) Pltout(i, mpf) = pfuel
-       if (mph > 0) Pltout(i, mph) = phi
-       if (mfa > 0) Pltout(i, mfa) = 1.d0/Oxfl
-       if (meq > 0) Pltout(i, meq) = Eqrat
+       if (mof > 0) cea%Pltout(i, mof) = Oxfl
+       if (mpf > 0) cea%Pltout(i, mpf) = pfuel
+       if (mph > 0) cea%Pltout(i, mph) = phi
+       if (mfa > 0) cea%Pltout(i, mfa) = 1.d0/Oxfl
+       if (meq > 0) cea%Pltout(i, meq) = Eqrat
     end do
 
     if (SIunit) then
@@ -1082,13 +1082,13 @@ contains
     cea%fmt(4) = cea%fmt(6)
 
     ! PRESSURE
-    call VARFMT(cea, Ppp)
+    call VARFMT(cea, cea%Ppp)
 
     do i = 1, Npt
-       X(i) = Ppp(i) * pfactor
+       X(i) = cea%Ppp(i) * pfactor
        if (Nplt /= 0 .and. i > ione) then
-          if (mp > 0) Pltout(i + Iplt - ione, mp) = X(i)
-          if (mt > 0) Pltout(i + Iplt - ione, mt) = Ttt(i)
+          if (mp > 0) cea%Pltout(i + Iplt - ione, mp) = X(i)
+          if (mt > 0) cea%Pltout(i + Iplt - ione, mt) = cea%Ttt(i)
        end if
     end do
 
@@ -1098,19 +1098,19 @@ contains
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '2,'
-    write(IOOUT, cea%fmt) 'T, K            ', (Ttt(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'T, K            ', (cea%Ttt(j), j = 1, Npt)
 
     ! DENSITY
     do i = 1, Npt
-       if (Vlm(i) /= 0) X(i) = vnum / Vlm(i)
-       if (Nplt /= 0 .and. i > ione .and. mrho > 0) Pltout(i+Iplt-ione, mrho) = X(i)
+       if (cea%Vlm(i) /= 0) X(i) = vnum / cea%Vlm(i)
+       if (Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+Iplt-ione, mrho) = X(i)
     end do
     call EFMT(cea%fmt(4), frh, X)
 
     ! ENTHALPY
     do i = 1, Npt
-       X(i) = Hsum(i) * R
-       if (Nplt /= 0 .and. i > ione .and. mh > 0) Pltout(i+Iplt-ione, mh) = X(i)
+       X(i) = cea%Hsum(i) * R
+       if (Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+Iplt-ione, mh) = X(i)
     end do
     cea%fmt(4) = cea%fmt(6)
     call VARFMT(cea, X)
@@ -1118,24 +1118,24 @@ contains
 
     ! INTERNAL ENERGY
     do i = 1, Npt
-       X(i) = (Hsum(i) - Ppp(i) * Vlm(i) / R0) * R
-       if (Nplt /= 0 .and. i > ione .and. mie > 0) Pltout(i+Iplt-ione, mie) = X(i)
+       X(i) = (cea%Hsum(i) - cea%Ppp(i) * cea%Vlm(i) / R0) * R
+       if (Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+Iplt-ione, mie) = X(i)
     end do
     call VARFMT(cea, X)
     write(IOOUT, cea%fmt) fu, (X(j), j = 1, Npt)
 
     ! GIBBS ENERGY
     do i = 1, Npt
-       X(i) = (Hsum(i) - Ttt(i) * Ssum(i)) * R
+       X(i) = (cea%Hsum(i) - cea%Ttt(i) * cea%Ssum(i)) * R
        if (Nplt /= 0 .and. i > ione) then
-          if (mg > 0) Pltout(i+Iplt-ione, mg) = X(i)
-          if (mm > 0) Pltout(i+Iplt-ione, mm) = Wm(i)
-          if (mmw > 0) Pltout(i+Iplt-ione, mmw) = 1 / Totn(i)
-          if (ms > 0) Pltout(i+Iplt-ione, ms) = Ssum(i) * R
-          if (mcp > 0) Pltout(i+Iplt-ione, mcp) = Cpr(i) * R
-          if (mgam > 0) Pltout(i+Iplt-ione, mgam) = Gammas(i)
-          if (mdvt > 0) Pltout(i+Iplt-ione, mdvt) = Dlvtp(i)
-          if (mdvp > 0) Pltout(i+Iplt-ione, mdvp) = Dlvpt(i)
+          if (mg > 0) cea%Pltout(i+Iplt-ione, mg) = X(i)
+          if (mm > 0) cea%Pltout(i+Iplt-ione, mm) = cea%Wm(i)
+          if (mmw > 0) cea%Pltout(i+Iplt-ione, mmw) = 1 / cea%Totn(i)
+          if (ms > 0) cea%Pltout(i+Iplt-ione, ms) = cea%Ssum(i) * R
+          if (mcp > 0) cea%Pltout(i+Iplt-ione, mcp) = cea%Cpr(i) * R
+          if (mgam > 0) cea%Pltout(i+Iplt-ione, mgam) = cea%Gammas(i)
+          if (mdvt > 0) cea%Pltout(i+Iplt-ione, mdvt) = cea%Dlvtp(i)
+          if (mdvp > 0) cea%Pltout(i+Iplt-ione, mdvp) = cea%Dlvpt(i)
        end if
     end do
     call VARFMT(cea, X)
@@ -1145,34 +1145,34 @@ contains
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '4,'
-    write(IOOUT, cea%fmt) fs, (Ssum(j) * R, j = 1, Npt)
+    write(IOOUT, cea%fmt) fs, (cea%Ssum(j) * R, j = 1, Npt)
     write(IOOUT, *)
 
     ! MOLECULAR WEIGHT
     cea%fmt(7) = '3,'
-    write(IOOUT, cea%fmt) 'M, (1/n)        ', (Wm(j), j = 1, Npt)
-    if (.not. Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/Totn(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'M, (1/n)        ', (cea%Wm(j), j = 1, Npt)
+    if (.not. Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, Npt)
 
     ! (DLV/DLP)T
     cea%fmt(7) = '5,'
-    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (Dlvpt(j), j = 1, Npt)
+    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, Npt)
 
     ! (DLV/DLT)P
     cea%fmt(7) = '4,'
-    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (Dlvtp(j), j = 1, Npt)
+    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
 
     ! HEAT CAPACITY
-    write(IOOUT, cea%fmt) fc, (Cpr(j) * R, j = 1, Npt)
+    write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * R, j = 1, Npt)
 
     ! GAMMA(S)
     cea%fmt(7) = '4,'
-    write(IOOUT, cea%fmt) 'GAMMAs          ', (Gammas(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'GAMMAs          ', (cea%Gammas(j), j = 1, Npt)
 
     ! SONIC VELOCITY
     cea%fmt(7) = '1,'
     do i = 1, Npt
-       cea%Sonvel(i) = sqrt(R0 * Gammas(i) * Ttt(i) / Wm(i))
-       if (Nplt /= 0 .and. i > ione .and. mson > 0) Pltout(i+Iplt-ione, mson) = cea%Sonvel(i)
+       cea%Sonvel(i) = sqrt(R0 * cea%Gammas(i) * cea%Ttt(i) / cea%Wm(i))
+       if (Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+Iplt-ione, mson) = cea%Sonvel(i)
     end do
     write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, Npt)
     return
@@ -1186,7 +1186,7 @@ contains
     use mod_legacy_cea
     implicit none
 
-    type(CEA_Problem), intent(in):: cea
+    type(CEA_Problem), intent(inout):: cea
 
     character(4):: mamo
     logical:: kOK
@@ -1229,7 +1229,7 @@ contains
              if (Massf) then
                 tem = cea%Mw(k)
              else
-                tem = 1 / Totn(i)
+                tem = 1 / cea%Totn(i)
              end if
              if (k <= Ng) then
                 X(i) = En(k, i) * tem
@@ -1237,7 +1237,7 @@ contains
                 if (Prod(k) /= Prod(k-1)) X(i) = 0
                 if (En(k, i) > 0) X(i) = En(k, i) * tem
              end if
-             if (Nplt /= 0 .and. i > ione .and. im > 0) Pltout(i+Iplt-ione, im) = X(i)
+             if (Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+Iplt-ione, im) = X(i)
              if (kOK .and. X(i) >= tra) kin = 1
           end do
 
@@ -1293,11 +1293,11 @@ contains
     if (Nplt > 0) then
        do i = 1, Npt
           if (i > ione) then
-             if (mvis > 0) Pltout(i+Iplt-ione, mvis) = cea%Vis(i)
-             if (mcond > 0) Pltout(i+Iplt-ione, mcond) = cea%Coneql(i)
-             if (mpn > 0) Pltout(i+Iplt-ione, mpn) = cea%Preql(i)
-             if (mcondf > 0) Pltout(i+Iplt-ione, mcondf) = cea%Confro(i)
-             if (mpnf > 0) Pltout(i+Iplt-ione, mpnf) = cea%Prfro(i)
+             if (mvis > 0) cea%Pltout(i+Iplt-ione, mvis) = cea%Vis(i)
+             if (mcond > 0) cea%Pltout(i+Iplt-ione, mcond) = cea%Coneql(i)
+             if (mpn > 0) cea%Pltout(i+Iplt-ione, mpn) = cea%Preql(i)
+             if (mcondf > 0) cea%Pltout(i+Iplt-ione, mcondf) = cea%Confro(i)
+             if (mpnf > 0) cea%Pltout(i+Iplt-ione, mpnf) = cea%Prfro(i)
           end if
        end do
     end if

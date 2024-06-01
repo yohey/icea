@@ -25,10 +25,13 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     real(8):: Cpr(Ncol), Dlvpt(Ncol), Dlvtp(Ncol), Gammas(Ncol), Hsum(Ncol)
+     real(8):: Ppp(Ncol), Ssum(Ncol), Totn(Ncol), Ttt(Ncol), Vlm(Ncol), Wm(Ncol)
+     real(8):: Pltout(500, 20)
+
      integer:: Nreac
      integer:: Jray(maxR)
-     real(8):: Dens(maxR), Enth(maxR), Pecwt(maxR), Rmw(maxR), Rtemp(maxR)
-     real(8):: Rnum(maxR, 12)
+     real(8):: Dens(maxR), Enth(maxR), Pecwt(maxR), Rmw(maxR), Rtemp(maxR), Rnum(maxR, 12)
 
      real(8):: Cpsum
      real(8):: Cft(maxNc, 9), Coef(maxNg, 9, 3), Temp(2, maxNc)

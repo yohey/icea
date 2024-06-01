@@ -41,11 +41,6 @@ module mod_legacy_cea
        Prod(0:maxNgc), Rname(maxR)
   character(200):: Pfile
 
-  real(8):: Cpr(Ncol), Dlvpt(Ncol), Dlvtp(Ncol), Gammas(Ncol), Hsum(Ncol), &
-       Ppp(Ncol), Ssum(Ncol), Totn(Ncol), Ttt(Ncol), Vlm(Ncol), &
-       Wm(Ncol)
-  real(8):: Pltout(500, 20)
-
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
