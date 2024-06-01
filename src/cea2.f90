@@ -58,6 +58,7 @@ program main
 
      !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
      if (icase > 2) then
+        cea(icase)%Dens(:) = cea(icase-1)%Dens(:)
         cea(icase)%Mu(:) = cea(icase-1)%Mu(:)
      end if
      !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
@@ -91,7 +92,7 @@ program main
         Nlm = Nlm - 1
      end if
 
-     Jray(1:Nreac) = 0
+     cea(icase)%Jray(1:cea(icase)%Nreac) = 0
 
      call SEARCH(cea(icase))
 
@@ -322,7 +323,7 @@ subroutine DETON(cea)
   Eql = .true.
 
   if (T(1) == 0) then
-     T(1) = Rtemp(1)
+     T(1) = cea%Rtemp(1)
      Nt = 1
   end if
 
@@ -346,7 +347,7 @@ subroutine DETON(cea)
         call HCALC(cea)
 
         if (Tt == 0) return
-        if (Detdbg) call OUT1
+        if (Detdbg) call OUT1(cea)
 
         h1(Npt) = Hsub0 * R
         tub(Npt) = T1
@@ -457,7 +458,7 @@ subroutine DETON(cea)
 
 ! OUTPUT
            write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
-           call OUT1
+           call OUT1(cea)
 
 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
            mp    = 0
@@ -1861,19 +1862,19 @@ subroutine HCALC(cea)
 ! if oxidant, k = 1
 ! if fuel,    k = 2
   Nspr = Nspx
-  do n = 1, Nreac
+  do n = 1, cea%Nreac
      k = 2
      if (Fox(n)(:1) == 'O' .or. Fox(n)(:1) == 'o') k = 1
-     if (Tt == 0) Tt = Rtemp(n)
+     if (Tt == 0) Tt = cea%Rtemp(n)
 
-     j = Jray(n)
+     j = cea%Jray(n)
 
      if (j == 0) then
 ! SEARCH FOR REACTANT IN STORED THERMO SPECIES. STORE INDEX IN JRAY(N).
         ifaz = 0
         do j = 1, Ngc
            if (Rname(n) == Prod(j) .or. '*' // Rname(n) == Prod(j)) then
-              Jray(n) = j
+              cea%Jray(n) = j
               if (j > Ng) then
                  write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
                  Tt = 0
@@ -1910,10 +1911,10 @@ subroutine HCALC(cea)
                     if (bb(j) == 0) exit
                     Nfla(n) = j
                     Ratom(n, j) = el(j)
-                    Rnum(n, j) = bb(j)
+                    cea%Rnum(n, j) = bb(j)
                  end do
 
-                 Jray(n) = Nspr
+                 cea%Jray(n) = Nspr
                  j = Nspr
 
                  forall(l = 1:icf, m = 1:9) cea%Coef(j, m, l) = thermo(m, l)
@@ -1942,9 +1943,9 @@ subroutine HCALC(cea)
 
 ! CALCULATE EN FOR REACTANT AND CALCULATE PROPERTIES.
 50   if (Moles) then
-        enj = Pecwt(n) / Wp(k)
+        enj = cea%Pecwt(n) / Wp(k)
      else
-        enj = Pecwt(n) / Rmw(n)
+        enj = cea%Pecwt(n) / cea%Rmw(n)
      end if
      enj = enj / tem
      if (k == 1) enj = enj * Oxfl
@@ -2241,14 +2242,14 @@ subroutine REACT(cea)
 
 ! IF OXIDANT, KR = 1
 ! IF FUEL, KR = 2
-  do n = 1, Nreac
+  do n = 1, cea%Nreac
      hOK = .false.
      T1save = 20000
      T2save = 0
      rcoefs = .true.
 
-     if (Energy(n) == 'lib' .or. Rnum(n, 1) == 0) then
-        Tt = Rtemp(n)
+     if (Energy(n) == 'lib' .or. cea%Rnum(n, 1) == 0) then
+        Tt = cea%Rtemp(n)
         rewind IOTHM
         read(IOTHM) Tg, ntgas, ntot, nall
 
@@ -2266,11 +2267,11 @@ subroutine REACT(cea)
               if (nint == 0) then
                  rcoefs = .false.
                  hOK = .true.
-                 Enth(n) = eform * 1000 / R0
+                 cea%Enth(n) = eform * 1000 / R0
 
                  if (Tt == 0) then
                     Tt = T1
-                    Rtemp(n) = T1
+                    cea%Rtemp(n) = T1
                  else
                     dift = abs(Tt - T1)
                     if (dift > 1) then
@@ -2286,7 +2287,7 @@ subroutine REACT(cea)
                                & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
                                & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') Rname(n), T1, Tt
                           Tt = T1
-                          Rtemp(n) = T1
+                          cea%Rtemp(n) = T1
                        end if
                     end if
                  end if
@@ -2305,7 +2306,7 @@ subroutine REACT(cea)
                  if (bb(j) == 0) exit
                  Nfla(n) = j
                  Ratom(n, j) = el(j)
-                 Rnum(n, j) = bb(j)
+                 cea%Rnum(n, j) = bb(j)
               end do
 
               if (Tt == 0) then
@@ -2323,10 +2324,10 @@ subroutine REACT(cea)
                     if (Tt > Tg(3)) l = 3
                  end if
 
-                 Enth(n) = (((((rcf(7, l)/5) * Tt + rcf(6, l) / 4) * Tt + rcf(5, l) / 3) * Tt &
+                 cea%Enth(n) = (((((rcf(7, l)/5) * Tt + rcf(6, l) / 4) * Tt + rcf(5, l) / 3) * Tt &
                       + rcf(4, l) / 2) * Tt + rcf(3, l)) * Tt - rcf(1, l) / Tt + rcf(2, l) * Tln + rcf(8, l)
 
-                 if (Vol .and. ifaz <= 0) Enth(n) = Enth(n) - Tt
+                 if (Vol .and. ifaz <= 0) cea%Enth(n) = cea%Enth(n) - Tt
               end if
 
               if (hOK) go to 50
@@ -2374,10 +2375,10 @@ subroutine REACT(cea)
 
 80      do kk = 1, 100
            if (atomic_symbol(kk) == Ratom(n, jj)) then
-              rm = rm + Rnum(n, jj) * atomic_mass(kk)
+              rm = rm + cea%Rnum(n, jj) * atomic_mass(kk)
               Atwt(j) = atomic_mass(kk)
               X(j) = atomic_valence(kk)
-              dat(j) = dat(j) + Rnum(n, jj)
+              dat(j) = dat(j) + cea%Rnum(n, jj)
               go to 100
            end if
         end do
@@ -2387,11 +2388,11 @@ subroutine REACT(cea)
         return
 100  end do
 
-     if (Pecwt(n) < 0) then
-        Pecwt(n) = 0
+     if (cea%Pecwt(n) < 0) then
+        cea%Pecwt(n) = 0
         if (.not. Moles .and. .not. wdone(kr)) then
            wdone(kr) = .true.
-           Pecwt(n) = 100.
+           cea%Pecwt(n) = 100.
            write(IOOUT, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", i3, ".", &
                 & /" PROGRAM SETS WEIGHT PERCENT = 100. (REACT)")') n
         else
@@ -2402,8 +2403,8 @@ subroutine REACT(cea)
      end if
 
 ! ADD CONTRIBUTIONS TO WP(K), HPP(K), AM(K), AND B0P(I, K)
-     if (Pecwt(n) > 0) wdone(kr) = .true.
-     pcwt = Pecwt(n)
+     if (cea%Pecwt(n) > 0) wdone(kr) = .true.
+     pcwt = cea%Pecwt(n)
      if (Moles) pcwt = pcwt * rm
      Wp(kr) = Wp(kr) + pcwt
 
@@ -2411,10 +2412,10 @@ subroutine REACT(cea)
         Nlm = 0
         return
      else
-        Hpp(kr) = Hpp(kr) + Enth(n) * pcwt / rm
+        Hpp(kr) = Hpp(kr) + cea%Enth(n) * pcwt / rm
         Am(kr) = Am(kr) + pcwt / rm
-        if (Dens(n) /= 0) then
-           Rh(kr) = Rh(kr) + pcwt / Dens(n)
+        if (cea%Dens(n) /= 0) then
+           Rh(kr) = Rh(kr) + pcwt / cea%Dens(n)
         else
            Rh = 0
         end if
@@ -2423,7 +2424,7 @@ subroutine REACT(cea)
            B0p(j, kr) = dat(j) * pcwt / rm + B0p(j, kr)
         end forall
 
-        Rmw(n) = rm
+        cea%Rmw(n) = rm
      end if
 
   end do
@@ -2456,11 +2457,11 @@ subroutine REACT(cea)
      end do
 
      if (.not. Moles) then
-        do n = 1, Nreac
+        do n = 1, cea%Nreac
            if (Fox(n)(:1) == 'O') then
-              Pecwt(n) = Pecwt(n) / Wp(1)
+              cea%Pecwt(n) = cea%Pecwt(n) / Wp(1)
            else
-              Pecwt(n) = Pecwt(n) / Wp(2)
+              cea%Pecwt(n) = cea%Pecwt(n) / Wp(2)
            end if
         end do
      end if
@@ -2473,9 +2474,9 @@ subroutine REACT(cea)
            write(IOOUT, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
                 & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') 'WT.FRAC'
         end if
-        do n = 1, Nreac
+        do n = 1, cea%Nreac
            write(IOOUT, '(1x, a1, ": ", a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))') &
-                Fox(n), Rname(n), Pecwt(n), Enth(n), Rtemp(n), Dens(n), (Ratom(n, i), Rnum(n, i), i = 1, Nfla(n))
+                Fox(n), Rname(n), cea%Pecwt(n), cea%Enth(n), cea%Rtemp(n), cea%Dens(n), (Ratom(n, i), cea%Rnum(n, i), i = 1, Nfla(n))
         end do
      end if
 
@@ -2527,7 +2528,7 @@ subroutine RKTOUT(cea)
      i23 = 3
   end if
 
-  call OUT1
+  call OUT1(cea)
 
   cea%fmt(4) = cea%fmt(6)
   nex = Npt - 2
@@ -3640,7 +3641,7 @@ subroutine SHCK(cea)
   end if
   if (cea%Refleq .or. cea%Reflfz) srefl = .true.
   seql = cea%Incdeq
-  if (T(1) == 0) T(1) = Rtemp(1)
+  if (T(1) == 0) T(1) = cea%Rtemp(1)
   do i = 1, cea%Nsk
      uis(i) = cea%U1(i)
      mis(i) = cea%Mach1(i)
@@ -3708,7 +3709,7 @@ subroutine SHCK(cea)
      write(IOOUT, '(/, 16X, " EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED CONDITIONS"//)')
   end if
   Eql = .false.
-  call OUT1
+  call OUT1(cea)
   write(IOOUT, '(/" INITIAL GAS (1)")')
   cea%fmt(4) = '13'
   cea%fmt(5) = ' '
@@ -3906,8 +3907,8 @@ subroutine SHCK(cea)
            write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MOLE'
            ww = wmx
         end if
-        do n = 1, Nreac
-           j = Jray(n)
+        do n = 1, cea%Nreac
+           j = cea%Jray(n)
            if (Massf) ww = cea%Mw(j)
            write(IOOUT, '(" ", A16, F8.5, 12F9.5)') Prod(j), (En(j, i) * ww, i = 1, Npt)
         end do
@@ -3970,8 +3971,8 @@ subroutine SHCK(cea)
      go to 300
   else if (iof >= Nof) then
      Tp = .false.
-     do n = 1, Nreac
-        Rtemp(n) = T(1)
+     do n = 1, cea%Nreac
+        cea%Rtemp(n) = T(1)
      end do
   else
      do i = 1, cea%Nsk
@@ -4032,7 +4033,7 @@ subroutine THERMP(cea)
               if (Tv) write(IOOUT, '(/28X, "TEMPERATURE AND VOLUME"/)')
               if (Sv) write(IOOUT, '(/30X, "ENTROPY AND VOLUME"/)')
            end if
-           call OUT1
+           call OUT1(cea)
            write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
            call OUT2(cea)
            if (Trnspt) call OUT4(cea)
@@ -4089,9 +4090,9 @@ subroutine TRANIN(cea)
         go to 300
      else if (.not. cea%Incdeq) then
         if (Npt <= 1) then
-           cea%Nm = Nreac
+           cea%Nm = cea%Nreac
            do i = 1, cea%Nm
-              j = Jray(i)
+              j = cea%Jray(i)
               cea%Ind(i) = j
               cea%Wmol(i) = cea%Mw(j)
               cea%Xs(i) = En(j, 1)*Wm(1)

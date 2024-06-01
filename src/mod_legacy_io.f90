@@ -142,8 +142,8 @@ contains
           else if (code == 'reac') then
              reacts = .true.
              Moles = .false.
-             Nreac = 0
-             Pecwt(1:maxR) = -1
+             cea%Nreac = 0
+             cea%Pecwt(1:maxR) = -1
 
              i = 1
              do while (i < ncin)
@@ -166,32 +166,32 @@ contains
 
                 ! NEW REACTANT
                 if (cx2 == 'na' .or. cx2 == 'ox' .or. cx2 == 'fu') then
-                   Nreac = min(Nreac+1, maxR)
-                   Fox(Nreac) = trim(cx15)
+                   cea%Nreac = min(cea%Nreac+1, maxR)
+                   Fox(cea%Nreac) = trim(cx15)
                    i = i + 1
-                   if (lcin(i) < 0) Rname(Nreac) = cin(i)
+                   if (lcin(i) < 0) Rname(cea%Nreac) = cin(i)
                    ifrmla = 0
-                   Nfla(Nreac) = 0
-                   Energy(Nreac) = 'lib'
-                   Enth(Nreac) = 0
-                   Jray(Nreac) = 0
-                   Pecwt(Nreac) = -1
-                   Rnum(Nreac, 1) = 0
-                   Rmw(Nreac) = 0
-                   Rtemp(Nreac) = 0
+                   Nfla(cea%Nreac) = 0
+                   Energy(cea%Nreac) = 'lib'
+                   cea%Enth(cea%Nreac) = 0
+                   cea%Jray(cea%Nreac) = 0
+                   cea%Pecwt(cea%Nreac) = -1
+                   cea%Rnum(cea%Nreac, 1) = 0
+                   cea%Rmw(cea%Nreac) = 0
+                   cea%Rtemp(cea%Nreac) = 0
 
                 else
                    ! LOOK FOR PERCENTS
                    if (cx1 == 'm' .or. cx1 == 'w') then
                       if (lcin(i+1) > 0) then
                          i = i + 1
-                         Pecwt(Nreac) = dpin(i)
+                         cea%Pecwt(cea%Nreac) = dpin(i)
                       else
                          caseOK = .false.
                          write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
                       end if
 
-                      if (cx1 == 'm' .and. Nreac == 1) Moles = .true.
+                      if (cx1 == 'm' .and. cea%Nreac == 1) Moles = .true.
 
                       if (cx1 == 'm' .and. .not. Moles .or. cx1 == 'w' .and. Moles) then
                          caseOK = .false.
@@ -202,12 +202,12 @@ contains
                    else if (cx1 == 't') then
                       if (lcin(i+1) > 0) then
                          i = i + 1
-                         Rtemp(Nreac) = dpin(i)
+                         cea%Rtemp(cea%Nreac) = dpin(i)
 
                          if (lcin(i-1) < 1) then
-                            if (index(cx15, 'r') > 0) Rtemp(Nreac) = Rtemp(Nreac) / 1.8d0
-                            if (index(cx15, 'c') > 0) Rtemp(Nreac) = Rtemp(Nreac) + 273.15d0
-                            if (index(cx15, 'f') > 0) Rtemp(Nreac) = (Rtemp(Nreac) - 32) / 1.8d0 + 273.15d0
+                            if (index(cx15, 'r') > 0) cea%Rtemp(cea%Nreac) = cea%Rtemp(cea%Nreac) / 1.8d0
+                            if (index(cx15, 'c') > 0) cea%Rtemp(cea%Nreac) = cea%Rtemp(cea%Nreac) + 273.15d0
+                            if (index(cx15, 'f') > 0) cea%Rtemp(cea%Nreac) = (cea%Rtemp(cea%Nreac) - 32) / 1.8d0 + 273.15d0
                          end if
 
                       else
@@ -217,40 +217,40 @@ contains
 
                       ! LOOK FOR ENTHALPY
                    else if (cx1 == 'h' .or. cx1 == 'u') then
-                      Energy(Nreac) = cx15
+                      Energy(cea%Nreac) = cx15
 
                       if (lcin(i+1) > 0) then
                          i = i + 1
-                         Enth(Nreac) = dpin(i) * 1000 / R0
+                         cea%Enth(cea%Nreac) = dpin(i) * 1000 / R0
 
-                         if (index(cin(i-1), 'c') > 0) Enth(Nreac) = Enth(Nreac) * 4.184d0
-                         if (index(cin(i-1), 'k') > 0) Enth(Nreac) = Enth(Nreac) * 1000
+                         if (index(cin(i-1), 'c') > 0) cea%Enth(cea%Nreac) = cea%Enth(cea%Nreac) * 4.184d0
+                         if (index(cin(i-1), 'k') > 0) cea%Enth(cea%Nreac) = cea%Enth(cea%Nreac) * 1000
                       end if
 
                       ! LOOK FOR DENSITY
                    else if (cx3 == 'rho' .or. cx3 == 'den') then
                       if (lcin(i+1) > 0) then
                          i = i + 1
-                         Dens(Nreac) = dpin(i)
-                         if (index(cx15, 'kg') > 0) Dens(Nreac) = Dens(Nreac) / 1000
+                         cea%Dens(cea%Nreac) = dpin(i)
+                         if (index(cx15, 'kg') > 0) cea%Dens(cea%Nreac) = cea%Dens(cea%Nreac) / 1000
                       end if
 
                       ! CHECK FOR CHEMICAL SYMBOLS IN EXPLODED FORMULA
                    else if ((lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) > 0) then
-                      Energy(Nreac) = ' '
+                      Energy(cea%Nreac) = ' '
                       ifrmla = ifrmla + 1
-                      Nfla(Nreac) = ifrmla
+                      Nfla(cea%Nreac) = ifrmla
 
                       if (lcin(i) == -2) then
                          ix = index(lc, cx2(2:2))
                          if (ix > 0) cx2(2:2) = uc(ix:ix)
                       end if
 
-                      Ratom(Nreac, ifrmla) = cx2
+                      Ratom(cea%Nreac, ifrmla) = cx2
                       if (lcin(i+1) == i) then
-                         Rnum(Nreac, ifrmla) = dpin(i+1)
+                         cea%Rnum(cea%Nreac, ifrmla) = dpin(i+1)
                       else
-                         Rnum(Nreac, ifrmla) = 1
+                         cea%Rnum(cea%Nreac, ifrmla) = 1
                       end if
 
                       i = i + 1
@@ -449,8 +449,8 @@ contains
                 if (.not. Vol .and. .not. Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
              end if
 
-             if (reacts) call REACT
-             if (Nreac == 0 .or. Nlm <= 0) then
+             if (reacts) call REACT(cea)
+             if (cea%Nreac == 0 .or. Nlm <= 0) then
                 write(IOOUT, '(/" ERROR IN REACTANTS DATASET (INPUT)")')
                 caseOK = .false.
                 write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
@@ -884,7 +884,7 @@ contains
   end subroutine INFREE
 
 
-  subroutine OUT1
+  subroutine OUT1(cea)
     !***********************************************************************
     ! OUT1 WRITES REACTANT AND FUEL-OXIDANT RATIO INformatION.
     !
@@ -892,6 +892,8 @@ contains
     !***********************************************************************
     use mod_legacy_cea
     implicit none
+
+    type(CEA_Problem), intent(inout):: cea
 
     integer:: i, n
     real(8):: rho
@@ -908,8 +910,8 @@ contains
        if (SIunit) write(IOOUT, '(42X, "(SEE NOTE)     KJ/KG-MOL      K  ")')
     end if
 
-    do n = 1, Nreac
-       write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') Fox(n), Rname(n), Pecwt(n), Enth(n)*R, Rtemp(n)
+    do n = 1, cea%Nreac
+       write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') Fox(n), Rname(n), cea%Pecwt(n), cea%Enth(n)*R, cea%Rtemp(n)
     end do
 
     phi = 0

@@ -46,11 +46,6 @@ module mod_legacy_cea
        Wm(Ncol)
   real(8):: Pltout(500, 20)
 
-  integer:: Nreac
-  integer:: Jray(maxR)
-  real(8):: Dens(maxR), Enth(maxR), Pecwt(maxR), Rmw(maxR), Rtemp(maxR)
-  real(8):: Rnum(maxR, 12)
-
   real(8):: Tg(4)
 
   ! for subroutine CPHS and ALLCON
