@@ -25,6 +25,10 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     real(8):: Eqrat, Hsub0, Oxfl, Pp, R, Size, S0, Tln, Tm, Trace, Tt, Viscns, Vv
+     real(8):: Atwt(maxEl), B0(maxEl), X(maxMat)
+     real(8):: A(maxEl, maxNgc), G(maxMat, maxMat+1)
+
      character(2):: Elmt(maxEl), Ratom(maxR, 12)
      character(8):: Fox(maxR)
      character(10):: Thdate

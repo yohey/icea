@@ -38,7 +38,7 @@ contains
     Nomit = 0
     Nsert = 0
     reacts = .false.
-    Trace = 0
+    cea%Trace = 0
     Short = .false.
     Massf = .false.
     Debug(1:Ncol) = .false.
@@ -110,7 +110,7 @@ contains
                       Trnspt = .true.
 
                    else if (cx4 == 'trac') then
-                      Trace = dpin(i+1)
+                      cea%Trace = dpin(i+1)
 
                    else if (cin(i)(:5) == 'short') then
                       Short = .true.
@@ -268,10 +268,10 @@ contains
              V(1:maxPv) = 0
              T(1:maxT) = 0
              P(1) = 1
-             Trace = 0
+             cea%Trace = 0
              Lsave = 0
-             R = R0 / 4184
-             S0 = 0
+             cea%R = R0 / 4184
+             cea%S0 = 0
              hr = 1.d30
              ur = 1.d30
              Tp = .false.
@@ -414,13 +414,13 @@ contains
                 if (refl .and. Eql) cea%Refleq = .true.
              end if
 
-             Hsub0 = min(hr, ur)
-             Size = 0
+             cea%Hsub0 = min(hr, ur)
+             cea%Size = 0
 
              if (hr > 0.9d30) hr = 0
              if (ur > 0.9d30) ur = 0
-             if (Trnspt) Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
-             if (SIunit) R = R0 / 1000
+             if (Trnspt) cea%Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
+             if (SIunit) cea%R = R0 / 1000
              if (Detn .or. Shock) Newr = .true.
 
              if (.not. Short) then
@@ -432,7 +432,7 @@ contains
                      Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
                      incd, cea%Rkt, cea%Froz, Eql, Ions, SIunit, cea%Debugf, cea%Shkdbg, Detdbg, Trnspt
                 if (T(1) > 0) write(IOOUT, '(/" T,K =", 7f11.4)') (T(jj), jj = 1, Nt)
-                write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') Trace, S0, hr, ur
+                write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') cea%Trace, cea%S0, hr, ur
                 if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
              end if
 
@@ -619,10 +619,10 @@ contains
              cea%Tcest = mix(1)
 
           else if (cx4 == 'trac') then
-             Trace = mix(1)
+             cea%Trace = mix(1)
 
           else if (cx3 == 's/r') then
-             S0 = mix(1)
+             cea%S0 = mix(1)
 
           else if (cx3 == 'u/r' .or. cx2 == 'ur') then
              ur = mix(1)
@@ -911,24 +911,25 @@ contains
     end if
 
     do n = 1, cea%Nreac
-       write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') cea%Fox(n), cea%Rname(n), cea%Pecwt(n), cea%Enth(n)*R, cea%Rtemp(n)
+       write(IOOUT, '(1x, a8, 4x, a15, 11x, f12.7, f14.3, f11.3)') &
+            cea%Fox(n), cea%Rname(n), cea%Pecwt(n), cea%Enth(n)*cea%R, cea%Rtemp(n)
     end do
 
     phi = 0
-    tem = (Vpls(1) + Vmin(1)) * Oxfl
+    tem = (Vpls(1) + Vmin(1)) * cea%Oxfl
     if (ABS(tem) >= 1.d-3) phi = -(Vmin(2) + Vpls(2)) / tem
 
     if (cea%Fox(1) == 'NAME') then
        pfuel = 0
     else
-       pfuel = 100 / (1 + Oxfl)
+       pfuel = 100 / (1 + cea%Oxfl)
     end if
 
     if (any(Rh /= 0)) then
        if (any(Rh == 0)) then
           rho = max(Rh(1), Rh(2))
        else
-          rho = (Oxfl + 1) * Rh(1) * Rh(2) / (Rh(1) + Oxfl * Rh(2))
+          rho = (cea%Oxfl + 1) * Rh(1) * Rh(2) / (Rh(1) + cea%Oxfl * Rh(2))
        end if
        if (SIunit) then
           rho = rho * 1000
@@ -939,7 +940,7 @@ contains
     end if
 
     write(IOOUT, '(/" O/F=", F11.5, 2X, "%FUEL=", F10.6, 2X, "R,EQ.RATIO=", F9.6, 2X, "PHI,EQ.RATIO=", F9.6)') &
-         Oxfl, pfuel, Eqrat, phi
+         cea%Oxfl, pfuel, cea%Eqrat, phi
     return
   end subroutine OUT1
 
@@ -1050,11 +1051,11 @@ contains
        end if
 100 continue
     do i = Iplt + 1, Iplt + Npt
-       if (mof > 0) cea%Pltout(i, mof) = Oxfl
+       if (mof > 0) cea%Pltout(i, mof) = cea%Oxfl
        if (mpf > 0) cea%Pltout(i, mpf) = pfuel
        if (mph > 0) cea%Pltout(i, mph) = phi
-       if (mfa > 0) cea%Pltout(i, mfa) = 1.d0/Oxfl
-       if (meq > 0) cea%Pltout(i, meq) = Eqrat
+       if (mfa > 0) cea%Pltout(i, mfa) = 1.d0/cea%Oxfl
+       if (meq > 0) cea%Pltout(i, meq) = cea%Eqrat
     end do
 
     if (SIunit) then
@@ -1085,14 +1086,14 @@ contains
     call VARFMT(cea, cea%Ppp)
 
     do i = 1, Npt
-       X(i) = cea%Ppp(i) * pfactor
+       cea%X(i) = cea%Ppp(i) * pfactor
        if (Nplt /= 0 .and. i > ione) then
-          if (mp > 0) cea%Pltout(i + Iplt - ione, mp) = X(i)
+          if (mp > 0) cea%Pltout(i + Iplt - ione, mp) = cea%X(i)
           if (mt > 0) cea%Pltout(i + Iplt - ione, mt) = cea%Ttt(i)
        end if
     end do
 
-    write(IOOUT, cea%fmt) fp, (X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fp, (cea%X(j), j = 1, Npt)
 
     ! TEMPERATURE
     cea%fmt(4) = '13'
@@ -1102,50 +1103,50 @@ contains
 
     ! DENSITY
     do i = 1, Npt
-       if (cea%Vlm(i) /= 0) X(i) = vnum / cea%Vlm(i)
-       if (Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+Iplt-ione, mrho) = X(i)
+       if (cea%Vlm(i) /= 0) cea%X(i) = vnum / cea%Vlm(i)
+       if (Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+Iplt-ione, mrho) = cea%X(i)
     end do
-    call EFMT(cea%fmt(4), frh, X)
+    call EFMT(cea%fmt(4), frh, cea%X)
 
     ! ENTHALPY
     do i = 1, Npt
-       X(i) = cea%Hsum(i) * R
-       if (Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+Iplt-ione, mh) = X(i)
+       cea%X(i) = cea%Hsum(i) * cea%R
+       if (Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+Iplt-ione, mh) = cea%X(i)
     end do
     cea%fmt(4) = cea%fmt(6)
-    call VARFMT(cea, X)
-    write(IOOUT, cea%fmt) fh, (X(j), j = 1, Npt)
+    call VARFMT(cea, cea%X)
+    write(IOOUT, cea%fmt) fh, (cea%X(j), j = 1, Npt)
 
     ! INTERNAL ENERGY
     do i = 1, Npt
-       X(i) = (cea%Hsum(i) - cea%Ppp(i) * cea%Vlm(i) / R0) * R
-       if (Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+Iplt-ione, mie) = X(i)
+       cea%X(i) = (cea%Hsum(i) - cea%Ppp(i) * cea%Vlm(i) / R0) * cea%R
+       if (Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+Iplt-ione, mie) = cea%X(i)
     end do
-    call VARFMT(cea, X)
-    write(IOOUT, cea%fmt) fu, (X(j), j = 1, Npt)
+    call VARFMT(cea, cea%X)
+    write(IOOUT, cea%fmt) fu, (cea%X(j), j = 1, Npt)
 
     ! GIBBS ENERGY
     do i = 1, Npt
-       X(i) = (cea%Hsum(i) - cea%Ttt(i) * cea%Ssum(i)) * R
+       cea%X(i) = (cea%Hsum(i) - cea%Ttt(i) * cea%Ssum(i)) * cea%R
        if (Nplt /= 0 .and. i > ione) then
-          if (mg > 0) cea%Pltout(i+Iplt-ione, mg) = X(i)
+          if (mg > 0) cea%Pltout(i+Iplt-ione, mg) = cea%X(i)
           if (mm > 0) cea%Pltout(i+Iplt-ione, mm) = cea%Wm(i)
           if (mmw > 0) cea%Pltout(i+Iplt-ione, mmw) = 1 / cea%Totn(i)
-          if (ms > 0) cea%Pltout(i+Iplt-ione, ms) = cea%Ssum(i) * R
-          if (mcp > 0) cea%Pltout(i+Iplt-ione, mcp) = cea%Cpr(i) * R
+          if (ms > 0) cea%Pltout(i+Iplt-ione, ms) = cea%Ssum(i) * cea%R
+          if (mcp > 0) cea%Pltout(i+Iplt-ione, mcp) = cea%Cpr(i) * cea%R
           if (mgam > 0) cea%Pltout(i+Iplt-ione, mgam) = cea%Gammas(i)
           if (mdvt > 0) cea%Pltout(i+Iplt-ione, mdvt) = cea%Dlvtp(i)
           if (mdvp > 0) cea%Pltout(i+Iplt-ione, mdvp) = cea%Dlvpt(i)
        end if
     end do
-    call VARFMT(cea, X)
-    write(IOOUT, cea%fmt) fgi, (X(j), j = 1, Npt)
+    call VARFMT(cea, cea%X)
+    write(IOOUT, cea%fmt) fgi, (cea%X(j), j = 1, Npt)
 
     ! ENTROPY
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '4,'
-    write(IOOUT, cea%fmt) fs, (cea%Ssum(j) * R, j = 1, Npt)
+    write(IOOUT, cea%fmt) fs, (cea%Ssum(j) * cea%R, j = 1, Npt)
     write(IOOUT, *)
 
     ! MOLECULAR WEIGHT
@@ -1162,7 +1163,7 @@ contains
     if (Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
 
     ! HEAT CAPACITY
-    write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * R, j = 1, Npt)
+    write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * cea%R, j = 1, Npt)
 
     ! GAMMA(S)
     cea%fmt(7) = '4,'
@@ -1195,7 +1196,7 @@ contains
     real(8):: tra
 
     tra = 5.d-6
-    if (Trace /= 0.) tra = Trace
+    if (cea%Trace /= 0.) tra = cea%Trace
 
     ! MASS OR MOLE FRACTIONS
     if (Massf) then
@@ -1232,20 +1233,20 @@ contains
                 tem = 1 / cea%Totn(i)
              end if
              if (k <= Ng) then
-                X(i) = En(k, i) * tem
+                cea%X(i) = En(k, i) * tem
              else
-                if (cea%Prod(k) /= cea%Prod(k-1)) X(i) = 0
-                if (En(k, i) > 0) X(i) = En(k, i) * tem
+                if (cea%Prod(k) /= cea%Prod(k-1)) cea%X(i) = 0
+                if (En(k, i) > 0) cea%X(i) = En(k, i) * tem
              end if
-             if (Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+Iplt-ione, im) = X(i)
-             if (kOK .and. X(i) >= tra) kin = 1
+             if (Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+Iplt-ione, im) = cea%X(i)
+             if (kOK .and. cea%X(i) >= tra) kin = 1
           end do
 
           if (kin == 1) then
-             if (Trace == 0) then
-                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (X(i), i = 1, Npt)
+             if (cea%Trace == 0) then
+                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (cea%X(i), i = 1, Npt)
              else
-                call EFMT(cea%fmt(4), cea%Prod(k), X)
+                call EFMT(cea%fmt(4), cea%Prod(k), cea%X)
              end if
              if (cea%Prod(k) == cea%Omit(notuse)) notuse = notuse - 1
           else if (cea%Prod(k) /= cea%Prod(k-1)) then

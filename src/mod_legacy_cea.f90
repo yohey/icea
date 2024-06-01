@@ -29,11 +29,6 @@ module mod_legacy_cea
   logical:: Convg, Debug(Ncol), Detdbg, Detn, Eql, Gonly, Hp, Ions, Massf, &
        Moles, Newr, Pderiv, Shock, Short, Siunit, Sp, Tp, Trnspt, Vol
 
-  real(8):: Eqrat, Hsub0, Oxfl, Pp, R, Size, S0, Tln, Tm, &
-       Trace, Tt, Viscns, Vv
-  real(8):: Atwt(maxEl), B0(maxEl), X(maxMat)
-  real(8):: A(maxEl, maxNgc), G(maxMat, maxMat+1)
-
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
