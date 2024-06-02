@@ -603,61 +603,6 @@ subroutine DETON(cea)
 end subroutine DETON
 
 
-
-subroutine EFMT(Fone, Aa, Vx, Npt)
-!***********************************************************************
-! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
-!***********************************************************************
-  use mod_cea
-  implicit none
-! DUMMY ARGUMENTS
-  character(15):: Aa
-  character(4):: Fone
-  real(8):: Vx(maxMat)
-  integer, intent(in):: Npt
-! LOCAL VARIABLES
-  character(4), parameter:: fmix(5) = [character(4):: 'I3,', '6.4,', 'I2,', '9X,', '5.3,']
-  character(4):: frmt(8) = [character(4):: '(1H ', ',A15', ',', '9X,', '13(F', '6.4,', 'I2,', '1X))']
-  integer:: i, j, j1, ne(Ncol)
-  real(8):: ee, fe, w(Ncol)
-
-
-  frmt(6) = fmix(2)
-  frmt(7) = fmix(3)
-  j1 = 1
-  frmt(4) = '1x,'
-
-  if (Fone == '9X,') then
-     j1 = 2
-     frmt(4) = fmix(4)
-  end if
-
-  do i = j1, Npt
-     if (Vx(i) /= 0.) then
-        ee = log10(abs(Vx(i)))
-        ne(i) = int(ee)
-        fe = ne(i)
-
-        if (ee < -0.2181E-05 .and. fe /= ee) ne(i) = ne(i) - 1
-
-        if (abs(ne(i)) >= 10) then
-           frmt(6) = fmix(5)
-           frmt(7) = fmix(1)
-        end if
-        w(i) = Vx(i) / 10.**ne(i)
-     else
-        w(i) = 0
-        ne(i) = 0
-     end if
-  end do
-
-  write(IOOUT, frmt) Aa, (w(j), ne(j), j = j1, Npt)
-
-  return
-end subroutine EFMT
-
-
-
 subroutine EQLBRM(cea)
 !***********************************************************************
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
