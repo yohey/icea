@@ -16,6 +16,11 @@ target_sources(${CEA_EXECUTABLE}
   src/mod_legacy_io.f90
 )
 
+target_compile_options(${CEA_EXECUTABLE}
+  PRIVATE
+  "-std=f2023"
+)
+
 
 foreach(LIB IN ITEMS "thermo" "trans")
   add_custom_target(${LIB} ALL
