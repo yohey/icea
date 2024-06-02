@@ -39,11 +39,11 @@ contains
     Nsert = 0
     reacts = .false.
     cea%Trace = 0
-    Short = .false.
-    Massf = .false.
-    Debug(1:Ncol) = .false.
+    cea%Short = .false.
+    cea%Massf = .false.
+    cea%Debug(1:Ncol) = .false.
     Nplt = 0
-    SIunit = .true.
+    cea%SIunit = .true.
     pltdat = .false.
 
     do
@@ -78,7 +78,7 @@ contains
              ! KEYWORD 'THER' READ
              ! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
           else if (code == 'ther') then
-             Newr = .true.
+             cea%Newr = .true.
              rewind IOTHM
              call UTHERM(cea, readOK)
              if (.not. readOK) then
@@ -104,26 +104,26 @@ contains
                    cx4 = cin(i)(1:4)
 
                    if (cx3 == 'cal') then
-                      SIunit = .false.
+                      cea%SIunit = .false.
 
                    else if (cx4 == 'tran' .or. cx3 == 'trn') then
-                      Trnspt = .true.
+                      cea%Trnspt = .true.
 
                    else if (cx4 == 'trac') then
                       cea%Trace = dpin(i+1)
 
                    else if (cin(i)(:5) == 'short') then
-                      Short = .true.
+                      cea%Short = .true.
 
                    else if (cin(i)(:5) == 'massf') then
-                      Massf = .true.
+                      cea%Massf = .true.
 
                    else if (cx3 == 'deb' .or. cx3 == 'dbg') then
-                      forall(j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol) Debug(int(dpin(j))) = .true.
+                      forall(j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol) cea%Debug(int(dpin(j))) = .true.
                       forall(j = i+1:ncin, lcin(j) == i) lcin(j) = 0
 
                    else if (cx2 == 'si') then
-                      SIunit = .true.
+                      cea%SIunit = .true.
 
                    else if (pltdat .and. Nplt < 20) then
                       Nplt = Nplt + 1
@@ -141,7 +141,7 @@ contains
              ! SORT AND STORE DATA FROM 'REAC' DATASET.
           else if (code == 'reac') then
              reacts = .true.
-             Moles = .false.
+             cea%Moles = .false.
              cea%Nreac = 0
              cea%Pecwt(1:maxR) = -1
 
@@ -191,9 +191,9 @@ contains
                          write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
                       end if
 
-                      if (cx1 == 'm' .and. cea%Nreac == 1) Moles = .true.
+                      if (cx1 == 'm' .and. cea%Nreac == 1) cea%Moles = .true.
 
-                      if (cx1 == 'm' .and. .not. Moles .or. cx1 == 'w' .and. Moles) then
+                      if (cx1 == 'm' .and. .not. cea%Moles .or. cx1 == 'w' .and. cea%Moles) then
                          caseOK = .false.
                          write(IOOUT, '(/" MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)")')
                       end if
@@ -274,15 +274,15 @@ contains
              cea%S0 = 0
              hr = 1.d30
              ur = 1.d30
-             Tp = .false.
-             Hp = .false.
-             Sp = .false.
+             cea%Tp = .false.
+             cea%Hp = .false.
+             cea%Sp = .false.
              cea%Rkt = .false.
-             Shock = .false.
-             Detn = .false.
-             Vol = .false.
-             Ions = .false.
-             Eql = .false.
+             cea%Shock = .false.
+             cea%Detn = .false.
+             cea%Vol = .false.
+             cea%Ions = .false.
+             cea%Eql = .false.
              cea%Froz = .false.
              cea%Fac = .false.
              cea%Debugf = .false.
@@ -313,7 +313,7 @@ contains
              cea%Reflfz = .false.
              Np = 0
              Nt = 1
-             Trnspt = .false.
+             cea%Trnspt = .false.
 
              ! PROCESS LITERAL VARIABLES IN 'PROB' DATASET THAT DO NOT HAVE
              ! ASSOCIATED NUMERICAL DATA.
@@ -331,25 +331,25 @@ contains
                       lcin(i+1) = 0
 
                    else if (cx2 == 'tp' .or. cx2 == 'pt') then
-                      Tp = .true.
+                      cea%Tp = .true.
 
                    else if (cx2 == 'hp' .or. cx2 == 'ph') then
-                      Hp = .true.
+                      cea%Hp = .true.
 
                    else if (cx2 == 'sp' .or. cx2 == 'ps') then
-                      Sp = .true.
+                      cea%Sp = .true.
 
                    else if (cx2 == 'sv' .or. cx2 == 'vs') then
-                      Sp = .true.
-                      Vol = .true.
+                      cea%Sp = .true.
+                      cea%Vol = .true.
 
                    else if (cx2 == 'uv' .or. cx2 == 'vu') then
-                      Hp = .true.
-                      Vol = .true.
+                      cea%Hp = .true.
+                      cea%Vol = .true.
 
                    else if (cx2 == 'tv' .or. cx2 == 'vt') then
-                      Tp = .true.
-                      Vol = .true.
+                      cea%Tp = .true.
+                      cea%Vol = .true.
 
                    else if (cx2 == 'ro' .or. cx3 == 'rkt') then
                       cea%Rkt = .true.
@@ -357,42 +357,42 @@ contains
                    else if (cx3 == 'dbg' .or. cx3 == 'deb') then
                       cea%Debugf = .true.
                       cea%Shkdbg = .true.
-                      Detdbg = .true.
+                      cea%Detdbg = .true.
 
                    else if (cx3 == 'fac') then
                       cea%Rkt = .true.
-                      Eql = .true.
+                      cea%Eql = .true.
                       cea%Fac = .true.
                       cea%Froz = .false.
 
                    else if (cx2 == 'eq') then
-                      Eql = .true.
+                      cea%Eql = .true.
 
                    else if (cx2 == 'fr' .or. cx2 == 'fz') then
                       cea%Froz = .true.
 
                    else if (cx2 == 'sh') then
-                      Shock = .true.
+                      cea%Shock = .true.
 
                    else if (cx3 == 'inc') then
-                      Shock = .true.
+                      cea%Shock = .true.
                       incd = .true.
-                      if (index(cx15, 'eq') > 0) Eql = .true.
+                      if (index(cx15, 'eq') > 0) cea%Eql = .true.
                       if (index(cx15, 'fr') > 0) cea%Froz = .true.
                       if (index(cx15, 'fz') > 0) cea%Froz = .true.
 
                    else if (cx3 == 'ref') then
-                      Shock = .true.
+                      cea%Shock = .true.
                       refl = .true.
-                      if (index(cx15, 'eq') > 0) Eql = .true.
+                      if (index(cx15, 'eq') > 0) cea%Eql = .true.
                       if (index(cx15, 'fr') > 0) cea%Froz = .true.
                       if (index(cx15, 'fz') > 0) cea%Froz = .true.
 
                    else if (cx3 == 'det') then
-                      Detn = .true.
+                      cea%Detn = .true.
 
                    else if (cx4 == 'ions') then
-                      Ions = .true.
+                      cea%Ions = .true.
 
                    else
                       write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
@@ -407,11 +407,11 @@ contains
              exit
 
           else if (code(1:3) == 'end') then
-             if (Shock) then
+             if (cea%Shock) then
                 if (incd .and. cea%Froz) cea%Incdfz = .true.
-                if (incd .and. Eql) cea%Incdeq = .true.
+                if (incd .and. cea%Eql) cea%Incdeq = .true.
                 if (refl .and. cea%Froz) cea%Reflfz = .true.
-                if (refl .and. Eql) cea%Refleq = .true.
+                if (refl .and. cea%Eql) cea%Refleq = .true.
              end if
 
              cea%Hsub0 = min(hr, ur)
@@ -419,26 +419,27 @@ contains
 
              if (hr > 0.9d30) hr = 0
              if (ur > 0.9d30) ur = 0
-             if (Trnspt) cea%Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
-             if (SIunit) cea%R = R0 / 1000
-             if (Detn .or. Shock) Newr = .true.
+             if (cea%Trnspt) cea%Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
+             if (cea%SIunit) cea%R = R0 / 1000
+             if (cea%Detn .or. cea%Shock) cea%Newr = .true.
 
-             if (.not. Short) then
+             if (.not. cea%Short) then
                 write(IOOUT, '(/" OPTIONS: TP=", l1, "  HP=", l1, "  SP=", l1, "  TV=", l1, &
                      & "  UV=", l1, "  SV=", l1, "  DETN=", l1, "  SHOCK=", l1, &
                      & "  REFL=", l1, "  INCD=", l1, /" RKT=", l1, "  FROZ=", l1, &
                      & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
                      & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
-                     Tp, (Hp .and. .not. Vol), Sp, (Tp .and. Vol), (Hp .and. Vol), (Sp .and. Vol), Detn, Shock, refl, &
-                     incd, cea%Rkt, cea%Froz, Eql, Ions, SIunit, cea%Debugf, cea%Shkdbg, Detdbg, Trnspt
+                     cea%Tp, (cea%Hp .and. .not. cea%Vol), cea%Sp, (cea%Tp .and. cea%Vol), (cea%Hp .and. cea%Vol), &
+                     (cea%Sp .and. cea%Vol), cea%Detn, cea%Shock, refl, incd, cea%Rkt, cea%Froz, cea%Eql, cea%Ions, &
+                     cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
                 if (T(1) > 0) write(IOOUT, '(/" T,K =", 7f11.4)') (T(jj), jj = 1, Nt)
                 write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') cea%Trace, cea%S0, hr, ur
-                if (Np > 0 .and. Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
+                if (Np > 0 .and. cea%Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
              end if
 
              if (cea%Rkt) then
-                if (Nt == 0) Hp = .true.
-                if (.not. Short) then
+                if (Nt == 0) cea%Hp = .true.
+                if (.not. cea%Short) then
                    write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
                    write(IOOUT, '(/" Pc/P =", 9f11.4)') (cea%Pcp(jj), jj = 1, cea%Npp)
                    write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
@@ -446,7 +447,7 @@ contains
                    write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
                 end if
              else
-                if (.not. Vol .and. .not. Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
+                if (.not. cea%Vol .and. .not. cea%Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
              end if
 
              if (reacts) call REACT(cea)
@@ -490,11 +491,11 @@ contains
                 end do
              end if
 
-             if (.not. Sp .and. .not. Tp .and. .not. Hp .and. .not. cea%Rkt .and. .not. Detn .and. .not. Shock) then
+             if (.not. (cea%Sp .or. cea%Tp .or. cea%Hp .or. cea%Rkt .or. cea%Detn .or. cea%Shock)) then
                 caseOK = .false.
                 write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
 
-             else if (Tp .and. T(1) <= 0) then
+             else if (cea%Tp .and. T(1) <= 0) then
                 caseOK = .false.
                 write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
 
@@ -900,14 +901,14 @@ contains
 
     write(IOOUT, '(" CASE = ", a15)') cea%Case
 
-    if (Moles) then
+    if (cea%Moles) then
        write(IOOUT, '(/13X, "REACTANT", 20x, a11, "      ENERGY", 6x, "TEMP")') '   MOLES   '
-       if (.not. SIunit) write(IOOUT, '(57X, " CAL/MOL ", 6x, "K")')
-       if (SIunit) write(IOOUT, '(57X, "KJ/KG-MOL", 6x, "K")')
+       if (.not. cea%SIunit) write(IOOUT, '(57X, " CAL/MOL ", 6x, "K")')
+       if (cea%SIunit) write(IOOUT, '(57X, "KJ/KG-MOL", 6x, "K")')
     else
        write(IOOUT, '(/13X, "REACTANT", 20x, a11, "      ENERGY", 6x, "TEMP")') 'WT FRACTION'
-       if (.not. SIunit) write(IOOUT, '(42X, "(SEE NOTE)      CAL/MOL       K  ")')
-       if (SIunit) write(IOOUT, '(42X, "(SEE NOTE)     KJ/KG-MOL      K  ")')
+       if (.not. cea%SIunit) write(IOOUT, '(42X, "(SEE NOTE)      CAL/MOL       K  ")')
+       if (cea%SIunit) write(IOOUT, '(42X, "(SEE NOTE)     KJ/KG-MOL      K  ")')
     end if
 
     do n = 1, cea%Nreac
@@ -931,7 +932,7 @@ contains
        else
           rho = (cea%Oxfl + 1) * Rh(1) * Rh(2) / (Rh(1) + cea%Oxfl * Rh(2))
        end if
-       if (SIunit) then
+       if (cea%SIunit) then
           rho = rho * 1000
           write(IOOUT, '(/" REACTANT DENSITY=", F8.2, " KG/CU M")') rho
        else
@@ -1030,7 +1031,7 @@ contains
           else if (cea%Pltvar(i)(:2) == 's ') then
              ms = i
           else if (cea%Pltvar(i)(:1) == 'm' .and. cea%Pltvar(i)(:2) /= 'ma') then
-             if (.not. Gonly .and. cea%Pltvar(i)(:2) == 'mw') then
+             if (.not. cea%Gonly .and. cea%Pltvar(i)(:2) == 'mw') then
                 mmw = i
              else
                 mm = i
@@ -1058,7 +1059,7 @@ contains
        if (meq > 0) cea%Pltout(i, meq) = cea%Eqrat
     end do
 
-    if (SIunit) then
+    if (cea%SIunit) then
        pfactor = 1
        fp = 'P, BAR'
        vnum = 1.d05
@@ -1152,15 +1153,15 @@ contains
     ! MOLECULAR WEIGHT
     cea%fmt(7) = '3,'
     write(IOOUT, cea%fmt) 'M, (1/n)        ', (cea%Wm(j), j = 1, Npt)
-    if (.not. Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, Npt)
+    if (.not. cea%Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, Npt)
 
     ! (DLV/DLP)T
     cea%fmt(7) = '5,'
-    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, Npt)
+    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, Npt)
 
     ! (DLV/DLT)P
     cea%fmt(7) = '4,'
-    if (Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
+    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
 
     ! HEAT CAPACITY
     write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * cea%R, j = 1, Npt)
@@ -1199,13 +1200,13 @@ contains
     if (cea%Trace /= 0.) tra = cea%Trace
 
     ! MASS OR MOLE FRACTIONS
-    if (Massf) then
+    if (cea%Massf) then
        mamo = 'MASS'
     else
        mamo = 'MOLE'
     end if
 
-    if (Eql) then
+    if (cea%Eql) then
        write(IOOUT, '(/1x, A4, " FRACTIONS"/)') mamo
        notuse = 0
 
@@ -1227,7 +1228,7 @@ contains
 
           kin = 0
           do i = 1, Npt
-             if (Massf) then
+             if (cea%Massf) then
                 tem = cea%Mw(k)
              else
                 tem = 1 / cea%Totn(i)
@@ -1257,14 +1258,14 @@ contains
     end if
 
     write(IOOUT, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') cea%Tg(4)
-    if (.not. Short) then
+    if (.not. cea%Short) then
        write(IOOUT, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", a4, &
             & " FRACTIONS", /"    WERE LESS THAN", 1pe13.6, &
             & " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
        write(IOOUT, '(5(1x, a15))') (cea%Omit(i), i = 1, notuse)
     end if
 
-    if (.not. Moles) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
+    if (.not. cea%Moles) write(IOOUT, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
          & " OXIDANT IN TOTAL OXIDANTS")')
     return
   end subroutine OUT3
@@ -1283,7 +1284,7 @@ contains
 
     write(IOOUT, *)
     write(IOOUT, '(" TRANSPORT PROPERTIES (GASES ONLY)")')
-    if (SIunit) then
+    if (cea%SIunit) then
        write(IOOUT, '("   CONDUCTIVITY IN UNITS OF MILLIWATTS/(CM)(K)"/)')
     else
        write(IOOUT, '("   CONDUCTIVITY IN UNITS OF MILLICALORIES/(CM)(K)(SEC)"/)')
@@ -1311,7 +1312,7 @@ contains
     cea%fmt(5) = ' '
     cea%fmt(7) = '4,'
 
-    if (Eql) then
+    if (cea%Eql) then
        write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
        write(IOOUT, cea%fmt) fc, (cea%Cpeql(j), j = 1, Npt)
