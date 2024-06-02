@@ -269,7 +269,7 @@ contains
              T(1:maxT) = 0
              P(1) = 1
              cea%Trace = 0
-             Lsave = 0
+             cea%Lsave = 0
              cea%R = R0 / 4184
              cea%S0 = 0
              hr = 1.d30

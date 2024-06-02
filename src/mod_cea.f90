@@ -25,6 +25,8 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     integer:: Imat, Iq1, Isv, Jliq, Jsol, Lsave, Msing
+
      logical:: Convg, Debug(Ncol), Detdbg, Detn, Eql, Gonly, Hp, Ions, Massf, Moles
      logical:: Newr, Pderiv, Shock, Short, SIunit, Sp, Tp, Trnspt, Vol
 
