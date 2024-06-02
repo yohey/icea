@@ -25,6 +25,9 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     integer:: Iplt, Nc, Ng, Ngp1, Nlm, Nplt, Nof, Nomit, Nonly, Np, Npr, Npt, Ngc, Nsert, Nspr, Nspx, Nt
+     integer:: Jcond(45), Jx(maxEl), Nfla(maxR), Ifz(maxNc)
+
      real(8):: Cpmix, Wmix, Bcheck
      real(8):: Am(2), Hpp(2), Vmin(2), Vpls(2), Wp(2), Oxf(maxMix), P(maxPv), Rh(2), T(maxT), V(maxPv)
      real(8):: B0p(maxEl, 2)

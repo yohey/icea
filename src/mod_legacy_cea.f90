@@ -15,10 +15,6 @@ module mod_legacy_cea
   real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)
   real(8):: En(maxNgc, Ncol)
 
-  integer:: Ip, Iplt, It, Nc, Ng, Ngp1, Nlm, Nplt, Nof, Nomit, Nonly, Np, Npr, Npt, &
-       Ngc, Nsert, Nspr, Nspx, Nt
-  integer:: Jcond(45), Jx(maxEl), Nfla(maxR), Ifz(maxNc)
-
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]

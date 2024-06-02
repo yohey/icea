@@ -34,15 +34,15 @@ contains
     write(IOOUT, '(/, /)')
 
     caseOK = .true.
-    Nonly = 0
-    Nomit = 0
-    Nsert = 0
+    cea%Nonly = 0
+    cea%Nomit = 0
+    cea%Nsert = 0
     reacts = .false.
     cea%Trace = 0
     cea%Short = .false.
     cea%Massf = .false.
     cea%Debug(1:Ncol) = .false.
-    Nplt = 0
+    cea%Nplt = 0
     cea%SIunit = .true.
     pltdat = .false.
 
@@ -61,19 +61,19 @@ contains
 
           ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
           if (code == 'only') then
-             Nonly = min(maxNgc, ncin-1)
-             forall(i = 1:Nonly) cea%Prod(i) = cin(i+1)
+             cea%Nonly = min(maxNgc, ncin-1)
+             forall(i = 1:cea%Nonly) cea%Prod(i) = cin(i+1)
 
              ! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
           else if (code == 'inse') then
-             Nsert = min(20, ncin-1)
-             forall(i = 1:Nsert) Ensert(i) = cin(i+1)
+             cea%Nsert = min(20, ncin-1)
+             forall(i = 1:cea%Nsert) Ensert(i) = cin(i+1)
 
              ! STORE PRODUCT NAMES FROM 'OMIT' DATASET
           else if (code == 'omit') then
              ! CHECK OMIT DATASET
-             Nomit = min(maxNgc, ncin-1)
-             forall(i = 1:Nomit) cea%Omit(i) = cin(i+1)
+             cea%Nomit = min(maxNgc, ncin-1)
+             forall(i = 1:cea%Nomit) cea%Omit(i) = cin(i+1)
 
              ! KEYWORD 'THER' READ
              ! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
@@ -125,9 +125,9 @@ contains
                    else if (cx2 == 'si') then
                       cea%SIunit = .true.
 
-                   else if (pltdat .and. Nplt < 20) then
-                      Nplt = Nplt + 1
-                      cea%Pltvar(Nplt) = cin(i)
+                   else if (pltdat .and. cea%Nplt < 20) then
+                      cea%Nplt = cea%Nplt + 1
+                      cea%Pltvar(cea%Nplt) = cin(i)
 
                    else if (cx2 == 'pl') then
                       pltdat = .true.
@@ -171,7 +171,7 @@ contains
                    i = i + 1
                    if (lcin(i) < 0) cea%Rname(cea%Nreac) = cin(i)
                    ifrmla = 0
-                   Nfla(cea%Nreac) = 0
+                   cea%Nfla(cea%Nreac) = 0
                    cea%Energy(cea%Nreac) = 'lib'
                    cea%Enth(cea%Nreac) = 0
                    cea%Jray(cea%Nreac) = 0
@@ -239,7 +239,7 @@ contains
                    else if ((lcin(i) == -1 .or. lcin(i) == -2) .and. index(uc, cx1) > 0) then
                       cea%Energy(cea%Nreac) = ' '
                       ifrmla = ifrmla + 1
-                      Nfla(cea%Nreac) = ifrmla
+                      cea%Nfla(cea%Nreac) = ifrmla
 
                       if (lcin(i) == -2) then
                          ix = index(lc, cx2(2:2))
@@ -311,8 +311,8 @@ contains
              cea%Incdfz = .false.
              cea%Refleq = .false.
              cea%Reflfz = .false.
-             Np = 0
-             Nt = 1
+             cea%Np = 0
+             cea%Nt = 1
              cea%Trnspt = .false.
 
              ! PROCESS LITERAL VARIABLES IN 'PROB' DATASET THAT DO NOT HAVE
@@ -403,7 +403,7 @@ contains
              end do
 
              iv = 2
-             Nof = 0
+             cea%Nof = 0
              exit
 
           else if (code(1:3) == 'end') then
@@ -434,39 +434,39 @@ contains
                      cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
 
                 if (cea%T(1) > 0) then
-                   write(IOOUT, '(/" T,K =", 7f11.4)') (cea%T(jj), jj = 1, Nt)
+                   write(IOOUT, '(/" T,K =", 7f11.4)') (cea%T(jj), jj = 1, cea%Nt)
                 end if
 
                 write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') cea%Trace, cea%S0, hr, ur
 
-                if (Np > 0 .and. cea%Vol) then
-                   write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (cea%V(jj)*1.d-05, jj = 1, Np)
+                if (cea%Np > 0 .and. cea%Vol) then
+                   write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (cea%V(jj)*1.d-05, jj = 1, cea%Np)
                 end if
              end if
 
              if (cea%Rkt) then
-                if (Nt == 0) cea%Hp = .true.
+                if (cea%Nt == 0) cea%Hp = .true.
                 if (.not. cea%Short) then
-                   write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (cea%P(jj), jj = 1, Np)
+                   write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
                    write(IOOUT, '(/" Pc/P =", 9f11.4)') (cea%Pcp(jj), jj = 1, cea%Npp)
                    write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
                    write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
                    write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
                 end if
              else
-                if (.not. cea%Vol .and. .not. cea%Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (cea%P(jj), jj = 1, Np)
+                if (.not. cea%Vol .and. .not. cea%Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
              end if
 
              if (reacts) call REACT(cea)
-             if (cea%Nreac == 0 .or. Nlm <= 0) then
+             if (cea%Nreac == 0 .or. cea%Nlm <= 0) then
                 write(IOOUT, '(/" ERROR IN REACTANTS DATASET (INPUT)")')
                 caseOK = .false.
                 write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 return
              end if
 
-             if (Nof == 0) then
-                Nof = 1
+             if (cea%Nof == 0) then
+                cea%Nof = 1
                 cea%Oxf(1) = 0
                 if (cea%Wp(2) > 0) then
                    cea%Oxf(1) = cea%Wp(1) / cea%Wp(2)
@@ -478,7 +478,7 @@ contains
                 end if
 
              else if (phi .or. eqrats) then
-                do i = 1, Nof
+                do i = 1, cea%Nof
                    eratio = cea%Oxf(i)
                    if (eqrats) then
                       xyz = -eratio * cea%Vmin(2) - cea%Vpls(2)
@@ -506,12 +506,12 @@ contains
                 caseOK = .false.
                 write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
 
-             else if (Np <= 0) then
+             else if (cea%Np <= 0) then
                 caseOK = .false.
                 write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", " DATASET (INPUT)")')
              end if
 
-             if (.not. (caseOK .and. Nlm > 0)) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+             if (.not. (caseOK .and. cea%Nlm > 0)) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
              return
 
           else
@@ -552,13 +552,13 @@ contains
           cx4 = cx15(:4)
 
           if (cx1 == 't') then
-             Nt = nmix
+             cea%Nt = nmix
              if (nmix > maxMix) then
-                Nt = maxMix
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 't', Nt
+                cea%Nt = maxMix
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 't', cea%Nt
              end if
 
-             do i = 1, Nt
+             do i = 1, cea%Nt
                 if (cx4 /= 'tces') then
                    cea%T(i) = mix(i)
                    if (lcin(in) < -1) then
@@ -578,13 +578,13 @@ contains
              cea%Pcp(1:cea%Npp) = mix(1:cea%Npp)
 
           else if (cx1 == 'p' .and. cx3 /= 'phi') then
-             Np = nmix
+             cea%Np = nmix
              if (nmix > maxPv) then
-                Np = maxPv
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'p', Np
+                cea%Np = maxPv
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'p', cea%Np
              end if
 
-             do i = 1, Np
+             do i = 1, cea%Np
                 cea%P(i) = mix(i)
                 if (index(cx15, 'psi') /= 0) then
                    cea%P(i) = cea%P(i) / 14.696006d0
@@ -602,22 +602,22 @@ contains
           else if (cx3 == 'rho') then
              xyz = 1.d02
              if (index(cx15, 'kg') /= 0) xyz = 1.d05
-             Np = nmix
+             cea%Np = nmix
              if (nmix > maxPv) then
-                Np = maxPv
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'rho', Np
+                cea%Np = maxPv
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'rho', cea%Np
              end if
-             cea%V(1:Np) = xyz / mix(1:Np)
+             cea%V(1:cea%Np) = xyz / mix(1:cea%Np)
 
           else if (cx1 == 'v') then
              xyz = 1.d02
              if (index(cx15, 'kg') /= 0) xyz = 1.d05
-             Np = nmix
+             cea%Np = nmix
              if (nmix > maxPv) then
-                Np = maxPv
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'v', Np
+                cea%Np = maxPv
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'v', cea%Np
              end if
-             cea%V(1:Np) = mix(1:Np) * xyz
+             cea%V(1:cea%Np) = mix(1:cea%Np) * xyz
 
           else if (cx3 == 'nfz' .or. cx3 == 'nfr') then
              cea%Nfz = int(mix(1))
@@ -680,13 +680,13 @@ contains
              cea%Case = cin(in+1)
              lcin(in+1) = 0
 
-          else if (Nof == 0 .and. (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or. cx2 == '%f' .or. cx1 == 'r')) then
-             Nof = nmix
+          else if (cea%Nof == 0 .and. (cx3 == 'phi' .or. cx3 == 'o/f' .or. cx3 == 'f/a' .or. cx2 == '%f' .or. cx1 == 'r')) then
+             cea%Nof = nmix
              if (nmix > maxMix) then
-                Nof = maxMix
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', Nof
+                cea%Nof = maxMix
+                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', cea%Nof
              end if
-             cea%Oxf(1:Nof) = mix(1:Nof)
+             cea%Oxf(1:cea%Nof) = mix(1:cea%Nof)
 
              if (cx3 == 'phi') then
                 phi = .true.
@@ -695,10 +695,10 @@ contains
                 eqrats = .true.
 
              else if (cx3 == 'f/a') then
-                forall(k = 1:Nof, cea%Oxf(k) > 0) cea%Oxf(k) = 1/cea%Oxf(k)
+                forall(k = 1:cea%Nof, cea%Oxf(k) > 0) cea%Oxf(k) = 1/cea%Oxf(k)
 
              else if (cx4 == '%fue') then
-                forall(k = 1:Nof, cea%Oxf(k) > 0) cea%Oxf(k) = (100 - cea%Oxf(k)) / cea%Oxf(k)
+                forall(k = 1:cea%Nof, cea%Oxf(k) > 0) cea%Oxf(k) = (100 - cea%Oxf(k)) / cea%Oxf(k)
              end if
 
           else
@@ -999,7 +999,7 @@ contains
     mcondf = 0
     mpnf   = 0
 
-    do 100 i = 1, Nplt
+    do 100 i = 1, cea%Nplt
        if (index(cea%Pltvar(i)(2:), '1') == 0) then
           if (index(cea%Pltvar(i)(1:), 'dlnt') /= 0) then
              mdvt = i
@@ -1058,7 +1058,7 @@ contains
           end if
        end if
 100 continue
-    do i = Iplt + 1, Iplt + Npt
+    do i = cea%Iplt + 1, cea%Iplt + cea%Npt
        if (mof > 0) cea%Pltout(i, mof) = cea%Oxfl
        if (mpf > 0) cea%Pltout(i, mpf) = pfuel
        if (mph > 0) cea%Pltout(i, mph) = phi
@@ -1093,97 +1093,97 @@ contains
     ! PRESSURE
     call VARFMT(cea, cea%Ppp)
 
-    do i = 1, Npt
+    do i = 1, cea%Npt
        cea%X(i) = cea%Ppp(i) * pfactor
-       if (Nplt /= 0 .and. i > ione) then
-          if (mp > 0) cea%Pltout(i + Iplt - ione, mp) = cea%X(i)
-          if (mt > 0) cea%Pltout(i + Iplt - ione, mt) = cea%Ttt(i)
+       if (cea%Nplt /= 0 .and. i > ione) then
+          if (mp > 0) cea%Pltout(i + cea%Iplt - ione, mp) = cea%X(i)
+          if (mt > 0) cea%Pltout(i + cea%Iplt - ione, mt) = cea%Ttt(i)
        end if
     end do
 
-    write(IOOUT, cea%fmt) fp, (cea%X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fp, (cea%X(j), j = 1, cea%Npt)
 
     ! TEMPERATURE
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '2,'
-    write(IOOUT, cea%fmt) 'T, K            ', (cea%Ttt(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'T, K            ', (cea%Ttt(j), j = 1, cea%Npt)
 
     ! DENSITY
-    do i = 1, Npt
+    do i = 1, cea%Npt
        if (cea%Vlm(i) /= 0) cea%X(i) = vnum / cea%Vlm(i)
-       if (Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+Iplt-ione, mrho) = cea%X(i)
+       if (cea%Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+cea%Iplt-ione, mrho) = cea%X(i)
     end do
-    call EFMT(cea%fmt(4), frh, cea%X)
+    call EFMT(cea%fmt(4), frh, cea%X, cea%Npt)
 
     ! ENTHALPY
-    do i = 1, Npt
+    do i = 1, cea%Npt
        cea%X(i) = cea%Hsum(i) * cea%R
-       if (Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+Iplt-ione, mh) = cea%X(i)
+       if (cea%Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+cea%Iplt-ione, mh) = cea%X(i)
     end do
     cea%fmt(4) = cea%fmt(6)
     call VARFMT(cea, cea%X)
-    write(IOOUT, cea%fmt) fh, (cea%X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fh, (cea%X(j), j = 1, cea%Npt)
 
     ! INTERNAL ENERGY
-    do i = 1, Npt
+    do i = 1, cea%Npt
        cea%X(i) = (cea%Hsum(i) - cea%Ppp(i) * cea%Vlm(i) / R0) * cea%R
-       if (Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+Iplt-ione, mie) = cea%X(i)
+       if (cea%Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+cea%Iplt-ione, mie) = cea%X(i)
     end do
     call VARFMT(cea, cea%X)
-    write(IOOUT, cea%fmt) fu, (cea%X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fu, (cea%X(j), j = 1, cea%Npt)
 
     ! GIBBS ENERGY
-    do i = 1, Npt
+    do i = 1, cea%Npt
        cea%X(i) = (cea%Hsum(i) - cea%Ttt(i) * cea%Ssum(i)) * cea%R
-       if (Nplt /= 0 .and. i > ione) then
-          if (mg > 0) cea%Pltout(i+Iplt-ione, mg) = cea%X(i)
-          if (mm > 0) cea%Pltout(i+Iplt-ione, mm) = cea%Wm(i)
-          if (mmw > 0) cea%Pltout(i+Iplt-ione, mmw) = 1 / cea%Totn(i)
-          if (ms > 0) cea%Pltout(i+Iplt-ione, ms) = cea%Ssum(i) * cea%R
-          if (mcp > 0) cea%Pltout(i+Iplt-ione, mcp) = cea%Cpr(i) * cea%R
-          if (mgam > 0) cea%Pltout(i+Iplt-ione, mgam) = cea%Gammas(i)
-          if (mdvt > 0) cea%Pltout(i+Iplt-ione, mdvt) = cea%Dlvtp(i)
-          if (mdvp > 0) cea%Pltout(i+Iplt-ione, mdvp) = cea%Dlvpt(i)
+       if (cea%Nplt /= 0 .and. i > ione) then
+          if (mg > 0) cea%Pltout(i+cea%Iplt-ione, mg) = cea%X(i)
+          if (mm > 0) cea%Pltout(i+cea%Iplt-ione, mm) = cea%Wm(i)
+          if (mmw > 0) cea%Pltout(i+cea%Iplt-ione, mmw) = 1 / cea%Totn(i)
+          if (ms > 0) cea%Pltout(i+cea%Iplt-ione, ms) = cea%Ssum(i) * cea%R
+          if (mcp > 0) cea%Pltout(i+cea%Iplt-ione, mcp) = cea%Cpr(i) * cea%R
+          if (mgam > 0) cea%Pltout(i+cea%Iplt-ione, mgam) = cea%Gammas(i)
+          if (mdvt > 0) cea%Pltout(i+cea%Iplt-ione, mdvt) = cea%Dlvtp(i)
+          if (mdvp > 0) cea%Pltout(i+cea%Iplt-ione, mdvp) = cea%Dlvpt(i)
        end if
     end do
     call VARFMT(cea, cea%X)
-    write(IOOUT, cea%fmt) fgi, (cea%X(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fgi, (cea%X(j), j = 1, cea%Npt)
 
     ! ENTROPY
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '4,'
-    write(IOOUT, cea%fmt) fs, (cea%Ssum(j) * cea%R, j = 1, Npt)
+    write(IOOUT, cea%fmt) fs, (cea%Ssum(j) * cea%R, j = 1, cea%Npt)
     write(IOOUT, *)
 
     ! MOLECULAR WEIGHT
     cea%fmt(7) = '3,'
-    write(IOOUT, cea%fmt) 'M, (1/n)        ', (cea%Wm(j), j = 1, Npt)
-    if (.not. cea%Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'M, (1/n)        ', (cea%Wm(j), j = 1, cea%Npt)
+    if (.not. cea%Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, cea%Npt)
 
     ! (DLV/DLP)T
     cea%fmt(7) = '5,'
-    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, Npt)
+    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, cea%Npt)
 
     ! (DLV/DLT)P
     cea%fmt(7) = '4,'
-    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
+    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, cea%Npt)
 
     ! HEAT CAPACITY
-    write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * cea%R, j = 1, Npt)
+    write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * cea%R, j = 1, cea%Npt)
 
     ! GAMMA(S)
     cea%fmt(7) = '4,'
-    write(IOOUT, cea%fmt) 'GAMMAs          ', (cea%Gammas(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'GAMMAs          ', (cea%Gammas(j), j = 1, cea%Npt)
 
     ! SONIC VELOCITY
     cea%fmt(7) = '1,'
-    do i = 1, Npt
+    do i = 1, cea%Npt
        cea%Sonvel(i) = sqrt(R0 * cea%Gammas(i) * cea%Ttt(i) / cea%Wm(i))
-       if (Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+Iplt-ione, mson) = cea%Sonvel(i)
+       if (cea%Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+cea%Iplt-ione, mson) = cea%Sonvel(i)
     end do
-    write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, cea%Npt)
     return
   end subroutine OUT2
 
@@ -1217,14 +1217,14 @@ contains
        write(IOOUT, '(/1x, A4, " FRACTIONS"/)') mamo
        notuse = 0
 
-       do k = 1, Ngc
+       do k = 1, cea%Ngc
           kOK = .true.
 
-          if (k > Ng .and. k < Ngc .and. cea%Prod(k) == cea%Prod(k+1)) then
+          if (k > cea%Ng .and. k < cea%Ngc .and. cea%Prod(k) == cea%Prod(k+1)) then
              kOK = .false.
              im = 0
           else
-             do m = 1, Nplt
+             do m = 1, cea%Nplt
                 im = 0
                 if (cea%Pltvar(m) == cea%Prod(k) .or. '*' // cea%Pltvar(m) == cea%Prod(k)) then
                    im = m
@@ -1234,27 +1234,27 @@ contains
           end if
 
           kin = 0
-          do i = 1, Npt
+          do i = 1, cea%Npt
              if (cea%Massf) then
                 tem = cea%Mw(k)
              else
                 tem = 1 / cea%Totn(i)
              end if
-             if (k <= Ng) then
+             if (k <= cea%Ng) then
                 cea%X(i) = En(k, i) * tem
              else
                 if (cea%Prod(k) /= cea%Prod(k-1)) cea%X(i) = 0
                 if (En(k, i) > 0) cea%X(i) = En(k, i) * tem
              end if
-             if (Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+Iplt-ione, im) = cea%X(i)
+             if (cea%Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+cea%Iplt-ione, im) = cea%X(i)
              if (kOK .and. cea%X(i) >= tra) kin = 1
           end do
 
           if (kin == 1) then
              if (cea%Trace == 0) then
-                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (cea%X(i), i = 1, Npt)
+                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (cea%X(i), i = 1, cea%Npt)
              else
-                call EFMT(cea%fmt(4), cea%Prod(k), cea%X)
+                call EFMT(cea%fmt(4), cea%Prod(k), cea%X, cea%Npt)
              end if
              if (cea%Prod(k) == cea%Omit(notuse)) notuse = notuse - 1
           else if (cea%Prod(k) /= cea%Prod(k-1)) then
@@ -1299,21 +1299,21 @@ contains
 
     ! TRANSPORT PROPERTIES
     cea%fmt(4) = cea%fmt(6)
-    if (Nplt > 0) then
-       do i = 1, Npt
+    if (cea%Nplt > 0) then
+       do i = 1, cea%Npt
           if (i > ione) then
-             if (mvis > 0) cea%Pltout(i+Iplt-ione, mvis) = cea%Vis(i)
-             if (mcond > 0) cea%Pltout(i+Iplt-ione, mcond) = cea%Coneql(i)
-             if (mpn > 0) cea%Pltout(i+Iplt-ione, mpn) = cea%Preql(i)
-             if (mcondf > 0) cea%Pltout(i+Iplt-ione, mcondf) = cea%Confro(i)
-             if (mpnf > 0) cea%Pltout(i+Iplt-ione, mpnf) = cea%Prfro(i)
+             if (mvis > 0) cea%Pltout(i+cea%Iplt-ione, mvis) = cea%Vis(i)
+             if (mcond > 0) cea%Pltout(i+cea%Iplt-ione, mcond) = cea%Coneql(i)
+             if (mpn > 0) cea%Pltout(i+cea%Iplt-ione, mpn) = cea%Preql(i)
+             if (mcondf > 0) cea%Pltout(i+cea%Iplt-ione, mcondf) = cea%Confro(i)
+             if (mpnf > 0) cea%Pltout(i+cea%Iplt-ione, mpnf) = cea%Prfro(i)
           end if
        end do
     end if
 
     call VARFMT(cea, cea%Vis)
 
-    write(IOOUT, cea%fmt) 'VISC,MILLIPOISE', (cea%Vis(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'VISC,MILLIPOISE', (cea%Vis(j), j = 1, cea%Npt)
 
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
@@ -1322,20 +1322,20 @@ contains
     if (cea%Eql) then
        write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
-       write(IOOUT, cea%fmt) fc, (cea%Cpeql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) fc, (cea%Cpeql(j), j = 1, cea%Npt)
        ! CONDUCTIVITY
-       write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Coneql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Coneql(j), j = 1, cea%Npt)
        ! PRANDTL NUMBER
-       write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Preql(j), j = 1, Npt)
+       write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Preql(j), j = 1, cea%Npt)
     end if
 
     write(IOOUT, '(/"  WITH FROZEN REACTIONS"/)')
     ! SPECIFIC HEAT
-    write(IOOUT, cea%fmt) fc, (cea%Cpfro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) fc, (cea%Cpfro(j), j = 1, cea%Npt)
     ! CONDUCTIVITY
-    write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Confro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Confro(j), j = 1, cea%Npt)
     ! PRANDTL NUMBER
-    write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Prfro(j), j = 1, Npt)
+    write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Prfro(j), j = 1, cea%Npt)
 
     return
   end subroutine OUT4
@@ -1357,7 +1357,7 @@ contains
     integer:: i, k
     real(8):: vi
 
-    do i = 1, Npt
+    do i = 1, cea%Npt
        vi = abs(Vx(i))
        k = 2*i + 3
        cea%fmt(k) = '5,'
