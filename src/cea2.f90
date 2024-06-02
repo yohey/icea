@@ -1521,23 +1521,23 @@ subroutine EQLBRM(cea)
   end do
 
   if (bigen > 0.) then
-     do 1250 lc = 1, nn
+     do lc = 1, nn
         if (jbx == 0) jbx = cea%Jx(lc)
 
         if (cea%A(lc, jbx) > smalno) then
            if (njc /= 0) then
               do i = 1, njc
                  l = lcs(i)
-                 if (l == lc) go to 1250
+                 if (l == lc) cycle
                  if (l == 0) exit
                  j = cea%Jcm(l)
-                 if (all(cea%A(1:nn, jbx) == cea%A(1:nn, j))) go to 1250
+                 if (all(cea%A(1:nn, jbx) == cea%A(1:nn, j))) cycle
               end do
            end if
 
            do i = 1, nn
               if (i /= lc .and. abs(cea%A(lc, jbx) * cea%A(i, cea%jx(i)) - cea%A(lc, cea%jx(i)) * cea%A(i, jbx)) <= smalno) then
-                 go to 1250
+                 cycle
               end if
            end do
 
@@ -1545,11 +1545,11 @@ subroutine EQLBRM(cea)
            if (jbx /= cea%Jcm(lc)) newcom = .true.
            cea%Jcm(lc) = jbx
            lcs(njc) = lc
-           go to 1300
+           exit
         end if
-1250 continue
+     end do
 
-1300 cea%En(jbx, cea%Npt) = -cea%En(jbx, cea%Npt)
+     cea%En(jbx, cea%Npt) = -cea%En(jbx, cea%Npt)
      if (njc < nn) go to 1200
   end if
 
@@ -3395,8 +3395,9 @@ subroutine SEARCH(cea)
   read(IOTHM) cea%Tg, ntgas, ntot, nall, cea%Thdate
   cea%Ngc = 1
   cea%Nc = 1
-! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
-  do 200 itot = 1, ntot
+
+  ! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
+  outerLoop: do itot = 1, ntot
      if (itot > ntgas) then
         read(IOTHM) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), cea%Ifz(cea%Nc), &
              cea%Temp(1, cea%Nc), cea%Temp(2, cea%Nc), cea%Mw(cea%Ngc), (cea%Cft(cea%Nc, k), k = 1, 9)
@@ -3408,7 +3409,7 @@ subroutine SEARCH(cea)
 20      if (cea%Prod(i) /= sub .and. '*' // cea%Prod(i) /= sub) then
            i = i + 1
            if (i <= cea%Nonly) go to 20
-           go to 200
+           cycle outerLoop
         else
            if (sub == cea%Prod(cea%Ngc-1)) then
               cea%Nonly = cea%Nonly + 1
@@ -3422,23 +3423,23 @@ subroutine SEARCH(cea)
         end if
      else if (cea%Nomit /= 0) then
         do i = 1, cea%Nomit
-           if (cea%Omit(i) == sub .or. '*' // cea%Omit(i) == sub) go to 200
+           if (cea%Omit(i) == sub .or. '*' // cea%Omit(i) == sub) cycle outerLoop
         end do
      end if
-     do 50 k = 1, 5
-        if (b(k) == 0) go to 100
+     innerLoop: do k = 1, 5
+        if (b(k) == 0) exit
         do i = 1, cea%Nlm
            if (cea%Elmt(i) == el(k)) then
               cea%A(i, cea%Ngc) = b(k)
-              go to 50
+              cycle innerLoop
            end if
         end do
         do j = 1, cea%Nlm
            cea%A(j, cea%Ngc) = 0
         end do
-        go to 200
-50   continue
-100  cea%Prod(cea%Ngc) = sub
+        cycle outerLoop
+     end do innerLoop
+     cea%Prod(cea%Ngc) = sub
      if (itot > ntgas) then
         cea%Nc = cea%Nc + 1
         if (cea%Nc > maxNc) go to 400
@@ -3464,7 +3465,8 @@ subroutine SEARCH(cea)
      end if
 150  cea%Ngc = cea%Ngc + 1
      if (cea%Ngc > maxNgc) go to 400
-200 continue
+  end do outerLoop
+
 ! FINISHED READING THERMO DATA FROM I/O UNIT IOTHM.
   cea%Ifz(cea%Nc) = 0
   cea%Nc = cea%Nc - 1
@@ -3501,16 +3503,16 @@ subroutine SEARCH(cea)
      end do
   end if
 ! ARE ALL ELEMENTS IN PRODUCT SPECIES?
-  do 300 i = 1, cea%Nlm
+  outerLoop2: do i = 1, cea%Nlm
      do j = 1, cea%Ngc
-        if (cea%A(i, j) /= 0) go to 300
+        if (cea%A(i, j) /= 0) cycle outerLoop2
         ii = i
      end do
      write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
           & //, 13x, "FATAL ERROR (SEARCH)")') cea%Elmt(ii)
      cea%Ngc = 0
      return
-300 continue
+  end do outerLoop2
 ! WRITE POSSIBLE PRODUCT LIST
   if (.not. cea%Short) then
      write(IOOUT, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &

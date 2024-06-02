@@ -1013,7 +1013,7 @@ contains
     mcondf = 0
     mpnf   = 0
 
-    do 100 i = 1, cea%Nplt
+    do i = 1, cea%Nplt
        if (index(cea%Pltvar(i)(2:), '1') == 0) then
           if (index(cea%Pltvar(i)(1:), 'dlnt') /= 0) then
              mdvt = i
@@ -1071,7 +1071,7 @@ contains
              meq = i
           end if
        end if
-100 continue
+    end do
     do i = cea%Iplt + 1, cea%Iplt + cea%Npt
        if (mof > 0) cea%Pltout(i, mof) = cea%Oxfl
        if (mpf > 0) cea%Pltout(i, mpf) = pfuel
