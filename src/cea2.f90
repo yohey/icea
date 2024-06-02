@@ -4095,6 +4095,12 @@ subroutine TRANIN(cea)
        stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
        trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
 
+  nms = 0
+  setx = .false.
+  inds(:) = 0
+  wmols(:) = 0
+  xss(:) = 0
+
   if (.not. cea%Eql) then
      if (.not. cea%Shock) then
         if (.not. setx) then
