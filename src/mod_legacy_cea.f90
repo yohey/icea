@@ -19,11 +19,6 @@ module mod_legacy_cea
        Ngc, Nsert, Nspr, Nspx, Nt
   integer:: Jcond(45), Jx(maxEl), Nfla(maxR), Ifz(maxNc)
 
-  real(8):: Cpmix, Wmix, Bcheck
-  real(8):: Am(2), Hpp(2), Vmin(2), Vpls(2), Wp(2), Oxf(maxMix), &
-       P(maxPv), Rh(2), T(maxT), V(maxPv)
-  real(8):: B0p(maxEl, 2)
-
   ! for subroutine CPHS and ALLCON
   real(8):: cx(7) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
   real(8):: hcx(7) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]

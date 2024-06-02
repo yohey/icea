@@ -264,10 +264,10 @@ contains
              ! SORT AND STORE INPUT FROM 'PROB' DATASET
           else if (code == 'prob') then
              cea%Case = ' '
-             P(1:maxPv) = 0
-             V(1:maxPv) = 0
-             T(1:maxT) = 0
-             P(1) = 1
+             cea%P(1:maxPv) = 0
+             cea%V(1:maxPv) = 0
+             cea%T(1:maxT) = 0
+             cea%P(1) = 1
              cea%Trace = 0
              cea%Lsave = 0
              cea%R = R0 / 4184
@@ -432,22 +432,29 @@ contains
                      cea%Tp, (cea%Hp .and. .not. cea%Vol), cea%Sp, (cea%Tp .and. cea%Vol), (cea%Hp .and. cea%Vol), &
                      (cea%Sp .and. cea%Vol), cea%Detn, cea%Shock, refl, incd, cea%Rkt, cea%Froz, cea%Eql, cea%Ions, &
                      cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
-                if (T(1) > 0) write(IOOUT, '(/" T,K =", 7f11.4)') (T(jj), jj = 1, Nt)
+
+                if (cea%T(1) > 0) then
+                   write(IOOUT, '(/" T,K =", 7f11.4)') (cea%T(jj), jj = 1, Nt)
+                end if
+
                 write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') cea%Trace, cea%S0, hr, ur
-                if (Np > 0 .and. cea%Vol) write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (V(jj)*1.d-05, jj = 1, Np)
+
+                if (Np > 0 .and. cea%Vol) then
+                   write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (cea%V(jj)*1.d-05, jj = 1, Np)
+                end if
              end if
 
              if (cea%Rkt) then
                 if (Nt == 0) cea%Hp = .true.
                 if (.not. cea%Short) then
-                   write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
+                   write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (cea%P(jj), jj = 1, Np)
                    write(IOOUT, '(/" Pc/P =", 9f11.4)') (cea%Pcp(jj), jj = 1, cea%Npp)
                    write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
                    write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
                    write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
                 end if
              else
-                if (.not. cea%Vol .and. .not. cea%Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (P(jj), jj = 1, Np)
+                if (.not. cea%Vol .and. .not. cea%Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (cea%P(jj), jj = 1, Np)
              end if
 
              if (reacts) call REACT(cea)
@@ -460,9 +467,9 @@ contains
 
              if (Nof == 0) then
                 Nof = 1
-                Oxf(1) = 0
-                if (Wp(2) > 0) then
-                   Oxf(1) = Wp(1) / Wp(2)
+                cea%Oxf(1) = 0
+                if (cea%Wp(2) > 0) then
+                   cea%Oxf(1) = cea%Wp(1) / cea%Wp(2)
                 else
                    caseOK = .false.
                    write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
@@ -472,13 +479,13 @@ contains
 
              else if (phi .or. eqrats) then
                 do i = 1, Nof
-                   eratio = Oxf(i)
+                   eratio = cea%Oxf(i)
                    if (eqrats) then
-                      xyz = -eratio * Vmin(2) - Vpls(2)
-                      denmtr = eratio * Vmin(1) + Vpls(1)
+                      xyz = -eratio * cea%Vmin(2) - cea%Vpls(2)
+                      denmtr = eratio * cea%Vmin(1) + cea%Vpls(1)
                    else
-                      xyz = -Vmin(2) - Vpls(2)
-                      denmtr = eratio * (Vmin(1) + Vpls(1))
+                      xyz = -cea%Vmin(2) - cea%Vpls(2)
+                      denmtr = eratio * (cea%Vmin(1) + cea%Vpls(1))
                    end if
 
                    if (abs(denmtr) < 1.d-30) then
@@ -487,7 +494,7 @@ contains
                       write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
                       return
                    end if
-                   Oxf(i) = xyz / denmtr
+                   cea%Oxf(i) = xyz / denmtr
                 end do
              end if
 
@@ -495,7 +502,7 @@ contains
                 caseOK = .false.
                 write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
 
-             else if (cea%Tp .and. T(1) <= 0) then
+             else if (cea%Tp .and. cea%T(1) <= 0) then
                 caseOK = .false.
                 write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
 
@@ -553,11 +560,11 @@ contains
 
              do i = 1, Nt
                 if (cx4 /= 'tces') then
-                   T(i) = mix(i)
+                   cea%T(i) = mix(i)
                    if (lcin(in) < -1) then
-                      if (index(cx15, 'r') > 0) T(i) = T(i) / 1.8d0
-                      if (index(cx15, 'c') > 0) T(i) = T(i) + 273.15d0
-                      if (index(cx15, 'f') > 0) T(i) = (T(i) - 32) / 1.8d0 + 273.15d0
+                      if (index(cx15, 'r') > 0) cea%T(i) = cea%T(i) / 1.8d0
+                      if (index(cx15, 'c') > 0) cea%T(i) = cea%T(i) + 273.15d0
+                      if (index(cx15, 'f') > 0) cea%T(i) = (cea%T(i) - 32) / 1.8d0 + 273.15d0
                    end if
                 end if
              end do
@@ -578,18 +585,18 @@ contains
              end if
 
              do i = 1, Np
-                P(i) = mix(i)
+                cea%P(i) = mix(i)
                 if (index(cx15, 'psi') /= 0) then
-                   P(i) = P(i) / 14.696006d0
+                   cea%P(i) = cea%P(i) / 14.696006d0
 
                 else if (index(cx15, 'mmh') /= 0) then
-                   P(i) = P(i) / 760
+                   cea%P(i) = cea%P(i) / 760
 
                 else if (index(cx15, 'atm') == 0) then
                    cycle
                 end if
 
-                P(i) = P(i) * 1.01325d0
+                cea%P(i) = cea%P(i) * 1.01325d0
              end do
 
           else if (cx3 == 'rho') then
@@ -600,7 +607,7 @@ contains
                 Np = maxPv
                 write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'rho', Np
              end if
-             V(1:Np) = xyz / mix(1:Np)
+             cea%V(1:Np) = xyz / mix(1:Np)
 
           else if (cx1 == 'v') then
              xyz = 1.d02
@@ -610,7 +617,7 @@ contains
                 Np = maxPv
                 write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'v', Np
              end if
-             V(1:Np) = mix(1:Np) * xyz
+             cea%V(1:Np) = mix(1:Np) * xyz
 
           else if (cx3 == 'nfz' .or. cx3 == 'nfr') then
              cea%Nfz = int(mix(1))
@@ -679,7 +686,7 @@ contains
                 Nof = maxMix
                 write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', Nof
              end if
-             Oxf(1:Nof) = mix(1:Nof)
+             cea%Oxf(1:Nof) = mix(1:Nof)
 
              if (cx3 == 'phi') then
                 phi = .true.
@@ -688,10 +695,10 @@ contains
                 eqrats = .true.
 
              else if (cx3 == 'f/a') then
-                forall(k = 1:Nof, Oxf(k) > 0) Oxf(k) = 1/Oxf(k)
+                forall(k = 1:Nof, cea%Oxf(k) > 0) cea%Oxf(k) = 1/cea%Oxf(k)
 
              else if (cx4 == '%fue') then
-                forall(k = 1:Nof, Oxf(k) > 0) Oxf(k) = (100 - Oxf(k)) / Oxf(k)
+                forall(k = 1:Nof, cea%Oxf(k) > 0) cea%Oxf(k) = (100 - cea%Oxf(k)) / cea%Oxf(k)
              end if
 
           else
@@ -917,8 +924,8 @@ contains
     end do
 
     phi = 0
-    tem = (Vpls(1) + Vmin(1)) * cea%Oxfl
-    if (ABS(tem) >= 1.d-3) phi = -(Vmin(2) + Vpls(2)) / tem
+    tem = (cea%Vpls(1) + cea%Vmin(1)) * cea%Oxfl
+    if (ABS(tem) >= 1.d-3) phi = -(cea%Vmin(2) + cea%Vpls(2)) / tem
 
     if (cea%Fox(1) == 'NAME') then
        pfuel = 0
@@ -926,11 +933,11 @@ contains
        pfuel = 100 / (1 + cea%Oxfl)
     end if
 
-    if (any(Rh /= 0)) then
-       if (any(Rh == 0)) then
-          rho = max(Rh(1), Rh(2))
+    if (any(cea%Rh /= 0)) then
+       if (any(cea%Rh == 0)) then
+          rho = max(cea%Rh(1), cea%Rh(2))
        else
-          rho = (cea%Oxfl + 1) * Rh(1) * Rh(2) / (Rh(1) + cea%Oxfl * Rh(2))
+          rho = (cea%Oxfl + 1) * cea%Rh(1) * cea%Rh(2) / (cea%Rh(1) + cea%Oxfl * cea%Rh(2))
        end if
        if (cea%SIunit) then
           rho = rho * 1000

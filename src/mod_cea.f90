@@ -25,6 +25,10 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     real(8):: Cpmix, Wmix, Bcheck
+     real(8):: Am(2), Hpp(2), Vmin(2), Vpls(2), Wp(2), Oxf(maxMix), P(maxPv), Rh(2), T(maxT), V(maxPv)
+     real(8):: B0p(maxEl, 2)
+
      integer:: Imat, Iq1, Isv, Jliq, Jsol, Lsave, Msing
 
      logical:: Convg, Debug(Ncol), Detdbg, Detn, Eql, Gonly, Hp, Ions, Massf, Moles

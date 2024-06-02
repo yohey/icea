@@ -72,9 +72,9 @@ program main
      if ((.not. caseOK) .or. (.not. readOK)) cycle
 
      do iof = 1, Nof
-        if (Oxf(iof) == 0. .and. B0p(1, 1) /= 0.) then
+        if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%B0p(1, 1) /= 0.) then
            do i = 1, Nlm
-              if (B0p(i, 1) == 0. .or. B0p(i, 2) == 0.) then
+              if (cea(icase)%B0p(i, 1) == 0. .or. cea(icase)%B0p(i, 2) == 0.) then
                  write(IOOUT, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
                  cycle outerLoop
               end if
@@ -86,8 +86,8 @@ program main
         if (cea(icase)%Elmt(Nlm) /= 'E') then
            Nlm = Nlm + 1
            cea(icase)%Elmt(Nlm) = 'E'
-           B0p(Nlm, 1) = 0
-           B0p(Nlm, 2) = 0
+           cea%B0p(Nlm, 1) = 0
+           cea%B0p(Nlm, 2) = 0
         end if
      else if (cea(icase)%Elmt(Nlm) == 'E') then
         Nlm = Nlm - 1
@@ -323,25 +323,25 @@ subroutine DETON(cea)
   iof = 0
   cea%Eql = .true.
 
-  if (T(1) == 0) then
-     T(1) = cea%Rtemp(1)
+  if (cea%T(1) == 0) then
+     cea%T(1) = cea%Rtemp(1)
      Nt = 1
   end if
 
-100 cea%Tt = T(1)
+100 cea%Tt = cea%T(1)
 
   iof = iof + 1
-  cea%Oxfl = Oxf(iof)
+  cea%Oxfl = cea%Oxf(iof)
 
   call NEWOF(cea)
 
 ! BEGIN T LOOP.
   do It = 1, Nt
-     T1 = T(It)
+     T1 = cea%T(It)
 
 ! BEGIN P LOOP.
      do Ip = 1, Np
-        p1 = P(Ip)
+        p1 = cea%P(Ip)
         cea%Tt = T1
         cea%Pp = p1
 
@@ -353,14 +353,14 @@ subroutine DETON(cea)
         h1(Npt) = cea%Hsub0 * cea%R
         tub(Npt) = T1
         pub(Npt) = p1
-        cpl(Npt) = Cpmix * cea%R
+        cpl(Npt) = cea%Cpmix * cea%R
         itr = 0
         cea%Tt = 3800
         pp1 = 15
         cea%Pp = pp1 * p1
 
 ! CALCULATE ENTHALPY FOR INITIAL ESTIMATE OF T2(TT AFTER EQLBRM)
-        cea%Hsub0 = h1(Npt) / cea%R + 0.75 * T1 * pp1 / Wmix
+        cea%Hsub0 = h1(Npt) / cea%R + 0.75 * T1 * pp1 / cea%Wmix
         cea%Tp = .false.
         cea%Hp = .true.
 
@@ -373,8 +373,8 @@ subroutine DETON(cea)
            gam = cea%Gammas(Npt)
            tt1 = cea%Tt / T1
            ii = 0
-           tem = tt1 - 0.75 * pp1 / (cea%Cpr(Npt) * Wmix)
-           amm = cea%Wm(Npt) / Wmix
+           tem = tt1 - 0.75 * pp1 / (cea%Cpr(Npt) * cea%Wmix)
+           amm = cea%Wm(Npt) / cea%Wmix
 
            if (cea%Detdbg) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') cea%Tt
 
@@ -383,7 +383,7 @@ subroutine DETON(cea)
               alpha = amm / tt1
               pp1 = (1 + gam) * (1 + sqrt(1 - 4 * gam * alpha / (1 + gam)**2)) / (2 * gam * alpha)
               rk = pp1 * alpha
-              tt1 = tem + 0.5 * pp1 * gam * (rk**2 - 1) / (Wmix * cea%Cpr(Npt) * rk)
+              tt1 = tem + 0.5 * pp1 * gam * (rk**2 - 1) / (cea%Wmix * cea%Cpr(Npt) * rk)
               if (cea%Detdbg) write(IOOUT, '(i5, 2e20.8)') ii, pp1, tt1
            end do
 
@@ -401,7 +401,7 @@ subroutine DETON(cea)
 
            if (cea%Tt /= 0) then
               gam = cea%Gammas(Npt)
-              amm = cea%Wm(Npt) / Wmix
+              amm = cea%Wm(Npt) / cea%Wmix
               rr1 = pp1 * amm / tt1
               a11 = 1 / pp1 + gam * rr1 * cea%Dlvpt(Npt)
               a12 = gam * rr1 * cea%Dlvtp(Npt)
@@ -438,8 +438,8 @@ subroutine DETON(cea)
                     gm1(Npt) = 0
                     cea%Vmoc(Npt) = 0
                  else
-                    gm1(Npt) = cpl(Npt) / (cpl(Npt) - cea%R / Wmix)
-                    cea%Vmoc(Npt) = ud / sqrt(R0 * gm1(Npt) * T1 / Wmix)
+                    gm1(Npt) = cpl(Npt) / (cpl(Npt) - cea%R / cea%Wmix)
+                    cea%Vmoc(Npt) = ud / sqrt(R0 * gm1(Npt) * T1 / cea%Wmix)
                  end if
               else
                  write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
@@ -498,16 +498,16 @@ subroutine DETON(cea)
 
            do i = 1, Npt
               if (cea%SIunit) then
-                 V(i) = pub(i)
+                 cea%V(i) = pub(i)
                  unit = 'BAR'
               else
-                 V(i) = pub(i) / 1.01325d0
+                 cea%V(i) = pub(i) / 1.01325d0
                  unit = 'ATM'
               end if
-              if (mp > 0) cea%Pltout(i+Iplt, mp) = V(i)
+              if (mp > 0) cea%Pltout(i+Iplt, mp) = cea%V(i)
            end do
 
-           write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (V(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (cea%V(j), j = 1, Npt)
 
            cea%fmt(7) = '2,'
            write(IOOUT, cea%fmt) ft1, (tub(j), j = 1, Npt)
@@ -516,12 +516,12 @@ subroutine DETON(cea)
            if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(j), j = 1, Npt)
 
            forall(i = 1:Npt)
-              V(i) = Wmix
-              cea%Sonvel(i) = sqrt(R0 * gm1(i) * tub(i) / Wmix)
+              cea%V(i) = cea%Wmix
+              cea%Sonvel(i) = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
            end forall
 
            cea%fmt(7) = '3,'
-           write(IOOUT, cea%fmt) fm1, (V(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) fm1, (cea%V(j), j = 1, Npt)
            cea%fmt(7) = '4,'
            write(IOOUT, cea%fmt) fg1, (gm1(j), j = 1, Npt)
            cea%fmt(7) = '1,'
@@ -548,20 +548,20 @@ subroutine DETON(cea)
            cea%fmt(7) = '3,'
 
            do i = 1, Npt
-              V(i) = cea%Ppp(i) / pub(i)
+              cea%V(i) = cea%Ppp(i) / pub(i)
               cea%Pcp(i) = cea%Ttt(i) / tub(i)
               cea%Sonvel(i) = cea%Sonvel(i) * rrho(i)
               if (mmach > 0) cea%Pltout(i+Iplt, mmach) = cea%Vmoc(i)
               if (mdv > 0)   cea%Pltout(i+Iplt, mdv) = cea%Sonvel(i)
            end do
 
-           write(IOOUT, cea%fmt) fpp1, (V(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) fpp1, (cea%V(j), j = 1, Npt)
            write(IOOUT, cea%fmt) ftt1, (cea%Pcp(j), j = 1, Npt)
 
-           forall(i = 1:Npt) V(i) = cea%Wm(i) / Wmix
+           forall(i = 1:Npt) cea%V(i) = cea%Wm(i) / cea%Wmix
 
            cea%fmt(7) = '4,'
-           write(IOOUT, cea%fmt) fmm1, (V(j), j = 1, Npt)
+           write(IOOUT, cea%fmt) fmm1, (cea%V(j), j = 1, Npt)
            write(IOOUT, cea%fmt) frr1, (rrho(j), j = 1, Npt)
            write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%Vmoc(j), j = 1, Npt)
 
@@ -709,7 +709,7 @@ subroutine EQLBRM(cea)
   if (cea%Tp) cpcalc = .false.
 
   if (cea%Tt /= 0) then
-     if (Npr == 0 .or. (cea%Tt /= T(1) .and. .not. cea%Tp)) go to 400
+     if (Npr == 0 .or. (cea%Tt /= cea%T(1) .and. .not. cea%Tp)) go to 400
      k = 1
   else
      cea%Tt = 3800
@@ -1044,7 +1044,7 @@ subroutine EQLBRM(cea)
            le = Nlm
 
            if (any(abs(cea%B0(1:Nlm)) >= 1.d-06 .and. &
-                abs(cea%B0(1:Nlm) - sum(spread(En(1:Ngc, Npt), 1, Nlm) * cea%A(1:Nlm, 1:Ngc), DIM=2)) > Bcheck)) go to 500
+                abs(cea%B0(1:Nlm) - sum(spread(En(1:Ngc, Npt), 1, Nlm) * cea%A(1:Nlm, 1:Ngc), DIM=2)) > cea%Bcheck)) go to 500
 
            if (cea%Trace /= 0.) then
               tsize = xsize
@@ -1551,8 +1551,8 @@ subroutine EQLBRM(cea)
 ! CALCULATE NEW COEFFICIENTS
            if (tem /= 1) then
               cea%B0(lc) = cea%B0(lc) / tem
-              B0p(lc, 1) = B0p(lc, 1) / tem
-              B0p(lc, 2) = B0p(lc, 2) / tem
+              cea%B0p(lc, 1) = cea%B0p(lc, 1) / tem
+              cea%B0p(lc, 2) = cea%B0p(lc, 2) / tem
 
               forall(j = 1:Nspx) cea%A(lc, j) = cea%A(lc, j) / tem
            end if
@@ -1565,8 +1565,8 @@ subroutine EQLBRM(cea)
                  forall(j = 1:Nspx, abs(cea%A(i, j)) < 1.E-5) cea%A(i, j) = 0
 
                  cea%B0(i) = cea%B0(i) - cea%B0(lc) * tem
-                 B0p(i, 1) = B0p(i, 1) - B0p(lc, 1) * tem
-                 B0p(i, 2) = B0p(i, 2) - B0p(lc, 2) * tem
+                 cea%B0p(i, 1) = cea%B0p(i, 1) - cea%B0p(lc, 1) * tem
+                 cea%B0p(i, 2) = cea%B0p(i, 2) - cea%B0p(lc, 2) * tem
               end if
            end do
         end if
@@ -1615,9 +1615,9 @@ subroutine EQLBRM(cea)
         pisave(Nlm) = aa
 
         do i = 1, 2
-           aa = B0p(cea%Msing, i)
-           B0p(cea%Msing, i) = B0p(Nlm, i)
-           B0p(Nlm, i) = aa
+           aa = cea%B0p(cea%Msing, i)
+           cea%B0p(cea%Msing, i) = cea%B0p(Nlm, i)
+           cea%B0p(Nlm, i) = aa
         end do
      end if
   else if (.not. newcom .and. cea%Trace == 0.) then
@@ -1857,13 +1857,13 @@ subroutine HCALC(cea)
   Tsave = cea%Tt
 
   cea%Tm = 0
-  if (cea%Pp > 0) cea%Tm = log(cea%Pp * Wmix)
+  if (cea%Pp > 0) cea%Tm = log(cea%Pp * cea%Wmix)
 
   cea%Ssum(Npt) = 0
-  Hpp(1) = 0
-  Hpp(2) = 0
+  cea%Hpp(1) = 0
+  cea%Hpp(2) = 0
   cea%Hsub0 = 0
-  Cpmix = 0
+  cea%Cpmix = 0
   tem = (1 + cea%Oxfl)
 
 ! LOOP ON REACTANTS.
@@ -1886,7 +1886,7 @@ subroutine HCALC(cea)
               if (j > Ng) then
                  write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
                  cea%Tt = 0
-                 Cpmix = 0
+                 cea%Cpmix = 0
                  return
               end if
               go to 50
@@ -1932,7 +1932,7 @@ subroutine HCALC(cea)
                  if (ifaz > 0) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
                  if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') cea%Rname(n)
                  cea%Tt = 0
-                 Cpmix = 0
+                 cea%Cpmix = 0
                  return
               end if
            end if
@@ -1944,14 +1944,14 @@ subroutine HCALC(cea)
 
         cea%Energy(n) = ' '
         cea%Tt = 0
-        Cpmix = 0
+        cea%Cpmix = 0
 
         return
      end if
 
 ! CALCULATE EN FOR REACTANT AND CALCULATE PROPERTIES.
 50   if (cea%Moles) then
-        enj = cea%Pecwt(n) / Wp(k)
+        enj = cea%Pecwt(n) / cea%Wp(k)
      else
         enj = cea%Pecwt(n) / cea%Rmw(n)
      end if
@@ -1981,14 +1981,14 @@ subroutine HCALC(cea)
      if (abs(cea%H0(j)) < 0.01) cea%H0(j) = 0
 
 ! ADD CONTRIBUTION TO CP, H, AND S OF TOTAL REACTANT.
-     Cpmix = Cpmix + cea%Cp(j) * enj
+     cea%Cpmix = cea%Cpmix + cea%Cp(j) * enj
 
 ! FOR CONDENSED SPECIES:  SJ = S(J)
      sj = cea%S(j) - log(enj) - cea%Tm
      cea%Ssum(Npt) = cea%Ssum(Npt) + enj * sj
      er = cea%H0(j) * enj * cea%Tt
      cea%Hsub0 = cea%Hsub0 + er
-     Hpp(k) = Hpp(k) + er
+     cea%Hpp(k) = cea%Hpp(k) + er
   end do
 
   if (Tsave /= 0) cea%Tt = Tsave
@@ -2163,11 +2163,11 @@ subroutine NEWOF(cea)
   if (.not. cea%Short) write(IOOUT, '(/" O/F = ", f10.6)') cea%Oxfl
   cea%Eqrat = 0
   tem = cea%Oxfl + 1
-  v2 = (cea%Oxfl * Vmin(1) + Vmin(2)) / tem
-  v1 = (cea%Oxfl * Vpls(1) + Vpls(2)) / tem
+  v2 = (cea%Oxfl * cea%Vmin(1) + cea%Vmin(2)) / tem
+  v1 = (cea%Oxfl * cea%Vpls(1) + cea%Vpls(2)) / tem
   if (v2 /= 0.) cea%Eqrat = abs(v1/v2)
   do i = 1, Nlm
-     cea%B0(i) = (cea%Oxfl * B0p(i, 1) + B0p(i, 2)) / tem
+     cea%B0(i) = (cea%Oxfl * cea%B0p(i, 1) + cea%B0p(i, 2)) / tem
      dbi = abs(cea%B0(i))
      if (i == 1) then
         bigb = dbi
@@ -2177,20 +2177,20 @@ subroutine NEWOF(cea)
         if (dbi > bigb) bigb = dbi
      end if
   end do
-  Bcheck = bigb * .000001d0
+  cea%Bcheck = bigb * .000001d0
 
 ! CALCUALTE MOLECULAR WEIGHT OF TOTAL REACTANT, WMIX.
-  if (all(Am /= 0)) then
-     Wmix = (cea%Oxfl + 1) * Am(1) * Am(2) / (Am(1) + cea%Oxfl * Am(2))
+  if (all(cea%Am /= 0)) then
+     cea%Wmix = (cea%Oxfl + 1) * cea%Am(1) * cea%Am(2) / (cea%Am(1) + cea%Oxfl * cea%Am(2))
   else
-     Wmix = Am(2)
-     if (Am(2) == 0.0) Wmix = Am(1)
+     cea%Wmix = cea%Am(2)
+     if (cea%Am(2) == 0.0) cea%Wmix = cea%Am(1)
   end if
   Npt = 1
 
 ! IF ASSIGNED U OR H NOT GIVEN IN PROB DATA, INITIAL HSUB0 = 1.d30
   if (cea%Size == 0) assval = cea%Hsub0
-  if (assval >= 1.d30) cea%Hsub0 = (cea%Oxfl * Hpp(1) + Hpp(2)) / tem
+  if (assval >= 1.d30) cea%Hsub0 = (cea%Oxfl * cea%Hpp(1) + cea%Hpp(2)) / tem
 
 ! NOTE THAT "BRATIO" IS "BRATIO" IN SEC 3.2 IN RP-1311.
   bratio = smalb / bigb
@@ -2203,13 +2203,13 @@ subroutine NEWOF(cea)
      write(IOOUT, '(/, 23x, "EFFECTIVE FUEL", 5x, "EFFECTIVE OXIDANT", 8x, "MIXTURE")')
      if (cea%Vol) write(IOOUT, '(" INTERNAL ENERGY", 11x, "u(2)/R", 14x, "u(1)/R", 14x, "u0/R")')
      if (.not. cea%Vol) write(IOOUT, '(" ENTHALPY", 18x, "h(2)/R", 14x, "h(1)/R", 15x, "h0/R")')
-     write(IOOUT, '(" (KG-MOL)(K)/KG", 4x, e18.8, 2e20.8)') Hpp(2), Hpp(1), cea%Hsub0
+     write(IOOUT, '(" (KG-MOL)(K)/KG", 4x, e18.8, 2e20.8)') cea%Hpp(2), cea%Hpp(1), cea%Hsub0
      write(IOOUT, '(/" KG-FORM.WT./KG", 13x, "bi(2)", 15x, "bi(1)", 15x, "b0i")')
   end if
 
   do i = 1, Nlm
      j = cea%Jcm(i)
-     if (.not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), B0p(i, 2), B0p(i, 1), cea%B0(i)
+     if (.not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), cea%B0p(i, 2), cea%B0p(i, 1), cea%B0(i)
   end do
 
   return
@@ -2238,14 +2238,14 @@ subroutine REACT(cea)
   real(8):: T1save, T2save
 
   wdone = .false.
-  Wp = 0
-  Hpp = 0
-  Vpls = 0
-  Vmin = 0
-  Am = 0
-  Rh = 0
+  cea%Wp = 0
+  cea%Hpp = 0
+  cea%Vpls = 0
+  cea%Vmin = 0
+  cea%Am = 0
+  cea%Rh = 0
   cea%Elmt = ' '
-  B0p = 0
+  cea%B0p = 0
   dat = 0
 
 ! IF OXIDANT, KR = 1
@@ -2414,22 +2414,22 @@ subroutine REACT(cea)
      if (cea%Pecwt(n) > 0) wdone(kr) = .true.
      pcwt = cea%Pecwt(n)
      if (cea%Moles) pcwt = pcwt * rm
-     Wp(kr) = Wp(kr) + pcwt
+     cea%Wp(kr) = cea%Wp(kr) + pcwt
 
      if (rm <= 0) then
         Nlm = 0
         return
      else
-        Hpp(kr) = Hpp(kr) + cea%Enth(n) * pcwt / rm
-        Am(kr) = Am(kr) + pcwt / rm
+        cea%Hpp(kr) = cea%Hpp(kr) + cea%Enth(n) * pcwt / rm
+        cea%Am(kr) = cea%Am(kr) + pcwt / rm
         if (cea%Dens(n) /= 0) then
-           Rh(kr) = Rh(kr) + pcwt / cea%Dens(n)
+           cea%Rh(kr) = cea%Rh(kr) + pcwt / cea%Dens(n)
         else
-           Rh = 0
+           cea%Rh = 0
         end if
 
         forall(j = 1:Nlm)
-           B0p(j, kr) = dat(j) * pcwt / rm + B0p(j, kr)
+           cea%B0p(j, kr) = dat(j) * pcwt / rm + cea%B0p(j, kr)
         end forall
 
         cea%Rmw(n) = rm
@@ -2440,26 +2440,26 @@ subroutine REACT(cea)
   if (.not. fuel) then
 ! 100 PERCENT OXIDANT, SWITCH INDICES
      cea%Fox = ' '
-     Wp(2) = Wp(1)
-     Wp(1) = 0
-     Hpp(2) = Hpp(1)
-     Am(2) = Am(1)
-     Am(1) = 0
-     B0p(:, 2) = B0p(:, 1)
+     cea%Wp(2) = cea%Wp(1)
+     cea%Wp(1) = 0
+     cea%Hpp(2) = cea%Hpp(1)
+     cea%Am(2) = cea%Am(1)
+     cea%Am(1) = 0
+     cea%B0p(:, 2) = cea%B0p(:, 1)
   end if
 
   if (Nlm /= 0) then
 ! NORMALIZE HPP(KKR), AM(KR), B0P(I, KR), AND PECWT(N).
 ! CALCULATE V+(KR), AND V-(KR)
      do kr = 1, 2
-        if (Wp(kr) /= 0) then
-           Hpp(kr) = Hpp(kr) / Wp(kr)
-           Am(kr) = Wp(kr) / Am(kr)
-           if (Rh(kr) /= 0) Rh(kr) = Wp(kr) / Rh(kr)
+        if (cea%Wp(kr) /= 0) then
+           cea%Hpp(kr) = cea%Hpp(kr) / cea%Wp(kr)
+           cea%Am(kr) = cea%Wp(kr) / cea%Am(kr)
+           if (cea%Rh(kr) /= 0) cea%Rh(kr) = cea%Wp(kr) / cea%Rh(kr)
            do j = 1, Nlm
-              B0p(j, kr) = B0p(j, kr) / Wp(kr)
-              if (cea%X(j) < 0) Vmin(kr) = Vmin(kr) + B0p(j, kr) * cea%X(j)
-              if (cea%X(j) > 0) Vpls(kr) = Vpls(kr) + B0p(j, kr) * cea%X(j)
+              cea%B0p(j, kr) = cea%B0p(j, kr) / cea%Wp(kr)
+              if (cea%X(j) < 0) cea%Vmin(kr) = cea%Vmin(kr) + cea%B0p(j, kr) * cea%X(j)
+              if (cea%X(j) > 0) cea%Vpls(kr) = cea%Vpls(kr) + cea%B0p(j, kr) * cea%X(j)
            end do
         end if
      end do
@@ -2467,9 +2467,9 @@ subroutine REACT(cea)
      if (.not. cea%Moles) then
         do n = 1, cea%Nreac
            if (cea%Fox(n)(:1) == 'O') then
-              cea%Pecwt(n) = cea%Pecwt(n) / Wp(1)
+              cea%Pecwt(n) = cea%Pecwt(n) / cea%Wp(1)
            else
-              cea%Pecwt(n) = cea%Pecwt(n) / Wp(2)
+              cea%Pecwt(n) = cea%Pecwt(n) / cea%Wp(2)
            end if
         end do
      end if
@@ -2525,7 +2525,7 @@ subroutine RKTOUT(cea)
      end if
   end if
 
-  if (cea%Ttt(1) == T(It)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
+  if (cea%Ttt(1) == cea%T(It)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
 
   tem = cea%Ppp(1) * 14.696006d0 / 1.01325d0
   write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
@@ -2802,31 +2802,31 @@ subroutine ROCKET(cea)
   seql = cea%Eql
   iof = 0
   cea%Tt = cea%Tcest
-  cea%Pp = P(1)
+  cea%Pp = cea%P(1)
   cea%App(i12) = 1
 ! LOOP FOR EACH O/F
 100 It = 1
   iof = iof + 1
-  cea%Oxfl = Oxf(iof)
-  if (T(1) /= 0.) then
+  cea%Oxfl = cea%Oxf(iof)
+  if (cea%T(1) /= 0.) then
      cea%Tp = .true.
   else
      cea%Hp = .true.
   end if
   cea%Sp = .false.
   call NEWOF(cea)
-  if (T(1) /= 0) cea%Tt = T(1)
+  if (cea%T(1) /= 0) cea%Tt = cea%T(1)
 ! LOOP FOR CHAMBER PRESSURES
 200 do Ip = 1, Np
      itnum = 0
      cea%Area = .false.
-     if (T(1) == 0) cea%Hp = .true.
-     if (T(1) /= 0) cea%Tp = .true.
+     if (cea%T(1) == 0) cea%Hp = .true.
+     if (cea%T(1) /= 0) cea%Tp = .true.
      cea%Sp = .false.
      cea%Eql = .true.
      isub = 1
      cea%Isup = 1
-     cea%Pp = P(Ip)
+     cea%Pp = cea%P(Ip)
      pinf = cea%Pp
      ipp = 1
      itrot = 3
@@ -2848,7 +2848,7 @@ subroutine ROCKET(cea)
      if (cea%Tt /= 0.) then
 ! TEST FOR FINITE AREA COMBUSTOR
         if (.not. cea%Fac) go to 400
-        pinjas = P(Ip) * pa
+        pinjas = cea%P(Ip) * pa
         pinj = pinjas
         if (Npt <= 2) then
            if (Npt == 1 .and. cea%Trnspt) call TRANP(cea)
@@ -2945,7 +2945,7 @@ subroutine ROCKET(cea)
                     dlt = log(tmelt / cea%Tt)
                     dd = dlt * cea%Cpr(nptth) / (Enn * cea%Dlvtp(nptth))
                     cea%Pp = cea%Pp * EXP(dd)
-                    cea%App(nptth) = P(Ip) / cea%Pp
+                    cea%App(nptth) = cea%P(Ip) / cea%Pp
                     if (cea%Fac) cea%App(nptth) = pinf / cea%Pp
                     if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') cea%App(nptth)
                     thi = .true.
@@ -2993,7 +2993,7 @@ subroutine ROCKET(cea)
      cea%Isv = -i12
      go to 1200
 500  npr1 = Npr
-     cea%App(nptth) = P(Ip) / cea%Pp
+     cea%App(nptth) = cea%P(Ip) / cea%Pp
      if (cea%Fac) cea%App(nptth) = Pinf / cea%Pp
      if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') cea%App(nptth)
      itrot = itrot - 1
@@ -3286,7 +3286,7 @@ subroutine ROCKET(cea)
   end do
   if (It < Nt) then
      It = It + 1
-     cea%Tt = T(It)
+     cea%Tt = cea%T(It)
      go to 200
   else if (iof < Nof) then
      go to 100
@@ -3644,7 +3644,7 @@ subroutine SHCK(cea)
 
   if (cea%Trace == 0) cea%Trace = 5.E-9
   cea%Tp = .true.
-  Cpmix = 0
+  cea%Cpmix = 0
   srefl = .false.
   if (.not. cea%Short) then
      write(IOOUT, '(/"   *** INPUT FOR SHOCK PROBLEMS ***")')
@@ -3653,7 +3653,7 @@ subroutine SHCK(cea)
   end if
   if (cea%Refleq .or. cea%Reflfz) srefl = .true.
   seql = cea%Incdeq
-  if (T(1) == 0) T(1) = cea%Rtemp(1)
+  if (cea%T(1) == 0) cea%T(1) = cea%Rtemp(1)
   do i = 1, cea%Nsk
      uis(i) = cea%U1(i)
      mis(i) = cea%Mach1(i)
@@ -3669,14 +3669,14 @@ subroutine SHCK(cea)
   end if
   iof = 0
 200 iof = iof + 1
-  cea%Oxfl = Oxf(iof)
+  cea%Oxfl = cea%Oxf(iof)
   call NEWOF(cea)
   cea%Incdeq = seql
 300 refl = .false.
   it2 = 2
   it1 = 1
-  cea%Pp = P(1)
-  cea%Tt = T(1)
+  cea%Pp = cea%P(1)
+  cea%Tt = cea%T(1)
   if (.not. cea%Incdeq) then
 ! FROZEN
      do n = 1, cea%Nsk
@@ -3685,8 +3685,8 @@ subroutine SHCK(cea)
      end do
   end if
   do Npt = 1, cea%Nsk
-     cea%Ppp(Npt) = P(Npt)
-     cea%Ttt(Npt) = T(Npt)
+     cea%Ppp(Npt) = cea%P(Npt)
+     cea%Ttt(Npt) = cea%T(Npt)
      if (Npt > 1) then
         if (cea%Ppp(Npt) == 0) cea%Ppp(Npt) = cea%Ppp(Npt-1)
         if (cea%Ttt(Npt) == 0) cea%Ttt(Npt) = cea%Ttt(Npt-1)
@@ -3703,14 +3703,14 @@ subroutine SHCK(cea)
         write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') cea%Tt, Npt
         go to 1000
      end if
-350  if (Cpmix /= 0) cea%Gamma1 = Cpmix / (Cpmix - 1/Wmix)
-     cea%A1 = sqrt(R0 * cea%Gamma1 * cea%Tt / Wmix)
+350  if (cea%Cpmix /= 0) cea%Gamma1 = cea%Cpmix / (cea%Cpmix - 1/cea%Wmix)
+     cea%A1 = sqrt(R0 * cea%Gamma1 * cea%Tt / cea%Wmix)
      if (cea%U1(Npt) == 0) cea%U1(Npt) = cea%A1 * cea%Mach1(Npt)
      if (cea%Mach1(Npt) == 0.) cea%Mach1(Npt) = cea%U1(Npt) / cea%A1
-     cea%Wm(Npt) = Wmix
-     cea%Cpr(Npt) = Cpmix
+     cea%Wm(Npt) = cea%Wmix
+     cea%Cpr(Npt) = cea%Cpmix
      cea%Gammas(Npt) = cea%Gamma1
-     cea%Vlm(Npt) = R0 * cea%Tt / (Wmix * cea%Pp)
+     cea%Vlm(Npt) = R0 * cea%Tt / (cea%Wmix * cea%Pp)
   end do
   Npt = cea%Nsk
 ! OUTPUT--1ST CONDITION
@@ -3779,7 +3779,7 @@ subroutine SHCK(cea)
         call HCALC(cea)
         if (cea%Tt == 0) go to 600
         cea%Hsum(Npt) = cea%Hsub0
-        cea%Cpr(Npt) = Cpmix
+        cea%Cpr(Npt) = cea%Cpmix
      else
         call CPHS(cea)
         cea%Cpr(Npt) = cea%Cpsum
@@ -3984,7 +3984,7 @@ subroutine SHCK(cea)
   else if (iof >= Nof) then
      cea%Tp = .false.
      do n = 1, cea%Nreac
-        cea%Rtemp(n) = T(1)
+        cea%Rtemp(n) = cea%T(1)
      end do
   else
      do i = 1, cea%Nsk
@@ -4017,15 +4017,15 @@ subroutine THERMP(cea)
   Sv = transfer(cea%Sp, Sv)
   cea%Eql = .true.
   outerLoop: do iof = 1, Nof
-     cea%Oxfl = Oxf(iof)
+     cea%Oxfl = cea%Oxf(iof)
      call NEWOF(cea)
 ! SET ASSIGNED P OR VOLUME
      do Ip = 1, Np
-        cea%Pp = P(Ip)
+        cea%Pp = cea%P(Ip)
 ! SET ASSIGNED T
         do It = 1, Nt
-           cea%Vv = V(Ip)
-           cea%Tt = T(It)
+           cea%Vv = cea%V(Ip)
+           cea%Tt = cea%T(It)
            call EQLBRM(cea)
            if (Npt == 0) return
            if (cea%Trnspt .and. cea%Tt /= 0) call TRANP(cea)
@@ -4055,7 +4055,7 @@ subroutine THERMP(cea)
            write(IOOUT, '(////)')
            Npt = 0
 10         Npt = Npt + 1
-           if (.not. cea%Tp .and. cea%Tt /= 0) T(1) = cea%Tt
+           if (.not. cea%Tp .and. cea%Tt /= 0) cea%T(1) = cea%Tt
            if (Nt == 1 .and. Np == 1) cycle outerLoop
            if (Ip == 1 .and. It == 1) cea%Isv = -cea%Isv
            if (Nt /= 1) then
