@@ -903,7 +903,7 @@ contains
 
     type(CEA_Problem), intent(inout):: cea
 
-    integer:: i, n
+    integer:: n
     real(8):: rho
 
     write(IOOUT, '(" CASE = ", a15)') cea%Case

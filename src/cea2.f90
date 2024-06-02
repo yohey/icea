@@ -16,7 +16,7 @@ program main
   character(200):: Pfile
   character(196):: prefix
   logical:: caseOK, ex, readOK
-  integer:: i, inc, iof, j, ln, n
+  integer:: i, iof, j, ln
   real(8):: xi, xln
 
   write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
@@ -668,8 +668,8 @@ subroutine EQLBRM(cea)
   character(12):: ae, cmp(maxEl)
   character(16):: amb
   logical, save:: cpcalc, i2many, newcom, reduce
-  integer:: i, il, ilamb, ilamb1, inc, ipr, iq2, iter, ix, ixsing, iz, j, ja, jb, &
-       jbx, jc, jcondi, jcons, jdelg, jex, jj, jkg, jneg, jsw, k, kc, kg, kk, &
+  integer:: i, il, ilamb, ilamb1, inc, ipr, iq2, iter, ixsing, iz, j, ja, jb, &
+       jbx, jc, jcondi, jcons, jdelg, jkg, jneg, jsw, k, kc, kg, kk, &
        kmat, kneg, l, lc, lcs(maxEl), le, lelim, lk, ll, lncvg, ls, lsing, &
        lz, maxitn, ncvg, njc, nn, numb
   real(8), save:: aa, ambda, ambda1, bigen, bigneg, delg, dlnt, dpie, ensol, esize, &
@@ -1690,7 +1690,7 @@ subroutine FROZEN(cea)
   type(CEA_Problem), intent(inout):: cea
 
 ! LOCAL VARIABLES
-  integer:: i, inc, iter, j, k, nnn
+  integer:: iter, j, nnn
   real(8):: dlnt, dlpm
 
   cea%Convg = .false.
@@ -2237,7 +2237,7 @@ subroutine REACT(cea)
   character(6):: date
   character(2):: el(5)
   character(15):: sub
-  integer:: i, icf, ifaz, ifrmla, itot, j, jj, k, kk, kr, l, n, nall, nint, nj, ntgas, ntot
+  integer:: i, icf, ifaz, ifrmla, itot, j, jj, kk, kr, l, n, nall, nint, nj, ntgas, ntot
   logical:: fuel, rcoefs, wdone(2)
   logical:: hOK
   real(8):: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, T1, T2
