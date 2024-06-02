@@ -1385,19 +1385,31 @@ contains
   end subroutine VARFMT
 
 
-  subroutine write_plt_file(IOPLT, Iplt, Nplt, Pltvar, Pltout)
+  subroutine write_plt_file(cea, filename)
+    use mod_cea
     implicit none
 
-    integer, intent(in):: IOPLT, Iplt, Nplt
-    character(*), intent(in):: Pltvar(:)
-    real(8), intent(in):: Pltout(:, :)
-    integer:: i, j
+    type(CEA_Problem), intent(in):: cea(:)
+    character(*), intent(in):: filename
 
-    write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
-    do i = 1, Iplt
-       write(IOPLT, '(1x, 1p, 20E12.4)') (Pltout(i, j), j = 1, Nplt)
+    integer:: num_cases, IOPLT
+    integer:: i, j, icase
+
+    num_cases = size(cea)
+
+    open(newunit = IOPLT, file = filename, form = 'formatted')
+
+    do icase = 1, num_cases
+       if (cea(icase)%Nplt > 0) then
+          write(IOPLT, '("#", 2x, 20A12)') (cea(icase)%Pltvar(j), j = 1, cea(icase)%Nplt)
+          do i = 1, cea(icase)%Iplt
+             write(IOPLT, '(1x, 1p, 20E12.4)') (cea(icase)%Pltout(i, j), j = 1, cea(icase)%Nplt)
+          end do
+          write(IOPLT, '("#", 2x, 20A12)') (cea(icase)%Pltvar(j), j = 1, cea(icase)%Nplt)
+       end if
     end do
-    write(IOPLT, '("#", 2x, 20A12)') (Pltvar(j), j = 1, Nplt)
+
+    close(IOPLT)
 
     return
   end subroutine write_plt_file

@@ -20,7 +20,6 @@ module mod_cea
   integer, parameter:: ioout =  8
   integer, parameter:: iosch = 13
   integer, parameter:: iothm = 14
-  integer, parameter:: ioplt = 15
   integer, parameter:: iotrn = 18
   !***********************************************************************
 

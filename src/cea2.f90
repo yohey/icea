@@ -8,13 +8,12 @@ program main
   use mod_legacy_io
   implicit none
 
-  integer:: icase = 0
+  integer:: icase = 0, num_cases
   type(CEA_Problem):: cea(255)
 
   character(15):: ensert(20)
-  character(200):: infile, ofile
-  character(200):: Pfile
-  character(196):: prefix
+  character(200):: inp_filename, out_filename, plt_filename
+  character(196):: basename
   logical:: caseOK, ex, readOK
   integer:: i, iof, j, ln
   real(8):: xi, xln
@@ -24,21 +23,21 @@ program main
        & " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
        & //)')
 
-  read(*, '(a)') prefix
+  read(*, '(a)') basename
 
-  ln = index(prefix, ' ') - 1
-  infile = prefix(1:ln) // '.inp'
-  ofile  = prefix(1:ln) // '.out'
-  Pfile  = prefix(1:ln) // '.plt'
+  ln = index(basename, ' ') - 1
+  inp_filename = basename(1:ln) // '.inp'
+  out_filename = basename(1:ln) // '.out'
+  plt_filename = basename(1:ln) // '.plt'
 
-  inquire(file=infile, exist=ex)
+  inquire(file=inp_filename, exist=ex)
   if (.not. ex) then
-     print *, infile, ' DOES NOT EXIST'
+     print *, inp_filename, ' DOES NOT EXIST'
      error stop
   end if
 
-  open(IOINP, file=infile, status='old', form='formatted')
-  open(IOOUT, file=ofile, status='unknown', form='formatted')
+  open(IOINP, file=inp_filename, status='old', form='formatted')
+  open(IOOUT, file=out_filename, status='unknown', form='formatted')
   open(IOSCH, status='scratch', form='unformatted')
   open(IOTHM, file='thermo.lib', form='unformatted')
   open(IOTRN, file='trans.lib', form='unformatted')
@@ -144,11 +143,6 @@ program main
         call SHCK(cea(icase))
      end if
 
-     if (cea(icase)%Nplt > 0) then
-        open(IOPLT, file = Pfile, form = 'formatted')
-        call write_plt_file(IOPLT, cea(icase)%Iplt, cea(icase)%Nplt, cea(icase)%Pltvar, cea(icase)%Pltout)
-     end if
-
   end do outerLoop
 
   close(IOINP)
@@ -156,7 +150,10 @@ program main
   close(IOSCH)
   close(IOTHM)
   close(IOTRN)
-  close(IOPLT)
+
+  num_cases = icase
+
+  call write_plt_file(cea(1:num_cases), plt_filename)
 
   stop
 end program main
