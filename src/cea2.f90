@@ -698,7 +698,7 @@ subroutine EQLBRM(cea)
 
   if (xsize > 80) xsize = 80
 
-  esize = min(80., xsize + 6.90775528d0)
+  esize = min(80d0, xsize + 6.90775528d0)
   jcons = 0
   pie = 0
   i2many = .false.
@@ -1766,7 +1766,7 @@ subroutine GAUSS(cea)
   type(CEA_Problem), intent(inout):: cea
 
 ! LOCAL VARIABLES
-  integer:: i, imatp1, j, k, nn, nnp1
+  integer:: i, imatp1, j, k, nn, nnp1, itmp(1)
   real(8), parameter:: bigNo = 1e25
   real(8):: coefx(50)
   real(8):: tmp(cea%Imat+1)
@@ -1799,8 +1799,8 @@ subroutine GAUSS(cea)
         end if
 
 ! LOCATE ROW WITH SMALLEST MAXIMUM COEFFICIENT
-        tmp(1:1) = minloc(coefx(nn:cea%Imat))
-        i = tmp(1) + nn - 1
+        itmp(1:1) = minloc(coefx(nn:cea%Imat))
+        i = itmp(1) + nn - 1
 
 ! INDEX I LOCATES EQUATION TO BE USED FOR ELIMINATING THE NTH
 ! VARIABLE FROM THE REMAINING EQUATIONS
@@ -4321,7 +4321,7 @@ subroutine TRANIN(cea)
      if (.not. (cea%Ions .and. (abs(cea%A(cea%Nlm, k)) == 1) .and. (cea%Eta(i, i) == 0))) then
         if (cea%Eta(i, i) == 0) then
            omega = log(50 * cea%Wmol(i)**4.6 / cea%Tt**1.4)
-           omega = max(omega, 1.)
+           omega = max(omega, 1d0)
            cea%Eta(i, i) = cea%Viscns * sqrt(cea%Wmol(i) * cea%Tt) / omega
         end if
         if (cea%Con(i) == 0) cea%Con(i) = cea%Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (cea%Cprr(i) - 2.5d0)) / cea%Wmol(i)
