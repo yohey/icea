@@ -4,7 +4,7 @@
 !             CHEMICAL EQULIBRIUM WITH APPLICATIONS         5/21/04
 !***********************************************************************
 program main
-  use mod_legacy_cea
+  use mod_cea
   use mod_legacy_io
   implicit none
 
@@ -166,31 +166,31 @@ subroutine CPHS(cea)
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
 
   integer:: i, ij, j, jj, k
 
-  cx(:) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
-  hcx(:) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
-  scx(:) = 0d0
+  cea%cx(:) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
+  cea%hcx(:) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
+  cea%scx(:) = 0d0
 
   k = 1
   if (cea%Tt > cea%Tg(2)) k = 2
   if (cea%Tt > cea%Tg(3)) k = 3
-  cx(2) = 1 / cea%Tt
-  cx(1) = cx(2)**2
-  scx(3) = cea%Tln
-  scx(2) = -cx(2)
-  hcx(2) = cea%Tln * cx(2)
-  hcx(1) = -cx(1)
-  scx(1) = hcx(1) / 2
+  cea%cx(2) = 1 / cea%Tt
+  cea%cx(1) = cea%cx(2)**2
+  cea%scx(3) = cea%Tln
+  cea%scx(2) = -cea%cx(2)
+  cea%hcx(2) = cea%Tln * cea%cx(2)
+  cea%hcx(1) = -cea%cx(1)
+  cea%scx(1) = cea%hcx(1) / 2
 
   forall(i = 4:7)
-     hcx(i) = cx(i) * cea%Tt
-     scx(i) = cx(i-1) * cea%Tt
+     cea%hcx(i) = cea%cx(i) * cea%Tt
+     cea%scx(i) = cea%cx(i-1) * cea%Tt
   end forall
 
   cea%H0(1:cea%Ng) = 0
@@ -198,21 +198,21 @@ subroutine CPHS(cea)
 
   do i = 7, 4, -1
      forall(j = 1:cea%Ng)
-        cea%S(j) = (cea%S(j) + cea%Coef(j, i, k)) * scx(i)
-        cea%H0(j) = (cea%H0(j) + cea%Coef(j, i, k)) * hcx(i)
+        cea%S(j) = (cea%S(j) + cea%Coef(j, i, k)) * cea%scx(i)
+        cea%H0(j) = (cea%H0(j) + cea%Coef(j, i, k)) * cea%hcx(i)
      end forall
   end do
 
   do i = 1, 3
      forall(j = 1:cea%Ng)
-        cea%S(j) = cea%S(j) + cea%Coef(j, i, k) * scx(i)
-        cea%H0(j) = cea%H0(j) + cea%Coef(j, i, k) * hcx(i)
+        cea%S(j) = cea%S(j) + cea%Coef(j, i, k) * cea%scx(i)
+        cea%H0(j) = cea%H0(j) + cea%Coef(j, i, k) * cea%hcx(i)
      end forall
   end do
 
   forall(j = 1:cea%Ng)
      cea%S(j) = cea%S(j) + cea%Coef(j, 9, k)
-     cea%H0(j) = cea%H0(j) + cea%Coef(j, 8, k) * cx(2)
+     cea%H0(j) = cea%H0(j) + cea%Coef(j, 8, k) * cea%cx(2)
   end forall
 
   if (.not. cea%Tp .or. cea%Convg) then
@@ -222,7 +222,7 @@ subroutine CPHS(cea)
         forall(j = 1:cea%Ng) cea%Cp(j) = (cea%Cp(j) + cea%Coef(j, i, k)) * cea%Tt
      end do
 
-     forall(j = 1:cea%Ng) cea%Cp(j) = cea%Cp(j) + sum(cea%Coef(j, 1:3, k) * cx(1:3))
+     forall(j = 1:cea%Ng) cea%Cp(j) = cea%Cp(j) + sum(cea%Coef(j, 1:3, k) * cea%cx(1:3))
   end if
 
   if (cea%Npr /= 0 .and. k /= 3 .and. cea%Ng /= cea%Ngc) then
@@ -234,19 +234,19 @@ subroutine CPHS(cea)
         cea%S(j) = 0
 
         do i = 7, 4, -1
-           cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * scx(i)
-           cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * hcx(i)
+           cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * cea%scx(i)
+           cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * cea%hcx(i)
            cea%Cp(j) = (cea%Cp(j) + cea%Cft(jj, i)) * cea%Tt
         end do
 
         do i = 1, 3
-           cea%S(j) = cea%S(j) + cea%Cft(jj, i) * scx(i)
-           cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * hcx(i)
-           cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cx(i)
+           cea%S(j) = cea%S(j) + cea%Cft(jj, i) * cea%scx(i)
+           cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * cea%hcx(i)
+           cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cea%cx(i)
         end do
 
         cea%S(j) = cea%S(j) + cea%Cft(jj, 9)
-        cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cx(2)
+        cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cea%cx(2)
      end do
   end if
 
@@ -258,7 +258,7 @@ subroutine ALLCON(cea)
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -272,19 +272,19 @@ subroutine ALLCON(cea)
      cea%S(j) = 0
 
      do i = 7, 4, -1
-        cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * scx(i)
-        cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * hcx(i)
+        cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * cea%scx(i)
+        cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * cea%hcx(i)
         cea%Cp(j) = (cea%Cp(j) + cea%Cft(jj, i)) * cea%Tt
      end do
 
      do i = 1, 3
-        cea%S(j) = cea%S(j) + cea%Cft(jj, i) * scx(i)
-        cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * hcx(i)
-        cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cx(i)
+        cea%S(j) = cea%S(j) + cea%Cft(jj, i) * cea%scx(i)
+        cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * cea%hcx(i)
+        cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cea%cx(i)
      end do
 
      cea%S(j) = cea%S(j) + cea%Cft(jj, 9)
-     cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cx(2)
+     cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cea%cx(2)
   end do
 
   return
@@ -296,7 +296,7 @@ subroutine DETON(cea)
 !***********************************************************************
 ! CHAPMAN-JOUGUET DETONATIONS.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   use mod_legacy_io
   implicit none
 
@@ -605,7 +605,7 @@ subroutine EFMT(Fone, Aa, Vx, Npt)
 !***********************************************************************
 ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 ! DUMMY ARGUMENTS
   character(15):: Aa
@@ -660,7 +660,6 @@ subroutine EQLBRM(cea)
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
   use mod_cea
-  use mod_legacy_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -1686,7 +1685,6 @@ subroutine FROZEN(cea)
 ! AND PRESSURE.  CALLED FROM ROCKET.
 !***********************************************************************
   use mod_cea
-  use mod_legacy_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -1762,7 +1760,7 @@ subroutine GAUSS(cea)
 ! SOLVE ANY LINEAR SET OF UP TO maxMat EQUATIONS
 ! NUMBER OF EQUATIONS = IMAT
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -1851,7 +1849,7 @@ subroutine HCALC(cea)
 ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
 ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -2010,7 +2008,7 @@ subroutine MATRIX(cea)
 !***********************************************************************
 ! SET UP ITERATION OR DERIVATIVE MATRIX.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -2160,7 +2158,7 @@ subroutine NEWOF(cea)
 !***********************************************************************
 ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -2231,7 +2229,6 @@ subroutine REACT(cea)
 ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
 !***********************************************************************
   use mod_cea
-  use mod_legacy_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -2509,7 +2506,7 @@ subroutine RKTOUT(cea, it)
 !***********************************************************************
 ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   use mod_legacy_io
   implicit none
 
@@ -2749,7 +2746,6 @@ subroutine ROCKET(cea)
 ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
 !***********************************************************************
   use mod_cea
-  use mod_legacy_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3313,7 +3309,6 @@ subroutine SEARCH(cea)
 ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
 !***********************************************************************
   use mod_cea
-  use mod_legacy_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3489,7 +3484,7 @@ end subroutine
 
 subroutine READTR(cea)
   ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3562,7 +3557,7 @@ subroutine SETEN(cea)
 !         ALSO USE COMPOSITIONS FROM POINT -ISV FOR NPT.
 !  ISV=0  USE COMPOSITIONS SAVED WHEN ISV<0.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3639,7 +3634,7 @@ subroutine SHCK(cea)
 !***********************************************************************
 ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   use mod_legacy_io
   implicit none
 
@@ -4014,7 +4009,7 @@ subroutine THERMP(cea)
 !***********************************************************************
 ! ASSIGNED THERMODYNAMIC STATES.  HP, SP, TP, UV, SV, AND TV PROBLEMS.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   use mod_legacy_io
   implicit none
 
@@ -4089,7 +4084,6 @@ subroutine TRANIN(cea)
 ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
 !***********************************************************************
   use mod_cea
-  use mod_legacy_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -4382,7 +4376,7 @@ subroutine TRANP(cea)
 !   NUMBER OF CHEMICAL REACTIONS = NR (NM - NLM)
 !   ARRAY OF STOICHIOMETRIC COEFFICIENTS = STC
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -4582,7 +4576,7 @@ subroutine UTHERM(cea, readOK)
 !           CONTIGUOUS PHASE, ETC.
 ! NTL     - NUMBER OF T INTERVALS FOR A SPECIES SET.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 
   ! DUMMY ARGUMENTS
@@ -4797,7 +4791,7 @@ subroutine UTRAN(readOK)
 ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY  AND USED BY ITSELF TO
 ! PROCESS THE TRANSPORT PROPERTY DATA.
 !***********************************************************************
-  use mod_legacy_cea
+  use mod_cea
   implicit none
 ! DUMMY ARGUMENTS
   logical, intent(out):: readOK

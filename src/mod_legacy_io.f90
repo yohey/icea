@@ -12,7 +12,7 @@ contains
     !***********************************************************************
     ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
     !***********************************************************************
-    use mod_legacy_cea
+    use mod_cea
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -731,7 +731,7 @@ contains
     !   Cnum - CHARACTER STRING REPRESENTING DATASET NUMBERS. MAXIMUM 24
     !          CHARACTERS.
     !***********************************************************************
-    use mod_legacy_cea
+    use mod_cea
     implicit none
 
     ! DUMMY ARGUMENTS
@@ -898,7 +898,7 @@ contains
     !
     ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
     !***********************************************************************
-    use mod_legacy_cea
+    use mod_cea
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -957,7 +957,7 @@ contains
     !***********************************************************************
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
-    use mod_legacy_cea
+    use mod_cea
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1192,7 +1192,7 @@ contains
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
-    use mod_legacy_cea
+    use mod_cea
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1282,7 +1282,7 @@ contains
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
-    use mod_legacy_cea
+    use mod_cea
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1346,7 +1346,7 @@ contains
     ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-format IN
     ! VARIABLE format FMT.
     !***********************************************************************
-    use mod_legacy_cea
+    use mod_cea
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
