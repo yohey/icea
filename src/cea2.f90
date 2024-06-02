@@ -948,9 +948,15 @@ subroutine EQLBRM(cea)
 
         cea%En(1:cea%Ng, cea%Npt) = 0
 
-        do concurrent (j = 1:cea%Ng, (lelim == 0 .or. all(cea%A(lelim:ls, j) == 0)) .and. (cea%Enln(j) - cea%Ennl + tsize) > 0)
-           cea%En(j, cea%Npt) = exp(cea%Enln(j))
-        end do
+        if (lelim == 0) then
+           do concurrent (j = 1:cea%Ng, (cea%Enln(j) - cea%Ennl + tsize) > 0)
+              cea%En(j, cea%Npt) = exp(cea%Enln(j))
+           end do
+        else
+           do concurrent (j = 1:cea%Ng, all(cea%A(lelim:ls, j) == 0))
+              cea%En(j, cea%Npt) = exp(cea%Enln(j))
+           end do
+        end if
 
         cea%Totn(cea%Npt) = cea%Totn(cea%Npt) + sum(cea%En(1:cea%Ng, cea%Npt))
 
@@ -1669,9 +1675,15 @@ subroutine EQLBRM(cea)
        & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') cea%Npt, gasfrc
 
   if (cea%Trace /= 0) then
-     do concurrent (j = 1:cea%Ng, lelim == 0 .or. all(cea%A(lelim:ls, j) == 0) .and. cea%Enln(j) > -87)
-        cea%En(j, cea%Npt) = exp(cea%Enln(j))
-     end do
+     if (lelim == 0) then
+        do concurrent (j = 1:cea%Ng, cea%Enln(j) > -87)
+           cea%En(j, cea%Npt) = exp(cea%Enln(j))
+        end do
+     else
+        do concurrent (j = 1:cea%Ng, all(cea%A(lelim:ls, j) == 0))
+           cea%En(j, cea%Npt) = exp(cea%Enln(j))
+        end do
+     end if
   end if
 
   if (cea%Debug(cea%Npt)) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
@@ -3006,7 +3018,9 @@ subroutine ROCKET(cea)
               appl = sqrt(eln*(1.535d0 + 3.294d0 * eln)) + pcplt
               go to 1100
            else
-              if (cea%Isup > isup1 .and. cea%Supar(cea%Isup-1) >= 2) go to 850
+              if (cea%Isup > isup1) then
+                 if (cea%Supar(cea%Isup-1) >= 2) go to 850
+              end if
               appl = cea%Gammas(nptth) + eln * 1.4
               go to 1100
            end if
