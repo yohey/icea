@@ -188,41 +188,45 @@ subroutine CPHS(cea)
   cea%hcx(1) = -cea%cx(1)
   cea%scx(1) = cea%hcx(1) / 2
 
-  forall(i = 4:7)
+  do concurrent (i = 4:7)
      cea%hcx(i) = cea%cx(i) * cea%Tt
      cea%scx(i) = cea%cx(i-1) * cea%Tt
-  end forall
+  end do
 
   cea%H0(1:cea%Ng) = 0
   cea%S(1:cea%Ng) = 0
 
   do i = 7, 4, -1
-     forall(j = 1:cea%Ng)
+     do concurrent (j = 1:cea%Ng)
         cea%S(j) = (cea%S(j) + cea%Coef(j, i, k)) * cea%scx(i)
         cea%H0(j) = (cea%H0(j) + cea%Coef(j, i, k)) * cea%hcx(i)
-     end forall
+     end do
   end do
 
   do i = 1, 3
-     forall(j = 1:cea%Ng)
+     do concurrent (j = 1:cea%Ng)
         cea%S(j) = cea%S(j) + cea%Coef(j, i, k) * cea%scx(i)
         cea%H0(j) = cea%H0(j) + cea%Coef(j, i, k) * cea%hcx(i)
-     end forall
+     end do
   end do
 
-  forall(j = 1:cea%Ng)
+  do concurrent (j = 1:cea%Ng)
      cea%S(j) = cea%S(j) + cea%Coef(j, 9, k)
      cea%H0(j) = cea%H0(j) + cea%Coef(j, 8, k) * cea%cx(2)
-  end forall
+  end do
 
   if (.not. cea%Tp .or. cea%Convg) then
      cea%Cp(1:cea%Ng) = 0
 
      do i = 7, 4, -1
-        forall(j = 1:cea%Ng) cea%Cp(j) = (cea%Cp(j) + cea%Coef(j, i, k)) * cea%Tt
+        do concurrent (j = 1:cea%Ng)
+           cea%Cp(j) = (cea%Cp(j) + cea%Coef(j, i, k)) * cea%Tt
+        end do
      end do
 
-     forall(j = 1:cea%Ng) cea%Cp(j) = cea%Cp(j) + sum(cea%Coef(j, 1:3, k) * cea%cx(1:3))
+     do concurrent (j = 1:cea%Ng)
+        cea%Cp(j) = cea%Cp(j) + sum(cea%Coef(j, 1:3, k) * cea%cx(1:3))
+     end do
   end if
 
   if (cea%Npr /= 0 .and. k /= 3 .and. cea%Ng /= cea%Ngc) then
@@ -516,10 +520,10 @@ subroutine DETON(cea)
            if (.not. cea%SIunit) write(IOOUT, cea%fmt) fh1, (h1(j), j = 1, cea%Npt)
            if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(j), j = 1, cea%Npt)
 
-           forall(i = 1:cea%Npt)
+           do concurrent (i = 1:cea%Npt)
               cea%V(i) = cea%Wmix
               cea%Sonvel(i) = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
-           end forall
+           end do
 
            cea%fmt(7) = '3,'
            write(IOOUT, cea%fmt) fm1, (cea%V(j), j = 1, cea%Npt)
@@ -559,7 +563,9 @@ subroutine DETON(cea)
            write(IOOUT, cea%fmt) fpp1, (cea%V(j), j = 1, cea%Npt)
            write(IOOUT, cea%fmt) ftt1, (cea%Pcp(j), j = 1, cea%Npt)
 
-           forall(i = 1:cea%Npt) cea%V(i) = cea%Wm(i) / cea%Wmix
+           do concurrent (i = 1:cea%Npt)
+              cea%V(i) = cea%Wm(i) / cea%Wmix
+           end do
 
            cea%fmt(7) = '4,'
            write(IOOUT, cea%fmt) fmm1, (cea%V(j), j = 1, cea%Npt)
@@ -775,10 +781,10 @@ subroutine EQLBRM(cea)
   if (cea%Lsave /= 0 .and. cea%Nlm /= cea%Lsave) then
      tem = exp(-tsize)
      do i = cea%Lsave + 1, cea%Nlm
-        forall(j = 1:cea%Ng, cea%A(i, j) /= 0)
+        do concurrent (j = 1:cea%Ng, cea%A(i, j) /= 0)
            cea%En(j, cea%Npt) = tem
            cea%Enln(j) = -tsize
-        end forall
+        end do
      end do
   end if
 
@@ -873,7 +879,9 @@ subroutine EQLBRM(cea)
         end do outerLoop0
 
         if (cea%Npr /= 0) then
-           forall(k = 1:cea%Npr) cea%Deln(cea%Jcond(k)) = cea%X(cea%Nlm+k)
+           do concurrent (k = 1:cea%Npr)
+              cea%Deln(cea%Jcond(k)) = cea%X(cea%Nlm+k)
+           end do
         end if
 
 ! CALCULATE CONTROL FACTOR, AMBDA
@@ -938,29 +946,33 @@ subroutine EQLBRM(cea)
 ! APPLY CORRECTIONS TO ESTIMATES
         cea%Totn(cea%Npt) = 0
 
-        forall(j = 1:cea%Ng) cea%Enln(j) = cea%Enln(j) + ambda * cea%Deln(j)
+        do concurrent (j = 1:cea%Ng)
+           cea%Enln(j) = cea%Enln(j) + ambda * cea%Deln(j)
+        end do
 
         cea%En(1:cea%Ng, cea%Npt) = 0
 
-        forall(j = 1:cea%Ng, (lelim == 0 .or. all(cea%A(lelim:ls, j) == 0)) .and. (cea%Enln(j) - cea%Ennl + tsize) > 0)
+        do concurrent (j = 1:cea%Ng, (lelim == 0 .or. all(cea%A(lelim:ls, j) == 0)) .and. (cea%Enln(j) - cea%Ennl + tsize) > 0)
            cea%En(j, cea%Npt) = exp(cea%Enln(j))
-        end forall
+        end do
 
         cea%Totn(cea%Npt) = cea%Totn(cea%Npt) + sum(cea%En(1:cea%Ng, cea%Npt))
 
         if (cea%Ions .and. cea%Elmt(cea%Nlm) == 'E') then
            mask = .false.
-           forall(j = 1:cea%Ng, cea%A(ls, j) /= 0 .and. cea%En(j, cea%Npt) == 0 .and. (cea%Enln(j) - cea%Ennl + esize) > 0)
+           do concurrent (j = 1:cea%Ng, cea%A(ls, j) /= 0 .and. cea%En(j, cea%Npt) == 0 .and. (cea%Enln(j) - cea%Ennl + esize) > 0)
               cea%En(j, cea%Npt) = exp(cea%Enln(j))
               mask(j) = .true.
-           end forall
+           end do
            cea%Totn(cea%Npt) = cea%Totn(cea%Npt) + sum(cea%En(1:cea%Ng, cea%Npt), mask=mask)
         end if
 
         cea%Sumn = cea%Totn(cea%Npt)
 
         if (cea%Npr /= 0) then
-           forall(k = 1:cea%Npr) cea%En(cea%Jcond(k), cea%Npt) = cea%En(cea%Jcond(k), cea%Npt) + ambda * cea%Deln(cea%Jcond(k))
+           do concurrent (k = 1:cea%Npr)
+              cea%En(cea%Jcond(k), cea%Npt) = cea%En(cea%Jcond(k), cea%Npt) + ambda * cea%Deln(cea%Jcond(k))
+           end do
            cea%Totn(cea%Npt) = cea%Totn(cea%Npt) + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt))
         end if
 
@@ -1013,10 +1025,10 @@ subroutine EQLBRM(cea)
               xi = cea%Enn/xi
               xln = log(xi)
 
-              forall(j = 1:cea%Ng)
+              do concurrent (j = 1:cea%Ng)
                  cea%En(j, cea%Npt) = xi
                  cea%Enln(j) = xln
-              end forall
+              end do
 
               j = cea%Jcond(1)
               k = 1
@@ -1066,7 +1078,9 @@ subroutine EQLBRM(cea)
                  end do
               end if
 
-              forall(i = 1:cea%Nlm) pisave(i) = cea%X(i)
+              do concurrent (i = 1:cea%Nlm)
+                 pisave(i) = cea%X(i)
+              end do
 
               if (tem > 0.001) go to 500
 
@@ -1103,7 +1117,9 @@ subroutine EQLBRM(cea)
                  if (sum1 /= 0) then
                     dpie = -sum0 / sum1
 
-                    forall(j = 1:cea%Ng, cea%A(ls, j) /= 0) cea%Enln(j) = cea%Enln(j) + cea%A(ls, j) * dpie
+                    do concurrent (j = 1:cea%Ng, cea%A(ls, j) /= 0)
+                       cea%Enln(j) = cea%Enln(j) + cea%A(ls, j) * dpie
+                    end do
 
                     if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", i4, "  DELTA PI =", e14.7)') iter, dpie
 
@@ -1210,7 +1226,9 @@ subroutine EQLBRM(cea)
                        if (.not. cea%Ions) go to 1100
                        if (cea%Elmt(cea%Nlm) /= 'E') go to 1100
 
-                       forall(j = 1:cea%Ng, cea%A(cea%Nlm, j) /= 0) cea%En(j, cea%Npt) = 0
+                       do concurrent (j = 1:cea%Ng, cea%A(cea%Nlm, j) /= 0)
+                          cea%En(j, cea%Npt) = 0
+                       end do
 
                        pie = cea%X(cea%Nlm)
                        cea%Nlm = cea%Nlm - 1
@@ -1229,11 +1247,11 @@ subroutine EQLBRM(cea)
                  end if
               end if
 
-              forall(j = 1:cea%Ng, &
+              do concurrent (j = 1:cea%Ng, &
                    .not. (cea%Ions .and. cea%Elmt(cea%Nlm) /= 'E' .and. cea%A(ls, j) /= 0) .and. cea%En(j, cea%Npt) == 0)
                  cea%En(j, cea%Npt) = smalno
                  cea%Enln(j) = smnol
-              end forall
+              end do
 
               go to 500
            else
@@ -1272,7 +1290,9 @@ subroutine EQLBRM(cea)
      go to 1500
   else
      if (.not. cea%Shock) then
-        forall(il = 1:le) xx(il) = cea%X(il)
+        do concurrent (il = 1:le)
+           xx(il) = cea%X(il)
+        end do
 
         if (.not. cea%Short) then
            if (newcom) write(IOOUT, '(/" POINT ITN", 6x, "T", 10x, 4a12/(18x, 5a12))') (cmp(k), k = 1, le)
@@ -1533,7 +1553,9 @@ subroutine EQLBRM(cea)
      if (njc < nn) go to 1200
   end if
 
-  forall(j = 1:cea%Ng) cea%En(j, cea%Npt) = abs(cea%En(j, cea%Npt))
+  do concurrent (j = 1:cea%Ng)
+     cea%En(j, cea%Npt) = abs(cea%En(j, cea%Npt))
+  end do
 
   if (newcom) then
 ! SWITCH COMPONENTS
@@ -1559,15 +1581,22 @@ subroutine EQLBRM(cea)
               cea%B0p(lc, 1) = cea%B0p(lc, 1) / tem
               cea%B0p(lc, 2) = cea%B0p(lc, 2) / tem
 
-              forall(j = 1:cea%Nspx) cea%A(lc, j) = cea%A(lc, j) / tem
+              do concurrent (j = 1:cea%Nspx)
+                 cea%A(lc, j) = cea%A(lc, j) / tem
+              end do
            end if
 
            do i = 1, nn
               if (cea%A(i, jb) /= 0. .and. i /= lc) then
                  tem = cea%A(i, jb)
 
-                 forall(j = 1:cea%Nspx) cea%A(i, j) = cea%A(i, j) - cea%A(lc, j) * tem
-                 forall(j = 1:cea%Nspx, abs(cea%A(i, j)) < 1.E-5) cea%A(i, j) = 0
+                 do concurrent (j = 1:cea%Nspx)
+                    cea%A(i, j) = cea%A(i, j) - cea%A(lc, j) * tem
+                 end do
+
+                 do concurrent (j = 1:cea%Nspx, abs(cea%A(i, j)) < 1.E-5)
+                    cea%A(i, j) = 0
+                 end do
 
                  cea%B0(i) = cea%B0(i) - cea%B0(lc) * tem
                  cea%B0p(i, 1) = cea%B0p(i, 1) - cea%B0p(lc, 1) * tem
@@ -1644,9 +1673,9 @@ subroutine EQLBRM(cea)
        & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') cea%Npt, gasfrc
 
   if (cea%Trace /= 0) then
-     forall(j = 1:cea%Ng, lelim == 0 .or. all(cea%A(lelim:ls, j) == 0) .and. cea%Enln(j) > -87)
+     do concurrent (j = 1:cea%Ng, lelim == 0 .or. all(cea%A(lelim:ls, j) == 0) .and. cea%Enln(j) > -87)
         cea%En(j, cea%Npt) = exp(cea%Enln(j))
-     end forall
+     end do
   end if
 
   if (cea%Debug(cea%Npt)) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
@@ -1699,7 +1728,9 @@ subroutine FROZEN(cea)
   nnn = cea%Npt
   cea%Npt = cea%Nfz
 
-  forall(j = 1:cea%Ng, cea%En(j, cea%Nfz) /= 0) cea%Deln(j) = -(log(cea%En(j, cea%Nfz)) + dlpm)
+  do concurrent (j = 1:cea%Ng, cea%En(j, cea%Nfz) /= 0)
+     cea%Deln(j) = -(log(cea%En(j, cea%Nfz)) + dlpm)
+  end do
 
   do iter = 1, 8
      call CPHS(cea)
@@ -1822,11 +1853,15 @@ subroutine GAUSS(cea)
         cea%Msing = nn
         return
      else
-        forall(j = nn+1:imatp1) cea%G(nn, j) = cea%G(nn, j) / cea%G(nn, nn)
+        do concurrent (j = nn+1:imatp1)
+           cea%G(nn, j) = cea%G(nn, j) / cea%G(nn, nn)
+        end do
 
         if (nn + 1 /= imatp1) then
 !DIR$ IVDEP
-           forall(i = nn+1:cea%Imat, j = nn+1:imatp1) cea%G(i, j) = cea%G(i, j) - cea%G(i, nn) * cea%G(nn, j)
+           do concurrent (i = nn+1:cea%Imat, j = nn+1:imatp1)
+              cea%G(i, j) = cea%G(i, j) - cea%G(i, nn) * cea%G(nn, j)
+           end do
         end if
      end if
   end do
@@ -1932,7 +1967,10 @@ subroutine HCALC(cea)
                  cea%Jray(n) = cea%Nspr
                  j = cea%Nspr
 
-                 forall(l = 1:icf, m = 1:9) cea%Coef(j, m, l) = thermo(m, l)
+                 do concurrent (l = 1:icf, m = 1:9)
+                    cea%Coef(j, m, l) = thermo(m, l)
+                 end do
+
                  go to 50
 
               else
@@ -2041,7 +2079,9 @@ subroutine MATRIX(cea)
         do i = 1, cea%Nlm
            if (cea%A(i, j) /= 0) then
               term = cea%A(i, j) * cea%En(j, cea%Npt)
-              forall(k = i:cea%Nlm) cea%G(i, k) = cea%G(i, k) + cea%A(k, j) * term
+              do concurrent (k = i:cea%Nlm)
+                 cea%G(i, k) = cea%G(i, k) + cea%A(k, j) * term
+              end do
               cea%G(i, cea%Iq1) = cea%G(i, cea%Iq1) + term
               cea%G(i, iq2) = cea%G(i, iq2) + cea%A(i, j) * term1
               if (.not. (cea%Convg .or. cea%Tp)) then
@@ -2076,10 +2116,10 @@ subroutine MATRIX(cea)
         kk = cea%Nlm + k
         cea%Mu(j) = cea%H0(j) - cea%S(j)
 
-        forall(i = 1:cea%Nlm)
+        do concurrent (i = 1:cea%Nlm)
            cea%G(i, kk) = cea%A(i, j)
            cea%G(i, kmat) = cea%G(i, kmat) - cea%A(i, j) * cea%En(j, cea%Npt)
-        end forall
+        end do
 
         cea%G(kk, iq2) = cea%H0(j)
         cea%G(kk, kmat) = cea%Mu(j)
@@ -2102,12 +2142,16 @@ subroutine MATRIX(cea)
 
   do i = 1, isym
 !DIR$ IVDEP
-     forall(j = i:isym) cea%G(j, i) = cea%G(i, j)
+     do concurrent (j = i:isym)
+        cea%G(j, i) = cea%G(i, j)
+     end do
   end do
 
 ! COMPLETE THE RIGHT HAND SIDE
   if (.not. cea%Convg) then
-     forall(i = 1:cea%Nlm) cea%G(i, kmat) = cea%G(i, kmat) + cea%B0(i) - cea%G(i, cea%Iq1)
+     do concurrent (i = 1:cea%Nlm)
+        cea%G(i, kmat) = cea%G(i, kmat) + cea%B0(i) - cea%G(i, cea%Iq1)
+     end do
      cea%G(cea%Iq1, kmat) = cea%G(cea%Iq1, kmat) + cea%Enn - cea%Sumn
 
 ! COMPLETE ENERGY ROW AND TEMPERATURE COLUMN
@@ -2122,7 +2166,9 @@ subroutine MATRIX(cea)
      if (cea%Pderiv) then
 ! PDERIV = .true.-- SET UP MATRIX TO SOLVE FOR DLVPT
         cea%G(cea%Iq1, iq2) = cea%Enn
-        forall(i = 1:iq) cea%G(i, iq2) = cea%G(i, cea%Iq1)
+        do concurrent (i = 1:iq)
+           cea%G(i, iq2) = cea%G(i, cea%Iq1)
+        end do
      end if
      cea%G(iq2, iq2) = cea%G(iq2, iq2) + cea%Cpsum
   end if
@@ -2130,15 +2176,17 @@ subroutine MATRIX(cea)
   if (cea%Vol .and. .not. cea%Convg) then
 ! CONSTANT VOLUME MATRIX
      if (kmat == iq2) then
-        forall(i = 1:iq) cea%G(i, cea%Iq1) = cea%G(i, iq2)
+        do concurrent (i = 1:iq)
+           cea%G(i, cea%Iq1) = cea%G(i, iq2)
+        end do
      else
 
 !DIR$ IVDEP
-        forall(i = 1:iq)
+        do concurrent (i = 1:iq)
            cea%G(cea%Iq1, i) = cea%G(iq2, i) - cea%G(cea%Iq1, i)
            cea%G(i, cea%Iq1) = cea%G(i, iq2) - cea%G(i, cea%Iq1)
            cea%G(i, iq2) = cea%G(i, iq3)
-        end forall
+        end do
 
         cea%G(cea%Iq1, cea%Iq1) = cea%G(iq2, iq2) - cea%G(cea%Iq1, iq2) - cea%G(iq2, cea%Iq1)
         cea%G(cea%Iq1, iq2) = cea%G(iq2, iq3) - cea%G(cea%Iq1, iq3)
@@ -2434,9 +2482,9 @@ subroutine REACT(cea)
            cea%Rh = 0
         end if
 
-        forall(j = 1:cea%Nlm)
+        do concurrent (j = 1:cea%Nlm)
            cea%B0p(j, kr) = dat(j) * pcwt / rm + cea%B0p(j, kr)
-        end forall
+        end do
 
         cea%Rmw(n) = rm
      end if

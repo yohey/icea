@@ -62,18 +62,24 @@ contains
           ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
           if (code == 'only') then
              cea%Nonly = min(maxNgc, ncin-1)
-             forall(i = 1:cea%Nonly) cea%Prod(i) = cin(i+1)
+             do concurrent (i = 1:cea%Nonly)
+                cea%Prod(i) = cin(i+1)
+             end do
 
              ! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
           else if (code == 'inse') then
              cea%Nsert = min(20, ncin-1)
-             forall(i = 1:cea%Nsert) Ensert(i) = cin(i+1)
+             do concurrent (i = 1:cea%Nsert)
+                Ensert(i) = cin(i+1)
+             end do
 
              ! STORE PRODUCT NAMES FROM 'OMIT' DATASET
           else if (code == 'omit') then
              ! CHECK OMIT DATASET
              cea%Nomit = min(maxNgc, ncin-1)
-             forall(i = 1:cea%Nomit) cea%Omit(i) = cin(i+1)
+             do concurrent (i = 1:cea%Nomit)
+                cea%Omit(i) = cin(i+1)
+             end do
 
              ! KEYWORD 'THER' READ
              ! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
@@ -119,8 +125,12 @@ contains
                       cea%Massf = .true.
 
                    else if (cx3 == 'deb' .or. cx3 == 'dbg') then
-                      forall(j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol) cea%Debug(int(dpin(j))) = .true.
-                      forall(j = i+1:ncin, lcin(j) == i) lcin(j) = 0
+                      do concurrent (j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol)
+                         cea%Debug(int(dpin(j))) = .true.
+                      end do
+                      do concurrent (j = i+1:ncin, lcin(j) == i)
+                         lcin(j) = 0
+                      end do
 
                    else if (cx2 == 'si') then
                       cea%SIunit = .true.
@@ -293,14 +303,14 @@ contains
              cea%Nsup = 0
              cea%Npp = 0
              cea%Tcest = 3800
-             forall(i = 1:Ncol)
+             do concurrent (i = 1:Ncol)
                 cea%Pcp(i) = 0
                 cea%Pcp(i+Ncol) = 0
                 cea%Supar(i) = 0
                 cea%Subar(i) = 0
                 cea%Mach1(i) = 0
                 cea%U1(i) = 0
-             end forall
+             end do
              cea%Gamma1 = 0
              phi = .false.
              eqrats = .false.
@@ -695,10 +705,14 @@ contains
                 eqrats = .true.
 
              else if (cx3 == 'f/a') then
-                forall(k = 1:cea%Nof, cea%Oxf(k) > 0) cea%Oxf(k) = 1/cea%Oxf(k)
+                do concurrent (k = 1:cea%Nof, cea%Oxf(k) > 0)
+                   cea%Oxf(k) = 1/cea%Oxf(k)
+                end do
 
              else if (cx4 == '%fue') then
-                forall(k = 1:cea%Nof, cea%Oxf(k) > 0) cea%Oxf(k) = (100 - cea%Oxf(k)) / cea%Oxf(k)
+                do concurrent (k = 1:cea%Nof, cea%Oxf(k) > 0)
+                   cea%Oxf(k) = (100 - cea%Oxf(k)) / cea%Oxf(k)
+                end do
              end if
 
           else
