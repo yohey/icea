@@ -663,6 +663,7 @@ subroutine EQLBRM(cea)
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
   use mod_cea
+  use mod_general
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -834,9 +835,7 @@ subroutine EQLBRM(cea)
      end do
   end if
 
-  cea%Msing = 0
-
-  call GAUSS(cea)
+  call gauss_elimination(cea%G(1:cea%Imat, 1:cea%Imat+1), cea%X(1:cea%Imat), cea%Msing)
 
   if (cea%Msing == 0) then
      if (cea%Debug(cea%Npt)) then
@@ -1780,100 +1779,6 @@ subroutine FROZEN(cea)
 
   return
 end subroutine FROZEN
-
-
-
-subroutine GAUSS(cea)
-!***********************************************************************
-! SOLVE ANY LINEAR SET OF UP TO maxMat EQUATIONS
-! NUMBER OF EQUATIONS = IMAT
-!***********************************************************************
-  use mod_cea
-  implicit none
-
-  type(CEA_Problem), intent(inout):: cea
-
-! LOCAL VARIABLES
-  integer:: i, imatp1, j, k, nn, nnp1, itmp(1)
-  real(8), parameter:: bigNo = 1e25
-  real(8):: coefx(50)
-  real(8):: tmp(cea%Imat+1)
-
-! BEGIN ELIMINATION OF NNTH VARIABLE
-  imatp1 = cea%Imat + 1
-
-  do nn = 1, cea%Imat
-     if (nn /= cea%Imat) then
-! SEARCH FOR MAXIMUM COEFFICIENT IN EACH ROW
-        nnp1 = nn + 1
-
-        do i = nn, cea%Imat
-           coefx(i) = bigNo
-
-           if (cea%G(i, nn) /= 0) then
-              coefx(i) = maxval(abs(cea%G(i, nnp1:imatp1)))
-
-              if (coefx(i) < bigNo * abs(cea%G(i, nn))) then
-                 coefx(i) = coefx(i) / abs(cea%G(i, nn))
-              else
-                 coefx(i) = bigNo
-              end if
-           end if
-        end do
-
-        if (all(coefx(nn:cea%Imat) == bigNo)) then
-           cea%Msing = nn
-           return
-        end if
-
-! LOCATE ROW WITH SMALLEST MAXIMUM COEFFICIENT
-        itmp(1:1) = minloc(coefx(nn:cea%Imat))
-        i = itmp(1) + nn - 1
-
-! INDEX I LOCATES EQUATION TO BE USED FOR ELIMINATING THE NTH
-! VARIABLE FROM THE REMAINING EQUATIONS
-! INTERCHANGE EQUATIONS I AND NN
-        if (i /= nn) then
-           tmp(nn:imatp1) = cea%G(i, nn:imatp1)
-           cea%G(i, nn:imatp1) = cea%G(nn, nn:imatp1)
-           cea%G(nn, nn:imatp1) = tmp(nn:imatp1)
-        end if
-
-     else if (cea%G(nn, nn) == 0) then
-        cea%Msing = nn
-        return
-     end if
-
-! DIVIDE NTH ROW BY NTH DIAGONAL ELEMENT AND ELIMINATE THE NTH
-! VARIABLE FROM THE REMAINING EQUATIONS
-     if (cea%G(nn, nn) == 0) then
-        cea%Msing = nn
-        return
-     else
-        do concurrent (j = nn+1:imatp1)
-           cea%G(nn, j) = cea%G(nn, j) / cea%G(nn, nn)
-        end do
-
-        if (nn + 1 /= imatp1) then
-!DIR$ IVDEP
-           do concurrent (i = nn+1:cea%Imat, j = nn+1:imatp1)
-              cea%G(i, j) = cea%G(i, j) - cea%G(i, nn) * cea%G(nn, j)
-           end do
-        end if
-     end if
-  end do
-
-  ! BACKSOLVE FOR THE VARIABLES
-  do k = cea%Imat, 1, -1
-     cea%X(k) = cea%G(k, imatp1)
-     if (cea%Imat >= k+1) then
-        cea%X(k) = cea%X(k) - sum(cea%G(k, k+1:cea%Imat) * cea%X(k+1:cea%Imat))
-     end if
-  end do
-
-  return
-end subroutine GAUSS
-
 
 
 subroutine HCALC(cea)
@@ -4430,6 +4335,7 @@ subroutine TRANP(cea)
 !   ARRAY OF STOICHIOMETRIC COEFFICIENTS = STC
 !***********************************************************************
   use mod_cea
+  use mod_general
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -4536,7 +4442,9 @@ subroutine TRANP(cea)
         cea%G(i, m) = delh(i)
      end do
      cea%Imat = cea%Nr
-     call GAUSS(cea)
+
+     call gauss_elimination(cea%G(1:cea%Imat, 1:cea%Imat+1), cea%X(1:cea%Imat))
+
      cpreac = 0
      do i = 1, cea%Nr
         cea%G(i, m) = delh(i)
@@ -4547,7 +4455,9 @@ subroutine TRANP(cea)
            cea%G(j, i) = cea%G(i, j)
         end do
      end do
-     call GAUSS(cea)
+
+     call gauss_elimination(cea%G(1:cea%Imat, 1:cea%Imat+1), cea%X(1:cea%Imat))
+
      reacon = 0
      do i = 1, cea%Nr
         reacon = reacon + cea%R*delh(i)*cea%X(i)
