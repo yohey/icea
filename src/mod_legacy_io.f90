@@ -1241,10 +1241,10 @@ contains
                 tem = 1 / cea%Totn(i)
              end if
              if (k <= cea%Ng) then
-                cea%X(i) = En(k, i) * tem
+                cea%X(i) = cea%En(k, i) * tem
              else
                 if (cea%Prod(k) /= cea%Prod(k-1)) cea%X(i) = 0
-                if (En(k, i) > 0) cea%X(i) = En(k, i) * tem
+                if (cea%En(k, i) > 0) cea%X(i) = cea%En(k, i) * tem
              end if
              if (cea%Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+cea%Iplt-ione, im) = cea%X(i)
              if (kOK .and. cea%X(i) >= tra) kin = 1

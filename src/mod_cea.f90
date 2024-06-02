@@ -25,6 +25,10 @@ module mod_cea
   !***********************************************************************
 
   type:: CEA_Problem
+     real(8):: Enn, Ennl, Enlsav, Ensave, Sumn
+     real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)
+     real(8):: En(maxNgc, Ncol)
+
      integer:: Iplt, Nc, Ng, Ngp1, Nlm, Nplt, Nof, Nomit, Nonly, Np, Npr, Npt, Ngc, Nsert, Nspr, Nspx, Nt
      integer:: Jcond(45), Jx(maxEl), Nfla(maxR), Ifz(maxNc)
 
