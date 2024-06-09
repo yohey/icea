@@ -14,7 +14,7 @@ program main
   character(15):: ensert(20)
   character(200):: inp_filename, out_filename, plt_filename
   character(196):: basename
-  logical:: caseOK, ex, readOK
+  logical:: caseOK, ex, readOK, is_opened
   integer:: i, iof, j, ln
   real(8):: xi, xln
 
@@ -38,7 +38,6 @@ program main
 
   open(IOINP, file=inp_filename, status='old', form='formatted')
   open(IOOUT, file=out_filename, status='unknown', form='formatted')
-  open(IOSCH, status='scratch', form='unformatted')
   open(IOTHM, file='thermo.lib', form='unformatted')
   open(IOTRN, file='trans.lib', form='unformatted')
 
@@ -147,11 +146,17 @@ program main
 
   close(IOINP)
   close(IOOUT)
-  close(IOSCH)
   close(IOTHM)
   close(IOTRN)
 
   num_cases = icase
+
+  do icase = 1, num_cases
+     if (cea(icase)%io_scratch /= 0) then
+        inquire(cea(icase)%io_scratch, opened = is_opened)
+        if (is_opened) close(cea(icase)%io_scratch)
+     end if
+  end do
 
   call write_plt_file(cea(1:num_cases), plt_filename)
 
@@ -3404,8 +3409,14 @@ subroutine READTR(cea)
   integer:: i, j, k, jj(2), jk, ir, lineb, npure, nrec
   real(8):: trdata(36)
 
+  if (cea%io_scratch == 0) then
+     open(newunit = cea%io_scratch, status = 'scratch', form = 'unformatted')
+  else
+     rewind cea%io_scratch
+  end if
+
   rewind IOTRN
-  rewind IOSCH
+
   cea%Ntape = 0
   npure = 0
   lineb = 1
@@ -3439,7 +3450,7 @@ subroutine READTR(cea)
         end if
      end do
      go to 550
-500  write(IOSCH) jj, trdata
+500  write(cea%io_scratch) jj, trdata
      cea%Ntape = cea%Ntape + 1
 550  if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
         if (.not. cea%Short) write(IOOUT, '(4(2x, A16))') (pure(jk), jk = 1, npure)
@@ -4158,10 +4169,10 @@ subroutine TRANIN(cea)
      end do
   end do
 
-  rewind IOSCH
+  rewind cea%io_scratch
 
   outerLoop2: do ir = 1, cea%Ntape
-     read(IOSCH) jtape, trc
+     read(cea%io_scratch) jtape, trc
 
      innerLoop: do k = 1, 2
         do i = 1, cea%Nm
@@ -4454,8 +4465,6 @@ subroutine UTHERM(cea, readOK)
 ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
 ! UNFORMATTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
 !
-! USES SCRATCH I/O UNIT IOSCH.
-!
 ! UTHERM IS CALLED FROM subroutine INPUT.
 !
 ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY AND USED BY ITSELF TO
@@ -4515,6 +4524,7 @@ subroutine UTHERM(cea, readOK)
   logical:: fill(3)
   real(8):: aa, atms, cpfix, dlt, expn(8), fno(5), hform, hh, mwt, templ(9), tex, &
        tgl(4), thermo(9, 3), tinf, tl(2), ttl, tx
+  integer:: io_scratch
 
   ngl = 0
   ns = 0
@@ -4522,7 +4532,9 @@ subroutine UTHERM(cea, readOK)
   ifzm1 = 0
   inew = 0
   tinf = 1.d06
-  rewind IOSCH
+
+  open(newunit = io_scratch, status = 'scratch', form = 'unformatted')
+
   read(IOINP, '(4f10.3, a10)') tgl, cea%Thdate
 
   do
@@ -4550,7 +4562,7 @@ subroutine UTHERM(cea, readOK)
         nall = nall + 1
         read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
         thermo(1, 1) = hform
-        write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+        write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
         cycle
      else if (name == 'Air') then
         sym(1) = 'N'
@@ -4607,7 +4619,7 @@ subroutine UTHERM(cea, readOK)
            else
               inew = i
            end if
-           write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), inew, tl, mwt, thermo
+           write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), inew, tl, mwt, thermo
         end if
      end do
 
@@ -4661,28 +4673,28 @@ subroutine UTHERM(cea, readOK)
               thermo(9, 3) = -templ(1) * dlt + thermo(9, 2) + templ(9) - templ(2) * ttl
            end if
         end if
-        ! WRITE COEFFICIENTS ON SCRATCH I/O UNIT IOSCH
-        write(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+        ! WRITE COEFFICIENTS ON SCRATCH I/O UNIT
+        write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
      end if
   end do
 
-! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IOSCH & ADD TO IOTHM.
-300 rewind IOSCH
+! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IO_SCRATCH & ADD TO IOTHM.
+300 rewind io_scratch
 
   if (ns == 0) ns = nall
   write(IOTHM) tgl, ngl, ns, nall, cea%Thdate
 ! WRITE GASEOUS PRODUCTS ON IOTHM
   if (ngl /= 0) then
      do i = 1, ns
-        read(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+        read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
         if (ifaz <= 0) write(IOTHM) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
      end do
   end if
   if (ngl /= nall) then
 ! WRITE CONDENSED PRODUCTS AND REACTANTS ON IOTHM
-     rewind IOSCH
+     rewind io_scratch
      do i = 1, nall
-        read(IOSCH) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+        read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
         if (i > ns) then
            write(IOTHM) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo(1, 1)
            if (ntl > 0) write(IOTHM) thermo
@@ -4692,11 +4704,13 @@ subroutine UTHERM(cea, readOK)
      end do
   end if
 
+  close(io_scratch)
   return
 
 400 write(IOOUT, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
   readOK = .false.
 
+  close(io_scratch)
   return
 end subroutine UTHERM
 
@@ -4705,7 +4719,7 @@ end subroutine UTHERM
 subroutine UTRAN(readOK)
 !***********************************************************************
 ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
-! UNFORMATTED ON I/O UNIT IOTRN.  USES SCRATCH I/O UNIT IOSCH.
+! UNFORMATTED ON I/O UNIT IOTRN.
 !
 ! UTRAN IS CALLED FROM subroutine INPUT AFTER A RECORD WITH 'tran'
 ! IN COLUMNS 1-4 HAS BEEN READ.
@@ -4722,21 +4736,30 @@ subroutine UTRAN(readOK)
   character(1):: vorc
   integer:: i, ic, in, iv, j, k, ncc, nn, ns, nv
   real(8):: cc, tcin(6), trcoef(6, 3, 2), vvl
+  integer:: io_scratch
 
+
+  open(newunit = io_scratch, status = 'scratch', form = 'unformatted')
 
   ns = 0
-  rewind IOSCH
   outerLoop: do
      trcoef(:, :, :) = 0
+
      read(IOINP, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
+
      if (tname(1) == 'end' .or. tname(1) == 'LAST') then
         write(IOTRN) ns
-        rewind IOSCH
+
+        rewind io_scratch
+
         do i = 1, ns
-           read(IOSCH, ERR=200) tname, trcoef
+           read(io_scratch, ERR=200) tname, trcoef
            write(IOTRN) tname, trcoef
         end do
+
+        close(io_scratch)
         return
+
      else
         ic = 0
         iv = 0
@@ -4759,13 +4782,21 @@ subroutine UTRAN(readOK)
               end do
            end do
            ns = ns + 1
-           write(IOSCH) tname, trcoef
+
+           write(io_scratch) tname, trcoef
+
            cycle
         end if
      end if
+
      exit
   end do outerLoop
+
 200 write(IOOUT, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
+
   readOK = .false.
+
+  close(io_scratch)
+
   return
 end subroutine UTRAN

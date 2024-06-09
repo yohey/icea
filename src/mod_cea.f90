@@ -18,12 +18,13 @@ module mod_cea
   ! and may be adjusted as desired.
   integer, parameter:: ioinp =  7
   integer, parameter:: ioout =  8
-  integer, parameter:: iosch = 13
   integer, parameter:: iothm = 14
   integer, parameter:: iotrn = 18
   !***********************************************************************
 
   type:: CEA_Problem
+     integer:: io_scratch = 0
+
      real(8):: Enn, Ennl, Enlsav, Ensave, Sumn
      real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)
      real(8):: En(maxNgc, Ncol)
