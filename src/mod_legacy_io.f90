@@ -1,11 +1,51 @@
 module mod_legacy_io
   implicit none
 
+  integer, parameter:: MAX_CHARS = 132 !< Maximum number of characters in a line (record).
+
   character(15), private:: fc
   integer, private:: ione, mcond, mcondf, mpn, mpnf, mvis
   real(8), private:: pfuel, phi, tem
 
 contains
+
+  subroutine count_cases(inp_filename, num_cases)
+    character(*), intent(in):: inp_filename
+    integer, intent(out):: num_cases
+    integer:: io_inp
+    character(MAX_CHARS):: line
+    character(4):: head
+    logical:: case_ended
+
+    num_cases = 0
+    case_ended = .true.
+
+    open(newunit = io_inp, file = trim(inp_filename), status = 'old', form = 'formatted', action = 'read')
+
+    do
+       read(io_inp, '(a)', end = 999) line
+       line = adjustl(line)
+       head = line(1:4)
+
+       if (head == 'ther' .or. head == 'tran' .or. head == 'prob' .or.  &
+            head == 'reac' .or. head == 'outp' .or. head == 'omit' .or.  &
+            head == 'only' .or. head == 'inse') then
+          case_ended = .false.
+       else if (head(1:3) == 'end' .and. .not. case_ended) then
+          num_cases = num_cases + 1
+          case_ended = .true.
+       end if
+    end do
+
+999 close(io_inp)
+
+    if (.not. case_ended) then
+       num_cases = num_cases + 1
+    end if
+
+    return
+  end subroutine count_cases
+
 
   subroutine INPUT(cea, readOK, caseOK, Ensert)
     !***********************************************************************

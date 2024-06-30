@@ -9,13 +9,13 @@ program main
   implicit none
 
   integer:: icase = 0, num_cases
-  type(CEA_Problem):: cea(255)
+  type(CEA_Problem), allocatable:: cea(:)
 
   character(15):: ensert(20)
-  character(200):: inp_filename, out_filename, plt_filename
-  character(196):: basename
-  logical:: caseOK, ex, readOK, is_opened
-  integer:: i, iof, j, ln
+  character(MAX_FILENAME):: inp_filename, out_filename, plt_filename
+  character(MAX_FILENAME-4):: basename
+  logical:: caseOK, file_exists, readOK, is_opened
+  integer:: i, iof, j
   real(8):: xi, xln
 
   write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
@@ -25,16 +25,19 @@ program main
 
   read(*, '(a)') basename
 
-  ln = index(basename, ' ') - 1
-  inp_filename = basename(1:ln) // '.inp'
-  out_filename = basename(1:ln) // '.out'
-  plt_filename = basename(1:ln) // '.plt'
+  inp_filename = trim(basename) // '.inp'
+  out_filename = trim(basename) // '.out'
+  plt_filename = trim(basename) // '.plt'
 
-  inquire(file=inp_filename, exist=ex)
-  if (.not. ex) then
+  inquire(file = inp_filename, exist = file_exists)
+  if (.not. file_exists) then
      print *, inp_filename, ' DOES NOT EXIST'
      error stop
   end if
+
+  call count_cases(inp_filename, num_cases)
+
+  allocate(cea(num_cases))
 
   open(IOINP, file=inp_filename, status='old', form='formatted')
   open(IOOUT, file=out_filename, status='unknown', form='formatted')
@@ -52,8 +55,7 @@ program main
   readOK = .true.
   cea(:)%Newr = .false.
 
-  outerLoop: do while (readOK)
-     icase = icase + 1
+  do icase = 1, num_cases
 
      !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
      if (icase > 2) then
@@ -67,18 +69,18 @@ program main
 
      call INPUT(cea(icase), readOK, caseOK, ensert)
 
-     if ((.not. caseOK) .or. (.not. readOK)) cycle
-
      do iof = 1, cea(icase)%Nof
         if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%B0p(1, 1) /= 0.) then
            do i = 1, cea(icase)%Nlm
               if (cea(icase)%B0p(i, 1) == 0. .or. cea(icase)%B0p(i, 2) == 0.) then
                  write(IOOUT, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
-                 cycle outerLoop
+                 caseOK = .false.
               end if
            end do
         end if
      end do
+
+     if ((.not. caseOK) .or. (.not. readOK)) cycle
 
      if (cea(icase)%Ions) then
         if (cea(icase)%Elmt(cea(icase)%Nlm) /= 'E') then
@@ -95,7 +97,7 @@ program main
 
      call SEARCH(cea(icase))
 
-     if (cea(icase)%Ngc == 0) exit outerLoop
+     if (cea(icase)%Ngc == 0) exit
 
      cea(icase)%Newr = .false.
 
@@ -142,14 +144,12 @@ program main
         call SHCK(cea(icase))
      end if
 
-  end do outerLoop
+  end do
 
   close(IOINP)
   close(IOOUT)
   close(IOTHM)
   close(IOTRN)
-
-  num_cases = icase
 
   do icase = 1, num_cases
      if (cea(icase)%io_scratch /= 0) then
@@ -159,6 +159,8 @@ program main
   end do
 
   call write_plt_file(cea(1:num_cases), plt_filename)
+
+  deallocate(cea)
 
   stop
 end program main

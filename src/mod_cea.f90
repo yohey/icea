@@ -1,6 +1,8 @@
 module mod_cea
   implicit none
 
+  integer, parameter:: MAX_FILENAME = 255
+
   integer, parameter:: maxNgc = 600
   integer, parameter:: maxNc  = 300
   integer, parameter:: Ncol   = 8
