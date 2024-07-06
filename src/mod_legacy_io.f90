@@ -70,7 +70,9 @@ contains
     real(8):: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
 
 
-    write(IOOUT, '(/, /)')
+    open(newunit = cea%io_log, status = 'scratch', form = 'formatted')
+
+    write(cea%io_log, '(/, /)')
 
     caseOK = .true.
     cea%Nonly = 0
@@ -88,7 +90,7 @@ contains
     do
        do
           ! CALL INFREE TO READ DATASET
-          call INFREE(readOK, cin, ncin, lcin, dpin)
+          call INFREE(readOK, cin, ncin, lcin, dpin, cea%io_log)
 
           if (.not. readOK) return
 
@@ -127,16 +129,16 @@ contains
              rewind IOTHM
              call UTHERM(cea, readOK)
              if (.not. readOK) then
-                write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+                write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 return
              end if
 
              ! KEYWORD 'TRAN' READ
              ! CALL UTRAN TO CONVERT FORMATTED TRANSPORT PROPERTIES
           else if (code == 'tran') then
-             call UTRAN(readOK)
+             call UTRAN(cea%io_log, readOK)
              if (.not. readOK) then
-                write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+                write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 return
              end if
 
@@ -182,7 +184,7 @@ contains
                       pltdat = .true.
 
                    else
-                      write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cin(i)
+                      write(cea%io_log, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cin(i)
                    end if
                 end if
              end do
@@ -203,7 +205,7 @@ contains
                 end if
 
                 if (lcin(i) > 0) then
-                   write(IOOUT, '(/" WARNING!!  LITERAL EXPECTED FOR ", a15, "(INPUT)")') cin(i)
+                   write(cea%io_log, '(/" WARNING!!  LITERAL EXPECTED FOR ", a15, "(INPUT)")') cin(i)
                    cycle
                 end if
 
@@ -237,14 +239,14 @@ contains
                          cea%Pecwt(cea%Nreac) = dpin(i)
                       else
                          caseOK = .false.
-                         write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
+                         write(cea%io_log, '(/" REACTANT AMOUNT MISSING (INPUT)")')
                       end if
 
                       if (cx1 == 'm' .and. cea%Nreac == 1) cea%Moles = .true.
 
                       if (cx1 == 'm' .and. .not. cea%Moles .or. cx1 == 'w' .and. cea%Moles) then
                          caseOK = .false.
-                         write(IOOUT, '(/" MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)")')
+                         write(cea%io_log, '(/" MOLES AND WEIGHT PERCENTS SHOULD NOT BE MIXED (INPUT)")')
                       end if
 
                       ! LOOK FOR TEMPERATURES
@@ -260,7 +262,7 @@ contains
                          end if
 
                       else
-                         write(IOOUT, '(/" REACTANT TEMPERATURE MISSING (INPUT) ")')
+                         write(cea%io_log, '(/" REACTANT TEMPERATURE MISSING (INPUT) ")')
                          caseOK = .false.
                       end if
 
@@ -305,7 +307,7 @@ contains
                       i = i + 1
 
                    else
-                      write(IOOUT, '(/" WARNING!! ", a15, " NOT RECOGNIZED (INPUT)")') cin(i)
+                      write(cea%io_log, '(/" WARNING!! ", a15, " NOT RECOGNIZED (INPUT)")') cin(i)
                    end if
                 end if
              end do
@@ -444,7 +446,7 @@ contains
                       cea%Ions = .true.
 
                    else
-                      write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
+                      write(cea%io_log, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
 
                    end if
                    lcin(i) = 0
@@ -473,7 +475,7 @@ contains
              if (cea%Detn .or. cea%Shock) cea%Newr = .true.
 
              if (.not. cea%Short) then
-                write(IOOUT, '(/" OPTIONS: TP=", l1, "  HP=", l1, "  SP=", l1, "  TV=", l1, &
+                write(cea%io_log, '(/" OPTIONS: TP=", l1, "  HP=", l1, "  SP=", l1, "  TV=", l1, &
                      & "  UV=", l1, "  SV=", l1, "  DETN=", l1, "  SHOCK=", l1, &
                      & "  REFL=", l1, "  INCD=", l1, /" RKT=", l1, "  FROZ=", l1, &
                      & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
@@ -483,34 +485,34 @@ contains
                      cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
 
                 if (cea%T(1) > 0) then
-                   write(IOOUT, '(/" T,K =", 7f11.4)') (cea%T(jj), jj = 1, cea%Nt)
+                   write(cea%io_log, '(/" T,K =", 7f11.4)') (cea%T(jj), jj = 1, cea%Nt)
                 end if
 
-                write(IOOUT, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') cea%Trace, cea%S0, hr, ur
+                write(cea%io_log, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') cea%Trace, cea%S0, hr, ur
 
                 if (cea%Np > 0 .and. cea%Vol) then
-                   write(IOOUT, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (cea%V(jj)*1.d-05, jj = 1, cea%Np)
+                   write(cea%io_log, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (cea%V(jj)*1.d-05, jj = 1, cea%Np)
                 end if
              end if
 
              if (cea%Rkt) then
                 if (cea%Nt == 0) cea%Hp = .true.
                 if (.not. cea%Short) then
-                   write(IOOUT, '(/" Pc,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
-                   write(IOOUT, '(/" Pc/P =", 9f11.4)') (cea%Pcp(jj), jj = 1, cea%Npp)
-                   write(IOOUT, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
-                   write(IOOUT, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
-                   write(IOOUT, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
+                   write(cea%io_log, '(/" Pc,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
+                   write(cea%io_log, '(/" Pc/P =", 9f11.4)') (cea%Pcp(jj), jj = 1, cea%Npp)
+                   write(cea%io_log, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
+                   write(cea%io_log, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
+                   write(cea%io_log, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
                 end if
              else
-                if (.not. cea%Vol .and. .not. cea%Short) write(IOOUT, '(/" P,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
+                if (.not. cea%Vol .and. .not. cea%Short) write(cea%io_log, '(/" P,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
              end if
 
              if (reacts) call REACT(cea)
              if (cea%Nreac == 0 .or. cea%Nlm <= 0) then
-                write(IOOUT, '(/" ERROR IN REACTANTS DATASET (INPUT)")')
+                write(cea%io_log, '(/" ERROR IN REACTANTS DATASET (INPUT)")')
                 caseOK = .false.
-                write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+                write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 return
              end if
 
@@ -521,8 +523,8 @@ contains
                    cea%Oxf(1) = cea%Wp(1) / cea%Wp(2)
                 else
                    caseOK = .false.
-                   write(IOOUT, '(/" REACTANT AMOUNT MISSING (INPUT)")')
-                   write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+                   write(cea%io_log, '(/" REACTANT AMOUNT MISSING (INPUT)")')
+                   write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                    return
                 end if
 
@@ -539,8 +541,8 @@ contains
 
                    if (abs(denmtr) < 1.d-30) then
                       caseOK = .false.
-                      write(IOOUT, '(/" UNABLE TO PROCESS EQUIVALENCE RATIO =", E11.4, "(INPUT)")') eratio
-                      write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+                      write(cea%io_log, '(/" UNABLE TO PROCESS EQUIVALENCE RATIO =", E11.4, "(INPUT)")') eratio
+                      write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                       return
                    end if
                    cea%Oxf(i) = xyz / denmtr
@@ -549,22 +551,22 @@ contains
 
              if (.not. (cea%Sp .or. cea%Tp .or. cea%Hp .or. cea%Rkt .or. cea%Detn .or. cea%Shock)) then
                 caseOK = .false.
-                write(IOOUT, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
+                write(cea%io_log, '(/" TYPE OF PROBLEM NOT SPECIFIED (INPUT)")')
 
              else if (cea%Tp .and. cea%T(1) <= 0) then
                 caseOK = .false.
-                write(IOOUT, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
+                write(cea%io_log, '(/" ASSIGNED VALUES OF TEMPERATURE ARE MISSING IN prob", " DATASET (INPUT)")')
 
              else if (cea%Np <= 0) then
                 caseOK = .false.
-                write(IOOUT, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", " DATASET (INPUT)")')
+                write(cea%io_log, '(/" ASSIGNED PRESSURE (OR DENSITY) MISSING IN prob", " DATASET (INPUT)")')
              end if
 
-             if (.not. (caseOK .and. cea%Nlm > 0)) write(IOOUT, '(/" FATAL ERROR IN DATASET (INPUT)")')
+             if (.not. (caseOK .and. cea%Nlm > 0)) write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
              return
 
           else
-             write(IOOUT, '(/" WARNING!!  A KEYWORD IS MISSING (INPUT)")')
+             write(cea%io_log, '(/" WARNING!!  A KEYWORD IS MISSING (INPUT)")')
           end if
 
        end do
@@ -604,7 +606,7 @@ contains
              cea%Nt = nmix
              if (nmix > maxMix) then
                 cea%Nt = maxMix
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 't', cea%Nt
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 't', cea%Nt
              end if
 
              do i = 1, cea%Nt
@@ -622,7 +624,7 @@ contains
              cea%Npp = nmix
              if (nmix > 2*Ncol) then
                 cea%Npp = 2 * Ncol
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', cea%Npp
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', cea%Npp
              end if
              cea%Pcp(1:cea%Npp) = mix(1:cea%Npp)
 
@@ -630,7 +632,7 @@ contains
              cea%Np = nmix
              if (nmix > maxPv) then
                 cea%Np = maxPv
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'p', cea%Np
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'p', cea%Np
              end if
 
              do i = 1, cea%Np
@@ -654,7 +656,7 @@ contains
              cea%Np = nmix
              if (nmix > maxPv) then
                 cea%Np = maxPv
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'rho', cea%Np
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'rho', cea%Np
              end if
              cea%V(1:cea%Np) = xyz / mix(1:cea%Np)
 
@@ -664,7 +666,7 @@ contains
              cea%Np = nmix
              if (nmix > maxPv) then
                 cea%Np = maxPv
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'v', cea%Np
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'v', cea%Np
              end if
              cea%V(1:cea%Np) = mix(1:cea%Np) * xyz
 
@@ -691,7 +693,7 @@ contains
              cea%Nsk = nmix
              if (nmix > Ncol) then
                 cea%Nsk = Ncol
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', cea%Nsk
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', cea%Nsk
              end if
              cea%U1(1:cea%Nsk) = mix(1:cea%Nsk)
 
@@ -699,7 +701,7 @@ contains
              cea%Nsk = nmix
              if (nmix > Ncol) then
                 cea%Nsk = Ncol
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', cea%Nsk
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', cea%Nsk
              end if
              cea%Mach1(1:cea%Nsk) = mix(1:cea%Nsk)
 
@@ -707,7 +709,7 @@ contains
              cea%Nsub = nmix
              if (nmix > 13) then
                 cea%Nsub = 13
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'subar', cea%Nsub
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'subar', cea%Nsub
              end if
              cea%Subar(1:cea%Nsub) = mix(1:cea%Nsub)
 
@@ -715,7 +717,7 @@ contains
              cea%Nsup = nmix
              if (nmix > 13) then
                 cea%Nsup = 13
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'supar', cea%Nsup
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'supar', cea%Nsup
              end if
              cea%Supar(1:cea%Nsup) = mix(1:cea%Nsup)
 
@@ -733,7 +735,7 @@ contains
              cea%Nof = nmix
              if (nmix > maxMix) then
                 cea%Nof = maxMix
-                write(IOOUT, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', cea%Nof
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', cea%Nof
              end if
              cea%Oxf(1:cea%Nof) = mix(1:cea%Nof)
 
@@ -755,7 +757,7 @@ contains
              end if
 
           else
-             write(IOOUT, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
+             write(cea%io_log, '("  WARNING!!  DID NOT RECOGNIZE ", a15, " (INPUT)"/)') cx15
           end if
 
           if (iv >= ncin) exit
@@ -766,7 +768,7 @@ contains
   end subroutine INPUT
 
 
-  subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin)
+  subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin, io_log)
     !***********************************************************************
     ! FREE-FORM READ FOR CEA.  READS AND DECIPHERS DATA FOR ONE DATASET.
     !
@@ -793,6 +795,7 @@ contains
     integer, intent(out):: Lcin(maxNgc)
     logical, intent(out):: readOK
     real(8), intent(out):: Dpin(maxNgc)
+    integer, intent(in):: io_log
 
     ! LOCAL VARIABLES
     character(1), parameter:: nums(13) = ['+', '-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
@@ -835,7 +838,7 @@ contains
        end do
 
        if (nch1 == 1 .or. ch1(ich1) == '#' .or. ch1(ich1) == '!') then
-          write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
+          write(io_log, '(1x, 80a1)') (ch1(i), i = 1, nch1)
           cycle
        end if
 
@@ -848,7 +851,7 @@ contains
           if (Ncin == 1) then
              Cin(Ncin) = w1
              if (w1(1:3) == 'end' .or. w1 == 'ther' .or. w1 == 'tran') then
-                write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
+                write(io_log, '(1x, 80a1)') (ch1(i), i = 1, nch1)
                 return
              end if
              ich1 = ich1 + 4
@@ -863,11 +866,11 @@ contains
           end if
 
        else if (Ncin == 1) then
-          write(IOOUT, '(/" FATAL ERROR IN INPUT format (INFREE)")')
+          write(io_log, '(/" FATAL ERROR IN INPUT format (INFREE)")')
           go to 500
        end if
 
-       write(IOOUT, '(1x, 80a1)') (ch1(i), i = 1, nch1)
+       write(io_log, '(1x, 80a1)') (ch1(i), i = 1, nch1)
 
        do i = ich1, nch1
           cx_ = ch1(i)
@@ -916,7 +919,7 @@ contains
 
              go to 340
 
-320          if (Cin(Ncin-1)(:4) /= 'case') write(IOOUT, '(/" WARNING!!  UNACCEPTABLE NUMBER ", a15, " (INFREE)")') Cin(i)
+320          if (Cin(Ncin-1)(:4) /= 'case') write(io_log, '(/" WARNING!!  UNACCEPTABLE NUMBER ", a15, " (INFREE)")') Cin(i)
              Lcin(Ncin) = 0
 
 340          Ncin = Ncin + 1
@@ -943,6 +946,27 @@ contains
 
     return
   end subroutine INFREE
+
+
+  subroutine OUT0(cea)
+    use mod_cea
+    implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+    character(MAX_CHARS):: line
+
+    rewind cea%io_log
+
+    do
+       read(cea%io_log, '(a)', end = 999) line
+!!$       write(0, '(a)') trim(line)
+       write(IOOUT, '(a)') trim(line)
+    end do
+
+999 close(cea%io_log)
+
+    return
+  end subroutine OUT0
 
 
   subroutine OUT1(cea)

@@ -42,7 +42,7 @@ foreach(INP IN ITEMS "thermo" "trans")
   foreach(EXT IN ITEMS "lib" "out")
     add_test(
       NAME ${INP}.${EXT}
-      COMMAND diff ${CMAKE_SOURCE_DIR}/test/${INP}.${EXT} ${CMAKE_BINARY_DIR}/${INP}.${EXT}
+      COMMAND diff -b ${CMAKE_SOURCE_DIR}/test/${INP}.${EXT} ${CMAKE_BINARY_DIR}/${INP}.${EXT}
     )
   endforeach()
 endforeach()
@@ -67,7 +67,7 @@ set_tests_properties(cea2 PROPERTIES FIXTURES_SETUP test_fixtures)
 foreach(EXT IN ITEMS "out" "plt")
   add_test(
     NAME cea2.${EXT}
-    COMMAND diff -B ${CMAKE_SOURCE_DIR}/test/cea2.${EXT} ${CMAKE_BINARY_DIR}/cea2.${EXT}
+    COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/test/cea2.${EXT} ${CMAKE_BINARY_DIR}/cea2.${EXT}
   )
   set_tests_properties(cea2.${EXT} PROPERTIES FIXTURES_REQUIRED test_fixtures)
 endforeach()

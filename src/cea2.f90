@@ -40,17 +40,8 @@ program main
   allocate(cea(num_cases))
 
   open(IOINP, file=inp_filename, status='old', form='formatted')
-  open(IOOUT, file=out_filename, status='unknown', form='formatted')
   open(IOTHM, file='thermo.lib', form='unformatted')
   open(IOTRN, file='trans.lib', form='unformatted')
-
-  write(IOOUT, '(/" *******************************************************************************")')
-  write(IOOUT, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
-       & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
-       & " AND SANFORD GORDON", /5x, &
-       & " REFS: NASA RP-1311, PART I, 1994", &
-       & " AND NASA RP-1311, PART II, 1996")')
-  write(IOOUT, '(/" *******************************************************************************")')
 
   readOK = .true.
   cea(:)%Newr = .false.
@@ -58,9 +49,8 @@ program main
   do icase = 1, num_cases
 
      !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
-     if (icase > 2) then
+     if (icase >= 2) then
         cea(icase)%Dens(:) = cea(icase-1)%Dens(:)
-        cea(icase)%Mu(:) = cea(icase-1)%Mu(:)
      end if
      !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
 
@@ -73,7 +63,7 @@ program main
         if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%B0p(1, 1) /= 0.) then
            do i = 1, cea(icase)%Nlm
               if (cea(icase)%B0p(i, 1) == 0. .or. cea(icase)%B0p(i, 2) == 0.) then
-                 write(IOOUT, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
+                 write(cea(icase)%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
                  caseOK = .false.
               end if
            end do
@@ -126,13 +116,35 @@ program main
               if (cea(icase)%Prod(j) == ensert(i)) then
                  cea(icase)%Npr = cea(icase)%Npr + 1
                  cea(icase)%Jcond(cea(icase)%Npr) = j
-                 if (.not. cea(icase)%Short) write(IOOUT, '(1X, A16, "INSERTED")') cea(icase)%Prod(j)
+                 if (.not. cea(icase)%Short) write(cea(icase)%io_log, '(1X, A16, "INSERTED")') cea(icase)%Prod(j)
                  cycle innerLoop
               end if
            end do
-           write(IOOUT, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') ensert(i)
+           write(cea(icase)%io_log, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') ensert(i)
         end do innerLoop
      end if
+  end do
+
+  close(IOINP)
+
+
+  open(IOOUT, file=out_filename, status='unknown', form='formatted')
+  write(IOOUT, '(/" *******************************************************************************")')
+  write(IOOUT, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
+       & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
+       & " AND SANFORD GORDON", /5x, &
+       & " REFS: NASA RP-1311, PART I, 1994", &
+       & " AND NASA RP-1311, PART II, 1996")')
+  write(IOOUT, '(/" *******************************************************************************")')
+
+  do icase = 1, num_cases
+     !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
+     if (icase >= 2) then
+        cea(icase)%Mu(:) = cea(icase-1)%Mu(:)
+     end if
+     !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
+
+     call OUT0(cea(icase))
 
      if (cea(icase)%Rkt) then
         call ROCKET(cea(icase))
@@ -143,10 +155,8 @@ program main
      else if (cea(icase)%Shock) then
         call SHCK(cea(icase))
      end if
-
   end do
 
-  close(IOINP)
   close(IOOUT)
   close(IOTHM)
   close(IOTRN)
@@ -2204,14 +2214,14 @@ subroutine REACT(cea)
                     dift = abs(cea%Tt - T1)
                     if (dift > 1) then
                        if (dift > 10) then
-                          write(IOOUT, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
+                          write(cea%io_log, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
                                & f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", f8.2, &
                                & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
                           cea%Nlm = 0
                           hOK = .false.
                           return
                        else
-                          write(IOOUT, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
+                          write(cea%io_log, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
                                & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
                                & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
                           cea%Tt = T1
@@ -2239,7 +2249,7 @@ subroutine REACT(cea)
 
               if (cea%Tt == 0) then
                  if (.not. cea%Hp) go to 50
-                 write(IOOUT, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
+                 write(cea%io_log, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
                  cea%Nlm = 0
                  return
               end if
@@ -2263,7 +2273,7 @@ subroutine REACT(cea)
         end do
 
         if (.not. hOK) then
-           write(IOOUT, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
+           write(cea%io_log, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
                 & "IS OUTSIDE ITS TEMPERATURE RANGE", f8.2, " TO", f9.2, "K (REACT)")') cea%Tt, cea%Rname(n), T1save, T2save
            cea%Energy(n) = ' '
            cea%Nlm = 0
@@ -2311,7 +2321,7 @@ subroutine REACT(cea)
            end if
         end do
 
-        write(IOOUT, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') cea%Ratom(n, jj)
+        write(cea%io_log, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') cea%Ratom(n, jj)
         cea%Nlm = 0
         return
 100  end do
@@ -2321,10 +2331,10 @@ subroutine REACT(cea)
         if (.not. cea%Moles .and. .not. wdone(kr)) then
            wdone(kr) = .true.
            cea%Pecwt(n) = 100.
-           write(IOOUT, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", i3, ".", &
+           write(cea%io_log, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", i3, ".", &
                 & /" PROGRAM SETS WEIGHT PERCENT = 100. (REACT)")') n
         else
-           write(IOOUT, '(/" AMOUNT MISSING FOR REACTANT NO.", i2, "(REACT)")') n
+           write(cea%io_log, '(/" AMOUNT MISSING FOR REACTANT NO.", i2, "(REACT)")') n
            cea%Nlm = 0
            return
         end if
@@ -2396,14 +2406,14 @@ subroutine REACT(cea)
 
      if (.not. cea%Short) then
         if (cea%Moles) then
-           write(IOOUT, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
+           write(cea%io_log, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
                 & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') ' MOLES '
         else
-           write(IOOUT, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
+           write(cea%io_log, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
                 & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') 'WT.FRAC'
         end if
         do n = 1, cea%Nreac
-           write(IOOUT, '(1x, a1, ": ", a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))') &
+           write(cea%io_log, '(1x, a1, ": ", a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))') &
                 cea%Fox(n), cea%Rname(n), cea%Pecwt(n), cea%Enth(n), cea%Rtemp(n), cea%Dens(n), &
                 (cea%Ratom(n, i), cea%Rnum(n, i), i = 1, cea%Nfla(n))
         end do
@@ -3342,7 +3352,7 @@ subroutine SEARCH(cea)
   cea%Ngp1 = cea%Ng + 1
   if (cea%Ngc < cea%Nonly) then
      do k = cea%Ngc+1, cea%Nonly
-        write(IOOUT, '(/" WARNING!!  ", a15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') cea%Prod(k)
+        write(cea%io_log, '(/" WARNING!!  ", a15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') cea%Prod(k)
      end do
   end if
 ! FIND MISSING ELEMENTS (IF ANY) FOR COMPONENTS
@@ -3376,25 +3386,25 @@ subroutine SEARCH(cea)
         if (cea%A(i, j) /= 0) cycle outerLoop2
         ii = i
      end do
-     write(IOOUT, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
+     write(cea%io_log, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
           & //, 13x, "FATAL ERROR (SEARCH)")') cea%Elmt(ii)
      cea%Ngc = 0
      return
   end do outerLoop2
 ! WRITE POSSIBLE PRODUCT LIST
   if (.not. cea%Short) then
-     write(IOOUT, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &
+     write(cea%io_log, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &
           & /" (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)", &
           & /"  LAST thermo.inp UPDATE: ", a10, /)') cea%Thdate
      do i = 1, cea%Ngc, 3
         i5 = i + 2
         if (cea%Ngc < i5) i5 = cea%Ngc
-        write(IOOUT, '(3(2X, A6, 2X, A15))') (date(j), cea%Prod(j), j = i, i5)
+        write(cea%io_log, '(3(2X, A6, 2X, A15))') (date(j), cea%Prod(j), j = i, i5)
      end do
   end if
   return
 
-400 write(IOOUT, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
+400 write(cea%io_log, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
   cea%Ngc = 0
   return
 end subroutine
@@ -3422,7 +3432,7 @@ subroutine READTR(cea)
   cea%Ntape = 0
   npure = 0
   lineb = 1
-  if (.not. cea%Short) write(IOOUT, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
+  if (.not. cea%Short) write(cea%io_log, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
   read(IOTRN) nrec
   do ir = 1, nrec
      read(IOTRN) spece, trdata
@@ -3455,18 +3465,18 @@ subroutine READTR(cea)
 500  write(cea%io_scratch) jj, trdata
      cea%Ntape = cea%Ntape + 1
 550  if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
-        if (.not. cea%Short) write(IOOUT, '(4(2x, A16))') (pure(jk), jk = 1, npure)
+        if (.not. cea%Short) write(cea%io_log, '(4(2x, A16))') (pure(jk), jk = 1, npure)
         npure = 0
      end if
   end do
   lineb = lineb - 1
   if (.not. cea%Short) then
-     write(IOOUT, '(/"     BINARY INTERACTIONS"/)')
+     write(cea%io_log, '(/"     BINARY INTERACTIONS"/)')
      do j = 1, lineb
-        write(IOOUT, '(5X, 2A16)') (bin(i, j), i = 1, 2)
+        write(cea%io_log, '(5X, 2A16)') (bin(i, j), i = 1, 2)
      end do
   end if
-  write(IOOUT, *)
+  write(cea%io_log, *)
   return
 end subroutine READTR
 
@@ -4557,7 +4567,7 @@ subroutine UTHERM(cea, readOK)
      end if
      read(IOINP, '(i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)', ERR=400) &
           ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, mwt, hform
-     write(IOOUT, '(" ", a15, 2x, a6, e15.6, 2x, a65)') name, date, hform, notes
+     write(cea%io_log, '(" ", a15, 2x, a6, e15.6, 2x, a65)') name, date, hform, notes
      ! IF NTL=0, REACTANT WITHOUT COEFFICIENTS
      if (ntl == 0) then
         if (ns == 0) exit
@@ -4709,7 +4719,7 @@ subroutine UTHERM(cea, readOK)
   close(io_scratch)
   return
 
-400 write(IOOUT, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
+400 write(cea%io_log, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
   readOK = .false.
 
   close(io_scratch)
@@ -4718,7 +4728,7 @@ end subroutine UTHERM
 
 
 
-subroutine UTRAN(readOK)
+subroutine UTRAN(io_log, readOK)
 !***********************************************************************
 ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
 ! UNFORMATTED ON I/O UNIT IOTRN.
@@ -4732,6 +4742,7 @@ subroutine UTRAN(readOK)
   use mod_cea
   implicit none
 ! DUMMY ARGUMENTS
+  integer, intent(in):: io_log
   logical, intent(out):: readOK
 ! LOCAL VARIABLES
   character(16):: tname(2)
@@ -4794,7 +4805,7 @@ subroutine UTRAN(readOK)
      exit
   end do outerLoop
 
-200 write(IOOUT, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
+200 write(io_log, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
 
   readOK = .false.
 
