@@ -44,7 +44,6 @@ program main
   open(IOTRN, file='trans.lib', form='unformatted')
 
   readOK = .true.
-  cea(:)%Newr = .false.
 
   do icase = 1, num_cases
 
@@ -88,8 +87,6 @@ program main
      call SEARCH(cea(icase))
 
      if (cea(icase)%Ngc == 0) exit
-
-     cea(icase)%Newr = .false.
 
      if (cea(icase)%Trnspt) call READTR(cea(icase))
 

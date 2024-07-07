@@ -125,7 +125,6 @@ contains
              ! KEYWORD 'THER' READ
              ! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
           else if (code == 'ther') then
-             cea%Newr = .true.
              rewind IOTHM
              call UTHERM(cea, readOK)
              if (.not. readOK) then
@@ -472,7 +471,6 @@ contains
              if (ur > 0.9d30) ur = 0
              if (cea%Trnspt) cea%Viscns = 0.3125 * sqrt(1.e5 * Boltz / (pi * Avgdr))
              if (cea%SIunit) cea%R = R0 / 1000
-             if (cea%Detn .or. cea%Shock) cea%Newr = .true.
 
              if (.not. cea%Short) then
                 write(cea%io_log, '(/" OPTIONS: TP=", l1, "  HP=", l1, "  SP=", l1, "  TV=", l1, &

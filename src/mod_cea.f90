@@ -42,7 +42,7 @@ module mod_cea
      integer:: Imat, Iq1, Isv, Jliq, Jsol, Lsave, Msing
 
      logical:: Convg, Debug(Ncol), Detdbg, Detn, Eql, Gonly, Hp, Ions, Massf, Moles
-     logical:: Newr, Pderiv, Shock, Short, SIunit, Sp, Tp, Trnspt, Vol
+     logical:: Pderiv, Shock, Short, SIunit, Sp, Tp, Trnspt, Vol
 
      real(8):: Eqrat, Hsub0, Oxfl, Pp, R, Size, S0, Tln, Tm, Trace, Tt, Viscns, Vv
      real(8):: Atwt(maxEl), B0(maxEl), X(maxMat)
