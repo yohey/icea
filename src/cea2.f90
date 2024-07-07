@@ -40,7 +40,6 @@ program main
   allocate(cea(num_cases))
 
   open(IOINP, file=inp_filename, status='old', form='formatted')
-  open(IOTHM, file='thermo.lib', form='unformatted')
 
   readOK = .true.
 
@@ -154,7 +153,6 @@ program main
   end do
 
   close(IOOUT)
-  close(IOTHM)
 
   do icase = 1, num_cases
      if (cea(icase)%io_scratch /= 0) then
@@ -1766,6 +1764,7 @@ subroutine HCALC(cea)
   character(15):: sub
   integer, save:: i, icf, ifaz, itot, j, k, l, m, n, nall, nint, ntgas, ntot
   real(8):: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), Tsave
+  integer:: io_thermo
 
   Tsave = cea%Tt
 
@@ -1807,21 +1806,21 @@ subroutine HCALC(cea)
         end do
 
 ! SEARCH THERMO.LIB FOR SPECIES.
-        rewind IOTHM
+        open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
 
-        read(IOTHM) cea%Tg, ntgas, ntot, nall
+        read(io_thermo) cea%Tg, ntgas, ntot, nall
 
         cea%Nspr = cea%Nspr + 1
         do itot = 1, nall
            if (itot <= ntot) then
               icf = 3
               if (itot > ntgas) icf = 1
-              read(IOTHM) sub, nint, date(cea%Nspr), (el(j), bb(j), j = 1, 5), ifaz, &
+              read(io_thermo) sub, nint, date(cea%Nspr), (el(j), bb(j), j = 1, 5), ifaz, &
                    T1, T2, cea%Mw(cea%Nspr), ((thermo(l, m), l = 1, 9), m = 1, icf)
            else
-              read(IOTHM) sub, nint, date(cea%Nspr), (el(j), bb(j), j = 1, 5), ifaz, T1, T2, cea%Mw(cea%Nspr), er
+              read(io_thermo) sub, nint, date(cea%Nspr), (el(j), bb(j), j = 1, 5), ifaz, T1, T2, cea%Mw(cea%Nspr), er
               if (nint /= 0) then
-                 read(IOTHM) ((thermo(i, j), i = 1, 9), j = 1, nint)
+                 read(io_thermo) ((thermo(i, j), i = 1, 9), j = 1, nint)
                  icf = nint
               end if
            end if
@@ -1849,10 +1848,13 @@ subroutine HCALC(cea)
                  if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') cea%Rname(n)
                  cea%Tt = 0
                  cea%Cpmix = 0
+                 close(io_thermo)
                  return
               end if
            end if
         end do
+
+        close(io_thermo)
 
         cea%Nspr = cea%Nspr - 1
         write(IOOUT, '(/" ERROR IN DATA FOR ", a15, " CHECK NAME AND TEMPERATURE", &
@@ -2161,6 +2163,8 @@ subroutine REACT(cea)
   logical:: hOK
   real(8):: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, T1, T2
   real(8):: T1save, T2save
+  integer:: io_thermo
+  logical:: is_opened
 
   wdone = .false.
   cea%Wp = 0
@@ -2183,17 +2187,17 @@ subroutine REACT(cea)
 
      if (cea%Energy(n) == 'lib' .or. cea%Rnum(n, 1) == 0) then
         cea%Tt = cea%Rtemp(n)
-        rewind IOTHM
-        read(IOTHM) cea%Tg, ntgas, ntot, nall
+        open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
+        read(io_thermo) cea%Tg, ntgas, ntot, nall
 
         do itot = 1, nall
            if (itot <= ntot) then
               icf = 3
               if (itot > ntgas) icf = 1
-              read(IOTHM) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, ((rcf(i, j), i = 1, 9), j = 1, icf)
+              read(io_thermo) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, ((rcf(i, j), i = 1, 9), j = 1, icf)
            else
-              read(IOTHM) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, eform
-              if (nint > 0) read(IOTHM) ((rcf(i, j), i = 1, 9), j = 1, nint)
+              read(io_thermo) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, eform
+              if (nint > 0) read(io_thermo) ((rcf(i, j), i = 1, 9), j = 1, nint)
            end if
 
            if (sub == cea%Rname(n) .or. sub == '*' // cea%Rname(n)) then
@@ -2214,6 +2218,7 @@ subroutine REACT(cea)
                                & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
                           cea%Nlm = 0
                           hOK = .false.
+                          close(io_thermo)
                           return
                        else
                           write(cea%io_log, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
@@ -2246,6 +2251,7 @@ subroutine REACT(cea)
                  if (.not. cea%Hp) go to 50
                  write(cea%io_log, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
                  cea%Nlm = 0
+                 close(io_thermo)
                  return
               end if
 
@@ -2267,6 +2273,8 @@ subroutine REACT(cea)
            end if
         end do
 
+        close(io_thermo)
+
         if (.not. hOK) then
            write(cea%io_log, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
                 & "IS OUTSIDE ITS TEMPERATURE RANGE", f8.2, " TO", f9.2, "K (REACT)")') cea%Tt, cea%Rname(n), T1save, T2save
@@ -2276,7 +2284,12 @@ subroutine REACT(cea)
         endif
      end if
 
-50   ifrmla = cea%Nfla(n)
+50   continue
+
+     inquire(io_thermo, opened = is_opened)
+     if (is_opened) close(io_thermo)
+
+     ifrmla = cea%Nfla(n)
      if (cea%Fox(n)(:1) == 'f') then
         fuel = .true.
         kr = 2
@@ -3241,6 +3254,8 @@ subroutine SEARCH(cea)
   integer:: i, j, k, ii
   integer:: i5, ifaz, itot, nall, ne, nint, ntgas, ntot
   real(8):: b(5), t1, t2, thermo(9, 3)
+  integer:: io_thermo
+  logical:: is_opened
 
   cea%Nc = 0
   ne = 0
@@ -3264,18 +3279,18 @@ subroutine SEARCH(cea)
 !   NC =    NUMBER OF CONDENSED INTERVALS WITH STORED COEFFICIENTS.
 !   NGC =    NG + NC
 !   THDATE = DATE READ FROM THERMO.INP FILE
-  rewind IOTHM
-  read(IOTHM) cea%Tg, ntgas, ntot, nall, cea%Thdate
+  open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
+  read(io_thermo) cea%Tg, ntgas, ntot, nall, cea%Thdate
   cea%Ngc = 1
   cea%Nc = 1
 
   ! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
   outerLoop: do itot = 1, ntot
      if (itot > ntgas) then
-        read(IOTHM) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), cea%Ifz(cea%Nc), &
+        read(io_thermo) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), cea%Ifz(cea%Nc), &
              cea%Temp(1, cea%Nc), cea%Temp(2, cea%Nc), cea%Mw(cea%Ngc), (cea%Cft(cea%Nc, k), k = 1, 9)
      else
-        read(IOTHM) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), ifaz, T1, T2, cea%Mw(cea%Ngc), thermo
+        read(io_thermo) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), ifaz, T1, T2, cea%Mw(cea%Ngc), thermo
      end if
      if (cea%Nonly /= 0) then
         i = 1
@@ -3340,7 +3355,9 @@ subroutine SEARCH(cea)
      if (cea%Ngc > maxNgc) go to 400
   end do outerLoop
 
-! FINISHED READING THERMO DATA FROM I/O UNIT IOTHM.
+  close(io_thermo)
+
+! FINISHED READING THERMO DATA FROM I/O UNIT io_thermo.
   cea%Ifz(cea%Nc) = 0
   cea%Nc = cea%Nc - 1
   cea%Ngc = cea%Ngc - 1
@@ -3401,6 +3418,10 @@ subroutine SEARCH(cea)
 
 400 write(cea%io_log, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
   cea%Ngc = 0
+
+  inquire(io_thermo, opened = is_opened)
+  if (is_opened) close(io_thermo)
+
   return
 end subroutine
 
@@ -4474,7 +4495,7 @@ end subroutine TRANP
 subroutine UTHERM(cea, readOK)
 !***********************************************************************
 ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
-! UNFORMATTED ON I/O UNIT IOTHM.  DATA ARE REORDERED GASES FIRST.
+! UNFORMATTED ON NEW FILE.  DATA ARE REORDERED GASES FIRST.
 !
 ! UTHERM IS CALLED FROM subroutine INPUT.
 !
@@ -4535,7 +4556,7 @@ subroutine UTHERM(cea, readOK)
   logical:: fill(3)
   real(8):: aa, atms, cpfix, dlt, expn(8), fno(5), hform, hh, mwt, templ(9), tex, &
        tgl(4), thermo(9, 3), tinf, tl(2), ttl, tx
-  integer:: io_scratch
+  integer:: io_scratch, io_thermo
 
   ngl = 0
   ns = 0
@@ -4689,32 +4710,35 @@ subroutine UTHERM(cea, readOK)
      end if
   end do
 
-! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IO_SCRATCH & ADD TO IOTHM.
+! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IO_SCRATCH & ADD TO io_thermo.
 300 rewind io_scratch
 
+  open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'new', form = 'unformatted', action = 'write')
+
   if (ns == 0) ns = nall
-  write(IOTHM) tgl, ngl, ns, nall, cea%Thdate
-! WRITE GASEOUS PRODUCTS ON IOTHM
+  write(io_thermo) tgl, ngl, ns, nall, cea%Thdate
+! WRITE GASEOUS PRODUCTS ON io_thermo
   if (ngl /= 0) then
      do i = 1, ns
         read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
-        if (ifaz <= 0) write(IOTHM) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+        if (ifaz <= 0) write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
      end do
   end if
   if (ngl /= nall) then
-! WRITE CONDENSED PRODUCTS AND REACTANTS ON IOTHM
+! WRITE CONDENSED PRODUCTS AND REACTANTS ON io_thermo
      rewind io_scratch
      do i = 1, nall
         read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
         if (i > ns) then
-           write(IOTHM) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo(1, 1)
-           if (ntl > 0) write(IOTHM) thermo
+           write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo(1, 1)
+           if (ntl > 0) write(io_thermo) thermo
         else if (ifaz > 0) then
-           write(IOTHM) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, (thermo(k, 1), k = 1, 9)
+           write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, (thermo(k, 1), k = 1, 9)
         end if
      end do
   end if
 
+  close(io_thermo)
   close(io_scratch)
   return
 

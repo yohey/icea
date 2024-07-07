@@ -20,7 +20,6 @@ module mod_cea
   ! and may be adjusted as desired.
   integer, parameter:: ioinp =  7
   integer, parameter:: ioout =  8
-  integer, parameter:: iothm = 14
   !***********************************************************************
 
   type:: CEA_Problem
@@ -28,6 +27,7 @@ module mod_cea
      integer:: io_log = 0
 
      character(MAX_FILENAME):: filename_trans_lib = 'trans.lib'
+     character(MAX_FILENAME):: filename_thermo_lib = 'thermo.lib'
 
      real(8):: Enn, Ennl, Enlsav, Ensave, Sumn
      real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)

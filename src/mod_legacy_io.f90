@@ -125,7 +125,6 @@ contains
              ! KEYWORD 'THER' READ
              ! CALL UTHERM TO CONVERT FORMATTED THERMODYNAMIC DATA
           else if (code == 'ther') then
-             rewind IOTHM
              call UTHERM(cea, readOK)
              if (.not. readOK) then
                 write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
