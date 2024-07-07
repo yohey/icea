@@ -41,7 +41,6 @@ program main
 
   open(IOINP, file=inp_filename, status='old', form='formatted')
   open(IOTHM, file='thermo.lib', form='unformatted')
-  open(IOTRN, file='trans.lib', form='unformatted')
 
   readOK = .true.
 
@@ -156,7 +155,6 @@ program main
 
   close(IOOUT)
   close(IOTHM)
-  close(IOTRN)
 
   do icase = 1, num_cases
      if (cea(icase)%io_scratch /= 0) then
@@ -3417,6 +3415,7 @@ subroutine READTR(cea)
   character(16):: bin(2, 40), pure(6), spece(2)
   integer:: i, j, k, jj(2), jk, ir, lineb, npure, nrec
   real(8):: trdata(36)
+  integer:: io_transport
 
   if (cea%io_scratch == 0) then
      open(newunit = cea%io_scratch, status = 'scratch', form = 'unformatted')
@@ -3424,15 +3423,15 @@ subroutine READTR(cea)
      rewind cea%io_scratch
   end if
 
-  rewind IOTRN
+  open(newunit = io_transport, file = trim(cea%filename_trans_lib), status = 'old', form = 'unformatted', action = 'read')
 
   cea%Ntape = 0
   npure = 0
   lineb = 1
   if (.not. cea%Short) write(cea%io_log, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
-  read(IOTRN) nrec
+  read(io_transport) nrec
   do ir = 1, nrec
-     read(IOTRN) spece, trdata
+     read(io_transport) spece, trdata
      k = 1
 450  do j = 1, cea%Ng
         if (spece(k) == cea%Prod(j) .or. '*' // spece(k) == cea%Prod(j)) then
@@ -3474,6 +3473,9 @@ subroutine READTR(cea)
      end do
   end if
   write(cea%io_log, *)
+
+  close(io_transport)
+
   return
 end subroutine READTR
 
@@ -4725,10 +4727,10 @@ end subroutine UTHERM
 
 
 
-subroutine UTRAN(io_log, readOK)
+subroutine UTRAN(filename, io_input, io_log, readOK)
 !***********************************************************************
 ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
-! UNFORMATTED ON I/O UNIT IOTRN.
+! UNFORMATTED ON NEW FILE.
 !
 ! UTRAN IS CALLED FROM subroutine INPUT AFTER A RECORD WITH 'tran'
 ! IN COLUMNS 1-4 HAS BEEN READ.
@@ -4736,9 +4738,10 @@ subroutine UTRAN(io_log, readOK)
 ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY  AND USED BY ITSELF TO
 ! PROCESS THE TRANSPORT PROPERTY DATA.
 !***********************************************************************
-  use mod_cea
   implicit none
 ! DUMMY ARGUMENTS
+  character(*), intent(in):: filename
+  integer, intent(in):: io_input
   integer, intent(in):: io_log
   logical, intent(out):: readOK
 ! LOCAL VARIABLES
@@ -4746,27 +4749,29 @@ subroutine UTRAN(io_log, readOK)
   character(1):: vorc
   integer:: i, ic, in, iv, j, k, ncc, nn, ns, nv
   real(8):: cc, tcin(6), trcoef(6, 3, 2), vvl
-  integer:: io_scratch
+  integer:: io_scratch, io_transport
 
 
+  open(newunit = io_transport, file = trim(filename), status = 'new', form = 'unformatted', action = 'write')
   open(newunit = io_scratch, status = 'scratch', form = 'unformatted')
 
   ns = 0
   outerLoop: do
      trcoef(:, :, :) = 0
 
-     read(IOINP, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
+     read(io_input, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
 
      if (tname(1) == 'end' .or. tname(1) == 'LAST') then
-        write(IOTRN) ns
+        write(io_transport) ns
 
         rewind io_scratch
 
         do i = 1, ns
            read(io_scratch, ERR=200) tname, trcoef
-           write(IOTRN) tname, trcoef
+           write(io_transport) tname, trcoef
         end do
 
+        close(io_transport)
         close(io_scratch)
         return
 
@@ -4776,7 +4781,7 @@ subroutine UTRAN(io_log, readOK)
         nn = nv + ncc
         if (nv <= 3 .and. ncc <= 3) then
            do in = 1, nn
-              read(IOINP, '(1X, A1, 2F9.2, 4E15.8)') vorc, tcin
+              read(io_input, '(1X, A1, 2F9.2, 4E15.8)') vorc, tcin
               if (vorc == 'C') then
                  k = 2
                  ic = ic + 1
@@ -4806,6 +4811,7 @@ subroutine UTRAN(io_log, readOK)
 
   readOK = .false.
 
+  close(io_transport)
   close(io_scratch)
 
   return

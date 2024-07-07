@@ -135,7 +135,7 @@ contains
              ! KEYWORD 'TRAN' READ
              ! CALL UTRAN TO CONVERT FORMATTED TRANSPORT PROPERTIES
           else if (code == 'tran') then
-             call UTRAN(cea%io_log, readOK)
+             call UTRAN(cea%filename_trans_lib, IOINP, cea%io_log, readOK)
              if (.not. readOK) then
                 write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 return
