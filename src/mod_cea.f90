@@ -26,8 +26,12 @@ module mod_cea
      integer:: io_scratch = 0
      integer:: io_log = 0
 
+     logical:: invalid_case = .false.
+
      character(MAX_FILENAME):: filename_trans_lib = 'trans.lib'
      character(MAX_FILENAME):: filename_thermo_lib = 'thermo.lib'
+
+     character(15):: ensert(20)
 
      real(8):: Enn, Ennl, Enlsav, Ensave, Sumn
      real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)

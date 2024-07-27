@@ -11,11 +11,10 @@ program main
   integer:: icase = 0, num_cases
   type(CEA_Problem), allocatable:: cea(:)
 
-  character(15):: ensert(20)
   character(MAX_FILENAME):: inp_filename, out_filename, plt_filename
   character(MAX_FILENAME-4):: basename
-  logical:: caseOK, file_exists, readOK, is_opened
-  integer:: i, iof, j
+  logical:: is_opened
+  integer:: i, j
   real(8):: xi, xln
 
   write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
@@ -29,45 +28,12 @@ program main
   out_filename = trim(basename) // '.out'
   plt_filename = trim(basename) // '.plt'
 
-  inquire(file = inp_filename, exist = file_exists)
-  if (.not. file_exists) then
-     print *, inp_filename, ' DOES NOT EXIST'
-     error stop
-  end if
+  call read_legacy_input(cea, inp_filename)
 
-  call count_cases(inp_filename, num_cases)
-
-  allocate(cea(num_cases))
-
-  open(IOINP, file=inp_filename, status='old', form='formatted')
-
-  readOK = .true.
+  num_cases = size(cea)
 
   do icase = 1, num_cases
-
-     !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
-     if (icase >= 2) then
-        cea(icase)%Dens(:) = cea(icase-1)%Dens(:)
-     end if
-     !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
-
-     cea(icase)%Iplt = 0
-     cea(icase)%Nplt = 0
-
-     call INPUT(cea(icase), readOK, caseOK, ensert)
-
-     do iof = 1, cea(icase)%Nof
-        if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%B0p(1, 1) /= 0.) then
-           do i = 1, cea(icase)%Nlm
-              if (cea(icase)%B0p(i, 1) == 0. .or. cea(icase)%B0p(i, 2) == 0.) then
-                 write(cea(icase)%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
-                 caseOK = .false.
-              end if
-           end do
-        end if
-     end do
-
-     if ((.not. caseOK) .or. (.not. readOK)) cycle
+     if (cea(icase)%invalid_case) cycle
 
      if (cea(icase)%Ions) then
         if (cea(icase)%Elmt(cea(icase)%Nlm) /= 'E') then
@@ -84,7 +50,10 @@ program main
 
      call SEARCH(cea(icase))
 
-     if (cea(icase)%Ngc == 0) exit
+     if (cea(icase)%Ngc == 0) then
+        cea(icase)%invalid_case = .true.
+        cycle
+     end if
 
      if (cea(icase)%Trnspt) call READTR(cea(icase))
 
@@ -108,19 +77,17 @@ program main
      if (cea(icase)%Nc /= 0 .and. cea(icase)%Nsert /= 0) then
         innerLoop: do i = 1, cea(icase)%Nsert
            do j = cea(icase)%Ngc, cea(icase)%Ngp1, - 1
-              if (cea(icase)%Prod(j) == ensert(i)) then
+              if (cea(icase)%Prod(j) == cea(icase)%ensert(i)) then
                  cea(icase)%Npr = cea(icase)%Npr + 1
                  cea(icase)%Jcond(cea(icase)%Npr) = j
                  if (.not. cea(icase)%Short) write(cea(icase)%io_log, '(1X, A16, "INSERTED")') cea(icase)%Prod(j)
                  cycle innerLoop
               end if
            end do
-           write(cea(icase)%io_log, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') ensert(i)
+           write(cea(icase)%io_log, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') cea(icase)%ensert(i)
         end do innerLoop
      end if
   end do
-
-  close(IOINP)
 
 
   open(IOOUT, file=out_filename, status='unknown', form='formatted')
@@ -140,6 +107,8 @@ program main
      !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
 
      call OUT0(cea(icase))
+
+     if (cea(icase)%invalid_case) cycle
 
      if (cea(icase)%Rkt) then
         call ROCKET(cea(icase))

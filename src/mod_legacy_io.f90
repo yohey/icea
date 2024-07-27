@@ -47,7 +47,65 @@ contains
   end subroutine count_cases
 
 
-  subroutine INPUT(cea, readOK, caseOK, Ensert)
+  subroutine read_legacy_input(cea, filename)
+    use mod_cea
+    implicit none
+
+    type(CEA_Problem), allocatable, intent(out):: cea(:)
+    character(*), intent(in):: filename
+
+    integer:: num_cases
+    integer:: icase, iof, i
+    logical:: file_exists, caseOK, readOK
+
+    inquire(file = filename, exist = file_exists)
+    if (.not. file_exists) then
+       print *, filename, ' DOES NOT EXIST'
+       error stop
+    end if
+
+    call count_cases(filename, num_cases)
+
+    allocate(cea(num_cases))
+
+    open(IOINP, file = filename, status = 'old', form = 'formatted', action = 'read')
+
+    readOK = .true.
+
+    do icase = 1, num_cases
+
+       !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
+       if (icase >= 2) then
+          cea(icase)%Dens(:) = cea(icase-1)%Dens(:)
+       end if
+       !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
+
+       cea(icase)%Iplt = 0
+       cea(icase)%Nplt = 0
+
+       call INPUT(cea(icase), readOK, caseOK)
+
+       do iof = 1, cea(icase)%Nof
+          if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%B0p(1, 1) /= 0.) then
+             do i = 1, cea(icase)%Nlm
+                if (cea(icase)%B0p(i, 1) == 0. .or. cea(icase)%B0p(i, 2) == 0.) then
+                   write(cea(icase)%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
+                   caseOK = .false.
+                end if
+             end do
+          end if
+       end do
+
+       cea(icase)%invalid_case = (.not. caseOK) .or. (.not. readOK)
+    end do
+
+    close(IOINP)
+
+    return
+  end subroutine read_legacy_input
+
+
+  subroutine INPUT(cea, readOK, caseOK)
     !***********************************************************************
     ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
     !***********************************************************************
@@ -56,7 +114,6 @@ contains
 
     type(CEA_Problem), intent(inout):: cea
     logical, intent(out):: caseOK, readOK
-    character(15), intent(out):: Ensert(20)
 
     ! LOCAL VARIABLES
     character(26), parameter:: lc = 'abcdefghijklmnopqrstuvwxyz', uc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -111,7 +168,7 @@ contains
           else if (code == 'inse') then
              cea%Nsert = min(20, ncin-1)
              do concurrent (i = 1:cea%Nsert)
-                Ensert(i) = cin(i+1)
+                cea%ensert(i) = cin(i+1)
              end do
 
              ! STORE PRODUCT NAMES FROM 'OMIT' DATASET
@@ -945,6 +1002,13 @@ contains
   end subroutine INFREE
 
 
+!!$  subroutine write_legacy_output(filename, problems)
+!!$    character(*), intent(in):: filename
+!!$    type(CEA_Problem), dimension(:), intent(in):: problems
+!!$
+!!$  end subroutine write_legacy_output
+
+
   subroutine OUT0(cea)
     use mod_cea
     implicit none
@@ -1530,16 +1594,3 @@ contains
   end subroutine write_plt_file
 
 end module mod_legacy_io
-!!$
-!!$
-!!$  subroutine read_legacy_input(filename, problems)
-!!$    character(*), intent(in):: filename
-!!$    type(CEA_Problem), dimension(:), intent(out):: problems
-!!$
-!!$  end subroutine read_legacy_input
-!!$
-!!$  subroutine write_legacy_output(filename, problems)
-!!$    character(*), intent(in):: filename
-!!$    type(CEA_Problem), dimension(:), intent(in):: problems
-!!$
-!!$  end subroutine write_legacy_output
