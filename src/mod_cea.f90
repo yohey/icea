@@ -86,8 +86,6 @@ module mod_cea
 
      real(8):: Coneql(Ncol), Confro(Ncol), Cpeql(Ncol), Cpfro(Ncol), Preql(Ncol), Prfro(Ncol), Vis(Ncol)
 
-     real(8):: cx(7), hcx(7), scx(7)
-
      ! Information used in variable output format
      character(4):: fmt(30) = [character(4):: '(1X', ',A15', ',', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &

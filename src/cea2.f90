@@ -143,90 +143,36 @@ subroutine CPHS(cea)
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
   use mod_cea
+  use mod_functions
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
 
-  integer:: i, ij, j, jj, k
-
-  cea%cx(:) = [0d0, 0d0, 1d0, 0.5d0, 0.6666666666666667d0, 0.75d0, 0.8d0]
-  cea%hcx(:) = [0d0, 0d0, 1d0, 0d0, 0d0, 0d0, 0d0]
-  cea%scx(:) = 0d0
+  integer:: ij, j, jj, k
 
   k = 1
   if (cea%Tt > cea%Tg(2)) k = 2
   if (cea%Tt > cea%Tg(3)) k = 3
-  cea%cx(2) = 1 / cea%Tt
-  cea%cx(1) = cea%cx(2)**2
-  cea%scx(3) = cea%Tln
-  cea%scx(2) = -cea%cx(2)
-  cea%hcx(2) = cea%Tln * cea%cx(2)
-  cea%hcx(1) = -cea%cx(1)
-  cea%scx(1) = cea%hcx(1) / 2
-
-  do concurrent (i = 4:7)
-     cea%hcx(i) = cea%cx(i) * cea%Tt
-     cea%scx(i) = cea%cx(i-1) * cea%Tt
-  end do
-
-  cea%H0(1:cea%Ng) = 0
-  cea%S(1:cea%Ng) = 0
-
-  do i = 7, 4, -1
-     do concurrent (j = 1:cea%Ng)
-        cea%S(j) = (cea%S(j) + cea%Coef(j, i, k)) * cea%scx(i)
-        cea%H0(j) = (cea%H0(j) + cea%Coef(j, i, k)) * cea%hcx(i)
-     end do
-  end do
-
-  do i = 1, 3
-     do concurrent (j = 1:cea%Ng)
-        cea%S(j) = cea%S(j) + cea%Coef(j, i, k) * cea%scx(i)
-        cea%H0(j) = cea%H0(j) + cea%Coef(j, i, k) * cea%hcx(i)
-     end do
-  end do
 
   do concurrent (j = 1:cea%Ng)
-     cea%S(j) = cea%S(j) + cea%Coef(j, 9, k)
-     cea%H0(j) = cea%H0(j) + cea%Coef(j, 8, k) * cea%cx(2)
+     cea%S(j) = calc_entropy(cea%Coef(j, :, k), cea%Tt, cea%Tln, .true.)
+     cea%H0(j) = calc_enthalpy(cea%Coef(j, :, k), cea%Tt, cea%Tln, .true.)
   end do
 
   if (.not. cea%Tp .or. cea%Convg) then
-     cea%Cp(1:cea%Ng) = 0
-
-     do i = 7, 4, -1
-        do concurrent (j = 1:cea%Ng)
-           cea%Cp(j) = (cea%Cp(j) + cea%Coef(j, i, k)) * cea%Tt
-        end do
-     end do
-
      do concurrent (j = 1:cea%Ng)
-        cea%Cp(j) = cea%Cp(j) + sum(cea%Coef(j, 1:3, k) * cea%cx(1:3))
+        cea%Cp(j) = calc_specific_heat(cea%Coef(j, :, k), cea%Tt)
      end do
   end if
 
   if (cea%Npr /= 0 .and. k /= 3 .and. cea%Ng /= cea%Ngc) then
-     do ij = 1, cea%Npr
+     do concurrent (ij = 1:cea%Npr)
         j = cea%Jcond(ij)
         jj = cea%Jcond(ij) - cea%Ng
-        cea%Cp(j) = 0
-        cea%H0(j) = 0
-        cea%S(j) = 0
 
-        do i = 7, 4, -1
-           cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * cea%scx(i)
-           cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * cea%hcx(i)
-           cea%Cp(j) = (cea%Cp(j) + cea%Cft(jj, i)) * cea%Tt
-        end do
-
-        do i = 1, 3
-           cea%S(j) = cea%S(j) + cea%Cft(jj, i) * cea%scx(i)
-           cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * cea%hcx(i)
-           cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cea%cx(i)
-        end do
-
-        cea%S(j) = cea%S(j) + cea%Cft(jj, 9)
-        cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cea%cx(2)
+        cea%S(j) = calc_entropy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
+        cea%H0(j) = calc_enthalpy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
+        cea%Cp(j) = calc_specific_heat(cea%Cft(jj, :), cea%Tt)
      end do
   end if
 
@@ -239,32 +185,18 @@ subroutine ALLCON(cea)
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
   use mod_cea
+  use mod_functions
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
 
-  integer:: i, j, jj
+  integer:: j, jj
 
-  do jj = 1, cea%Nc
+  do concurrent (jj = 1:cea%Nc)
      j = jj + cea%Ng
-     cea%Cp(j) = 0
-     cea%H0(j) = 0
-     cea%S(j) = 0
-
-     do i = 7, 4, -1
-        cea%S(j) = (cea%S(j) + cea%Cft(jj, i)) * cea%scx(i)
-        cea%H0(j) = (cea%H0(j) + cea%Cft(jj, i)) * cea%hcx(i)
-        cea%Cp(j) = (cea%Cp(j) + cea%Cft(jj, i)) * cea%Tt
-     end do
-
-     do i = 1, 3
-        cea%S(j) = cea%S(j) + cea%Cft(jj, i) * cea%scx(i)
-        cea%H0(j) = cea%H0(j) + cea%Cft(jj, i) * cea%hcx(i)
-        cea%Cp(j) = cea%Cp(j) + cea%Cft(jj, i) * cea%cx(i)
-     end do
-
-     cea%S(j) = cea%S(j) + cea%Cft(jj, 9)
-     cea%H0(j) = cea%H0(j) + cea%Cft(jj, 8) * cea%cx(2)
+     cea%S(j) = calc_entropy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
+     cea%H0(j) = calc_enthalpy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
+     cea%Cp(j) = calc_specific_heat(cea%Cft(jj, :), cea%Tt)
   end do
 
   return
@@ -1723,6 +1655,7 @@ subroutine HCALC(cea)
 ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
 !***********************************************************************
   use mod_cea
+  use mod_functions
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -1854,16 +1787,11 @@ subroutine HCALC(cea)
         if (cea%Tt > cea%Tg(3) .and. ifaz < 0) l = 3
      end if
 
-     cea%S(j) = cea%Coef(j, 7, l) / 4 * cea%Tt**4 + cea%Coef(j, 6, l) / 3 * cea%Tt**3 + cea%Coef(j, 5, l) / 2 * cea%Tt**2 &
-          + cea%Coef(j, 4, l) * cea%Tt - cea%Coef(j, 1, l) * 0.5d0 / cea%Tt**2 - cea%Coef(j, 2, l) / cea%Tt &
-          + cea%Coef(j, 3, l) * cea%Tln + cea%Coef(j, 9, l)
+     cea%S(j) = calc_entropy(cea%Coef(j, :, l), cea%Tt, cea%Tln, .false.)
 
-     cea%H0(j) = cea%Coef(j, 7, l) / 5 * cea%Tt**4 + cea%Coef(j, 6, l) / 4 * cea%Tt**3 + cea%Coef(j, 5, l) / 3 * cea%Tt**2 &
-          + cea%Coef(j, 4, l) / 2 * cea%Tt - cea%Coef(j, 1, l) / cea%Tt**2 + (cea%Coef(j, 2, l) * cea%Tln &
-          + cea%Coef(j, 8, l)) / cea%Tt + cea%Coef(j, 3, l)
+     cea%H0(j) = calc_enthalpy(cea%Coef(j, :, l), cea%Tt, cea%Tln, .false.)
 
-     cea%Cp(j) = cea%Coef(j, 7, l) * cea%Tt**4 + cea%Coef(j, 6, l) * cea%Tt**3 + cea%Coef(j, 5, l) * cea%Tt**2 &
-          + cea%Coef(j, 4, l) * cea%Tt + cea%Coef(j, 1, l) / cea%Tt**2 + cea%Coef(j, 2, l) / cea%Tt + cea%Coef(j, 3, l)
+     cea%Cp(j) = calc_specific_heat(cea%Coef(j, :, l), cea%Tt)
 
      if (abs(cea%H0(j)) < 0.01) cea%H0(j) = 0
 
