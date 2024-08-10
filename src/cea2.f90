@@ -13,7 +13,6 @@ program main
 
   character(MAX_FILENAME):: inp_filename, out_filename, plt_filename
   character(MAX_FILENAME-4):: basename
-  logical:: is_opened
   integer:: i, j
   real(8):: xi, xln
 
@@ -122,13 +121,6 @@ program main
   end do
 
   close(IOOUT)
-
-  do icase = 1, num_cases
-     if (cea(icase)%io_scratch /= 0) then
-        inquire(cea(icase)%io_scratch, opened = is_opened)
-        if (is_opened) close(cea(icase)%io_scratch)
-     end if
-  end do
 
   call write_plt_file(cea(1:num_cases), plt_filename)
 
@@ -3335,12 +3327,6 @@ subroutine READTR(cea)
   real(8):: trdata(36)
   integer:: io_transport
 
-  if (cea%io_scratch == 0) then
-     open(newunit = cea%io_scratch, status = 'scratch', form = 'unformatted')
-  else
-     rewind cea%io_scratch
-  end if
-
   open(newunit = io_transport, file = trim(cea%filename_trans_lib), status = 'old', form = 'unformatted', action = 'read')
 
   cea%Ntape = 0
@@ -3350,6 +3336,8 @@ subroutine READTR(cea)
   if (.not. cea%Short) write(cea%io_log, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
 
   read(io_transport) nrec
+
+  allocate(cea%transport_properties(nrec))
 
   do ir = 1, nrec
      read(io_transport) spece, trdata
@@ -3380,8 +3368,9 @@ subroutine READTR(cea)
      end do
 
      if (j <= cea%Ng) then
-        write(cea%io_scratch) jj, trdata
         cea%Ntape = cea%Ntape + 1
+        cea%transport_properties(cea%Ntape)%j = jj
+        cea%transport_properties(cea%Ntape)%data = reshape(trdata, [6, 3, 2])
      end if
 
      if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
@@ -4107,10 +4096,9 @@ subroutine TRANIN(cea)
      end do
   end do
 
-  rewind cea%io_scratch
-
   outerLoop2: do ir = 1, cea%Ntape
-     read(cea%io_scratch) jtape, trc
+     jtape = cea%transport_properties(ir)%j
+     trc = cea%transport_properties(ir)%data
 
      innerLoop: do k = 1, 2
         do i = 1, cea%Nm

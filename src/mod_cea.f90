@@ -22,14 +22,21 @@ module mod_cea
   integer, parameter:: ioout =  8
   !***********************************************************************
 
+  type:: TransportProperty
+     integer:: j(2)
+     real(8):: data(6, 3, 2)
+  end type TransportProperty
+
+
   type:: CEA_Problem
-     integer:: io_scratch = 0
      integer:: io_log = 0
 
      logical:: invalid_case = .false.
 
      character(MAX_FILENAME):: filename_trans_lib = 'trans.lib'
      character(MAX_FILENAME):: filename_thermo_lib = 'thermo.lib'
+
+     type(TransportProperty), allocatable:: transport_properties(:)
 
      character(15):: ensert(20)
 
