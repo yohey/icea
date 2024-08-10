@@ -3346,50 +3346,59 @@ subroutine READTR(cea)
   cea%Ntape = 0
   npure = 0
   lineb = 1
+
   if (.not. cea%Short) write(cea%io_log, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
+
   read(io_transport) nrec
+
   do ir = 1, nrec
      read(io_transport) spece, trdata
      k = 1
-450  do j = 1, cea%Ng
+     do j = 1, cea%Ng
         if (spece(k) == cea%Prod(j) .or. '*' // spece(k) == cea%Prod(j)) then
            jj(k) = j
            if (k == 2) then
-! STORE NAMES FOR BINARIES IN BIN ARRAY.
+              ! STORE NAMES FOR BINARIES IN BIN ARRAY.
               do k = 1, 2
                  bin(k, lineb) = spece(k)
               end do
               lineb = lineb + 1
-              go to 500
+              exit
            else
               jj(2) = j
               if (spece(2) == ' ') then
-! WRITE NAMES FOR PURE SPECIES.
+                 ! WRITE NAMES FOR PURE SPECIES.
                  npure = npure + 1
                  pure(npure) = spece(1)
-                 go to 500
+                 exit
               else
                  k = 2
-                 go to 450
+                 cycle
               end if
            end if
         end if
      end do
-     go to 550
-500  write(cea%io_scratch) jj, trdata
-     cea%Ntape = cea%Ntape + 1
-550  if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
+
+     if (j <= cea%Ng) then
+        write(cea%io_scratch) jj, trdata
+        cea%Ntape = cea%Ntape + 1
+     end if
+
+     if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
         if (.not. cea%Short) write(cea%io_log, '(4(2x, A16))') (pure(jk), jk = 1, npure)
         npure = 0
      end if
   end do
+
   lineb = lineb - 1
+
   if (.not. cea%Short) then
      write(cea%io_log, '(/"     BINARY INTERACTIONS"/)')
      do j = 1, lineb
         write(cea%io_log, '(5X, 2A16)') (bin(i, j), i = 1, 2)
      end do
   end if
+
   write(cea%io_log, *)
 
   close(io_transport)
