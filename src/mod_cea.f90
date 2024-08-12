@@ -99,6 +99,17 @@ module mod_cea
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0', ')']
   end type CEA_Problem
 
+
+  interface
+     subroutine run_all_cases(cea, out_filename, plt_filename)
+       import:: CEA_Problem, MAX_FILENAME
+       type(CEA_Problem), intent(inout):: cea(:)
+       character(MAX_FILENAME), intent(in), optional:: out_filename
+       character(MAX_FILENAME), intent(in), optional:: plt_filename
+     end subroutine run_all_cases
+  end interface
+
+
   !***********************************************************************
   ! Fundamental constants from:  Cohen, E. Richard & Taylor, Barry N.,
   ! The 1986 codata recommended values of the fundamental physical

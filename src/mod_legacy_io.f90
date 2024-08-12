@@ -1027,6 +1027,14 @@ contains
        end if
     end if
 
+    write(io_out, '(/" *******************************************************************************")')
+    write(io_out, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
+                   & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
+                   & " AND SANFORD GORDON", /5x, &
+                   & " REFS: NASA RP-1311, PART I, 1994", &
+                   & " AND NASA RP-1311, PART II, 1996")')
+    write(io_out, '(/" *******************************************************************************")')
+
     return
   end subroutine open_legacy_output
 

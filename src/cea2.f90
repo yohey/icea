@@ -8,13 +8,10 @@ program main
   use mod_legacy_io
   implicit none
 
-  integer:: icase = 0, num_cases
   type(CEA_Problem), allocatable:: cea(:)
 
   character(MAX_FILENAME):: inp_filename, out_filename, plt_filename
   character(MAX_FILENAME-4):: basename
-  integer:: i, j
-  real(8):: xi, xln
 
   write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
        & "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
@@ -29,75 +26,35 @@ program main
 
   call read_legacy_input(cea, inp_filename)
 
+  call run_all_cases(cea, out_filename, plt_filename)
+
+  deallocate(cea)
+
+  stop
+end program main
+
+
+subroutine run_all_cases(cea, out_filename, plt_filename)
+  use mod_cea, only: CEA_Problem, MAX_FILENAME, IOOUT
+  use mod_legacy_io
+  implicit none
+
+  type(CEA_Problem), intent(inout):: cea(:)
+  character(MAX_FILENAME), intent(in), optional:: out_filename
+  character(MAX_FILENAME), intent(in), optional:: plt_filename
+  integer:: icase, num_cases
+
   num_cases = size(cea)
 
   do icase = 1, num_cases
-     if (cea(icase)%invalid_case) cycle
-
-     if (cea(icase)%Ions) then
-        if (cea(icase)%Elmt(cea(icase)%Nlm) /= 'E') then
-           cea(icase)%Nlm = cea(icase)%Nlm + 1
-           cea(icase)%Elmt(cea(icase)%Nlm) = 'E'
-           cea(icase)%B0p(cea(icase)%Nlm, 1) = 0
-           cea(icase)%B0p(cea(icase)%Nlm, 2) = 0
-        end if
-     else if (cea(icase)%Elmt(cea(icase)%Nlm) == 'E') then
-        cea(icase)%Nlm = cea(icase)%Nlm - 1
-     end if
-
-     cea(icase)%Jray(1:cea(icase)%Nreac) = 0
-
-     call SEARCH(cea(icase))
-
-     if (cea(icase)%Ngc == 0) then
-        cea(icase)%invalid_case = .true.
-        cycle
-     end if
-
-     if (cea(icase)%Trnspt) call READTR(cea(icase))
-
-     ! INITIAL ESTIMATES
-     cea(icase)%Npr = 0
-     cea(icase)%Gonly = .true.
-     cea(icase)%Enn = 0.1d0
-     cea(icase)%Ennl = -2.3025851
-     cea(icase)%Sumn = cea(icase)%Enn
-     xi = cea(icase)%Ng
-     if (xi == 0.) xi = 1
-     xi = cea(icase)%Enn/xi
-     xln = log(xi)
-
-     cea(icase)%En(cea(icase)%Ng+1:cea(icase)%Ng+cea(icase)%Nc, 1) = 0
-     cea(icase)%Enln(cea(icase)%Ng+1:cea(icase)%Ng+cea(icase)%Nc) = 0
-
-     cea(icase)%En(1:cea(icase)%Ng, 1) = xi
-     cea(icase)%Enln(1:cea(icase)%Ng) = xln
-
-     if (cea(icase)%Nc /= 0 .and. cea(icase)%Nsert /= 0) then
-        innerLoop: do i = 1, cea(icase)%Nsert
-           do j = cea(icase)%Ngc, cea(icase)%Ngp1, - 1
-              if (cea(icase)%Prod(j) == cea(icase)%ensert(i)) then
-                 cea(icase)%Npr = cea(icase)%Npr + 1
-                 cea(icase)%Jcond(cea(icase)%Npr) = j
-                 if (.not. cea(icase)%Short) write(cea(icase)%io_log, '(1X, A16, "INSERTED")') cea(icase)%Prod(j)
-                 cycle innerLoop
-              end if
-           end do
-           write(cea(icase)%io_log, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') cea(icase)%ensert(i)
-        end do innerLoop
-     end if
+     call read_libraries(cea(icase))
   end do
 
-
-  call open_legacy_output(IOOUT, out_filename)
-
-  write(IOOUT, '(/" *******************************************************************************")')
-  write(IOOUT, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
-       & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
-       & " AND SANFORD GORDON", /5x, &
-       & " REFS: NASA RP-1311, PART I, 1994", &
-       & " AND NASA RP-1311, PART II, 1996")')
-  write(IOOUT, '(/" *******************************************************************************")')
+  if (present(out_filename)) then
+     call open_legacy_output(IOOUT, out_filename)
+  else
+     call open_legacy_output(IOOUT)
+  end if
 
   do icase = 1, num_cases
      !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
@@ -123,12 +80,12 @@ program main
 
   close(IOOUT)
 
-  call write_plt_file(cea(1:num_cases), plt_filename)
+  if (present(plt_filename)) then
+     call write_plt_file(cea(1:num_cases), plt_filename)
+  end if
 
-  deallocate(cea)
-
-  stop
-end program main
+  return
+end subroutine run_all_cases
 
 
 subroutine CPHS(cea)
@@ -3126,6 +3083,72 @@ subroutine ROCKET(cea)
   return
 end subroutine ROCKET
 
+
+subroutine read_libraries(cea)
+  use mod_cea
+  implicit none
+
+  type(CEA_Problem), intent(inout):: cea
+  integer:: i, j
+  real(8):: xi, xln
+
+  if (cea%invalid_case) return
+
+  if (cea%Ions) then
+     if (cea%Elmt(cea%Nlm) /= 'E') then
+        cea%Nlm = cea%Nlm + 1
+        cea%Elmt(cea%Nlm) = 'E'
+        cea%B0p(cea%Nlm, 1) = 0
+        cea%B0p(cea%Nlm, 2) = 0
+     end if
+  else if (cea%Elmt(cea%Nlm) == 'E') then
+     cea%Nlm = cea%Nlm - 1
+  end if
+
+  cea%Jray(1:cea%Nreac) = 0
+
+  call SEARCH(cea)
+
+  if (cea%Ngc == 0) then
+     cea%invalid_case = .true.
+     return
+  end if
+
+  if (cea%Trnspt) call READTR(cea)
+
+  ! INITIAL ESTIMATES
+  cea%Npr = 0
+  cea%Gonly = .true.
+  cea%Enn = 0.1d0
+  cea%Ennl = -2.3025851
+  cea%Sumn = cea%Enn
+  xi = cea%Ng
+  if (xi == 0.) xi = 1
+  xi = cea%Enn/xi
+  xln = log(xi)
+
+  cea%En(cea%Ng+1:cea%Ng+cea%Nc, 1) = 0
+  cea%Enln(cea%Ng+1:cea%Ng+cea%Nc) = 0
+
+  cea%En(1:cea%Ng, 1) = xi
+  cea%Enln(1:cea%Ng) = xln
+
+  if (cea%Nc /= 0 .and. cea%Nsert /= 0) then
+     innerLoop: do i = 1, cea%Nsert
+        do j = cea%Ngc, cea%Ngp1, - 1
+           if (cea%Prod(j) == cea%ensert(i)) then
+              cea%Npr = cea%Npr + 1
+              cea%Jcond(cea%Npr) = j
+              if (.not. cea%Short) write(cea%io_log, '(1X, A16, "INSERTED")') cea%Prod(j)
+              cycle innerLoop
+           end if
+        end do
+        write(cea%io_log, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') cea%ensert(i)
+     end do innerLoop
+  end if
+
+  return
+end subroutine read_libraries
 
 
 subroutine SEARCH(cea)
