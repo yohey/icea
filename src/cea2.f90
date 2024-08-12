@@ -89,7 +89,8 @@ program main
   end do
 
 
-  open(IOOUT, file=out_filename, status='unknown', form='formatted')
+  call open_legacy_output(IOOUT, out_filename)
+
   write(IOOUT, '(/" *******************************************************************************")')
   write(IOOUT, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
        & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
@@ -105,7 +106,7 @@ program main
      end if
      !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
 
-     call OUT0(cea(icase))
+     call write_input_log(cea(icase)%io_log, IOOUT)
 
      if (cea(icase)%invalid_case) cycle
 

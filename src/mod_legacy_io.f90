@@ -68,7 +68,7 @@ contains
 
     allocate(cea(num_cases))
 
-    open(IOINP, file = filename, status = 'old', form = 'formatted', action = 'read')
+    open(newunit = IOINP, file = filename, status = 'old', form = 'formatted', action = 'read')
 
     readOK = .true.
 
@@ -1002,32 +1002,52 @@ contains
   end subroutine INFREE
 
 
-!!$  subroutine write_legacy_output(filename, problems)
-!!$    character(*), intent(in):: filename
-!!$    type(CEA_Problem), dimension(:), intent(in):: problems
-!!$
-!!$  end subroutine write_legacy_output
-
-
-  subroutine OUT0(cea)
-    use mod_cea
+  subroutine open_legacy_output(io_out, filename)
+    use mod_cea, only: MAX_FILENAME
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
-    character(MAX_CHARS):: line
+    integer, intent(inout):: io_out
+    character(MAX_FILENAME), intent(in), optional:: filename
+    integer:: i
+    logical:: is_opened
 
-    rewind cea%io_log
+    if (present(filename)) then
+       inquire(file = filename, number = i)
 
-    do
-       read(cea%io_log, '(a)', end = 999) line
-!!$       write(0, '(a)') trim(line)
-       write(IOOUT, '(a)') trim(line)
-    end do
+       if (i > 0) then
+          io_out = i
+       else
+          open(newunit = io_out, file = filename, status = 'unknown', form = 'formatted')
+       end if
+    else
+       inquire(io_out, opened = is_opened)
 
-999 close(cea%io_log)
+       if (.not. is_opened) then
+          open(newunit = io_out, status = 'scratch', form = 'formatted')
+       end if
+    end if
 
     return
-  end subroutine OUT0
+  end subroutine open_legacy_output
+
+
+  subroutine write_input_log(io_log, io_out)
+    implicit none
+
+    integer, intent(in):: io_log, io_out
+    character(MAX_CHARS):: line
+
+    rewind io_log
+
+    do
+       read(io_log, '(a)', end = 999) line
+       write(io_out, '(a)') trim(line)
+    end do
+
+999 close(io_log)
+
+    return
+  end subroutine write_input_log
 
 
   subroutine OUT1(cea)

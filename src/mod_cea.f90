@@ -18,8 +18,8 @@ module mod_cea
   ! The following parameters set the input/output unit numbers.
   ! These numbers are also defined in the manual, part 2 p. 39,
   ! and may be adjusted as desired.
-  integer, parameter:: ioinp =  7
-  integer, parameter:: ioout =  8
+  integer:: IOINP
+  integer:: IOOUT
   !***********************************************************************
 
   type:: TransportProperty
