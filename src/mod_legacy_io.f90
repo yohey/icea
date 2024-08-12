@@ -147,7 +147,7 @@ contains
     do
        do
           ! CALL INFREE TO READ DATASET
-          call INFREE(readOK, cin, ncin, lcin, dpin, cea%io_log)
+          call INFREE(readOK, cin, ncin, lcin, dpin, ioinp, cea%io_log)
 
           if (.not. readOK) return
 
@@ -822,7 +822,7 @@ contains
   end subroutine INPUT
 
 
-  subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin, io_log)
+  subroutine INFREE(readOK, Cin, Ncin, Lcin, Dpin, io_input, io_log)
     !***********************************************************************
     ! FREE-FORM READ FOR CEA.  READS AND DECIPHERS DATA FOR ONE DATASET.
     !
@@ -840,15 +840,15 @@ contains
     !   Cnum - CHARACTER STRING REPRESENTING DATASET NUMBERS. MAXIMUM 24
     !          CHARACTERS.
     !***********************************************************************
-    use mod_cea
     implicit none
 
     ! DUMMY ARGUMENTS
-    character(15), intent(out):: Cin(maxNgc)
+    character(15), intent(out):: Cin(:)
     integer, intent(out):: Ncin
-    integer, intent(out):: Lcin(maxNgc)
+    integer, intent(out):: Lcin(:)
     logical, intent(out):: readOK
-    real(8), intent(out):: Dpin(maxNgc)
+    real(8), intent(out):: Dpin(:)
+    integer, intent(in):: io_input
     integer, intent(in):: io_log
 
     ! LOCAL VARIABLES
@@ -878,7 +878,7 @@ contains
        nch1 = 1
 
        ! READ CHARACTERS, ONE AT A TIME
-       read(IOINP, '(132a1)', END = 500, ERR = 500) ch1
+       read(io_input, '(132a1)', END = 500, ERR = 500) ch1
 
        ! FIND FIRST AND LAST NON-BLANK CHARACTER
        do i = 132, 1, - 1
@@ -914,7 +914,7 @@ contains
           else
 
              ! KEYWORD READ FOR NEXT DATASET. END PROCESSING
-             backspace IOINP
+             backspace io_input
              if (nx == 0) Ncin = Ncin - 1
              return
           end if
