@@ -1,5 +1,5 @@
 program main
-  use mod_cea
+  use mod_types
   use mod_legacy_io
   implicit none
 
@@ -30,7 +30,7 @@ end program main
 
 
 subroutine parse_arguments(inp_filename, out_filename, plt_filename, legacy_mode)
-  use mod_cea, only: MAX_FILENAME, stderr
+  use mod_types, only: MAX_FILENAME, stderr
   implicit none
 
   character(MAX_FILENAME), intent(out):: inp_filename

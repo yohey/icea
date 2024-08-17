@@ -48,7 +48,7 @@ contains
 
 
   subroutine read_legacy_input(cea, filename)
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), allocatable, intent(out):: cea(:)
@@ -109,7 +109,7 @@ contains
     !***********************************************************************
     ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
     !***********************************************************************
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1003,7 +1003,7 @@ contains
 
 
   subroutine open_legacy_output(io_out, filename)
-    use mod_cea, only: MAX_FILENAME
+    use mod_types, only: MAX_FILENAME
     implicit none
 
     integer, intent(inout):: io_out
@@ -1064,7 +1064,7 @@ contains
     !
     ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
     !***********************************************************************
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1123,7 +1123,7 @@ contains
     !***********************************************************************
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1358,7 +1358,7 @@ contains
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1448,7 +1448,7 @@ contains
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1511,7 +1511,7 @@ contains
     !***********************************************************************
     ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
     !***********************************************************************
-    use mod_cea
+    use mod_types
     implicit none
 
     ! DUMMY ARGUMENTS
@@ -1567,7 +1567,7 @@ contains
     ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-format IN
     ! VARIABLE format FMT.
     !***********************************************************************
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1593,7 +1593,7 @@ contains
 
 
   subroutine write_plt_file(cea, filename)
-    use mod_cea
+    use mod_types
     implicit none
 
     type(CEA_Problem), intent(in):: cea(:)

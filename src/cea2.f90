@@ -4,7 +4,7 @@
 !-------------------------------------------------------------------------------
 
 subroutine run_all_cases(cea, out_filename, plt_filename)
-  use mod_cea, only: CEA_Problem, MAX_FILENAME, IOOUT
+  use mod_types, only: CEA_Problem, MAX_FILENAME, IOOUT
   use mod_legacy_io
   implicit none
 
@@ -61,7 +61,7 @@ subroutine CPHS(cea)
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_functions
   implicit none
 
@@ -103,7 +103,7 @@ subroutine ALLCON(cea)
 !***********************************************************************
 ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_functions
   implicit none
 
@@ -127,7 +127,7 @@ subroutine DETON(cea)
 !***********************************************************************
 ! CHAPMAN-JOUGUET DETONATIONS.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_legacy_io
   implicit none
 
@@ -437,7 +437,7 @@ subroutine EQLBRM(cea)
 !***********************************************************************
 ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_general
   implicit none
 
@@ -1496,7 +1496,7 @@ subroutine FROZEN(cea)
 ! CALCULATE PROPERTIES WITH FROZEN COMPOSITION AT ASSIGNED ENTROPY
 ! AND PRESSURE.  CALLED FROM ROCKET.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -1573,7 +1573,7 @@ subroutine HCALC(cea)
 ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
 ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_functions
   implicit none
 
@@ -1735,7 +1735,7 @@ subroutine MATRIX(cea)
 !***********************************************************************
 ! SET UP ITERATION OR DERIVATIVE MATRIX.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -1895,7 +1895,7 @@ subroutine NEWOF(cea)
 !***********************************************************************
 ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -1965,7 +1965,7 @@ subroutine REACT(cea)
 !***********************************************************************
 ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -2254,7 +2254,7 @@ subroutine RKTOUT(cea, it)
 !***********************************************************************
 ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_legacy_io
   implicit none
 
@@ -2493,7 +2493,7 @@ subroutine ROCKET(cea)
 !***********************************************************************
 ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3054,7 +3054,7 @@ end subroutine ROCKET
 
 
 subroutine read_libraries(cea)
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3124,7 +3124,7 @@ subroutine SEARCH(cea)
 !***********************************************************************
 ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3310,7 +3310,7 @@ end subroutine
 
 subroutine READTR(cea)
   ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3399,7 +3399,7 @@ subroutine SETEN(cea)
 !         ALSO USE COMPOSITIONS FROM POINT -ISV FOR NPT.
 !  ISV=0  USE COMPOSITIONS SAVED WHEN ISV<0.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -3476,7 +3476,7 @@ subroutine SHCK(cea)
 !***********************************************************************
 ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_legacy_io
   implicit none
 
@@ -3885,7 +3885,7 @@ subroutine THERMP(cea)
 !***********************************************************************
 ! ASSIGNED THERMODYNAMIC STATES.  HP, SP, TP, UV, SV, AND TV PROBLEMS.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_legacy_io
   implicit none
 
@@ -3959,7 +3959,7 @@ subroutine TRANIN(cea)
 !***********************************************************************
 ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   type(CEA_Problem), intent(inout):: cea
@@ -4257,7 +4257,7 @@ subroutine TRANP(cea)
 !   NUMBER OF CHEMICAL REACTIONS = NR (NM - NLM)
 !   ARRAY OF STOICHIOMETRIC COEFFICIENTS = STC
 !***********************************************************************
-  use mod_cea
+  use mod_types
   use mod_general
   implicit none
 
@@ -4460,7 +4460,7 @@ subroutine UTHERM(cea, readOK)
 !           CONTIGUOUS PHASE, ETC.
 ! NTL     - NUMBER OF T INTERVALS FOR A SPECIES SET.
 !***********************************************************************
-  use mod_cea
+  use mod_types
   implicit none
 
   ! DUMMY ARGUMENTS

@@ -1,4 +1,4 @@
-module mod_cea
+module mod_types
   use mod_constants
   implicit none
 
@@ -108,4 +108,4 @@ module mod_cea
      end subroutine run_all_cases
   end interface
 
-end module mod_cea
+end module mod_types
