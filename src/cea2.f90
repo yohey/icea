@@ -1,38 +1,7 @@
-!***********************************************************************
-!                     P R O G R A M      C E A 2
-!
-!             CHEMICAL EQULIBRIUM WITH APPLICATIONS         5/21/04
-!***********************************************************************
-program main
-  use mod_cea
-  use mod_legacy_io
-  implicit none
-
-  type(CEA_Problem), allocatable:: cea(:)
-
-  character(MAX_FILENAME):: inp_filename, out_filename, plt_filename
-  character(MAX_FILENAME-4):: basename
-
-  write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
-       & "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
-       & " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
-       & //)')
-
-  read(*, '(a)') basename
-
-  inp_filename = trim(basename) // '.inp'
-  out_filename = trim(basename) // '.out'
-  plt_filename = trim(basename) // '.plt'
-
-  call read_legacy_input(cea, inp_filename)
-
-  call run_all_cases(cea, out_filename, plt_filename)
-
-  deallocate(cea)
-
-  stop
-end program main
-
+!-------------------------------------------------------------------------------
+!> @mainpage CEA: Chemical Equlibrium with Applications
+!!
+!-------------------------------------------------------------------------------
 
 subroutine run_all_cases(cea, out_filename, plt_filename)
   use mod_cea, only: CEA_Problem, MAX_FILENAME, IOOUT

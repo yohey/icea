@@ -3,6 +3,8 @@ module mod_cea
 
   integer, parameter:: MAX_FILENAME = 255
 
+  integer, parameter:: stderr = 0
+
   integer, parameter:: maxNgc = 600
   integer, parameter:: maxNc  = 300
   integer, parameter:: Ncol   = 8

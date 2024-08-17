@@ -4,13 +4,14 @@ enable_language(Fortran)
 project(CEA Fortran)
 
 
-set(CEA_EXECUTABLE cea2)
+set(CEA_EXECUTABLE cea)
 
 
 add_executable(${CEA_EXECUTABLE})
 
 target_sources(${CEA_EXECUTABLE}
   PRIVATE
+  src/main.f90
   src/cea2.f90
   src/mod_cea.f90
   src/mod_general.f90
@@ -26,7 +27,7 @@ target_compile_options(${CEA_EXECUTABLE}
 
 foreach(LIB IN ITEMS "thermo" "trans")
   add_custom_target(${LIB} ALL
-    COMMAND echo ${LIB} | ./${CEA_EXECUTABLE} > /dev/null
+    COMMAND echo ${LIB} | ./${CEA_EXECUTABLE} --legacy-mode > /dev/null
     DEPENDS ${CEA_EXECUTABLE} ${LIB}.inp
   )
 
@@ -49,7 +50,7 @@ foreach(INP IN ITEMS "thermo" "trans")
 endforeach()
 
 add_custom_target(run-cea2
-  COMMAND echo cea2 | ./${CEA_EXECUTABLE} > /dev/null
+  COMMAND echo cea2 | ./${CEA_EXECUTABLE} --legacy-mode
   DEPENDS ${CEA_EXECUTABLE} cea2.inp
 )
 
