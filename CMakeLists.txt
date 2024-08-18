@@ -12,7 +12,7 @@ add_executable(${CEA_EXECUTABLE})
 target_sources(${CEA_EXECUTABLE}
   PRIVATE
   src/main.f90
-  src/cea2.f90
+  src/mod_cea.f90
   src/mod_types.f90
   src/mod_constants.f90
   src/mod_general.f90

@@ -7,6 +7,8 @@ module mod_legacy_io
   integer, private:: ione, mcond, mcondf, mpn, mpnf, mvis
   real(8), private:: pfuel, phi, tem
 
+  private:: INPUT, INFREE, REACT, UTHERM, UTRAN, EFMT, VARFMT
+
 contains
 
   subroutine count_cases(inp_filename, num_cases)
@@ -1505,6 +1507,881 @@ contains
 
     return
   end subroutine OUT4
+
+
+  subroutine REACT(cea)
+    !***********************************************************************
+    ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
+    !***********************************************************************
+    use mod_types
+    implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+
+    ! LOCAL VARIABLES
+    character(6):: date
+    character(2):: el(5)
+    character(15):: sub
+    integer:: i, icf, ifaz, ifrmla, itot, j, jj, kk, kr, l, n, nall, nint, nj, ntgas, ntot
+    logical:: fuel, rcoefs, wdone(2)
+    logical:: hOK
+    real(8):: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, T1, T2
+    real(8):: T1save, T2save
+    integer:: io_thermo
+    logical:: is_opened
+
+    wdone = .false.
+    cea%Wp = 0
+    cea%Hpp = 0
+    cea%Vpls = 0
+    cea%Vmin = 0
+    cea%Am = 0
+    cea%Rh = 0
+    cea%Elmt = ' '
+    cea%B0p = 0
+    dat = 0
+
+    ! IF OXIDANT, KR = 1
+    ! IF FUEL, KR = 2
+    do n = 1, cea%Nreac
+       hOK = .false.
+       T1save = 20000
+       T2save = 0
+       rcoefs = .true.
+
+       if (cea%Energy(n) == 'lib' .or. cea%Rnum(n, 1) == 0) then
+          cea%Tt = cea%Rtemp(n)
+          open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
+          read(io_thermo) cea%Tg, ntgas, ntot, nall
+
+          do itot = 1, nall
+             if (itot <= ntot) then
+                icf = 3
+                if (itot > ntgas) icf = 1
+                read(io_thermo) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, ((rcf(i, j), i = 1, 9), j = 1, icf)
+             else
+                read(io_thermo) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, eform
+                if (nint > 0) read(io_thermo) ((rcf(i, j), i = 1, 9), j = 1, nint)
+             end if
+
+             if (sub == cea%Rname(n) .or. sub == '*' // cea%Rname(n)) then
+                if (nint == 0) then
+                   rcoefs = .false.
+                   hOK = .true.
+                   cea%Enth(n) = eform * 1000 / R0
+
+                   if (cea%Tt == 0) then
+                      cea%Tt = T1
+                      cea%Rtemp(n) = T1
+                   else
+                      dift = abs(cea%Tt - T1)
+                      if (dift > 1) then
+                         if (dift > 10) then
+                            write(cea%io_log, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
+                                 & f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", f8.2, &
+                                 & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
+                            cea%Nlm = 0
+                            hOK = .false.
+                            close(io_thermo)
+                            return
+                         else
+                            write(cea%io_log, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
+                                 & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
+                                 & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
+                            cea%Tt = T1
+                            cea%Rtemp(n) = T1
+                         end if
+                      end if
+                   end if
+                else
+                   if (ifaz <= 0) then
+                      T1save = min(T1save, 0.8d0 * cea%Tg(1))
+                      T2save = max(T2save, 1.2d0 * T2)
+                   else
+                      T1save = min(T1save, T1 - 0.001d0)
+                      T2save = max(T2save, T2 + 0.001d0)
+                   endif
+                   if (T1save < cea%Tt .and. cea%Tt < T2save) hOK = .true.
+                end if
+
+                do j = 1, 5
+                   if (bb(j) == 0) exit
+                   cea%Nfla(n) = j
+                   cea%Ratom(n, j) = el(j)
+                   cea%Rnum(n, j) = bb(j)
+                end do
+
+                if (cea%Tt == 0) then
+                   if (.not. cea%Hp) go to 50
+                   write(cea%io_log, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
+                   cea%Nlm = 0
+                   close(io_thermo)
+                   return
+                end if
+
+                if (rcoefs .and. hOK) then
+                   cea%Tln = log(cea%Tt)
+                   l = 1
+                   if (ifaz <= 0) then
+                      if (cea%Tt > cea%Tg(2)) l = 2
+                      if (cea%Tt > cea%Tg(3)) l = 3
+                   end if
+
+                   cea%Enth(n) = (((((rcf(7, l)/5) * cea%Tt + rcf(6, l) / 4) * cea%Tt + rcf(5, l) / 3) * cea%Tt &
+                        + rcf(4, l) / 2) * cea%Tt + rcf(3, l)) * cea%Tt - rcf(1, l) / cea%Tt + rcf(2, l) * cea%Tln + rcf(8, l)
+
+                   if (cea%Vol .and. ifaz <= 0) cea%Enth(n) = cea%Enth(n) - cea%Tt
+                end if
+
+                if (hOK) go to 50
+             end if
+          end do
+
+          close(io_thermo)
+
+          if (.not. hOK) then
+             write(cea%io_log, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
+                  & "IS OUTSIDE ITS TEMPERATURE RANGE", f8.2, " TO", f9.2, "K (REACT)")') cea%Tt, cea%Rname(n), T1save, T2save
+             cea%Energy(n) = ' '
+             cea%Nlm = 0
+             return
+          endif
+       end if
+
+50     continue
+
+       inquire(io_thermo, opened = is_opened)
+       if (is_opened) close(io_thermo)
+
+       ifrmla = cea%Nfla(n)
+       if (cea%Fox(n)(:1) == 'f') then
+          fuel = .true.
+          kr = 2
+          cea%Fox(n) = 'FUEL'
+       else if (cea%Fox(n)(:4) == 'name') then
+          fuel = .true.
+          kr = 2
+          cea%Fox(n) = 'NAME'
+       else
+          kr = 1
+          cea%Fox(n) = 'OXIDANT'
+       end if
+
+       dat = 0
+
+       ! STORE ATOMIC SYMBOLS IN ELMT ARRAY.
+       ! CALCULATE MOLECULAR WEIGHT.
+       ! TEMPORARILY STORE ATOMIC VALENCE IN X.
+       rm = 0
+       do jj = 1, ifrmla
+          do j = 1, maxEl
+             nj = j
+             if (cea%Elmt(j) == ' ') exit
+             if (cea%Ratom(n, jj) == cea%Elmt(j)) go to 80
+          end do
+
+          cea%Nlm = nj
+          cea%Elmt(j) = cea%Ratom(n, jj)
+
+80        do kk = 1, 100
+             if (atomic_symbol(kk) == cea%Ratom(n, jj)) then
+                rm = rm + cea%Rnum(n, jj) * atomic_mass(kk)
+                cea%Atwt(j) = atomic_mass(kk)
+                cea%X(j) = atomic_valence(kk)
+                dat(j) = dat(j) + cea%Rnum(n, jj)
+                go to 100
+             end if
+          end do
+
+          write(cea%io_log, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') cea%Ratom(n, jj)
+          cea%Nlm = 0
+          return
+100    end do
+
+       if (cea%Pecwt(n) < 0) then
+          cea%Pecwt(n) = 0
+          if (.not. cea%Moles .and. .not. wdone(kr)) then
+             wdone(kr) = .true.
+             cea%Pecwt(n) = 100.
+             write(cea%io_log, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", i3, ".", &
+                  & /" PROGRAM SETS WEIGHT PERCENT = 100. (REACT)")') n
+          else
+             write(cea%io_log, '(/" AMOUNT MISSING FOR REACTANT NO.", i2, "(REACT)")') n
+             cea%Nlm = 0
+             return
+          end if
+       end if
+
+       ! ADD CONTRIBUTIONS TO WP(K), HPP(K), AM(K), AND B0P(I, K)
+       if (cea%Pecwt(n) > 0) wdone(kr) = .true.
+       pcwt = cea%Pecwt(n)
+       if (cea%Moles) pcwt = pcwt * rm
+       cea%Wp(kr) = cea%Wp(kr) + pcwt
+
+       if (rm <= 0) then
+          cea%Nlm = 0
+          return
+       else
+          cea%Hpp(kr) = cea%Hpp(kr) + cea%Enth(n) * pcwt / rm
+          cea%Am(kr) = cea%Am(kr) + pcwt / rm
+          if (cea%Dens(n) /= 0) then
+             cea%Rh(kr) = cea%Rh(kr) + pcwt / cea%Dens(n)
+          else
+             cea%Rh = 0
+          end if
+
+          do concurrent (j = 1:cea%Nlm)
+             cea%B0p(j, kr) = dat(j) * pcwt / rm + cea%B0p(j, kr)
+          end do
+
+          cea%Rmw(n) = rm
+       end if
+
+    end do
+
+    if (.not. fuel) then
+       ! 100 PERCENT OXIDANT, SWITCH INDICES
+       cea%Fox = ' '
+       cea%Wp(2) = cea%Wp(1)
+       cea%Wp(1) = 0
+       cea%Hpp(2) = cea%Hpp(1)
+       cea%Am(2) = cea%Am(1)
+       cea%Am(1) = 0
+       cea%B0p(:, 2) = cea%B0p(:, 1)
+    end if
+
+    if (cea%Nlm /= 0) then
+       ! NORMALIZE HPP(KKR), AM(KR), B0P(I, KR), AND PECWT(N).
+       ! CALCULATE V+(KR), AND V-(KR)
+       do kr = 1, 2
+          if (cea%Wp(kr) /= 0) then
+             cea%Hpp(kr) = cea%Hpp(kr) / cea%Wp(kr)
+             cea%Am(kr) = cea%Wp(kr) / cea%Am(kr)
+             if (cea%Rh(kr) /= 0) cea%Rh(kr) = cea%Wp(kr) / cea%Rh(kr)
+             do j = 1, cea%Nlm
+                cea%B0p(j, kr) = cea%B0p(j, kr) / cea%Wp(kr)
+                if (cea%X(j) < 0) cea%Vmin(kr) = cea%Vmin(kr) + cea%B0p(j, kr) * cea%X(j)
+                if (cea%X(j) > 0) cea%Vpls(kr) = cea%Vpls(kr) + cea%B0p(j, kr) * cea%X(j)
+             end do
+          end if
+       end do
+
+       if (.not. cea%Moles) then
+          do n = 1, cea%Nreac
+             if (cea%Fox(n)(:1) == 'O') then
+                cea%Pecwt(n) = cea%Pecwt(n) / cea%Wp(1)
+             else
+                cea%Pecwt(n) = cea%Pecwt(n) / cea%Wp(2)
+             end if
+          end do
+       end if
+
+       if (.not. cea%Short) then
+          if (cea%Moles) then
+             write(cea%io_log, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
+                  & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') ' MOLES '
+          else
+             write(cea%io_log, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
+                  & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') 'WT.FRAC'
+          end if
+          do n = 1, cea%Nreac
+             write(cea%io_log, '(1x, a1, ": ", a15, f10.6, e15.6, f9.2, f8.4, /8x, 5(2x, a2, f8.5))') &
+                  cea%Fox(n), cea%Rname(n), cea%Pecwt(n), cea%Enth(n), cea%Rtemp(n), cea%Dens(n), &
+                  (cea%Ratom(n, i), cea%Rnum(n, i), i = 1, cea%Nfla(n))
+          end do
+       end if
+
+    end if
+
+    return
+  end subroutine REACT
+
+
+  subroutine RKTOUT(cea, it)
+    !***********************************************************************
+    ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
+    !***********************************************************************
+    use mod_types
+    implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+    integer, intent(in):: it
+
+    ! LOCAL VARIABLES
+    character(4):: exit(11) = 'EXIT'
+    character(15):: fi, fiv, fr, z(4)
+    integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, misp, mivac, mmach, mppf, mppj, nex
+    real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
+
+
+    if (.not. cea%Eql) then
+       write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
+       if (cea%Nfz > 1) write(IOOUT, '(33x, "AFTER POINT", i2)') cea%Nfz
+    else
+       write(IOOUT, '(/////13x, " THEORETICAL ROCKET PERFORMANCE ASSUMING EQUILIBRIUM")')
+       if (cea%Iopt /= 0) then
+          write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
+       else
+          write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
+       end if
+    end if
+
+    if (cea%Ttt(1) == cea%T(it)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
+
+    tem = cea%Ppp(1) * 14.696006d0 / 1.01325d0
+    write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
+
+    i23 = 2
+    if (cea%Iopt > 0) then
+       if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), cea%App(2)
+       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%Ma, cea%App(2)
+       i23 = 3
+    end if
+
+    call OUT1(cea)
+
+    cea%fmt(4) = cea%fmt(6)
+    nex = cea%Npt - 2
+    if (cea%Page1) then
+       ione = 0
+       i46 = 4
+       i57 = 5
+       i68 = 6
+       i79 = 7
+    else
+       ione = i23
+    end if
+
+    ! PRESSURE RATIOS
+    if (cea%Iopt == 0) then
+       write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
+       call VARFMT(cea, cea%App)
+       write(IOOUT, cea%fmt) 'Pinf/P         ', (cea%App(j), j = 1, cea%Npt)
+    else
+       nex = nex - 1
+       write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
+       cea%X(1) = 1.d0
+       do i = 2, cea%Npt
+          cea%X(i) = cea%Ppp(1) / cea%Ppp(i)
+       end do
+       call VARFMT(cea, cea%X)
+       write(IOOUT, cea%fmt) 'Pinj/P         ', (cea%X(i), i = 1, cea%Npt)
+    end if
+
+    call OUT2(cea)
+
+    mppf  = 0
+    mppj  = 0
+    mmach = 0
+    mae   = 0
+    mcf   = 0
+    mivac = 0
+    misp  = 0
+
+    do i = 1, cea%Nplt
+       ixfz = index(cea%Pltvar(i)(2:), 'fz')
+       ixfr = index(cea%Pltvar(i)(2:), 'fr')
+
+       if (ixfz /= 0 .or. ixfr /= 0) then
+          if (cea%Eql) cycle
+       else if (.not. cea%Eql) then
+          cycle
+       end if
+
+       if (cea%Pltvar(i)(:4) == 'pi/p' .or. cea%Pltvar(i)(:3) == 'pip') then
+          if (cea%Iopt == 0) mppf = i
+          if (cea%Iopt /= 0) mppj = i
+       else if (cea%Pltvar(i)(:4) == 'mach') then
+          mmach = i
+       else if (cea%Pltvar(i)(:2) == 'ae') then
+          mae = i
+       else if (cea%Pltvar(i)(:2) == 'cf') then
+          mcf = i
+       else if (cea%Pltvar(i)(:4) == 'ivac') then
+          mivac = i
+       else if (cea%Pltvar(i)(:3) == 'isp') then
+          misp = i
+       end if
+    end do
+
+    if (cea%SIunit) then
+       agv = 1
+       gc = 1
+       fr = 'CSTAR, M/SEC'
+       fiv = 'Ivac, M/SEC'
+       fi = 'Isp, M/SEC'
+    else
+       gc = 32.174
+       agv = 9.80665
+       fr = 'CSTAR, FT/SEC'
+       fiv = 'Ivac,LB-SEC/LB'
+       fi = 'Isp, LB-SEC/LB'
+    end if
+
+    do k = 2, cea%Npt
+       cea%Spim(k) = sqrt(2 * R0 * (cea%Hsum(1) - cea%Hsum(k))) / agv
+       ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
+       aw = R0 * cea%Ttt(k) / (cea%Ppp(k) * cea%Wm(k) * cea%Spim(k) * agv**2)
+       if (k == i23) then
+          if (cea%Iopt == 0) cea%Cstr = gc * cea%Ppp(1) * aw
+          if (cea%Iopt /= 0) cea%Cstr = gc * cea%Ppp(1) / cea%App(2) * aw
+       end if
+       vaci(k) = cea%Spim(k) + cea%Ppp(k) * aw
+       cea%Vmoc(k) = 0
+       if (cea%Sonvel(k) /= 0) cea%Vmoc(k) = cea%Spim(k) * agv / cea%Sonvel(k)
+    end do
+
+    ! MACH NUMBER
+    cea%Vmoc(1) = 0
+    if (cea%Gammas(i23) == 0) cea%Vmoc(i23) = 0
+    cea%fmt(7) = '3,'
+    write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%Vmoc(j), j = 1, cea%Npt)
+    if (cea%Trnspt) call OUT4(cea)
+    write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
+
+    ! AREA RATIO
+    cea%fmt(4) = '9x,'
+    cea%fmt(i46) = '9x,'
+    call VARFMT(cea, cea%Aeat)
+    cea%fmt(5) = ' '
+    cea%fmt(i57) = ' '
+    write(IOOUT, cea%fmt) 'Ae/At          ', (cea%Aeat(j), j = 2, cea%Npt)
+
+    ! C*
+    cea%fmt(i57) = '13'
+    cea%fmt(i68) = cea%fmt(i68 + 2)
+    cea%fmt(i79) = '1,'
+    write(IOOUT, cea%fmt) fr, (cea%Cstr, j = 2, cea%Npt)
+
+    ! CF - THRUST COEFICIENT
+    cea%fmt(i79) = '4,'
+    do i = 2, cea%Npt
+       cea%X(i) = gc * cea%Spim(i) / cea%Cstr
+    end do
+    write(IOOUT, cea%fmt) 'CF             ', (cea%X(j), j = 2, cea%Npt)
+
+    ! VACUUM IMPULSE
+    cea%fmt(i57) = '13'
+    cea%fmt(i79) = '1,'
+    write(IOOUT, cea%fmt) fiv, (vaci(j), j = 2, cea%Npt)
+
+    ! SPECIFIC IMPULSE
+    write(IOOUT, cea%fmt) fi, (cea%Spim(j), j = 2, cea%Npt)
+
+    if (cea%Nplt > 0) then
+       cea%Spim(1) = 0
+       cea%Aeat(1) = 0
+       cea%Vmoc(1) = 0
+       vaci(1) = 0
+       cea%X(1) = 0
+       cea%Spim(1) = 0
+       do i = ione + 1, cea%Npt
+          if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = cea%Ppp(1) / cea%Ppp(i)
+          if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = cea%App(i)
+          if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = cea%Vmoc(i)
+          if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = cea%Aeat(i)
+          if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = cea%X(i)
+          if (mivac > 0) cea%Pltout(i+cea%Iplt-ione, mivac) = vaci(i)
+          if (misp > 0)  cea%Pltout(i+cea%Iplt-ione, misp)  = cea%Spim(i)
+       end do
+    end if
+
+    write(IOOUT, *)
+    cea%fmt(4) = ' '
+    cea%fmt(5) = '13'
+    cea%fmt(7) = '5,'
+
+    if (cea%Iopt /= 0) then
+       cea%fmt(i46) = cea%fmt(8)
+       cea%fmt(i57) = cea%fmt(9)
+    end if
+
+    if (.not. cea%Eql) then
+       if (cea%Massf) then
+          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
+       else
+          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
+          ww = 1 / cea%Totn(cea%Nfz)
+       end if
+
+       ! MOLE (OR MASS) FRACTIONS - FROZEN
+       tra = 5.E-6
+       if (cea%Trace /= 0) tra = cea%Trace
+       line = 0
+
+       do k = 1, cea%Ngc
+          if (cea%Massf) ww = cea%Mw(k)
+          cea%X(line+1) = cea%En(k, cea%Nfz) * ww
+
+          if (cea%X(line+1) >= tra) then
+             line = line + 1
+             z(line) = cea%Prod(k)
+          end if
+
+          if (line == 3 .or. k == cea%Ngc) then
+             if (line == 0) then
+                call OUT3(cea)
+                return
+             end if
+             write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), cea%X(ln), ln = 1, line)
+             line = 0
+          end if
+       end do
+    end if
+
+    call OUT3(cea)
+    return
+  end subroutine RKTOUT
+
+
+  subroutine UTHERM(cea, readOK)
+    !***********************************************************************
+    ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
+    ! UNFORMATTED ON NEW FILE.  DATA ARE REORDERED GASES FIRST.
+    !
+    ! UTHERM IS CALLED FROM subroutine INPUT.
+    !
+    ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY AND USED BY ITSELF TO
+    ! PROCESS THE THERMO DATA.
+    !
+    ! GASEOUS SPECIES:
+    ! THE STANDARD TEMPERATURE RANGES TGL ARE GIVEN ON THE FIRST
+    ! RECORD, FOLLOWED BY THE DATE OF THE LAST DATA CHANGE THDATE.
+    !
+    ! WHEN COEFFICIENTS ARE NOT GIVEN FOR THE THIRD TEMPERATURE
+    ! INTERVAL, A STRAIGHT LINE FOR CP/R IS USED.  FOR HIGH TEMPS,
+    ! THE EXTRAPOLATION GOES BETWEEN THE LAST POINT GIVEN AND THE
+    ! FOLLOWING VALUES AA AT TINF = 1.d06 K:
+    !      MONATOMICS  2.5
+    !      DIATOMICS   4.5
+    !      POLYATOMICS 3*N-1.75  (AVERAGE 1.5 AND 2)
+    !
+    ! THE FOLLOWING EXTRAPOLATION IS NOT CURRENTLY PROGRAMED (12/9/98):
+    !   FOR LOW TEMPS, THE EXTRAPOLATION GOES BETWEEN THE FIRST VALUE
+    !   DOWN TO THE FOLLOWING VALUES AA AT 0 K:
+    !      MONATOMICS  2.5
+    !      DIATOMICS   3.5
+    !      POLYATOMICS 3.75 (AVERAGE 3.5 AND 4.0)
+    !
+    ! IF DATA ARE AVAILABLE FOR THE THIRD T INTERVAL, IFAZ (SEE
+    ! DEFINITION) IS SET TO -1 AND THE NAME IS ALTERED TO START WITH *.
+    !
+    ! CONDENSED SPECIES:
+    ! NO EXTRAPOLATIONS ARE DONE.  TEMP INTERVALS VARY.
+    !
+    ! SOME DEFINITIONS:
+    ! TGL(I)  - TEMPERATURE INTERVALS FOR GASES (I.E. 200, 1000, 6000, 20000).
+    ! FILL(I) - IF TRUE, DATA MISSING FOR INTERVAL.  CURRENTLY ONLY 3RD
+    !           INTERVAL CHECKED.
+    ! NGL     - NUMBER OF GASEOUS PRODUCTS.
+    ! NS      - NGL + NUMBER OF CONDENSED PRODUCT PHASES.
+    ! NALL    - NS + NUMBER OF REACTANT SPECIES.
+    ! IFAZ    - PHASE INDICATOR. GASES ARE 0, CONDENSED PHASES ARE NUMBERED
+    !           STARTING WITH 1 FOR THE LOWEST T RANGE, 2 FOR THE NEXT
+    !           CONTIGUOUS PHASE, ETC.
+    ! NTL     - NUMBER OF T INTERVALS FOR A SPECIES SET.
+    !***********************************************************************
+    use mod_types
+    implicit none
+
+    ! DUMMY ARGUMENTS
+    type(CEA_Problem), intent(inout):: cea
+    logical:: readOK
+
+    ! LOCAL VARIABLES
+    character(15):: name
+    character(16):: namee
+    character(65):: notes
+    character(2):: sym(5)
+    character(6):: date
+    integer:: i, ifaz, ifzm1, inew, int, j, k, kk, l, nall, ncoef, ngl, ns, ntl
+    logical:: fill(3)
+    real(8):: aa, atms, cpfix, dlt, expn(8), fno(5), hform, hh, mwt, templ(9), tex, &
+         tgl(4), thermo(9, 3), tinf, tl(2), ttl, tx
+    integer:: io_scratch, io_thermo
+
+    ngl = 0
+    ns = 0
+    nall = 0
+    ifzm1 = 0
+    inew = 0
+    tinf = 1.d06
+
+    open(newunit = io_scratch, status = 'scratch', form = 'unformatted')
+
+    read(IOINP, '(4f10.3, a10)') tgl, cea%Thdate
+
+    do
+       do i = 1, 3
+          fill(i) = .true.
+          do j = 1, 9
+             thermo(j, i) = 0
+          end do
+       end do
+       hform = 0
+       tl(1) = 0
+       tl(2) = 0
+       read(IOINP, '(a15, a65)', END=300, ERR=400) name, notes
+       if (name(:3) == 'END' .or. name(:3) == 'end') then
+          if (index(name, 'ROD') == 0 .and. index(name, 'rod') == 0) exit
+          ns = nall
+          cycle
+       end if
+       read(IOINP, '(i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)', ERR=400) &
+            ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, mwt, hform
+       write(cea%io_log, '(" ", a15, 2x, a6, e15.6, 2x, a65)') name, date, hform, notes
+       ! IF NTL=0, REACTANT WITHOUT COEFFICIENTS
+       if (ntl == 0) then
+          if (ns == 0) exit
+          nall = nall + 1
+          read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
+          thermo(1, 1) = hform
+          write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+          cycle
+       else if (name == 'Air') then
+          sym(1) = 'N'
+          fno(1) = 1.56168d0
+          sym(2) = 'O'
+          fno(2) = .419590d0
+          sym(3) = 'AR'
+          fno(3) = .009365d0
+          sym(4) = 'C'
+          fno(4) = .000319d0
+       else if (name == 'e-') then
+          mwt = 5.48579903d-04
+       end if
+
+       do i = 1, ntl
+          read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
+          read(IOINP, '(5d16.8/2d16.8, 16x, 2d16.8)', ERR=400) templ
+
+          if (ifaz == 0 .and. i > 3) go to 400
+
+          if (ifaz <= 0) then
+             if (tl(2) > tgl(4)-.01d0) then
+                ifaz = -1
+                namee = '*' // name
+                name = namee(:15)
+             end if
+             if (tl(1) >= tgl(i+1)) cycle
+             int = i
+             fill(i) = .false.
+          else
+             int = 1
+             if (i > 1) then
+                do k = 1, 7
+                   thermo(k, 1) = 0
+                end do
+             end if
+          end if
+
+          do l = 1, ncoef
+             do k = 1, 7
+                if (expn(l) == real(k-3)) then
+                   thermo(k, int) = templ(l)
+                   exit
+                end if
+             end do
+          end do
+
+          thermo(8, int) = templ(8)
+          thermo(9, int) = templ(9)
+          if (ifaz > 0) then
+             nall = nall + 1
+             if (ifaz > ifzm1) then
+                inew = inew + 1
+             else
+                inew = i
+             end if
+             write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), inew, tl, mwt, thermo
+          end if
+       end do
+
+       ifzm1 = ifaz
+       if (ifaz <= 0) then
+          inew = 0
+          nall = nall + 1
+          if (ifaz <= 0 .and. ns == 0) then
+             ngl = ngl + 1
+             if (fill(3)) then
+                atms = 0
+
+                do i = 1, 5
+                   if (sym(i) == ' ' .or. sym(i) == 'E') exit
+                   atms = atms + fno(i)
+                end do
+
+                ! FOR GASES WITH NO COEFFICIENTS FOR TGL(3)-TGL(4) INTERVAL,
+                ! CALCULATE ESTIMATED COEFFICIENTS. (STRAIGHT LINE FOR CP/R)
+                aa = 2.5d0
+                if (atms > 1.9) aa = 4.5d0
+                if (atms > 2.1) aa = 3 * atms - 1.75d0
+                ttl = tl(2)
+                tx = ttl - tinf
+                cpfix = 0
+                templ(8) = 0
+                templ(9) = 0
+                dlt = log(ttl)
+                do k = 7, 1, - 1
+                   kk = k - 3
+                   if (kk == 0) then
+                      cpfix = cpfix + thermo(k, 2)
+                      templ(8) = templ(8) + thermo(k, 2)
+                      templ(9) = templ(9) + thermo(k, 2) * dlt
+                   else
+                      tex = ttl**kk
+                      cpfix = cpfix + thermo(k, 2) * tex
+                      templ(9) = templ(9) + thermo(k, 2) * tex / kk
+                      if (kk == -1) then
+                         templ(8) = templ(8) + thermo(k, 2)*dlt / ttl
+                      else
+                         templ(8) = templ(8) + thermo(k, 2)*tex / (kk + 1)
+                      end if
+                   end if
+                end do
+                templ(2) = (cpfix - aa) / tx
+                thermo(4, 3) = templ(2)
+                templ(1) = cpfix - ttl * templ(2)
+                thermo(3, 3) = templ(1)
+                thermo(8, 3) = thermo(8, 2) + ttl * (templ(8) - templ(1) - 0.5 * templ(2) * ttl)
+                thermo(9, 3) = -templ(1) * dlt + thermo(9, 2) + templ(9) - templ(2) * ttl
+             end if
+          end if
+          ! WRITE COEFFICIENTS ON SCRATCH I/O UNIT
+          write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+       end if
+    end do
+
+    ! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IO_SCRATCH & ADD TO io_thermo.
+300 rewind io_scratch
+
+    open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'new', form = 'unformatted', action = 'write')
+
+    if (ns == 0) ns = nall
+    write(io_thermo) tgl, ngl, ns, nall, cea%Thdate
+    ! WRITE GASEOUS PRODUCTS ON io_thermo
+    if (ngl /= 0) then
+       do i = 1, ns
+          read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+          if (ifaz <= 0) write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+       end do
+    end if
+    if (ngl /= nall) then
+       ! WRITE CONDENSED PRODUCTS AND REACTANTS ON io_thermo
+       rewind io_scratch
+       do i = 1, nall
+          read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+          if (i > ns) then
+             write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo(1, 1)
+             if (ntl > 0) write(io_thermo) thermo
+          else if (ifaz > 0) then
+             write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, (thermo(k, 1), k = 1, 9)
+          end if
+       end do
+    end if
+
+    close(io_thermo)
+    close(io_scratch)
+    return
+
+400 write(cea%io_log, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
+    readOK = .false.
+
+    close(io_scratch)
+    return
+  end subroutine UTHERM
+
+
+
+  subroutine UTRAN(filename, io_input, io_log, readOK)
+    !***********************************************************************
+    ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
+    ! UNFORMATTED ON NEW FILE.
+    !
+    ! UTRAN IS CALLED FROM subroutine INPUT AFTER A RECORD WITH 'tran'
+    ! IN COLUMNS 1-4 HAS BEEN READ.
+    !
+    ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY  AND USED BY ITSELF TO
+    ! PROCESS THE TRANSPORT PROPERTY DATA.
+    !***********************************************************************
+    implicit none
+    ! DUMMY ARGUMENTS
+    character(*), intent(in):: filename
+    integer, intent(in):: io_input
+    integer, intent(in):: io_log
+    logical, intent(out):: readOK
+    ! LOCAL VARIABLES
+    character(16):: tname(2)
+    character(1):: vorc
+    integer:: i, ic, in, iv, j, k, ncc, nn, ns, nv
+    real(8):: cc, tcin(6), trcoef(6, 3, 2), vvl
+    integer:: io_scratch, io_transport
+
+
+    open(newunit = io_transport, file = trim(filename), status = 'new', form = 'unformatted', action = 'write')
+    open(newunit = io_scratch, status = 'scratch', form = 'unformatted')
+
+    ns = 0
+    outerLoop: do
+       trcoef(:, :, :) = 0
+
+       read(io_input, '(2A16, 2X, A1, I1, A1, I1)') tname, vvl, nv, cc, ncc
+
+       if (tname(1) == 'end' .or. tname(1) == 'LAST') then
+          write(io_transport) ns
+
+          rewind io_scratch
+
+          do i = 1, ns
+             read(io_scratch, ERR=200) tname, trcoef
+             write(io_transport) tname, trcoef
+          end do
+
+          close(io_transport)
+          close(io_scratch)
+          return
+
+       else
+          ic = 0
+          iv = 0
+          nn = nv + ncc
+          if (nv <= 3 .and. ncc <= 3) then
+             do in = 1, nn
+                read(io_input, '(1X, A1, 2F9.2, 4E15.8)') vorc, tcin
+                if (vorc == 'C') then
+                   k = 2
+                   ic = ic + 1
+                   j = ic
+                else
+                   k = 1
+                   iv = iv + 1
+                   j = iv
+                end if
+                if (j > 3) exit outerLoop
+                do i = 1, 6
+                   trcoef(i, j, k) = tcin(i)
+                end do
+             end do
+             ns = ns + 1
+
+             write(io_scratch) tname, trcoef
+
+             cycle
+          end if
+       end if
+
+       exit
+    end do outerLoop
+
+200 write(io_log, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
+
+    readOK = .false.
+
+    close(io_transport)
+    close(io_scratch)
+
+    return
+  end subroutine UTRAN
 
 
   subroutine EFMT(Fone, Aa, Vx, Npt)

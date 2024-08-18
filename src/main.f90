@@ -1,4 +1,5 @@
 program main
+  use mod_cea
   use mod_types
   use mod_legacy_io
   implicit none
