@@ -14,7 +14,7 @@ contains
   subroutine count_cases(inp_filename, num_cases)
     character(*), intent(in):: inp_filename
     integer, intent(out):: num_cases
-    integer:: io_inp
+    integer:: io_inp, iostat
     character(MAX_CHARS):: line
     character(4):: head
     logical:: case_ended
@@ -25,7 +25,9 @@ contains
     open(newunit = io_inp, file = trim(inp_filename), status = 'old', form = 'formatted', action = 'read')
 
     do
-       read(io_inp, '(a)', end = 999) line
+       read(io_inp, '(a)', iostat = iostat) line
+       if (is_iostat_end(iostat)) exit
+
        line = adjustl(line)
        head = line(1:4)
 
@@ -39,7 +41,7 @@ contains
        end if
     end do
 
-999 close(io_inp)
+    close(io_inp)
 
     if (.not. case_ended) then
        num_cases = num_cases + 1
@@ -862,7 +864,7 @@ contains
     character(24):: cnum
     character(3):: fmtl(3)
     character(4):: w1
-    integer:: i, ich1, j, kcin, nb, nch1, nx
+    integer:: i, ich1, j, kcin, nb, nch1, nx, iostat
 
     fmtl = [character(3):: '(g', '16', '.0)']
 
@@ -880,7 +882,9 @@ contains
        nch1 = 1
 
        ! READ CHARACTERS, ONE AT A TIME
-       read(io_input, '(132a1)', END = 500, ERR = 500) ch1
+       read(io_input, '(132a1)', iostat = iostat) ch1
+
+       if (iostat /= 0) exit
 
        ! FIND FIRST AND LAST NON-BLANK CHARACTER
        do i = 132, 1, - 1
@@ -923,7 +927,7 @@ contains
 
        else if (Ncin == 1) then
           write(io_log, '(/" FATAL ERROR IN INPUT format (INFREE)")')
-          go to 500
+          exit
        end if
 
        write(io_log, '(1x, 80a1)') (ch1(i), i = 1, nch1)
@@ -970,15 +974,15 @@ contains
                 fmtl(2) = numg(min(24, nx))
 
                 ! INTERNAL READ TO CONVERT TO NUMERIC
-                read(cnum, fmtl, ERR=320) Dpin(Ncin)
+                read(cnum, fmtl, iostat = iostat) Dpin(Ncin)
              end if
 
-             go to 340
+             if (iostat > 0) then
+                if (Cin(Ncin-1)(:4) /= 'case') write(io_log, '(/" WARNING!!  UNACCEPTABLE NUMBER ", a15, " (INFREE)")') Cin(i)
+                Lcin(Ncin) = 0
+             end if
 
-320          if (Cin(Ncin-1)(:4) /= 'case') write(io_log, '(/" WARNING!!  UNACCEPTABLE NUMBER ", a15, " (INFREE)")') Cin(i)
-             Lcin(Ncin) = 0
-
-340          Ncin = Ncin + 1
+             Ncin = Ncin + 1
              Cin(Ncin) = ' '
              Lcin(Ncin) = 0
              Dpin(Ncin) = 0
@@ -998,7 +1002,7 @@ contains
 
     end do
 
-500 readOK = .false.
+    readOK = .false.
 
     return
   end subroutine INFREE
@@ -1046,15 +1050,18 @@ contains
 
     integer, intent(in):: io_log, io_out
     character(MAX_CHARS):: line
+    integer:: iostat
 
     rewind io_log
 
     do
-       read(io_log, '(a)', end = 999) line
+       read(io_log, '(a)', iostat = iostat) line
+       if (is_iostat_end(iostat)) exit
+
        write(io_out, '(a)') trim(line)
     end do
 
-999 close(io_log)
+    close(io_log)
 
     return
   end subroutine write_input_log
@@ -2098,7 +2105,7 @@ contains
     logical:: fill(3)
     real(8):: aa, atms, cpfix, dlt, expn(8), fno(5), hform, hh, mwt, templ(9), tex, &
          tgl(4), thermo(9, 3), tinf, tl(2), ttl, tx
-    integer:: io_scratch, io_thermo
+    integer:: io_scratch, io_thermo, iostat
 
     ngl = 0
     ns = 0
@@ -2111,7 +2118,7 @@ contains
 
     read(IOINP, '(4f10.3, a10)') tgl, cea%Thdate
 
-    do
+    outerLoop: do
        do i = 1, 3
           fill(i) = .true.
           do j = 1, 9
@@ -2121,20 +2128,30 @@ contains
        hform = 0
        tl(1) = 0
        tl(2) = 0
-       read(IOINP, '(a15, a65)', END=300, ERR=400) name, notes
+
+       read(IOINP, '(a15, a65)', iostat = iostat) name, notes
+       if (iostat /= 0) exit
+
        if (name(:3) == 'END' .or. name(:3) == 'end') then
           if (index(name, 'ROD') == 0 .and. index(name, 'rod') == 0) exit
           ns = nall
           cycle
        end if
-       read(IOINP, '(i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)', ERR=400) &
+
+       read(IOINP, '(i2, 1x, a6, 1x, 5(a2, f6.2), i2, f13.5, f15.3)', iostat = iostat) &
             ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, mwt, hform
+       if (iostat /= 0) exit
+
        write(cea%io_log, '(" ", a15, 2x, a6, e15.6, 2x, a65)') name, date, hform, notes
+
        ! IF NTL=0, REACTANT WITHOUT COEFFICIENTS
        if (ntl == 0) then
           if (ns == 0) exit
           nall = nall + 1
-          read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
+
+          read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', iostat = iostat) tl, ncoef, expn, hh
+          if (iostat /= 0) exit
+
           thermo(1, 1) = hform
           write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
           cycle
@@ -2152,10 +2169,15 @@ contains
        end if
 
        do i = 1, ntl
-          read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', ERR=400) tl, ncoef, expn, hh
-          read(IOINP, '(5d16.8/2d16.8, 16x, 2d16.8)', ERR=400) templ
+          read(IOINP, '(2F11.3, i1, 8F5.1, 2x, f15.3)', iostat = iostat) tl, ncoef, expn, hh
+          if (iostat /= 0) exit outerLoop
+          read(IOINP, '(5d16.8/2d16.8, 16x, 2d16.8)', iostat = iostat) templ
+          if (iostat /= 0) exit outerLoop
 
-          if (ifaz == 0 .and. i > 3) go to 400
+          if (ifaz == 0 .and. i > 3) then
+             iostat = 1
+             exit outerLoop
+          end if
 
           if (ifaz <= 0) then
              if (tl(2) > tgl(4)-.01d0) then
@@ -2250,44 +2272,47 @@ contains
           ! WRITE COEFFICIENTS ON SCRATCH I/O UNIT
           write(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
        end if
-    end do
+    end do outerLoop
 
     ! END OF DATA. COPY CONDENSED & REACTANT DATA FROM IO_SCRATCH & ADD TO io_thermo.
-300 rewind io_scratch
-
-    open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'new', form = 'unformatted', action = 'write')
-
-    if (ns == 0) ns = nall
-    write(io_thermo) tgl, ngl, ns, nall, cea%Thdate
-    ! WRITE GASEOUS PRODUCTS ON io_thermo
-    if (ngl /= 0) then
-       do i = 1, ns
-          read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
-          if (ifaz <= 0) write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
-       end do
-    end if
-    if (ngl /= nall) then
-       ! WRITE CONDENSED PRODUCTS AND REACTANTS ON io_thermo
+    if (iostat <= 0) then
        rewind io_scratch
-       do i = 1, nall
-          read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
-          if (i > ns) then
-             write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo(1, 1)
-             if (ntl > 0) write(io_thermo) thermo
-          else if (ifaz > 0) then
-             write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, (thermo(k, 1), k = 1, 9)
-          end if
-       end do
+
+       open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'new', form = 'unformatted', action = 'write')
+
+       if (ns == 0) ns = nall
+       write(io_thermo) tgl, ngl, ns, nall, cea%Thdate
+       ! WRITE GASEOUS PRODUCTS ON io_thermo
+       if (ngl /= 0) then
+          do i = 1, ns
+             read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+             if (ifaz <= 0) write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+          end do
+       end if
+       if (ngl /= nall) then
+          ! WRITE CONDENSED PRODUCTS AND REACTANTS ON io_thermo
+          rewind io_scratch
+          do i = 1, nall
+             read(io_scratch) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo
+             if (i > ns) then
+                write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, thermo(1, 1)
+                if (ntl > 0) write(io_thermo) thermo
+             else if (ifaz > 0) then
+                write(io_thermo) name, ntl, date, (sym(j), fno(j), j = 1, 5), ifaz, tl, mwt, (thermo(k, 1), k = 1, 9)
+             end if
+          end do
+       end if
+
+       close(io_thermo)
+
+    else
+       write(cea%io_log, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
+       readOK = .false.
+
     end if
 
-    close(io_thermo)
     close(io_scratch)
-    return
 
-400 write(cea%io_log, '(/" ERROR IN PROCESSING thermo.inp AT OR NEAR ", A15, " (UTHERM)")') name
-    readOK = .false.
-
-    close(io_scratch)
     return
   end subroutine UTHERM
 
@@ -2315,7 +2340,7 @@ contains
     character(1):: vorc
     integer:: i, ic, in, iv, j, k, ncc, nn, ns, nv
     real(8):: cc, tcin(6), trcoef(6, 3, 2), vvl
-    integer:: io_scratch, io_transport
+    integer:: io_scratch, io_transport, iostat
 
 
     open(newunit = io_transport, file = trim(filename), status = 'new', form = 'unformatted', action = 'write')
@@ -2333,7 +2358,8 @@ contains
           rewind io_scratch
 
           do i = 1, ns
-             read(io_scratch, ERR=200) tname, trcoef
+             read(io_scratch, iostat = iostat) tname, trcoef
+             if (iostat > 0) exit outerLoop
              write(io_transport) tname, trcoef
           end do
 
@@ -2373,7 +2399,7 @@ contains
        exit
     end do outerLoop
 
-200 write(io_log, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
+    write(io_log, '(/" ERROR IN PROCESSING trans.inp AT OR NEAR (UTRAN)", /1X, 2A16)') tname
 
     readOK = .false.
 
