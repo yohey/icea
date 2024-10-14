@@ -3369,12 +3369,8 @@ contains
 
     ! LOCAL VARIABLES
     integer:: iof
-    logical:: Uv, Tv, Sv
     integer:: ip, it
 
-    Uv = transfer(cea%Hp, Uv)
-    Tv = transfer(cea%Tp, Tv)
-    Sv = transfer(cea%Sp, Sv)
     cea%Eql = .true.
     outerLoop: do iof = 1, cea%Nof
        cea%Oxfl = cea%Oxf(iof)
@@ -3401,9 +3397,9 @@ contains
                 if (cea%Tp) write(IOOUT, '(/27X, "TEMPERATURE AND PRESSURE"/)')
                 if (cea%Sp) write(IOOUT, '(/29X, "ENTROPY AND PRESSURE"/)')
              else
-                if (Uv) write(IOOUT, '(/36X, " VOLUME"/)')
-                if (Tv) write(IOOUT, '(/28X, "TEMPERATURE AND VOLUME"/)')
-                if (Sv) write(IOOUT, '(/30X, "ENTROPY AND VOLUME"/)')
+                if (cea%Hp) write(IOOUT, '(/36X, " VOLUME"/)')
+                if (cea%Tp) write(IOOUT, '(/28X, "TEMPERATURE AND VOLUME"/)')
+                if (cea%Sp) write(IOOUT, '(/30X, "ENTROPY AND VOLUME"/)')
              end if
              call OUT1(cea)
              write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
