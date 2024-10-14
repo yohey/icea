@@ -78,13 +78,13 @@ contains
     if (cea%Tt > cea%Tg(3)) k = 3
 
     do concurrent (j = 1:cea%Ng)
-       cea%S(j) = calc_entropy(cea%Coef(j, :, k), cea%Tt, cea%Tln, .true.)
-       cea%H0(j) = calc_enthalpy(cea%Coef(j, :, k), cea%Tt, cea%Tln, .true.)
+       cea%S(j) = calc_entropy(cea%Coef(:, j, k), cea%Tt, cea%Tln, .true.)
+       cea%H0(j) = calc_enthalpy(cea%Coef(:, j, k), cea%Tt, cea%Tln, .true.)
     end do
 
     if (.not. cea%Tp .or. cea%Convg) then
        do concurrent (j = 1:cea%Ng)
-          cea%Cp(j) = calc_specific_heat(cea%Coef(j, :, k), cea%Tt)
+          cea%Cp(j) = calc_specific_heat(cea%Coef(:, j, k), cea%Tt)
        end do
     end if
 
@@ -93,9 +93,9 @@ contains
           j = cea%Jcond(ij)
           jj = cea%Jcond(ij) - cea%Ng
 
-          cea%S(j) = calc_entropy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
-          cea%H0(j) = calc_enthalpy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
-          cea%Cp(j) = calc_specific_heat(cea%Cft(jj, :), cea%Tt)
+          cea%S(j) = calc_entropy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
+          cea%H0(j) = calc_enthalpy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
+          cea%Cp(j) = calc_specific_heat(cea%Cft(:, jj), cea%Tt)
        end do
     end if
 
@@ -117,9 +117,9 @@ contains
 
     do concurrent (jj = 1:cea%Nc)
        j = jj + cea%Ng
-       cea%S(j) = calc_entropy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
-       cea%H0(j) = calc_enthalpy(cea%Cft(jj, :), cea%Tt, cea%Tln, .true.)
-       cea%Cp(j) = calc_specific_heat(cea%Cft(jj, :), cea%Tt)
+       cea%S(j) = calc_entropy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
+       cea%H0(j) = calc_enthalpy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
+       cea%Cp(j) = calc_specific_heat(cea%Cft(:, jj), cea%Tt)
     end do
 
     return
@@ -1663,7 +1663,7 @@ contains
                    j = cea%Nspr
 
                    do concurrent (l = 1:icf, m = 1:9)
-                      cea%Coef(j, m, l) = thermo(m, l)
+                      cea%Coef(m, j, l) = thermo(m, l)
                    end do
 
                    go to 50
@@ -1710,11 +1710,11 @@ contains
           if (cea%Tt > cea%Tg(3) .and. ifaz < 0) l = 3
        end if
 
-       cea%S(j) = calc_entropy(cea%Coef(j, :, l), cea%Tt, cea%Tln, .false.)
+       cea%S(j) = calc_entropy(cea%Coef(:, j, l), cea%Tt, cea%Tln, .false.)
 
-       cea%H0(j) = calc_enthalpy(cea%Coef(j, :, l), cea%Tt, cea%Tln, .false.)
+       cea%H0(j) = calc_enthalpy(cea%Coef(:, j, l), cea%Tt, cea%Tln, .false.)
 
-       cea%Cp(j) = calc_specific_heat(cea%Coef(j, :, l), cea%Tt)
+       cea%Cp(j) = calc_specific_heat(cea%Coef(:, j, l), cea%Tt)
 
        if (abs(cea%H0(j)) < 0.01) cea%H0(j) = 0
 
@@ -2646,7 +2646,7 @@ contains
     outerLoop: do itot = 1, ntot
        if (itot > ntgas) then
           read(io_thermo) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), cea%Ifz(cea%Nc), &
-               cea%Temp(1, cea%Nc), cea%Temp(2, cea%Nc), cea%Mw(cea%Ngc), (cea%Cft(cea%Nc, k), k = 1, 9)
+               cea%Temp(1, cea%Nc), cea%Temp(2, cea%Nc), cea%Mw(cea%Ngc), (cea%Cft(k, cea%Nc), k = 1, 9)
        else
           read(io_thermo) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), ifaz, T1, T2, cea%Mw(cea%Ngc), thermo
        end if
@@ -2694,7 +2694,7 @@ contains
           if (cea%Ng > maxNg) go to 400
           do i = 1, 3
              do j = 1, 9
-                cea%Coef(cea%Ng, j, i) = thermo(j, i)
+                cea%Coef(j, cea%Ng, i) = thermo(j, i)
              end do
           end do
           ! IF SPECIES IS AN ATOMIC GAS, STORE INDEX IN JX

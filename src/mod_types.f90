@@ -73,7 +73,7 @@ module mod_types
      real(8):: Dens(maxR), Enth(maxR), Pecwt(maxR), Rmw(maxR), Rtemp(maxR), Rnum(maxR, 12)
 
      real(8):: Cpsum
-     real(8):: Cft(maxNc, 9), Coef(maxNg, 9, 3), Temp(2, maxNc)
+     real(8):: Cft(9, maxNc), Coef(9, maxNg, 3), Temp(2, maxNc)
      real(8):: Cp(maxNgc), H0(maxNgc), Mu(maxNgc), Mw(maxNgc), S(maxNgc), Tg(4)
 
      integer:: Iopt, Isup, Nfz, Npp, Nsub, Nsup
