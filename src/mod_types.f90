@@ -27,6 +27,11 @@ module mod_types
   end type TransportProperty
 
 
+  type:: CEA_Point
+     real(8), pointer:: B0(:)
+  end type CEA_Point
+
+
   type:: CEA_Problem
      integer:: io_log = 0
 
@@ -36,6 +41,10 @@ module mod_types
      character(MAX_FILENAME):: filename_thermo_lib = 'thermo.lib'
 
      type(TransportProperty), allocatable:: transport_properties(:)
+     type(CEA_Point), pointer:: points(:, :)
+
+     integer:: iOF !!< index of O/F
+     integer:: Npt !!< index of point (to be changed to `ipt`)
 
      character(15):: ensert(20)
 
@@ -43,7 +52,7 @@ module mod_types
      real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)
      real(8):: En(maxNgc, Ncol)
 
-     integer:: Iplt, Nc, Ng, Ngp1, Nlm, Nplt, Nof, Nomit, Nonly, Np, Npr, Npt, Ngc, Nsert, Nspr, Nspx, Nt
+     integer:: Iplt, Nc, Ng, Ngp1, Nlm, Nplt, Nof, Nomit, Nonly, Np, Npr, Ngc, Nsert, Nspr, Nspx, Nt
      integer:: Jcond(45), Jx(maxEl), Nfla(maxR), Ifz(maxNc)
 
      real(8):: Cpmix, Wmix, Bcheck
@@ -56,7 +65,7 @@ module mod_types
      logical:: Pderiv, Shock, Short, SIunit, Sp, Tp, Trnspt, Vol
 
      real(8):: Eqrat, Hsub0, Oxfl, Pp, R, Size, S0, Tln, Tm, Trace, Tt, Viscns, Vv
-     real(8):: Atwt(maxEl), B0(maxEl), X(maxMat)
+     real(8):: Atwt(maxEl), X(maxMat)
      real(8):: A(maxEl, maxNgc), G(maxMat, maxMat+1)
 
      character(2):: Elmt(maxEl), Ratom(maxR, 12)

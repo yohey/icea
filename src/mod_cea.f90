@@ -20,6 +20,7 @@ contains
     num_cases = size(cea)
 
     do icase = 1, num_cases
+       call init_case(cea(icase))
        call read_libraries(cea(icase))
     end do
 
@@ -59,6 +60,31 @@ contains
 
     return
   end subroutine run_all_cases
+
+
+  subroutine init_case(cea)
+    use mod_types, only: CEA_Problem, Ncol, maxEl, maxMix
+    implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+
+    integer:: i, j
+
+    allocate(cea%points(maxMix, Ncol))
+
+    do concurrent (i = 1:maxMix)
+       allocate(cea%points(i, 1)%B0(maxEl))
+
+       do concurrent (j = 2:Ncol)
+          cea%points(i, j)%B0 => cea%points(i, 1)%B0
+       end do
+    end do
+
+    cea%iOF = 0
+    cea%Npt = 0
+
+    return
+  end subroutine init_case
 
 
   subroutine CPHS(cea)
@@ -461,6 +487,9 @@ contains
     real(8):: smalno = 1e-6, smnol = -13.815511
     logical:: mask(cea%Ng)
 
+    type(CEA_Point), pointer:: p !!< current point
+    p => cea%points(cea%iOF, cea%Npt)
+
     ixsing = 0
     lsing = 0
     jsw = 0
@@ -837,8 +866,8 @@ contains
 
              le = cea%Nlm
 
-             if (any(abs(cea%B0(1:cea%Nlm)) >= 1.d-06 .and. &
-                  abs(cea%B0(1:cea%Nlm) - sum(spread(cea%En(1:cea%Ngc, cea%Npt), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
+             if (any(abs(p%B0(1:cea%Nlm)) >= 1.d-06 .and. &
+                  abs(p%B0(1:cea%Nlm) - sum(spread(cea%En(1:cea%Ngc, cea%Npt), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
                   > cea%Bcheck)) go to 500
 
              if (cea%Trace /= 0.) then
@@ -1358,7 +1387,7 @@ contains
 
              ! CALCULATE NEW COEFFICIENTS
              if (tem /= 1) then
-                cea%B0(lc) = cea%B0(lc) / tem
+                p%B0(lc) = p%B0(lc) / tem
                 cea%B0p(lc, 1) = cea%B0p(lc, 1) / tem
                 cea%B0p(lc, 2) = cea%B0p(lc, 2) / tem
 
@@ -1379,7 +1408,7 @@ contains
                       cea%A(i, j) = 0
                    end do
 
-                   cea%B0(i) = cea%B0(i) - cea%B0(lc) * tem
+                   p%B0(i) = p%B0(i) - p%B0(lc) * tem
                    cea%B0p(i, 1) = cea%B0p(i, 1) - cea%B0p(lc, 1) * tem
                    cea%B0p(i, 2) = cea%B0p(i, 2) - cea%B0p(lc, 2) * tem
                 end if
@@ -1422,9 +1451,9 @@ contains
           aa = cea%Atwt(cea%Msing)
           cea%Atwt(cea%Msing) = cea%Atwt(cea%Nlm)
           cea%Atwt(cea%Nlm) = aa
-          aa = cea%B0(cea%Msing)
-          cea%B0(cea%Msing) = cea%B0(cea%Nlm)
-          cea%B0(cea%Nlm) = aa
+          aa = p%B0(cea%Msing)
+          p%B0(cea%Msing) = p%B0(cea%Nlm)
+          p%B0(cea%Nlm) = aa
           aa = pisave(cea%Msing)
           pisave(cea%Msing) = pisave(cea%Nlm)
           pisave(cea%Nlm) = aa
@@ -1506,14 +1535,12 @@ contains
     type(CEA_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
-    integer:: iter, j, nnn
+    integer:: iter, j
     real(8):: dlnt, dlpm
 
     cea%Convg = .false.
     cea%Tln = log(cea%Tt)
     dlpm = log(cea%Pp * cea%Wm(cea%Nfz))
-    nnn = cea%Npt
-    cea%Npt = cea%Nfz
 
     do concurrent (j = 1:cea%Ng, cea%En(j, cea%Nfz) /= 0)
        cea%Deln(j) = -(log(cea%En(j, cea%Nfz)) + dlpm)
@@ -1523,16 +1550,14 @@ contains
        call CPHS(cea)
 
        cea%Cpsum = sum(cea%En(1:cea%Ng, cea%Nfz) * cea%Cp(1:cea%Ng))
-       cea%Ssum(nnn) = sum(cea%En(1:cea%Ng, cea%Nfz) * (cea%S(1:cea%Ng) + cea%Deln(1:cea%Ng)))
+       cea%Ssum(cea%Npt) = sum(cea%En(1:cea%Ng, cea%Nfz) * (cea%S(1:cea%Ng) + cea%Deln(1:cea%Ng)))
 
        if (cea%Npr /= 0) then
           cea%Cpsum = cea%Cpsum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%Cp(cea%Jcond(1:cea%Npr)))
-          cea%Ssum(nnn) = cea%Ssum(nnn) + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%S(cea%Jcond(1:cea%Npr)))
+          cea%Ssum(cea%Npt) = cea%Ssum(cea%Npt) + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%S(cea%Jcond(1:cea%Npr)))
        end if
 
        if (cea%Convg) then
-          cea%Npt = nnn
-
           cea%Hsum(cea%Npt) = sum(cea%En(1:cea%Ngc, cea%Nfz) * cea%H0(1:cea%Ngc)) * cea%Tt
 
           cea%Ttt(cea%Npt) = cea%Tt
@@ -1556,7 +1581,7 @@ contains
           return
 
        else
-          dlnt = (cea%Ssum(cea%Nfz) - cea%Ssum(nnn)) / cea%Cpsum
+          dlnt = (cea%Ssum(cea%Nfz) - cea%Ssum(cea%Npt)) / cea%Cpsum
           cea%Tln = cea%Tln + dlnt
           if (abs(dlnt) < 0.5d-4) cea%Convg = .true.
           cea%Tt = exp(cea%Tln)
@@ -1566,7 +1591,7 @@ contains
     write(IOOUT, '(/" FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)")')
 
     cea%Tt = 0
-    cea%Npt = cea%Npt - 1
+    cea%Npt = cea%Nfz - 1
 
     return
   end subroutine FROZEN
@@ -1748,6 +1773,9 @@ contains
     integer:: i, iq, iq2, iq3, isym, j, k, kk, kmat
     real(8):: energyl, f, h, ss, sss, term, term1
 
+    type(CEA_Point), pointer:: p !!< current point
+    p => cea%points(cea%iOF, cea%Npt)
+
     iq = cea%Nlm + cea%Npr
     cea%Iq1 = iq + 1
     iq2 = cea%Iq1 + 1
@@ -1843,7 +1871,7 @@ contains
     ! COMPLETE THE RIGHT HAND SIDE
     if (.not. cea%Convg) then
        do concurrent (i = 1:cea%Nlm)
-          cea%G(i, kmat) = cea%G(i, kmat) + cea%B0(i) - cea%G(i, cea%Iq1)
+          cea%G(i, kmat) = cea%G(i, kmat) + p%B0(i) - cea%G(i, cea%Iq1)
        end do
        cea%G(cea%Iq1, kmat) = cea%G(cea%Iq1, kmat) + cea%Enn - cea%Sumn
 
@@ -1908,6 +1936,13 @@ contains
     integer:: i, j
     real(8):: assval, bigb, bratio, dbi, smalb, tem, v1, v2
 
+    type(CEA_Point), pointer:: p !!< current point
+
+    cea%iOF = cea%iOF + 1
+    cea%Npt = 1
+
+    p => cea%points(cea%iOF, cea%Npt)
+
     if (.not. cea%Short) write(IOOUT, '(/" O/F = ", f10.6)') cea%Oxfl
     cea%Eqrat = 0
     tem = cea%Oxfl + 1
@@ -1915,8 +1950,8 @@ contains
     v1 = (cea%Oxfl * cea%Vpls(1) + cea%Vpls(2)) / tem
     if (v2 /= 0.) cea%Eqrat = abs(v1/v2)
     do i = 1, cea%Nlm
-       cea%B0(i) = (cea%Oxfl * cea%B0p(i, 1) + cea%B0p(i, 2)) / tem
-       dbi = abs(cea%B0(i))
+       p%B0(i) = (cea%Oxfl * cea%B0p(i, 1) + cea%B0p(i, 2)) / tem
+       dbi = abs(p%B0(i))
        if (i == 1) then
           bigb = dbi
           smalb = dbi
@@ -1934,7 +1969,6 @@ contains
        cea%Wmix = cea%Am(2)
        if (cea%Am(2) == 0.0) cea%Wmix = cea%Am(1)
     end if
-    cea%Npt = 1
 
     ! IF ASSIGNED U OR H NOT GIVEN IN PROB DATA, INITIAL HSUB0 = 1.d30
     if (cea%Size == 0) assval = cea%Hsub0
@@ -1957,7 +1991,7 @@ contains
 
     do i = 1, cea%Nlm
        j = cea%Jcm(i)
-       if (.not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), cea%B0p(i, 2), cea%B0p(i, 1), cea%B0(i)
+       if (.not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), cea%B0p(i, 2), cea%B0p(i, 1), p%B0(i)
     end do
 
     return
