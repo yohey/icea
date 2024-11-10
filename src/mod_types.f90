@@ -29,6 +29,7 @@ module mod_types
 
   type:: CEA_Point
      real(8), pointer:: B0(:)
+     real(8), pointer:: B0p(:, :)
   end type CEA_Point
 
 
@@ -43,8 +44,8 @@ module mod_types
      type(TransportProperty), allocatable:: transport_properties(:)
      type(CEA_Point), pointer:: points(:, :)
 
-     integer:: iOF !!< index of O/F
-     integer:: Npt !!< index of point (to be changed to `ipt`)
+     integer:: iOF !< index of O/F
+     integer:: Npt !< index of point (to be changed to `ipt`)
 
      character(15):: ensert(20)
 
@@ -57,7 +58,6 @@ module mod_types
 
      real(8):: Cpmix, Wmix, Bcheck
      real(8):: Am(2), Hpp(2), Vmin(2), Vpls(2), Wp(2), Oxf(maxMix), P(maxPv), Rh(2), T(maxT), V(maxPv)
-     real(8):: B0p(maxEl, 2)
 
      integer:: Imat, Iq1, Isv, Jliq, Jsol, Lsave, Msing
 
@@ -106,5 +106,32 @@ module mod_types
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0', ')']
   end type CEA_Problem
+
+contains
+
+  subroutine init_case(cea)
+    implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+
+    integer:: i, j
+
+    allocate(cea%points(maxMix, Ncol))
+
+    do concurrent (i = 1:maxMix)
+       allocate(cea%points(i, 1)%B0(maxEl))
+       allocate(cea%points(i, 1)%B0p(maxEl, 2))
+
+       do concurrent (j = 2:Ncol)
+          cea%points(i, j)%B0 => cea%points(i, 1)%B0
+          cea%points(i, j)%B0p => cea%points(i, 1)%B0p
+       end do
+    end do
+
+    cea%iOF = 0
+    cea%Npt = 0
+
+    return
+  end subroutine init_case
 
 end module mod_types

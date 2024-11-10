@@ -20,7 +20,6 @@ contains
     num_cases = size(cea)
 
     do icase = 1, num_cases
-       call init_case(cea(icase))
        call read_libraries(cea(icase))
     end do
 
@@ -60,31 +59,6 @@ contains
 
     return
   end subroutine run_all_cases
-
-
-  subroutine init_case(cea)
-    use mod_types, only: CEA_Problem, Ncol, maxEl, maxMix
-    implicit none
-
-    type(CEA_Problem), intent(inout):: cea
-
-    integer:: i, j
-
-    allocate(cea%points(maxMix, Ncol))
-
-    do concurrent (i = 1:maxMix)
-       allocate(cea%points(i, 1)%B0(maxEl))
-
-       do concurrent (j = 2:Ncol)
-          cea%points(i, j)%B0 => cea%points(i, 1)%B0
-       end do
-    end do
-
-    cea%iOF = 0
-    cea%Npt = 0
-
-    return
-  end subroutine init_case
 
 
   subroutine CPHS(cea)
@@ -487,7 +461,7 @@ contains
     real(8):: smalno = 1e-6, smnol = -13.815511
     logical:: mask(cea%Ng)
 
-    type(CEA_Point), pointer:: p !!< current point
+    type(CEA_Point), pointer:: p !< current point
     p => cea%points(cea%iOF, cea%Npt)
 
     ixsing = 0
@@ -1388,8 +1362,8 @@ contains
              ! CALCULATE NEW COEFFICIENTS
              if (tem /= 1) then
                 p%B0(lc) = p%B0(lc) / tem
-                cea%B0p(lc, 1) = cea%B0p(lc, 1) / tem
-                cea%B0p(lc, 2) = cea%B0p(lc, 2) / tem
+                p%B0p(lc, 1) = p%B0p(lc, 1) / tem
+                p%B0p(lc, 2) = p%B0p(lc, 2) / tem
 
                 do concurrent (j = 1:cea%Nspx)
                    cea%A(lc, j) = cea%A(lc, j) / tem
@@ -1409,8 +1383,8 @@ contains
                    end do
 
                    p%B0(i) = p%B0(i) - p%B0(lc) * tem
-                   cea%B0p(i, 1) = cea%B0p(i, 1) - cea%B0p(lc, 1) * tem
-                   cea%B0p(i, 2) = cea%B0p(i, 2) - cea%B0p(lc, 2) * tem
+                   p%B0p(i, 1) = p%B0p(i, 1) - p%B0p(lc, 1) * tem
+                   p%B0p(i, 2) = p%B0p(i, 2) - p%B0p(lc, 2) * tem
                 end if
              end do
           end if
@@ -1459,9 +1433,9 @@ contains
           pisave(cea%Nlm) = aa
 
           do i = 1, 2
-             aa = cea%B0p(cea%Msing, i)
-             cea%B0p(cea%Msing, i) = cea%B0p(cea%Nlm, i)
-             cea%B0p(cea%Nlm, i) = aa
+             aa = p%B0p(cea%Msing, i)
+             p%B0p(cea%Msing, i) = p%B0p(cea%Nlm, i)
+             p%B0p(cea%Nlm, i) = aa
           end do
        end if
     else if (.not. newcom .and. cea%Trace == 0.) then
@@ -1773,7 +1747,7 @@ contains
     integer:: i, iq, iq2, iq3, isym, j, k, kk, kmat
     real(8):: energyl, f, h, ss, sss, term, term1
 
-    type(CEA_Point), pointer:: p !!< current point
+    type(CEA_Point), pointer:: p !< current point
     p => cea%points(cea%iOF, cea%Npt)
 
     iq = cea%Nlm + cea%Npr
@@ -1936,7 +1910,7 @@ contains
     integer:: i, j
     real(8):: assval, bigb, bratio, dbi, smalb, tem, v1, v2
 
-    type(CEA_Point), pointer:: p !!< current point
+    type(CEA_Point), pointer:: p !< current point
 
     cea%iOF = cea%iOF + 1
     cea%Npt = 1
@@ -1950,7 +1924,7 @@ contains
     v1 = (cea%Oxfl * cea%Vpls(1) + cea%Vpls(2)) / tem
     if (v2 /= 0.) cea%Eqrat = abs(v1/v2)
     do i = 1, cea%Nlm
-       p%B0(i) = (cea%Oxfl * cea%B0p(i, 1) + cea%B0p(i, 2)) / tem
+       p%B0(i) = (cea%Oxfl * p%B0p(i, 1) + p%B0p(i, 2)) / tem
        dbi = abs(p%B0(i))
        if (i == 1) then
           bigb = dbi
@@ -1991,7 +1965,7 @@ contains
 
     do i = 1, cea%Nlm
        j = cea%Jcm(i)
-       if (.not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), cea%B0p(i, 2), cea%B0p(i, 1), p%B0(i)
+       if (.not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), p%B0p(i, 2), p%B0p(i, 1), p%B0(i)
     end do
 
     return
@@ -2577,8 +2551,11 @@ contains
        if (cea%Elmt(cea%Nlm) /= 'E') then
           cea%Nlm = cea%Nlm + 1
           cea%Elmt(cea%Nlm) = 'E'
-          cea%B0p(cea%Nlm, 1) = 0
-          cea%B0p(cea%Nlm, 2) = 0
+
+          do concurrent (i = 1:maxMix, j = 1:Ncol)
+             cea%points(i, j)%B0p(cea%Nlm, 1) = 0
+             cea%points(i, j)%B0p(cea%Nlm, 2) = 0
+          end do
        end if
     else if (cea%Elmt(cea%Nlm) == 'E') then
        cea%Nlm = cea%Nlm - 1

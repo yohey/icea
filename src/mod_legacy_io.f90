@@ -77,6 +77,7 @@ contains
     readOK = .true.
 
     do icase = 1, num_cases
+       call init_case(cea(icase))
 
        !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
        if (icase >= 2) then
@@ -90,9 +91,9 @@ contains
        call INPUT(cea(icase), readOK, caseOK)
 
        do iof = 1, cea(icase)%Nof
-          if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%B0p(1, 1) /= 0.) then
+          if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%points(1, 1)%B0p(1, 1) /= 0.) then
              do i = 1, cea(icase)%Nlm
-                if (cea(icase)%B0p(i, 1) == 0. .or. cea(icase)%B0p(i, 2) == 0.) then
+                if (cea(icase)%points(1, 1)%B0p(i, 1) == 0. .or. cea(icase)%points(1, 1)%B0p(i, 2) == 0.) then
                    write(cea(icase)%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
                    caseOK = .false.
                 end if
@@ -1537,6 +1538,8 @@ contains
     integer:: io_thermo
     logical:: is_opened
 
+    real(8):: B0p(maxEl, 2)
+
     wdone = .false.
     cea%Wp = 0
     cea%Hpp = 0
@@ -1545,8 +1548,9 @@ contains
     cea%Am = 0
     cea%Rh = 0
     cea%Elmt = ' '
-    cea%B0p = 0
     dat = 0
+
+    B0p = 0
 
     ! IF OXIDANT, KR = 1
     ! IF FUEL, KR = 2
@@ -1738,7 +1742,7 @@ contains
           end if
 
           do concurrent (j = 1:cea%Nlm)
-             cea%B0p(j, kr) = dat(j) * pcwt / rm + cea%B0p(j, kr)
+             B0p(j, kr) = dat(j) * pcwt / rm + B0p(j, kr)
           end do
 
           cea%Rmw(n) = rm
@@ -1754,7 +1758,7 @@ contains
        cea%Hpp(2) = cea%Hpp(1)
        cea%Am(2) = cea%Am(1)
        cea%Am(1) = 0
-       cea%B0p(:, 2) = cea%B0p(:, 1)
+       B0p(:, 2) = B0p(:, 1)
     end if
 
     if (cea%Nlm /= 0) then
@@ -1766,9 +1770,9 @@ contains
              cea%Am(kr) = cea%Wp(kr) / cea%Am(kr)
              if (cea%Rh(kr) /= 0) cea%Rh(kr) = cea%Wp(kr) / cea%Rh(kr)
              do j = 1, cea%Nlm
-                cea%B0p(j, kr) = cea%B0p(j, kr) / cea%Wp(kr)
-                if (cea%X(j) < 0) cea%Vmin(kr) = cea%Vmin(kr) + cea%B0p(j, kr) * cea%X(j)
-                if (cea%X(j) > 0) cea%Vpls(kr) = cea%Vpls(kr) + cea%B0p(j, kr) * cea%X(j)
+                B0p(j, kr) = B0p(j, kr) / cea%Wp(kr)
+                if (cea%X(j) < 0) cea%Vmin(kr) = cea%Vmin(kr) + B0p(j, kr) * cea%X(j)
+                if (cea%X(j) > 0) cea%Vpls(kr) = cea%Vpls(kr) + B0p(j, kr) * cea%X(j)
              end do
           end if
        end do
@@ -1799,6 +1803,10 @@ contains
        end if
 
     end if
+
+    do concurrent (i = 1:maxMix, j = 1:Ncol)
+       cea%points(i, j)%B0p(:, :) = B0p(:, :)
+    end do
 
     return
   end subroutine REACT
