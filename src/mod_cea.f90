@@ -3450,15 +3450,9 @@ contains
     ! LOCAL VARIABLES
     integer:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
     logical:: change, elc1, elc2, ion1, ion2, setx
-    real(8):: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
+    real(8), save:: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
          stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
          trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
-
-    nms = 0
-    setx = .false.
-    inds(:) = 0
-    wmols(:) = 0
-    xss(:) = 0
 
     if (.not. cea%Eql) then
        if (.not. cea%Shock) then
@@ -3748,7 +3742,7 @@ contains
 
     ! LOCAL VARIABLES
     integer:: i, i1, j, jj, k, m, mm, nlmm, nmm
-    real(8):: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
+    real(8), save:: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
          psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
          stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
 
