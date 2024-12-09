@@ -39,41 +39,9 @@ foreach(LIB IN ITEMS "thermo" "trans")
 endforeach()
 
 
-enable_testing()
-
-foreach(INP IN ITEMS "thermo" "trans")
-  foreach(EXT IN ITEMS "lib" "out")
-    add_test(
-      NAME ${INP}.${EXT}
-      COMMAND diff -b ${CMAKE_SOURCE_DIR}/test/${INP}.${EXT} ${CMAKE_BINARY_DIR}/${INP}.${EXT}
-    )
-  endforeach()
-endforeach()
-
-add_custom_target(run-cea2
-  COMMAND echo cea2 | ./${CEA_EXECUTABLE} --legacy-mode
-  DEPENDS ${CEA_EXECUTABLE} cea2.inp
-)
-
-add_custom_command(
-  OUTPUT cea2.inp
-  COMMAND cp -a ${CMAKE_SOURCE_DIR}/test/cea2.inp ${CMAKE_BINARY_DIR}/
-)
-
-add_test(
-  NAME cea2
-  COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --target run-cea2
-)
-
-set_tests_properties(cea2 PROPERTIES FIXTURES_SETUP test_fixtures)
-
-foreach(EXT IN ITEMS "out" "plt")
-  add_test(
-    NAME cea2.${EXT}
-    COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/test/cea2.${EXT} ${CMAKE_BINARY_DIR}/cea2.${EXT}
-  )
-  set_tests_properties(cea2.${EXT} PROPERTIES FIXTURES_REQUIRED test_fixtures)
-endforeach()
-
-
 install(TARGETS ${CEA_EXECUTABLE} RUNTIME DESTINATION bin)
+
+
+enable_testing()
+add_subdirectory(tests/orig)
+add_subdirectory(tests/deton)

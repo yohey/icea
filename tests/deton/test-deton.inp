@@ -1,0 +1,7 @@
+reac oxid O2 wt%=100 t(k)=298.15
+     fuel H2 wt%=100 t(k)=298.15
+
+prob detonation case=Test-DETON t=300,350,400,450,500, r,e=1, pbar=1,5,10,15,20
+
+output calories transport
+end
