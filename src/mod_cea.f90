@@ -156,7 +156,6 @@ contains
     integer:: ip, it
 
 
-    iof = 0
     cea%Eql = .true.
 
     if (cea%T(1) == 0) then
@@ -164,274 +163,277 @@ contains
        cea%Nt = 1
     end if
 
-100 cea%Tt = cea%T(1)
+    outerLoop: do iof = 1, cea%Nof
+       cea%Tt = cea%T(1)
 
-    iof = iof + 1
-    cea%Oxfl = cea%Oxf(iof)
+       cea%Oxfl = cea%Oxf(iof)
 
-    call NEWOF(cea)
+       call NEWOF(cea)
 
-    ! BEGIN T LOOP.
-    do it = 1, cea%Nt
-       T1 = cea%T(it)
+       ! BEGIN T LOOP.
+       do it = 1, cea%Nt
+          T1 = cea%T(it)
 
-       ! BEGIN P LOOP.
-       do ip = 1, cea%Np
-          p1 = cea%P(ip)
-          cea%Tt = T1
-          cea%Pp = p1
+          ! BEGIN P LOOP.
+          do ip = 1, cea%Np
+             p1 = cea%P(ip)
+             cea%Tt = T1
+             cea%Pp = p1
 
-          call HCALC(cea)
+             call HCALC(cea)
 
-          if (cea%Tt == 0) return
-          if (cea%Detdbg) call OUT1(cea)
+             if (cea%Tt == 0) return
+             if (cea%Detdbg) call OUT1(cea)
 
-          h1(cea%Npt) = cea%Hsub0 * cea%R
-          tub(cea%Npt) = T1
-          pub(cea%Npt) = p1
-          cpl(cea%Npt) = cea%Cpmix * cea%R
-          itr = 0
-          cea%Tt = 3800
-          pp1 = 15
-          cea%Pp = pp1 * p1
+             h1(cea%Npt) = cea%Hsub0 * cea%R
+             tub(cea%Npt) = T1
+             pub(cea%Npt) = p1
+             cpl(cea%Npt) = cea%Cpmix * cea%R
+             cea%Tt = 3800
+             pp1 = 15
+             cea%Pp = pp1 * p1
 
-          ! CALCULATE ENTHALPY FOR INITIAL ESTIMATE OF T2(TT AFTER EQLBRM)
-          cea%Hsub0 = h1(cea%Npt) / cea%R + 0.75 * T1 * pp1 / cea%Wmix
-          cea%Tp = .false.
-          cea%Hp = .true.
-
-          call EQLBRM(cea)
-
-          cea%Hsub0 = h1(cea%Npt) / cea%R
-          cea%Hp = .false.
-
-          if (cea%Tt /= 0) then
-             gam = cea%Gammas(cea%Npt)
-             tt1 = cea%Tt / T1
-             ii = 0
-             tem = tt1 - 0.75 * pp1 / (cea%Cpr(cea%Npt) * cea%Wmix)
-             amm = cea%Wm(cea%Npt) / cea%Wmix
-
-             if (cea%Detdbg) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') cea%Tt
-
-             ! LOOP FOR IMPROVING T2/T1 AND P2/P1 INITIAL ESTIMATE.
-             do ii = 1, 3
-                alpha = amm / tt1
-                pp1 = (1 + gam) * (1 + sqrt(1 - 4 * gam * alpha / (1 + gam)**2)) / (2 * gam * alpha)
-                rk = pp1 * alpha
-                tt1 = tem + 0.5 * pp1 * gam * (rk**2 - 1) / (cea%Wmix * cea%Cpr(cea%Npt) * rk)
-                if (cea%Detdbg) write(IOOUT, '(i5, 2e20.8)') ii, pp1, tt1
-             end do
-
-             cea%Tp = .true.
-             cea%Tt = T1 * tt1
-             rr1 = pp1 * amm / tt1
-
-             ! BEGIN MAIN ITERATION LOOP.
-110          itr = itr + 1
-             cea%Pp = p1 * pp1
+             ! CALCULATE ENTHALPY FOR INITIAL ESTIMATE OF T2(TT AFTER EQLBRM)
+             cea%Hsub0 = h1(cea%Npt) / cea%R + 0.75 * T1 * pp1 / cea%Wmix
+             cea%Tp = .false.
+             cea%Hp = .true.
 
              call EQLBRM(cea)
 
-             if (cea%Npt == 0) go to 200
+             cea%Hsub0 = h1(cea%Npt) / cea%R
+             cea%Hp = .false.
 
              if (cea%Tt /= 0) then
                 gam = cea%Gammas(cea%Npt)
+                tt1 = cea%Tt / T1
+                ii = 0
+                tem = tt1 - 0.75 * pp1 / (cea%Cpr(cea%Npt) * cea%Wmix)
                 amm = cea%Wm(cea%Npt) / cea%Wmix
-                rr1 = pp1 * amm / tt1
-                a11 = 1 / pp1 + gam * rr1 * cea%Dlvpt(cea%Npt)
-                a12 = gam * rr1 * cea%Dlvtp(cea%Npt)
-                a21 = 0.5 * gam * (rr1**2 - 1 - cea%Dlvpt(cea%Npt) * (1 + rr1**2)) + cea%Dlvtp(cea%Npt) - 1
-                a22 = -0.5 * gam * cea%Dlvtp(cea%Npt) * (rr1**2 + 1) - cea%Wm(cea%Npt) * cea%Cpr(cea%Npt)
-                b1 = 1 / pp1 - 1 + gam * (rr1 - 1)
-                b2 = cea%Wm(cea%Npt) * (cea%Hsum(cea%Npt) - h1(cea%Npt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
-                d = a11 * a22 - a12 * a21
-                x1 = (a22 * b1 - a12 * b2) / d
-                x2 = (a11 * b2 - a21 * b1) / d
-                alam = 1
-                tem = x1
 
-                if (tem < 0) tem = -tem
-                if (x2 > tem) tem = x2
-                if (-x2 > tem) tem = -x2
-                if (tem > 0.4054652) alam = 0.4054652 / tem
+                if (cea%Detdbg) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') cea%Tt
 
-                pp1 = pp1 * exp(x1 * alam)
-                tt1 = tt1 * exp(x2 * alam)
-
-                cea%Tt = T1 * tt1
-                ud = rr1 * sqrt(R0 * gam * cea%Tt/cea%Wm(cea%Npt))
-
-                if (cea%Detdbg) write(IOOUT, '(/" ITER =", i2, 5x, "P/P1 =", e15.8, /7x, "T/T1 =", e15.8, 5x, &
-                     & "RHO/RHO1 =", e15.8, /7x, "DEL LN P/P1 =", e15.8, 5x, &
-                     & "DEL LN T/T1 =", e15.8)') itr, pp1, tt1, rr1, x1, x2
-                ! CONVERGENCE TEST
-                if (itr < 8 .and. tem > 0.5E-04) go to 110
-
-                if (itr < 8) then
-                   rrho(cea%Npt) = rr1
-                   if (cpl(cea%Npt) == 0) then
-                      gm1(cea%Npt) = 0
-                      cea%Vmoc(cea%Npt) = 0
-                   else
-                      gm1(cea%Npt) = cpl(cea%Npt) / (cpl(cea%Npt) - cea%R / cea%Wmix)
-                      cea%Vmoc(cea%Npt) = ud / sqrt(R0 * gm1(cea%Npt) * T1 / cea%Wmix)
-                   end if
-                else
-                   write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
-                   cea%Npt = cea%Npt - 1
-                   cea%Tt = 0
-                end if
-
-                if (cea%Trnspt) call TRANP(cea)
-
-                cea%Isv = 0
-
-                if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
-                   cea%Isv = cea%Npt
-                   if (cea%Npt /= Ncol) go to 120
-                end if
-             end if
-
-             ! OUTPUT
-             write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
-             call OUT1(cea)
-
-             ! SET MXX ARRAY FOR PLOTTING PARAMETERS
-             mp    = 0
-             mt    = 0
-             mgam  = 0
-             mh    = 0
-             mdv   = 0
-             mson  = 0
-             mmach = 0
-
-             do i = 1, cea%Nplt
-                if (index(cea%Pltvar(i)(2:), '1') /= 0) then
-                   if (cea%Pltvar(i)(:3) == 'son') then
-                      mson = i
-                   else if (cea%Pltvar(i)(:3) == 'gam') then
-                      mgam = i
-                   else if (cea%Pltvar(i)(:1) == 'h') then
-                      mh = i
-                   else if (cea%Pltvar(i)(:1) == 't') then
-                      mt = i
-                   else if (cea%Pltvar(i)(:1) == 'p') then
-                      mp = i
-                   end if
-                else if (index(cea%Pltvar(i), 'vel') /= 0) then
-                   mdv = i
-                else if (index(cea%Pltvar(i), 'mach') /= 0) then
-                   mmach = i
-                end if
-             end do
-
-             write(IOOUT, '(/" UNBURNED GAS"/)')
-
-             cea%fmt(4) = '13'
-             cea%fmt(5) = ' '
-             cea%fmt(7) = '4,'
-
-             do i = 1, cea%Npt
-                if (cea%SIunit) then
-                   cea%V(i) = pub(i)
-                   unit = 'BAR'
-                else
-                   cea%V(i) = pub(i) / 1.01325d0
-                   unit = 'ATM'
-                end if
-                if (mp > 0) cea%Pltout(i+cea%Iplt, mp) = cea%V(i)
-             end do
-
-             write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (cea%V(j), j = 1, cea%Npt)
-
-             cea%fmt(7) = '2,'
-             write(IOOUT, cea%fmt) ft1, (tub(j), j = 1, cea%Npt)
-
-             if (.not. cea%SIunit) write(IOOUT, cea%fmt) fh1, (h1(j), j = 1, cea%Npt)
-             if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(j), j = 1, cea%Npt)
-
-             do concurrent (i = 1:cea%Npt)
-                cea%V(i) = cea%Wmix
-                cea%Sonvel(i) = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
-             end do
-
-             cea%fmt(7) = '3,'
-             write(IOOUT, cea%fmt) fm1, (cea%V(j), j = 1, cea%Npt)
-             cea%fmt(7) = '4,'
-             write(IOOUT, cea%fmt) fg1, (gm1(j), j = 1, cea%Npt)
-             cea%fmt(7) = '1,'
-             write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (cea%Sonvel(j), j = 1, cea%Npt)
-
-             if (cea%Nplt > 0) then
-                do i = 1, cea%Npt
-                   if (mt > 0)   cea%Pltout(i+cea%Iplt, mt) = tub(i)
-                   if (mgam > 0) cea%Pltout(i+cea%Iplt, mgam) = gm1(i)
-                   if (mh > 0)   cea%Pltout(i+cea%Iplt, mh) = h1(i)
-                   if (mson > 0) cea%Pltout(i+cea%Iplt, mson) = cea%Sonvel(i)
+                ! LOOP FOR IMPROVING T2/T1 AND P2/P1 INITIAL ESTIMATE.
+                do ii = 1, 3
+                   alpha = amm / tt1
+                   pp1 = (1 + gam) * (1 + sqrt(1 - 4 * gam * alpha / (1 + gam)**2)) / (2 * gam * alpha)
+                   rk = pp1 * alpha
+                   tt1 = tem + 0.5 * pp1 * gam * (rk**2 - 1) / (cea%Wmix * cea%Cpr(cea%Npt) * rk)
+                   if (cea%Detdbg) write(IOOUT, '(i5, 2e20.8)') ii, pp1, tt1
                 end do
+
+                cea%Tp = .true.
+                cea%Tt = T1 * tt1
+                rr1 = pp1 * amm / tt1
+
+                ! BEGIN MAIN ITERATION LOOP.
+                do itr = 1, 8
+                   cea%Pp = p1 * pp1
+
+                   call EQLBRM(cea)
+
+                   if (cea%Npt == 0) exit outerLoop
+
+                   if (cea%Tt == 0) exit
+
+                   gam = cea%Gammas(cea%Npt)
+                   amm = cea%Wm(cea%Npt) / cea%Wmix
+                   rr1 = pp1 * amm / tt1
+                   a11 = 1 / pp1 + gam * rr1 * cea%Dlvpt(cea%Npt)
+                   a12 = gam * rr1 * cea%Dlvtp(cea%Npt)
+                   a21 = 0.5 * gam * (rr1**2 - 1 - cea%Dlvpt(cea%Npt) * (1 + rr1**2)) + cea%Dlvtp(cea%Npt) - 1
+                   a22 = -0.5 * gam * cea%Dlvtp(cea%Npt) * (rr1**2 + 1) - cea%Wm(cea%Npt) * cea%Cpr(cea%Npt)
+                   b1 = 1 / pp1 - 1 + gam * (rr1 - 1)
+                   b2 = cea%Wm(cea%Npt) * (cea%Hsum(cea%Npt) - h1(cea%Npt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
+                   d = a11 * a22 - a12 * a21
+                   x1 = (a22 * b1 - a12 * b2) / d
+                   x2 = (a11 * b2 - a21 * b1) / d
+                   alam = 1
+                   tem = x1
+
+                   if (tem < 0) tem = -tem
+                   if (x2 > tem) tem = x2
+                   if (-x2 > tem) tem = -x2
+                   if (tem > 0.4054652) alam = 0.4054652 / tem
+
+                   pp1 = pp1 * exp(x1 * alam)
+                   tt1 = tt1 * exp(x2 * alam)
+
+                   cea%Tt = T1 * tt1
+                   ud = rr1 * sqrt(R0 * gam * cea%Tt/cea%Wm(cea%Npt))
+
+                   if (cea%Detdbg) write(IOOUT, '(/" ITER =", i2, 5x, "P/P1 =", e15.8, /7x, "T/T1 =", e15.8, 5x, &
+                        & "RHO/RHO1 =", e15.8, /7x, "DEL LN P/P1 =", e15.8, 5x, &
+                        & "DEL LN T/T1 =", e15.8)') itr, pp1, tt1, rr1, x1, x2
+
+                   ! CONVERGENCE TEST
+                   if (tem <= 0.5E-04) exit
+                end do
+
+                if (cea%Tt /= 0) then
+                   if (itr < 8) then
+                      rrho(cea%Npt) = rr1
+                      if (cpl(cea%Npt) == 0) then
+                         gm1(cea%Npt) = 0
+                         cea%Vmoc(cea%Npt) = 0
+                      else
+                         gm1(cea%Npt) = cpl(cea%Npt) / (cpl(cea%Npt) - cea%R / cea%Wmix)
+                         cea%Vmoc(cea%Npt) = ud / sqrt(R0 * gm1(cea%Npt) * T1 / cea%Wmix)
+                      end if
+                   else
+                      write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
+                      cea%Npt = cea%Npt - 1
+                      cea%Tt = 0
+                   end if
+
+                   if (cea%Trnspt) call TRANP(cea)
+
+                   cea%Isv = 0
+
+                   if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
+                      cea%Isv = cea%Npt
+                      if (cea%Npt /= Ncol) go to 120
+                   end if
+                end if
+
+                ! OUTPUT
+                write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
+                call OUT1(cea)
+
+                ! SET MXX ARRAY FOR PLOTTING PARAMETERS
+                mp    = 0
+                mt    = 0
+                mgam  = 0
+                mh    = 0
+                mdv   = 0
+                mson  = 0
+                mmach = 0
+
+                do i = 1, cea%Nplt
+                   if (index(cea%Pltvar(i)(2:), '1') /= 0) then
+                      if (cea%Pltvar(i)(:3) == 'son') then
+                         mson = i
+                      else if (cea%Pltvar(i)(:3) == 'gam') then
+                         mgam = i
+                      else if (cea%Pltvar(i)(:1) == 'h') then
+                         mh = i
+                      else if (cea%Pltvar(i)(:1) == 't') then
+                         mt = i
+                      else if (cea%Pltvar(i)(:1) == 'p') then
+                         mp = i
+                      end if
+                   else if (index(cea%Pltvar(i), 'vel') /= 0) then
+                      mdv = i
+                   else if (index(cea%Pltvar(i), 'mach') /= 0) then
+                      mmach = i
+                   end if
+                end do
+
+                write(IOOUT, '(/" UNBURNED GAS"/)')
+
+                cea%fmt(4) = '13'
+                cea%fmt(5) = ' '
+                cea%fmt(7) = '4,'
+
+                do i = 1, cea%Npt
+                   if (cea%SIunit) then
+                      cea%V(i) = pub(i)
+                      unit = 'BAR'
+                   else
+                      cea%V(i) = pub(i) / 1.01325d0
+                      unit = 'ATM'
+                   end if
+                   if (mp > 0) cea%Pltout(i+cea%Iplt, mp) = cea%V(i)
+                end do
+
+                write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (cea%V(j), j = 1, cea%Npt)
+
+                cea%fmt(7) = '2,'
+                write(IOOUT, cea%fmt) ft1, (tub(j), j = 1, cea%Npt)
+
+                if (.not. cea%SIunit) write(IOOUT, cea%fmt) fh1, (h1(j), j = 1, cea%Npt)
+                if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(j), j = 1, cea%Npt)
+
+                do concurrent (i = 1:cea%Npt)
+                   cea%V(i) = cea%Wmix
+                   cea%Sonvel(i) = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
+                end do
+
+                cea%fmt(7) = '3,'
+                write(IOOUT, cea%fmt) fm1, (cea%V(j), j = 1, cea%Npt)
+                cea%fmt(7) = '4,'
+                write(IOOUT, cea%fmt) fg1, (gm1(j), j = 1, cea%Npt)
+                cea%fmt(7) = '1,'
+                write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (cea%Sonvel(j), j = 1, cea%Npt)
+
+                if (cea%Nplt > 0) then
+                   do i = 1, cea%Npt
+                      if (mt > 0)   cea%Pltout(i+cea%Iplt, mt) = tub(i)
+                      if (mgam > 0) cea%Pltout(i+cea%Iplt, mgam) = gm1(i)
+                      if (mh > 0)   cea%Pltout(i+cea%Iplt, mh) = h1(i)
+                      if (mson > 0) cea%Pltout(i+cea%Iplt, mson) = cea%Sonvel(i)
+                   end do
+                end if
+
+                write(IOOUT, '(/" BURNED GAS"/)')
+
+                cea%fmt(4) = cea%fmt(6)
+                call OUT2(cea)
+
+                if (cea%Trnspt) call OUT4(cea)
+
+                write(IOOUT, '(/" DETONATION PARAMETERS"/)')
+
+                cea%fmt(7) = '3,'
+
+                do i = 1, cea%Npt
+                   cea%V(i) = cea%Ppp(i) / pub(i)
+                   cea%Pcp(i) = cea%Ttt(i) / tub(i)
+                   cea%Sonvel(i) = cea%Sonvel(i) * rrho(i)
+                   if (mmach > 0) cea%Pltout(i+cea%Iplt, mmach) = cea%Vmoc(i)
+                   if (mdv > 0)   cea%Pltout(i+cea%Iplt, mdv) = cea%Sonvel(i)
+                end do
+
+                write(IOOUT, cea%fmt) fpp1, (cea%V(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) ftt1, (cea%Pcp(j), j = 1, cea%Npt)
+
+                do concurrent (i = 1:cea%Npt)
+                   cea%V(i) = cea%Wm(i) / cea%Wmix
+                end do
+
+                cea%fmt(7) = '4,'
+                write(IOOUT, cea%fmt) fmm1, (cea%V(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) frr1, (rrho(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%Vmoc(j), j = 1, cea%Npt)
+
+                cea%fmt(7) = '1,'
+                write(IOOUT, cea%fmt) fdv, (cea%Sonvel(j), j = 1, cea%Npt)
+
+                cea%Eql = .true.
+
+                call OUT3(cea)
+
+                cea%Iplt = min(cea%Iplt+cea%Npt, 500)
+
+                if (cea%Isv == 0 .and. iof == cea%Nof) exit outerLoop
+                if (cea%Np == 1 .and. cea%Nt == 1) cycle outerLoop
+
+                write(IOOUT, '(///)')
+
+                cea%Npt = 0
+120             cea%Npt = cea%Npt + 1
+
+                if (cea%Isv == 1) cea%Isv = -1
+
+                call SETEN(cea)
              end if
-
-             write(IOOUT, '(/" BURNED GAS"/)')
-
-             cea%fmt(4) = cea%fmt(6)
-             call OUT2(cea)
-
-             if (cea%Trnspt) call OUT4(cea)
-
-             write(IOOUT, '(/" DETONATION PARAMETERS"/)')
-
-             cea%fmt(7) = '3,'
-
-             do i = 1, cea%Npt
-                cea%V(i) = cea%Ppp(i) / pub(i)
-                cea%Pcp(i) = cea%Ttt(i) / tub(i)
-                cea%Sonvel(i) = cea%Sonvel(i) * rrho(i)
-                if (mmach > 0) cea%Pltout(i+cea%Iplt, mmach) = cea%Vmoc(i)
-                if (mdv > 0)   cea%Pltout(i+cea%Iplt, mdv) = cea%Sonvel(i)
-             end do
-
-             write(IOOUT, cea%fmt) fpp1, (cea%V(j), j = 1, cea%Npt)
-             write(IOOUT, cea%fmt) ftt1, (cea%Pcp(j), j = 1, cea%Npt)
-
-             do concurrent (i = 1:cea%Npt)
-                cea%V(i) = cea%Wm(i) / cea%Wmix
-             end do
-
-             cea%fmt(7) = '4,'
-             write(IOOUT, cea%fmt) fmm1, (cea%V(j), j = 1, cea%Npt)
-             write(IOOUT, cea%fmt) frr1, (rrho(j), j = 1, cea%Npt)
-             write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%Vmoc(j), j = 1, cea%Npt)
-
-             cea%fmt(7) = '1,'
-             write(IOOUT, cea%fmt) fdv, (cea%Sonvel(j), j = 1, cea%Npt)
-
-             cea%Eql = .true.
-
-             call OUT3(cea)
-
-             cea%Iplt = min(cea%Iplt+cea%Npt, 500)
-
-             if (cea%Isv == 0 .and. iof == cea%Nof) go to 200
-             if (cea%Np == 1 .and. cea%Nt == 1) go to 100
-
-             write(IOOUT, '(///)')
-
-             cea%Npt = 0
-120          cea%Npt = cea%Npt + 1
-
-             if (cea%Isv == 1) cea%Isv = -1
-
-             call SETEN(cea)
-          end if
+          end do
        end do
-    end do
 
-    cea%Iplt = min(cea%Iplt + cea%Npt - 1, 500)
+       cea%Iplt = min(cea%Iplt + cea%Npt - 1, 500)
 
-    if (iof < cea%Nof) go to 100
+    end do outerLoop
 
-200 cea%Tp = .false.
+    cea%Tp = .false.
 
     return
   end subroutine DETON
