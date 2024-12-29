@@ -1999,9 +1999,15 @@ contains
          pinjas, pjrat, ppa, pr, pracat, prat, pratsv, pvg, test, tmelt, usq
     integer:: ip, it
 
+    type(CEA_Point), pointer:: p !< current point
+
     iplte = cea%Iplt
     isup1 = 1
-    cea%App(1) = 1
+
+    do concurrent (iof = 1:cea%Nof)
+       cea%points(iof, 1)%App = 1
+    end do
+
     cea%Iopt = 0
     cea%Npp = cea%Npp + 2
     nn = cea%Npp
@@ -2046,11 +2052,15 @@ contains
        cea%Froz = .false.
     end if
     seql = cea%Eql
-    iof = 0
     cea%Tt = cea%Tcest
     cea%Pp = cea%P(1)
-    cea%App(i12) = 1
+
+    do concurrent (iof = 1:cea%Nof)
+       cea%points(iof, i12)%App = 1
+    end do
+
     ! LOOP FOR EACH O/F
+    iof = 0
 100 it = 1
     iof = iof + 1
     cea%Oxfl = cea%Oxf(iof)
@@ -2121,8 +2131,9 @@ contains
              end if
           end do
           cea%Subar(1) = cea%Acat
-260       cea%Pp = ppa / pa
-          cea%App(1) = cea%Pp / cea%Ppp(1)
+260       p => cea%points(cea%iOF, 1)
+          cea%Pp = ppa / pa
+          p%App = cea%Pp / cea%Ppp(1)
           go to 1100
        else
           if (cea%Npt < 1) go to 1400
@@ -2142,20 +2153,22 @@ contains
        call SETEN(cea)
        go to 250
 350    done = .true.
-       cea%App(1) = cea%Ppp(2) / cea%Ppp(1)
+       p => cea%points(cea%iOF, 1)
+       p%App = cea%Ppp(2) / cea%Ppp(1)
        cea%Area = .false.
        if (cea%Nsub > 1) isub = 2
        cea%Isv = 4
        cea%Npt = 2
        ipp = min(4, cea%Npp)
        call SETEN(cea)
+       p => cea%points(cea%iOF, 2)
        cea%Cpr(2) = cea%Cpr(4)
        cea%Dlvpt(2) = cea%Dlvpt(4)
        cea%Dlvtp(2) = cea%Dlvtp(4)
        cea%Gammas(2) = cea%Gammas(4)
        cea%Hsum(2) = cea%Hsum(4)
        cea%Ppp(2) = cea%Ppp(4)
-       cea%App(2) = cea%Ppp(1)/pinf
+       p%App = cea%Ppp(1)/pinf
        cea%Ssum(2) = cea%Ssum(4)
        cea%Totn(2) = cea%Totn(4)
        cea%Ttt(2) = cea%Ttt(4)
@@ -2188,12 +2201,13 @@ contains
                       cea%Pp = cea%Pp * (1 + msq * cea%Gammas(nptth)) / (cea%Gammas(nptth) + 1)
                    else
                       write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
+                      p => cea%points(cea%iOF, nptth)
                       dlt = log(tmelt / cea%Tt)
                       dd = dlt * cea%Cpr(nptth) / (cea%Enn * cea%Dlvtp(nptth))
                       cea%Pp = cea%Pp * EXP(dd)
-                      cea%App(nptth) = cea%P(ip) / cea%Pp
-                      if (cea%Fac) cea%App(nptth) = pinf / cea%Pp
-                      if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') cea%App(nptth)
+                      p%App = cea%P(ip) / cea%Pp
+                      if (cea%Fac) p%App = pinf / cea%Pp
+                      if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') p%App
                       thi = .true.
                       go to 250
                    end if
@@ -2233,19 +2247,22 @@ contains
 450    tmelt = 0
        itrot = 3
        thi = .false.
-       cea%App(nptth) = ((cea%Gammas(i12) + 1) / 2)**(cea%Gammas(i12) / (cea%Gammas(i12) - 1))
-       if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') cea%App(nptth)
-       cea%Pp = Pinf / cea%App(nptth)
+       p => cea%points(cea%iOF, nptth)
+       p%App = ((cea%Gammas(i12) + 1) / 2)**(cea%Gammas(i12) / (cea%Gammas(i12) - 1))
+       if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') p%App
+       cea%Pp = Pinf / p%App
        cea%Isv = -i12
        go to 1200
 500    npr1 = cea%Npr
-       cea%App(nptth) = cea%P(ip) / cea%Pp
-       if (cea%Fac) cea%App(nptth) = Pinf / cea%Pp
-       if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') cea%App(nptth)
+       p => cea%points(cea%iOF, nptth)
+       p%App = cea%P(ip) / cea%Pp
+       if (cea%Fac) p%App = Pinf / cea%Pp
+       if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') p%App
        itrot = itrot - 1
        go to 250
 550    cea%Awt = cea%Enn * cea%Tt / (cea%Pp * sqrt(usq))
-       pcplt = log(cea%App(nptth))
+       p => cea%points(cea%iOF, nptth)
+       pcplt = log(p%App)
 600    cea%Isv = 0
        cea%points(cea%iOF, cea%Npt)%AeAt = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
        if (cea%Tt == 0) go to 1150
@@ -2305,9 +2322,10 @@ contains
           ! TEST FOR CONVERGENCE ON AREA RATIO.
        else if (cea%Gammas(cea%Npt) > 0) then
           check = 0.00004
+          p => cea%points(cea%iOF, cea%Npt)
           if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
                & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
-               itnum, aratio, cea%points(cea%iOF, cea%Npt)%AeAt, cea%App(cea%Npt), dlnp
+               itnum, aratio, p%AeAt, p%App, dlnp
           if (abs(cea%points(cea%iOF, cea%Npt)%AeAt - Aratio) / Aratio <= check) go to 900
           if (abs(dlnp) < 0.00004) go to 900
           aeatl = log(cea%points(cea%iOF, cea%Npt)%AeAt)
@@ -2339,8 +2357,9 @@ contains
        appl = appl + dlnp
        if (itnum == 1) go to 1100
        if (appl < 0.) appl = 0.000001
-       cea%App(cea%Npt) = EXP(appl)
-       cea%Pp = Pinf / cea%App(cea%Npt)
+       p => cea%points(cea%iOF, cea%Npt)
+       p%App = EXP(appl)
+       cea%Pp = Pinf / p%App
        go to 250
        ! CONVERGENCE HAS BEEN REACHED FOR ASSIGNED AREA RATIO
 900    cea%points(cea%iOF, cea%Npt)%AeAt = Aratio
@@ -2466,7 +2485,8 @@ contains
              write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
                   & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
           end if
-          if (cea%App(cea%Nfz) < cea%App(nptth)) then
+          p => cea%points(cea%iOF, cea%Nfz)
+          if (p%App < cea%points(cea%iOF, nptth)%App) then
              write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
                   & "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
                   & "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
@@ -2489,13 +2509,14 @@ contains
           call SETEN(cea)
        end if
 1250   ipp = ipp + 1
+       p => cea%points(cea%iOF, cea%Npt)
        if (cea%Npt > nptth) then
           if (cea%Area) then
-             cea%App(cea%Npt) = EXP(appl)
+             p%App = EXP(appl)
           else
-             cea%App(cea%Npt) = cea%Pcp(ipp - nptth)
-             if (cea%Fac) cea%App(cea%Npt) = cea%App(cea%Npt) * Pinf / cea%Ppp(1)
-             if (.not. cea%Eql .and. cea%App(cea%Npt) < cea%App(cea%Nfz)) then
+             p%App = cea%Pcp(ipp - nptth)
+             if (cea%Fac) p%App = p%App * Pinf / cea%Ppp(1)
+             if (.not. cea%Eql .and. p%App < cea%points(cea%iOF, cea%Nfz)%App) then
                 write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
                      & " WHERE THE ASSIGNED", /, &
                      & " PRESSURE RATIOS WERE LESS THAN ", &
@@ -2503,7 +2524,7 @@ contains
                 go to 1250
              end if
           end if
-          cea%Pp = pinf / cea%App(cea%Npt)
+          cea%Pp = pinf / p%App
           if (cea%Fac) then
              if (cea%Area) then
                 if (isub <= cea%Nsub .and. isub > i01 .and. aratio >= cea%points(cea%iOF, 2)%AeAt) then

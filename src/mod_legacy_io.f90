@@ -1828,6 +1828,7 @@ contains
     integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, misp, mivac, mmach, mppf, mppj, nex
     real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
+    type(CEA_Point), pointer:: p !< current point
 
     if (.not. cea%Eql) then
        write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
@@ -1848,8 +1849,8 @@ contains
 
     i23 = 2
     if (cea%Iopt > 0) then
-       if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), cea%App(2)
-       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%Ma, cea%App(2)
+       if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), cea%points(cea%iOF, 2)%App
+       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%Ma, cea%points(cea%iOF, 2)%App
        i23 = 3
     end if
 
@@ -1870,8 +1871,8 @@ contains
     ! PRESSURE RATIOS
     if (cea%Iopt == 0) then
        write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
-       call VARFMT(cea, cea%App)
-       write(IOOUT, cea%fmt) 'Pinf/P         ', (cea%App(j), j = 1, cea%Npt)
+       call VARFMT(cea, [(cea%points(cea%iOF, j)%App, j = 1, cea%Npt)])
+       write(IOOUT, cea%fmt) 'Pinf/P         ', (cea%points(cea%iOF, j)%App, j = 1, cea%Npt)
     else
        nex = nex - 1
        write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
@@ -1939,7 +1940,7 @@ contains
        aw = R0 * cea%Ttt(k) / (cea%Ppp(k) * cea%Wm(k) * cea%Spim(k) * agv**2)
        if (k == i23) then
           if (cea%Iopt == 0) cea%Cstr = gc * cea%Ppp(1) * aw
-          if (cea%Iopt /= 0) cea%Cstr = gc * cea%Ppp(1) / cea%App(2) * aw
+          if (cea%Iopt /= 0) cea%Cstr = gc * cea%Ppp(1) / cea%points(cea%iOF, 2)%App * aw
        end if
        vaci(k) = cea%Spim(k) + cea%Ppp(k) * aw
        cea%Vmoc(k) = 0
@@ -1991,8 +1992,9 @@ contains
        cea%X(1) = 0
        cea%Spim(1) = 0
        do i = ione + 1, cea%Npt
+          p => cea%points(cea%iOF, i)
           if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = cea%Ppp(1) / cea%Ppp(i)
-          if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = cea%App(i)
+          if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = p%App
           if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = cea%Vmoc(i)
           if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = cea%points(cea%iOF, i)%AeAt
           if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = cea%X(i)
