@@ -30,6 +30,7 @@ module mod_types
   type:: CEA_Point
      real(8), pointer:: B0(:)
      real(8), pointer:: B0p(:, :)
+     real(8):: AeAt
   end type CEA_Point
 
 
@@ -89,7 +90,7 @@ module mod_types
      integer:: Iopt, Isup, Nfz, Npp, Nsub, Nsup
      logical:: Area, Debugf, Fac, Froz, Page1, Rkt
      real(8):: Acat, Awt, Cstr, Tcest, Ma
-     real(8):: Aeat(Ncol), App(Ncol), Pcp(2*Ncol), Sonvel(Ncol), Spim(Ncol), Subar(13), Supar(13), Vmoc(Ncol)
+     real(8):: App(Ncol), Pcp(2*Ncol), Sonvel(Ncol), Spim(Ncol), Subar(13), Supar(13), Vmoc(Ncol)
 
      integer:: Nsk
      logical:: Incdeq, Incdfz, Refleq, Reflfz, Shkdbg

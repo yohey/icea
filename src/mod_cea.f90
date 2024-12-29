@@ -2247,7 +2247,7 @@ contains
 550    cea%Awt = cea%Enn * cea%Tt / (cea%Pp * sqrt(usq))
        pcplt = log(cea%App(nptth))
 600    cea%Isv = 0
-       cea%Aeat(cea%Npt) = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
+       cea%points(cea%iOF, cea%Npt)%AeAt = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
        if (cea%Tt == 0) go to 1150
        if (cea%Area) go to 750
        if (cea%Trnspt .and. (.not. cea%Fac .or. done .or. cea%Npt > 2)) call TRANP(cea)
@@ -2274,7 +2274,7 @@ contains
           aratio = cea%Subar(isub)
           if ((.not. cea%Fac .or. done) .and. cea%Nsub <= i01) aratio = cea%Supar(cea%Isup)
           if (.not. cea%Eql .and. cea%Nfz >= 3) then
-             if (aratio <= cea%Aeat(cea%Nfz)) then
+             if (aratio <= cea%points(cea%iOF, cea%Nfz)%Aeat) then
                 write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
                      & " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
                      & "LESS THAN THE VALUE AT POINT nfz =", i3, " (ROCKET)")') cea%Nfz
@@ -2306,10 +2306,11 @@ contains
        else if (cea%Gammas(cea%Npt) > 0) then
           check = 0.00004
           if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
-               & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') itnum, aratio, cea%Aeat(cea%Npt), cea%App(cea%Npt), dlnp
-          if (abs(cea%Aeat(cea%Npt) - Aratio) / Aratio <= check) go to 900
+               & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
+               itnum, aratio, cea%points(cea%iOF, cea%Npt)%AeAt, cea%App(cea%Npt), dlnp
+          if (abs(cea%points(cea%iOF, cea%Npt)%AeAt - Aratio) / Aratio <= check) go to 900
           if (abs(dlnp) < 0.00004) go to 900
-          aeatl = log(cea%Aeat(cea%Npt))
+          aeatl = log(cea%points(cea%iOF, cea%Npt)%AeAt)
           itnum = itnum + 1
           if (itnum > 10) then
              write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
@@ -2342,7 +2343,7 @@ contains
        cea%Pp = Pinf / cea%App(cea%Npt)
        go to 250
        ! CONVERGENCE HAS BEEN REACHED FOR ASSIGNED AREA RATIO
-900    cea%Aeat(cea%Npt) = Aratio
+900    cea%points(cea%iOF, cea%Npt)%AeAt = Aratio
        if (cea%Fac) then
           if (.not. done) then
              if (cea%Iopt == 1) then
@@ -2505,10 +2506,10 @@ contains
           cea%Pp = pinf / cea%App(cea%Npt)
           if (cea%Fac) then
              if (cea%Area) then
-                if (isub <= cea%Nsub .and. isub > i01 .and. aratio >= cea%Aeat(2)) then
+                if (isub <= cea%Nsub .and. isub > i01 .and. aratio >= cea%points(cea%iOF, 2)%AeAt) then
                    write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
                         & "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
-                        & ".  POINT OMITTED (ROCKET)")') aratio, cea%Aeat(2)
+                        & ".  POINT OMITTED (ROCKET)")') aratio, cea%points(cea%iOF, 2)%AeAt
                    cea%Npt = cea%Npt - 1
                    go to 1000
                 end if

@@ -1957,10 +1957,10 @@ contains
     ! AREA RATIO
     cea%fmt(4) = '9x,'
     cea%fmt(i46) = '9x,'
-    call VARFMT(cea, cea%Aeat)
+    call VARFMT(cea, [(cea%points(cea%iOF, i)%AeAt, i = 1, cea%Npt)])
     cea%fmt(5) = ' '
     cea%fmt(i57) = ' '
-    write(IOOUT, cea%fmt) 'Ae/At          ', (cea%Aeat(j), j = 2, cea%Npt)
+    write(IOOUT, cea%fmt) 'Ae/At          ', (cea%points(cea%iOF, j)%AeAt, j = 2, cea%Npt)
 
     ! C*
     cea%fmt(i57) = '13'
@@ -1985,7 +1985,7 @@ contains
 
     if (cea%Nplt > 0) then
        cea%Spim(1) = 0
-       cea%Aeat(1) = 0
+       cea%points(cea%iOF, 1)%AeAt = 0
        cea%Vmoc(1) = 0
        vaci(1) = 0
        cea%X(1) = 0
@@ -1994,7 +1994,7 @@ contains
           if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = cea%Ppp(1) / cea%Ppp(i)
           if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = cea%App(i)
           if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = cea%Vmoc(i)
-          if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = cea%Aeat(i)
+          if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = cea%points(cea%iOF, i)%AeAt
           if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = cea%X(i)
           if (mivac > 0) cea%Pltout(i+cea%Iplt-ione, mivac) = vaci(i)
           if (misp > 0)  cea%Pltout(i+cea%Iplt-ione, misp)  = cea%Spim(i)
