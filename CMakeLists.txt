@@ -22,6 +22,7 @@ target_sources(${CEA_EXECUTABLE}
 
 target_compile_options(${CEA_EXECUTABLE}
   PRIVATE
+  "-cpp"
   "-std=f2023"
 )
 

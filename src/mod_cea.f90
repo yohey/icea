@@ -8,6 +8,7 @@ module mod_cea
 contains
 
   subroutine run_all_cases(cea, out_filename, plt_filename)
+    use mod_constants, only: stderr
     use mod_types, only: CEA_Problem, MAX_FILENAME, IOOUT
     use mod_legacy_io
     implicit none
@@ -49,6 +50,10 @@ contains
        else if (cea(icase)%Shock) then
           call SHCK(cea(icase))
        end if
+
+#ifndef NDEBUG
+       write(stderr, *)
+#endif
     end do
 
     close(IOOUT)
@@ -150,10 +155,10 @@ contains
     character(15):: fdv  = 'DET VEL,M/SEC'
     character(3):: unit
     integer:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt
-    real(8):: a11, a12, a21, a22, alam, alpha, amm, b1, b2, cpl(Ncol), d, gam, &
-         gm1(Ncol), h1(Ncol), p1, pp1, pub(Ncol), rk, rr1, rrho(Ncol), T1, &
-         tem, tt1, tub(Ncol), ud, x1, x2
     integer:: ip, it
+    real(8):: a11, a12, a21, a22, alam, alpha, amm, b1, b2, d, gam, &
+         p1, pp1, rk, rr1, T1, tem, tt1, ud, x1, x2
+    real(8):: cpl(Ncol), gm1(Ncol), h1(Ncol), pub(Ncol), rrho(Ncol), tub(Ncol)
 
 
     cea%Eql = .true.
@@ -3358,6 +3363,10 @@ contains
           cea%U1(i) = uis(i)
           cea%Mach1(i) = mis(i)
        end do
+
+#ifndef NDEBUG
+       call print_debug(cea, iof)
+#endif
     end do
 
     cea%Tp = .false.
@@ -3396,7 +3405,14 @@ contains
              cea%Vv = cea%V(ip)
              cea%Tt = cea%T(it)
              call EQLBRM(cea)
-             if (cea%Npt == 0) return
+
+             if (cea%Npt == 0) then
+#ifndef NDEBUG
+                call print_debug(cea, iof)
+#endif
+                return
+             end if
+
              if (cea%Trnspt .and. cea%Tt /= 0) call TRANP(cea)
              cea%Isv = 0
              if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
@@ -3420,12 +3436,26 @@ contains
              if (cea%Trnspt) call OUT4(cea)
              call OUT3(cea)
              cea%Iplt = min(cea%Iplt + cea%Npt, 500)
-             if (cea%Isv == 0 .and. iof == cea%Nof) return
+
+             if (cea%Isv == 0 .and. iof == cea%Nof) then
+#ifndef NDEBUG
+                call print_debug(cea, iof)
+#endif
+                return
+             end if
+
              write(IOOUT, '(////)')
              cea%Npt = 0
 10           cea%Npt = cea%Npt + 1
              if (.not. cea%Tp .and. cea%Tt /= 0) cea%T(1) = cea%Tt
-             if (cea%Nt == 1 .and. cea%Np == 1) cycle outerLoop
+
+             if (cea%Nt == 1 .and. cea%Np == 1) then
+#ifndef NDEBUG
+                call print_debug(cea, iof)
+#endif
+                cycle outerLoop
+             end if
+
              if (ip == 1 .and. it == 1) cea%Isv = -cea%Isv
              if (cea%Nt /= 1) then
                 if (it == cea%Nt .or. cea%Tt == 0.) cea%Isv = 0
@@ -3889,5 +3919,37 @@ contains
        cea%Preql(cea%Npt) = cea%Vis(cea%Npt) * cea%Cpeql(cea%Npt) / cea%Coneql(cea%Npt)
     end if
   end subroutine TRANP
+
+
+#ifndef NDEBUG
+  subroutine print_debug(cea, iof)
+    use mod_constants, only: stderr
+    use mod_types, only: CEA_Problem
+    implicit none
+
+    type(CEA_Problem), intent(in):: cea
+    integer, intent(in):: iof
+
+    integer:: i
+
+    write(stderr, *) "[DEBUG] Case: ", trim(cea%Case)
+    write(stderr, *) "[DEBUG] iof = ", iof, ", Nof = ", cea%Nof
+    write(stderr, *) "[DEBUG] ", (trim(cea%ensert(i)), i = 1, 20)
+    write(stderr, *) "[DEBUG] ", cea%Enn, cea%Ennl, cea%Enlsav, cea%Ensave, cea%Sumn
+!!$    write(stderr, *) "[DEBUG] ", cea%Deln(), cea%Enln(), cea%Sln()
+!!$    write(stderr, *) "[DEBUG] ", cea%En()
+    write(stderr, *) "[DEBUG] ", cea%Iplt, cea%Nc, cea%Ng, cea%Ngp1, cea%Nlm, cea%Nplt, cea%Nof
+    write(stderr, *) "[DEBUG] ", cea%Nomit, cea%Nonly, cea%Np, cea%Npr, cea%Ngc, cea%Nsert, cea%Nspr, cea%Nspx, cea%Nt
+    write(stderr, *) "[DEBUG] ", cea%Cpmix, cea%Wmix, cea%Bcheck
+    write(stderr, *) "[DEBUG] ", cea%Imat, cea%Iq1, cea%Isv, cea%Jliq, cea%Jsol, cea%Lsave, cea%Msing
+    write(stderr, *) "[DEBUG] ", cea%Convg, cea%Detdbg, cea%Detn, cea%Eql, cea%Gonly, cea%Hp, cea%Ions, cea%Massf, cea%Moles
+    write(stderr, *) "[DEBUG] ", cea%Pderiv, cea%Shock, cea%Short, cea%SIunit, cea%Sp, cea%Tp, cea%Trnspt, cea%Vol
+    write(stderr, *) "[DEBUG] ", cea%Eqrat, cea%Hsub0, cea%Oxfl, cea%Pp, cea%R, cea%Size, cea%S0
+    write(stderr, *) "[DEBUG] ", cea%Tln, cea%Tm, cea%Trace, cea%Tt, cea%Viscns, cea%Vv
+!!$    write(stderr, *) "[DEBUG] ", 
+
+    return
+  end subroutine print_debug
+#endif
 
 end module mod_cea

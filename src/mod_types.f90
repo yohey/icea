@@ -46,6 +46,7 @@ module mod_types
 
      integer:: iOF !< index of O/F
      integer:: Npt !< index of point (to be changed to `ipt`)
+     integer:: max_points
 
      character(15):: ensert(20)
 
@@ -116,17 +117,22 @@ contains
 
     integer:: i, j
 
-    allocate(cea%points(maxMix, Ncol))
+    ! temporary
+    cea%max_points = maxT * maxPv
+
+    allocate(cea%points(maxMix, cea%max_points))
 
     do concurrent (i = 1:maxMix)
        allocate(cea%points(i, 1)%B0(maxEl))
        allocate(cea%points(i, 1)%B0p(maxEl, 2))
 
-       do concurrent (j = 2:Ncol)
+       do concurrent (j = 2:cea%max_points)
           cea%points(i, j)%B0 => cea%points(i, 1)%B0
           cea%points(i, j)%B0p => cea%points(i, 1)%B0p
        end do
     end do
+
+    cea%ensert(:) = ""
 
     cea%iOF = 0
     cea%Npt = 0
