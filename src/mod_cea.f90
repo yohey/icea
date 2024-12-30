@@ -2921,16 +2921,20 @@ contains
     type(CEA_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
-    integer, save:: j, lsav
-    real(8), save:: Tsave
+    integer:: j
 
-    if (cea%Isv < 0) then
+    if (cea%Isv > 0) then
+       ! USE COMPOSITIONS FROM PREVIOUS POINT
+       do j = 1, cea%Ngc
+          cea%En(j, cea%Npt) = cea%En(j, cea%Isv)
+       end do
+    else if (cea%Isv < 0) then
        ! FIRST T--SAVE COMPOSITIONS FOR FUTURE POINTS WITH THIS T
        cea%Isv = -cea%Isv
-       Tsave = cea%Ttt(cea%Isv)
+       cea%Tsave = cea%Ttt(cea%Isv)
        cea%Ensave = cea%Enn
        cea%Enlsav = cea%Ennl
-       lsav = cea%Lsave
+       cea%lsav = cea%lsave
        do j = 1, cea%Ng
           cea%Sln(j) = cea%Enln(j)
        end do
@@ -2946,21 +2950,21 @@ contains
              cea%En(cea%Jliq, cea%Npt) = 0
              cea%Jsol = 0
              cea%Jliq = 0
-             Tsave = Tsave - 5
-             cea%Tt = Tsave
+             cea%Tsave = cea%Tsave - 5
+             cea%Tt = cea%Tsave
              cea%Sln(j) = 0
           else if (cea%En(j, cea%Npt) > 0) then
              cea%Npr = cea%Npr + 1
              cea%Jcond(cea%Npr) = j
           end if
        end do
-    else if (cea%Isv == 0) then
+    else ! if (cea%Isv == 0) then
        ! NEXT POINT FIRST T IN SCHEDULE, USE PREVIOUS COMPOSITIONS FOR THIS T
        cea%Jsol = 0
        cea%Jliq = 0
        cea%Enn = cea%Ensave
        cea%Ennl = cea%Enlsav
-       cea%Lsave = lsav
+       cea%lsave = cea%lsav
        cea%Npr = 0
        do j = cea%Ngp1, cea%Ngc
           cea%En(j, cea%Npt) = cea%Sln(j)
@@ -2976,13 +2980,8 @@ contains
              if ((cea%Enln(j) - cea%Ennl + 18.5) > 0) cea%En(j, cea%Npt) = exp(cea%Enln(j))
           end if
        end do
-       if (.not. cea%Tp) cea%Tt = Tsave
+       if (.not. cea%Tp) cea%Tt = cea%Tsave
        cea%Sumn = cea%Enn
-    else if (cea%Isv > 0) then
-       ! USE COMPOSITIONS FROM PREVIOUS POINT
-       do j = 1, cea%Ngc
-          cea%En(j, cea%Npt) = cea%En(j, cea%Isv)
-       end do
     end if
   end subroutine SETEN
 

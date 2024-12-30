@@ -51,7 +51,11 @@ module mod_types
 
      character(15):: ensert(20)
 
-     real(8):: Enn, Ennl, Enlsav, Ensave, Sumn
+     ! for subroutine SETEN
+     integer:: Isv, lsave, lsav
+     real(8):: Enlsav, Ensave, Tsave
+
+     real(8):: Enn, Ennl, Sumn
      real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)
      real(8):: En(maxNgc, Ncol)
 
@@ -61,7 +65,7 @@ module mod_types
      real(8):: Cpmix, Wmix, Bcheck
      real(8):: Am(2), Hpp(2), Vmin(2), Vpls(2), Wp(2), Oxf(maxMix), P(maxPv), Rh(2), T(maxT), V(maxPv)
 
-     integer:: Imat, Iq1, Isv, Jliq, Jsol, Lsave, Msing
+     integer:: Imat, Iq1, Jliq, Jsol, Msing
 
      logical:: Convg, Debug(Ncol), Detdbg, Detn, Eql, Gonly, Hp, Ions, Massf, Moles
      logical:: Pderiv, Shock, Short, SIunit, Sp, Tp, Trnspt, Vol
