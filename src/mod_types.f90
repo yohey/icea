@@ -46,7 +46,8 @@ module mod_types
      type(CEA_Point), pointer:: points(:, :)
 
      integer:: iOF !< index of O/F
-     integer:: Npt !< index of point (to be changed to `ipt`)
+     integer:: ipt !< index of point (new)
+     integer:: Npt !< index of point (= mod(ipt - 1, Ncol) + 1)
      integer:: max_points
 
      character(15):: ensert(20)

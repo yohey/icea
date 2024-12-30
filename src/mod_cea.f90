@@ -181,6 +181,14 @@ contains
 
           ! BEGIN P LOOP.
           do ip = 1, cea%Np
+             cea%ipt = (it - 1) * cea%Np + ip
+             cea%Npt = mod(cea%ipt - 1, Ncol) + 1
+
+             if (cea%ipt > 1) then
+                if (cea%Isv == 1) cea%Isv = -1
+                call SETEN(cea)
+             end if
+
              p1 = cea%P(ip)
              cea%Tt = T1
              cea%Pp = p1
@@ -286,7 +294,6 @@ contains
                       end if
                    else
                       write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
-                      cea%Npt = cea%Npt - 1
                       cea%Tt = 0
                    end if
 
@@ -296,7 +303,7 @@ contains
 
                    if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
                       cea%Isv = cea%Npt
-                      if (cea%Npt /= Ncol) go to 120
+                      if (cea%Npt /= Ncol) cycle
                    end if
                 end if
 
@@ -423,13 +430,6 @@ contains
                 if (cea%Np == 1 .and. cea%Nt == 1) cycle outerLoop
 
                 write(IOOUT, '(///)')
-
-                cea%Npt = 0
-120             cea%Npt = cea%Npt + 1
-
-                if (cea%Isv == 1) cea%Isv = -1
-
-                call SETEN(cea)
              end if
           end do
        end do
