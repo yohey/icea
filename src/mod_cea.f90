@@ -168,7 +168,7 @@ contains
        cea%Nt = 1
     end if
 
-    outerLoop: do iof = 1, cea%Nof
+    iofLoop: do iof = 1, cea%Nof
        cea%Tt = cea%T(1)
 
        cea%Oxfl = cea%Oxf(iof)
@@ -244,7 +244,7 @@ contains
 
                    call EQLBRM(cea)
 
-                   if (cea%Npt == 0) exit outerLoop
+                   if (cea%Npt == 0) exit iofLoop
 
                    if (cea%Tt == 0) exit
 
@@ -426,8 +426,8 @@ contains
 
                 cea%Iplt = min(cea%Iplt+cea%Npt, 500)
 
-                if (cea%Isv == 0 .and. iof == cea%Nof) exit outerLoop
-                if (cea%Np == 1 .and. cea%Nt == 1) cycle outerLoop
+                if (cea%Isv == 0 .and. iof == cea%Nof) exit iofLoop
+                if (cea%Np == 1 .and. cea%Nt == 1) cycle iofLoop
 
                 write(IOOUT, '(///)')
              end if
@@ -436,7 +436,7 @@ contains
 
        cea%Iplt = min(cea%Iplt + cea%Npt - 1, 500)
 
-    end do outerLoop
+    end do iofLoop
 
     cea%Tp = .false.
 
@@ -3414,8 +3414,12 @@ contains
     integer:: iof
     integer:: ip, it
 
+#ifndef NDEBUG
+    write(stderr, *) '[DEBUG] ', trim(cea%Case)
+#endif
+
     cea%Eql = .true.
-    outerLoop: do iof = 1, cea%Nof
+    iofLoop: do iof = 1, cea%Nof
        cea%Oxfl = cea%Oxf(iof)
        call NEWOF(cea)
        ! SET ASSIGNED P OR VOLUME
@@ -3423,6 +3427,22 @@ contains
           cea%Pp = cea%P(ip)
           ! SET ASSIGNED T
           do it = 1, cea%Nt
+             cea%ipt = (ip - 1) * cea%Nt + it
+             cea%Npt = mod(cea%ipt - 1, Ncol) + 1
+
+             if (iof > 1 .or. cea%ipt > 1) then
+                if (.not. cea%Tp .and. cea%Tt /= 0) cea%T(1) = cea%Tt
+
+                if (cea%ipt == 2) then
+                   cea%Isv = -1
+                else if (cea%Nt /= 1 .and. (it == 1 .or. cea%Tt == 0.)) then
+                   cea%Isv = 0
+                else
+                   cea%Isv = mod(cea%ipt - 2, Ncol) + 1
+                end if
+                call SETEN(cea)
+             end if
+
              cea%Vv = cea%V(ip)
              cea%Tt = cea%T(it)
              call EQLBRM(cea)
@@ -3435,10 +3455,9 @@ contains
              end if
 
              if (cea%Trnspt .and. cea%Tt /= 0) call TRANP(cea)
-             cea%Isv = 0
+
              if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
-                cea%Isv = cea%Npt
-                if (cea%Npt /= Ncol) go to 10
+                if (cea%Npt /= Ncol) cycle
              end if
              if (.not. cea%Hp) write(IOOUT, '(////15X, "THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED")')
              if (cea%Hp) write(IOOUT, '(////9X, "THERMODYNAMIC EQUILIBRIUM COMBUSTION PROPERTIES AT ASSIGNED")')
@@ -3458,7 +3477,7 @@ contains
              call OUT3(cea)
              cea%Iplt = min(cea%Iplt + cea%Npt, 500)
 
-             if (cea%Isv == 0 .and. iof == cea%Nof) then
+             if ((ip == cea%Np .and. it == cea%Nt .or. cea%Tt == 0) .and. iof == cea%Nof) then
 #ifndef NDEBUG
                 call print_debug(cea, iof)
 #endif
@@ -3466,25 +3485,9 @@ contains
              end if
 
              write(IOOUT, '(////)')
-             cea%Npt = 0
-10           cea%Npt = cea%Npt + 1
-             if (.not. cea%Tp .and. cea%Tt /= 0) cea%T(1) = cea%Tt
-
-             if (cea%Nt == 1 .and. cea%Np == 1) then
-#ifndef NDEBUG
-                call print_debug(cea, iof)
-#endif
-                cycle outerLoop
-             end if
-
-             if (ip == 1 .and. it == 1) cea%Isv = -cea%Isv
-             if (cea%Nt /= 1) then
-                if (it == cea%Nt .or. cea%Tt == 0.) cea%Isv = 0
-             end if
-             call SETEN(cea)
           end do
        end do
-    end do outerLoop
+    end do iofLoop
 
     return
   end subroutine THERMP
