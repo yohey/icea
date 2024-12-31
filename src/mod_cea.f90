@@ -3045,9 +3045,9 @@ contains
 
           if (.not. cea%Incdeq) then
              ! FROZEN
-             do n = 1, cea%Nsk
-                cea%Dlvtp(n) = 1
-                cea%Dlvpt(n) = -1
+             do i = 1, cea%Nsk
+                cea%Dlvtp(i) = 1
+                cea%Dlvpt(i) = -1
              end do
           end if
 
@@ -3085,8 +3085,6 @@ contains
              cea%Vlm(i) = R0 * cea%Tt / (cea%Wmix * cea%Pp)
           end do
 
-          cea%Npt = cea%Nsk
-
           ! OUTPUT--1ST CONDITION
           write(IOOUT, '(////25X, "SHOCK WAVE PARAMETERS ASSUMING")')
           if (.not. cea%Incdeq) then
@@ -3100,22 +3098,25 @@ contains
           cea%fmt(4) = '13'
           cea%fmt(5) = ' '
           cea%fmt(7) = '4,'
-          write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%Mach1(j), j = 1, cea%Npt)
+          write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%Mach1(j), j = 1, cea%Nsk)
           cea%fmt(7) = '2,'
-          write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%U1(j), j = 1, cea%Npt)
+          write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%U1(j), j = 1, cea%Nsk)
+
+          cea%Npt = cea%Nsk
           call OUT2(cea)
+
           ! BEGIN CALCULATIONS FOR 2ND CONDITION
           if (cea%Incdeq) cea%Eql = .true.
 
-          cea%Npt = 1
+          cea%ipt = 1
           do
-             cea%Gamma1 = cea%Gammas(cea%Npt)
-             uu = cea%U1(cea%Npt)
-             wmx = cea%Wm(cea%Npt)
-             p1 = cea%Ppp(cea%Npt)
-             T1 = cea%Ttt(cea%Npt)
-             hs = cea%Hsum(cea%Npt)
-             if (refl) uu = u1u2(cea%Npt)
+             cea%Gamma1 = cea%Gammas(cea%ipt)
+             uu = cea%U1(cea%ipt)
+             wmx = cea%Wm(cea%ipt)
+             p1 = cea%Ppp(cea%ipt)
+             T1 = cea%Ttt(cea%ipt)
+             hs = cea%Hsum(cea%ipt)
+             if (refl) uu = u1u2(cea%ipt)
              mu12rt = wmx * uu**2 / (R0 * T1)
              if (refl) then
                 ! REFLECTED--SUBSCRIPTS 2=1, 5=2, P52=P21
@@ -3123,18 +3124,22 @@ contains
                 b2 = (-1 - mu12rt - T21) / 2
                 p21 = -b2 + sqrt(b2**2 - T21)
              else
-                p21 = (2 * cea%Gamma1 * cea%Mach1(cea%Npt)**2 - cea%Gamma1 + 1) / (cea%Gamma1 + 1)
+                p21 = (2 * cea%Gamma1 * cea%Mach1(cea%ipt)**2 - cea%Gamma1 + 1) / (cea%Gamma1 + 1)
                 ! THE FOLLOWING IMPROVED FORMULATION FOR THE INITIAL ESTIMATE FOR THE
                 ! 2ND CONDITION WAS MADE AND TESTED BY S. GORDON 7/10/89.
                 if (.not. cea%Eql) then
-                   T21 = p21 * (2 / cea%Mach1(cea%Npt)**2 + cea%Gamma1 - 1) / (cea%Gamma1 + 1)
+                   T21 = p21 * (2 / cea%Mach1(cea%ipt)**2 + cea%Gamma1 - 1) / (cea%Gamma1 + 1)
                 else
                    cea%Pp = p21 * p1
                    cea%Tp = .false.
                    cea%Hp = .true.
                    cea%Hsub0 = hs + uu**2 / (2 * R0)
+
+                   cea%Npt = cea%ipt
                    call EQLBRM(cea)
-                   T21 = cea%Ttt(cea%Npt) / T1
+                   cea%ipt = cea%Npt
+
+                   T21 = cea%Ttt(cea%ipt) / T1
                    cea%Hp = .false.
                    cea%Tp = .true.
                 end if
@@ -3154,38 +3159,41 @@ contains
                    ! FROZEN
                    cea%Tln = log(cea%Tt)
                    if (.not. cea%Incdeq) then
+                      cea%Npt = cea%ipt
                       call HCALC(cea)
                       if (cea%Tt == 0) exit
-                      cea%Hsum(cea%Npt) = cea%Hsub0
-                      cea%Cpr(cea%Npt) = cea%Cpmix
+                      cea%Hsum(cea%ipt) = cea%Hsub0
+                      cea%Cpr(cea%ipt) = cea%Cpmix
                    else
                       call CPHS(cea)
-                      cea%Cpr(cea%Npt) = cea%Cpsum
-                      cea%Hsum(cea%Npt) = 0
+                      cea%Cpr(cea%ipt) = cea%Cpsum
+                      cea%Hsum(cea%ipt) = 0
                       do j = 1, cea%Ng
-                         cea%Hsum(cea%Npt) = cea%Hsum(cea%Npt) + cea%H0(j) * cea%En(j, cea%Npt)
+                         cea%Hsum(cea%ipt) = cea%Hsum(cea%ipt) + cea%H0(j) * cea%En(j, cea%ipt)
                       end do
-                      cea%Hsum(cea%Npt) = cea%Hsum(cea%Npt) * cea%Tt
+                      cea%Hsum(cea%ipt) = cea%Hsum(cea%ipt) * cea%Tt
                    end if
                 else
+                   cea%Npt = cea%ipt
                    call EQLBRM(cea)
+                   cea%ipt = cea%Npt
                    if (cea%Tt == 0) exit
                 end if
-                rho12 = wmx * T21 / (cea%Wm(cea%Npt) * p21)
+                rho12 = wmx * T21 / (cea%Wm(cea%ipt) * p21)
                 gg = rho12 * mu12rt
                 rho52 = 1 / rho12
                 if (refl) gg = -mu12rt * rho52 / (rho52 - 1)**2
-                cea%G(1, 1) = -gg * cea%Dlvpt(cea%Npt) - p21
-                cea%G(1, 2) = -gg * cea%Dlvtp(cea%Npt)
+                cea%G(1, 1) = -gg * cea%Dlvpt(cea%ipt) - p21
+                cea%G(1, 2) = -gg * cea%Dlvtp(cea%ipt)
                 cea%G(1, 3) = p21 - 1 + gg - mu12rt
                 if (refl) cea%G(1, 3) = p21 - 1 + gg * (rho52 - 1)
                 gg = gg * T1 / wmx
                 if (.not. refl) gg = gg * rho12
-                cea%G(2, 1) = -gg * cea%Dlvpt(cea%Npt) + cea%Tt * (cea%Dlvtp(cea%Npt) - 1) / cea%Wm(cea%Npt)
-                cea%G(2, 2) = -gg * cea%Dlvtp(cea%Npt) - cea%Tt * cea%Cpr(cea%Npt)
+                cea%G(2, 1) = -gg * cea%Dlvpt(cea%ipt) + cea%Tt * (cea%Dlvtp(cea%ipt) - 1) / cea%Wm(cea%ipt)
+                cea%G(2, 2) = -gg * cea%Dlvtp(cea%ipt) - cea%Tt * cea%Cpr(cea%ipt)
                 gg = 1 - rho12**2
                 if (refl) gg = (rho52 + 1) / (rho52 - 1)
-                cea%G(2, 3) = cea%Hsum(cea%Npt) - hs - uu**2 * gg / (2 * R0)
+                cea%G(2, 3) = cea%Hsum(cea%ipt) - hs - uu**2 * gg / (2 * R0)
                 cea%X(3) = cea%G(1, 1) * cea%G(2, 2) - cea%G(1, 2) * cea%G(2, 1)
                 cea%X(1) = (cea%G(1, 3) * cea%G(2, 2) - cea%G(2, 3) * cea%G(1, 2)) / cea%X(3)
                 cea%X(2) = (cea%G(1, 1) * cea%G(2, 3) - cea%G(2, 1) * cea%G(1, 3)) / cea%X(3)
@@ -3193,7 +3201,7 @@ contains
                    write(IOOUT, '(/" G(I,J)  ", 3E15.8)') cea%G(1, 1), cea%G(1, 2), cea%G(1, 3)
                    write(IOOUT, '(/" G(I,J)  ", 3E15.8)') cea%G(2, 1), cea%G(2, 2), cea%G(2, 3)
                    write(IOOUT, '(/" X       ", 2E15.8)') cea%X(1), cea%X(2)
-                   write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') cea%Hsum(cea%Npt), hs, uu, uu * rho12
+                   write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') cea%Hsum(cea%ipt), hs, uu, uu * rho12
                 end if
                 ax = abs(cea%X(1))
                 axx = abs(cea%X(2))
@@ -3219,37 +3227,37 @@ contains
 
                 if (itr == 1 .and. T21 >= ttmax) then
                    cea%Tt = 0
-                   cea%Npt = cea%Npt - 1
+                   cea%ipt = cea%ipt - 1
                 end if
              end do
 
              if (.not. cea%Eql .or. cea%Tt /= 0) then
                 if (itr > 60) then
                    write(IOOUT, '(/6x, " WARNING!!  NO CONVERGENCE FOR u1=", F8.1, &
-                        & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') cea%U1(cea%Npt)
+                        & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') cea%U1(cea%ipt)
                 end if
 
                 if ((itr > 60) .or. (ax < 0.00005) .or. ((.not. cea%Eql) .and. (.not. cea%Incdeq) .and. (cea%Tt == 0))) then
                    ! CONVERGED OR TOOK 60 ITERATIONS WITHOUT CONVERGING.
                    ! STORE RESULTS.
-                   rrho(cea%Npt) = rho52
-                   m2m1(cea%Npt) = cea%Wm(cea%Npt) / wmx
-                   p2p1(cea%Npt) = p21
-                   t2t1(cea%Npt) = T21
-                   utwo(cea%Npt) = uu * rho12
-                   u1u2(cea%Npt) = uu - utwo(cea%Npt)
+                   rrho(cea%ipt) = rho52
+                   m2m1(cea%ipt) = cea%Wm(cea%ipt) / wmx
+                   p2p1(cea%ipt) = p21
+                   t2t1(cea%ipt) = T21
+                   utwo(cea%ipt) = uu * rho12
+                   u1u2(cea%ipt) = uu - utwo(cea%ipt)
                    if (cea%Tt >= cea%Tg(1) * 0.8d0 .and. cea%Tt <= cea%Tg(4) * 1.1d0) then
                       if (.not. cea%Eql) then
                          ! FROZEN
-                         cea%Ppp(cea%Npt) = cea%Pp
-                         cea%Ttt(cea%Npt) = cea%Tt
-                         cea%Gammas(cea%Npt) = cea%Cpr(cea%Npt) / (cea%Cpr(cea%Npt) - 1 / wmx)
-                         cea%Vlm(cea%Npt) = R0 * cea%Tt / (wmx * cea%Pp)
+                         cea%Ppp(cea%ipt) = cea%Pp
+                         cea%Ttt(cea%ipt) = cea%Tt
+                         cea%Gammas(cea%ipt) = cea%Cpr(cea%ipt) / (cea%Cpr(cea%ipt) - 1 / wmx)
+                         cea%Vlm(cea%ipt) = R0 * cea%Tt / (wmx * cea%Pp)
                          if (cea%Incdeq) then
-                            cea%Ssum(cea%Npt) = 0
+                            cea%Ssum(cea%ipt) = 0
                             do j = 1, cea%Ngc
-                               pmn = cea%Pp * wmx * cea%En(j, cea%Npt)
-                               if (cea%En(j, cea%Npt) > 0) cea%Ssum(cea%Npt) = cea%Ssum(cea%Npt) + cea%En(j, cea%Npt) * (cea%S(j) - log(pmn))
+                               pmn = cea%Pp * wmx * cea%En(j, cea%ipt)
+                               if (cea%En(j, cea%ipt) > 0) cea%Ssum(cea%ipt) = cea%Ssum(cea%ipt) + cea%En(j, cea%ipt) * (cea%S(j) - log(pmn))
                             end do
                          end if
                       end if
@@ -3258,22 +3266,32 @@ contains
                 end if
 
                 write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
-                     & "FOR POINT", I5, " (SHCK)")') cea%Tt, cea%Npt
+                     & "FOR POINT", I5, " (SHCK)")') cea%Tt, cea%ipt
                 cea%Tt = 0
              end if
 
-             if (cea%Npt < 1) return
+             if (cea%ipt < 1) return
 
-             cea%Nsk = cea%Npt
+             cea%Nsk = cea%ipt
 
-900          if (cea%Trnspt) call TRANP(cea)
+900          if (cea%Trnspt) then
+                cea%Npt = cea%ipt
+                call TRANP(cea)
+             end if
+
              cea%Isv = 0
-             if (cea%Npt < cea%Nsk) cea%Isv = cea%Npt
-             if (cea%Npt == 1) cea%Isv = -1
-             cea%Npt = cea%Npt + 1
-             if (cea%Eql) call SETEN(cea)
-             if (cea%Npt <= cea%Nsk) cycle
-             cea%Npt = cea%Nsk
+             if (cea%ipt < cea%Nsk) cea%Isv = cea%ipt
+             if (cea%ipt == 1) cea%Isv = -1
+             cea%ipt = cea%ipt + 1
+
+             if (cea%Eql) then
+                write(stderr, *) '[DEBUG] SHCK: call SETEN(', cea%Isv, cea%Npt, ')'
+                cea%Npt = cea%ipt
+                call SETEN(cea)
+             end if
+
+             if (cea%ipt <= cea%Nsk) cycle
+             cea%ipt = cea%Nsk
              if (refl) then
                 if (.not. cea%Eql) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--FROZEN")')
                 if (cea%Eql) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM")')
@@ -3286,19 +3304,22 @@ contains
                 cr52 = '2'
              end if
              cea%fmt(7) = '2,'
-             write(IOOUT, cea%fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, cea%Npt)
+             write(IOOUT, cea%fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, cea%ipt)
+
+             cea%Npt = cea%ipt
              call OUT2(cea)
+
              if (cea%Trnspt) call OUT4(cea)
              write(IOOUT, *)
              cea%fmt(7) = '3,'
-             write(IOOUT, cea%fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, cea%Npt)
-             write(IOOUT, cea%fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, cea%Npt)
+             write(IOOUT, cea%fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, cea%ipt)
+             write(IOOUT, cea%fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, cea%ipt)
              cea%fmt(7) = '4,'
-             write(IOOUT, cea%fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, cea%Npt)
-             write(IOOUT, cea%fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, cea%Npt)
+             write(IOOUT, cea%fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, cea%ipt)
+             write(IOOUT, cea%fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, cea%ipt)
              cea%fmt(7) = '2,'
-             if (.not. refl) write(IOOUT, cea%fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, cea%Npt)
-             if (refl) write(IOOUT, cea%fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, cea%Npt)
+             if (.not. refl) write(IOOUT, cea%fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, cea%ipt)
+             if (refl) write(IOOUT, cea%fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, cea%ipt)
              if (.not. cea%Eql) then
                 ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
                 cea%fmt(7) = '5,'
@@ -3312,7 +3333,7 @@ contains
                    do n = 1, cea%Nreac
                       j = cea%Jray(n)
                       if (cea%Massf) ww = cea%Mw(j)
-                      write(IOOUT, '(" ", A16, F8.5, 12F9.5)') cea%Prod(j), (cea%En(j, i) * ww, i = 1, cea%Npt)
+                      write(IOOUT, '(" ", A16, F8.5, 12F9.5)') cea%Prod(j), (cea%En(j, i) * ww, i = 1, cea%ipt)
                    end do
                 else
                    cea%Eql = .true.
@@ -3323,7 +3344,7 @@ contains
                 call OUT3(cea)
              end if
 
-             cea%Iplt = min(cea%Iplt + cea%Npt, 500)
+             cea%Iplt = min(cea%Iplt + cea%ipt, 500)
 
              if (srefl) then
                 if (.not. refl) then
@@ -3334,28 +3355,23 @@ contains
                    if (cea%Reflfz) then
                       cea%Eql = .false.
                       if (cea%Refleq) then
-                         j = 0
-                         do i = 1, cea%Npt
-                            j = j + 1
-                            sg(j) = u1u2(i)
-                            j = j + 1
-                            sg(j) = cea%Wm(i)
-                            j = j + 1
-                            sg(j) = cea%Ppp(i)
-                            j = j + 1
-                            sg(j) = cea%Ttt(i)
-                            j = j + 1
-                            sg(j) = cea%Hsum(i)
-                            j = j + 1
-                            sg(j) = cea%Gammas(i)
+                         j = 1
+                         do i = 1, cea%ipt
+                            sg(j)   = u1u2(i)
+                            sg(j+1) = cea%Wm(i)
+                            sg(j+2) = cea%Ppp(i)
+                            sg(j+3) = cea%Ttt(i)
+                            sg(j+4) = cea%Hsum(i)
+                            sg(j+5) = cea%Gammas(i)
+                            j = j + 6
                          end do
                       end if
                    end if
-                   cea%Npt = 1
+                   cea%ipt = 1
                    cycle
                 else if (.not. cea%Eql .and. cea%Refleq) then
                    j = 1
-                   do i = 1, cea%Npt
+                   do i = 1, cea%ipt
                       u1u2(i) = sg(j)
                       cea%Wm(i) = sg(j+1)
                       cea%Ppp(i) = sg(j+2)
@@ -3365,7 +3381,7 @@ contains
                       j = j + 6
                    end do
                    cea%Eql = .true.
-                   cea%Npt = 1
+                   cea%ipt = 1
                    cycle
                 end if
              end if
