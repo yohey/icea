@@ -1070,7 +1070,7 @@ contains
 
   subroutine OUT1(cea)
     !***********************************************************************
-    ! OUT1 WRITES REACTANT AND FUEL-OXIDANT RATIO INformatION.
+    ! OUT1 WRITES REACTANT AND FUEL-OXIDANT RATIO INFORMATION.
     !
     ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
     !***********************************************************************
@@ -1129,7 +1129,7 @@ contains
   end subroutine OUT1
 
 
-  subroutine OUT2(cea)
+  subroutine OUT2(cea, Npt)
     !***********************************************************************
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
@@ -1137,6 +1137,7 @@ contains
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
+    integer, intent(in):: Npt
 
     character(15):: fgi, fh, fp, frh, fs, fu
     integer:: i, j
@@ -1234,7 +1235,7 @@ contains
           end if
        end if
     end do
-    do i = cea%Iplt + 1, cea%Iplt + cea%Npt
+    do i = cea%Iplt + 1, cea%Iplt + Npt
        if (mof > 0) cea%Pltout(i, mof) = cea%Oxfl
        if (mpf > 0) cea%Pltout(i, mpf) = pfuel
        if (mph > 0) cea%Pltout(i, mph) = phi
@@ -1267,9 +1268,9 @@ contains
     cea%fmt(4) = cea%fmt(6)
 
     ! PRESSURE
-    call VARFMT(cea, cea%Ppp)
+    call VARFMT(cea, cea%Ppp, Npt)
 
-    do i = 1, cea%Npt
+    do i = 1, Npt
        cea%X(i) = cea%Ppp(i) * pfactor
        if (cea%Nplt /= 0 .and. i > ione) then
           if (mp > 0) cea%Pltout(i + cea%Iplt - ione, mp) = cea%X(i)
@@ -1277,40 +1278,40 @@ contains
        end if
     end do
 
-    write(IOOUT, cea%fmt) fp, (cea%X(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) fp, (cea%X(j), j = 1, Npt)
 
     ! TEMPERATURE
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '2,'
-    write(IOOUT, cea%fmt) 'T, K            ', (cea%Ttt(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'T, K            ', (cea%Ttt(j), j = 1, Npt)
 
     ! DENSITY
-    do i = 1, cea%Npt
+    do i = 1, Npt
        if (cea%Vlm(i) /= 0) cea%X(i) = vnum / cea%Vlm(i)
        if (cea%Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+cea%Iplt-ione, mrho) = cea%X(i)
     end do
-    call EFMT(cea%fmt(4), frh, cea%X, cea%Npt)
+    call EFMT(cea%fmt(4), frh, cea%X, Npt)
 
     ! ENTHALPY
-    do i = 1, cea%Npt
+    do i = 1, Npt
        cea%X(i) = cea%Hsum(i) * cea%R
        if (cea%Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+cea%Iplt-ione, mh) = cea%X(i)
     end do
     cea%fmt(4) = cea%fmt(6)
-    call VARFMT(cea, cea%X)
-    write(IOOUT, cea%fmt) fh, (cea%X(j), j = 1, cea%Npt)
+    call VARFMT(cea, cea%X, Npt)
+    write(IOOUT, cea%fmt) fh, (cea%X(j), j = 1, Npt)
 
     ! INTERNAL ENERGY
-    do i = 1, cea%Npt
+    do i = 1, Npt
        cea%X(i) = (cea%Hsum(i) - cea%Ppp(i) * cea%Vlm(i) / R0) * cea%R
        if (cea%Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+cea%Iplt-ione, mie) = cea%X(i)
     end do
-    call VARFMT(cea, cea%X)
-    write(IOOUT, cea%fmt) fu, (cea%X(j), j = 1, cea%Npt)
+    call VARFMT(cea, cea%X, Npt)
+    write(IOOUT, cea%fmt) fu, (cea%X(j), j = 1, Npt)
 
     ! GIBBS ENERGY
-    do i = 1, cea%Npt
+    do i = 1, Npt
        cea%X(i) = (cea%Hsum(i) - cea%Ttt(i) * cea%Ssum(i)) * cea%R
        if (cea%Nplt /= 0 .and. i > ione) then
           if (mg > 0) cea%Pltout(i+cea%Iplt-ione, mg) = cea%X(i)
@@ -1323,48 +1324,48 @@ contains
           if (mdvp > 0) cea%Pltout(i+cea%Iplt-ione, mdvp) = cea%Dlvpt(i)
        end if
     end do
-    call VARFMT(cea, cea%X)
-    write(IOOUT, cea%fmt) fgi, (cea%X(j), j = 1, cea%Npt)
+    call VARFMT(cea, cea%X, Npt)
+    write(IOOUT, cea%fmt) fgi, (cea%X(j), j = 1, Npt)
 
     ! ENTROPY
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '4,'
-    write(IOOUT, cea%fmt) fs, (cea%Ssum(j) * cea%R, j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) fs, (cea%Ssum(j) * cea%R, j = 1, Npt)
     write(IOOUT, *)
 
     ! MOLECULAR WEIGHT
     cea%fmt(7) = '3,'
-    write(IOOUT, cea%fmt) 'M, (1/n)        ', (cea%Wm(j), j = 1, cea%Npt)
-    if (.not. cea%Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'M, (1/n)        ', (cea%Wm(j), j = 1, Npt)
+    if (.not. cea%Gonly) write(IOOUT, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, Npt)
 
     ! (DLV/DLP)T
     cea%fmt(7) = '5,'
-    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, cea%Npt)
+    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, Npt)
 
     ! (DLV/DLT)P
     cea%fmt(7) = '4,'
-    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, cea%Npt)
+    if (cea%Eql) write(IOOUT, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
 
     ! HEAT CAPACITY
-    write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * cea%R, j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) fc, (cea%Cpr(j) * cea%R, j = 1, Npt)
 
     ! GAMMA(S)
     cea%fmt(7) = '4,'
-    write(IOOUT, cea%fmt) 'GAMMAs          ', (cea%Gammas(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'GAMMAs          ', (cea%Gammas(j), j = 1, Npt)
 
     ! SONIC VELOCITY
     cea%fmt(7) = '1,'
-    do i = 1, cea%Npt
+    do i = 1, Npt
        cea%Sonvel(i) = sqrt(R0 * cea%Gammas(i) * cea%Ttt(i) / cea%Wm(i))
        if (cea%Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+cea%Iplt-ione, mson) = cea%Sonvel(i)
     end do
-    write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, Npt)
     return
   end subroutine OUT2
 
 
-  subroutine OUT3(cea)
+  subroutine OUT3(cea, Npt)
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
@@ -1372,6 +1373,7 @@ contains
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
+    integer, intent(in):: Npt
 
     character(4):: mamo
     logical:: kOK
@@ -1410,7 +1412,7 @@ contains
           end if
 
           kin = 0
-          do i = 1, cea%Npt
+          do i = 1, Npt
              if (cea%Massf) then
                 tem = cea%Mw(k)
              else
@@ -1428,9 +1430,9 @@ contains
 
           if (kin == 1) then
              if (cea%Trace == 0) then
-                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (cea%X(i), i = 1, cea%Npt)
+                write(IOOUT, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (cea%X(i), i = 1, Npt)
              else
-                call EFMT(cea%fmt(4), cea%Prod(k), cea%X, cea%Npt)
+                call EFMT(cea%fmt(4), cea%Prod(k), cea%X, Npt)
              end if
              if (cea%Prod(k) == cea%Omit(notuse)) notuse = notuse - 1
           else if (cea%Prod(k) /= cea%Prod(k-1)) then
@@ -1454,7 +1456,7 @@ contains
   end subroutine OUT3
 
 
-  subroutine OUT4(cea)
+  subroutine OUT4(cea, Npt)
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
@@ -1462,6 +1464,7 @@ contains
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
+    integer, intent(in):: Npt
 
     integer:: i, j
 
@@ -1476,7 +1479,7 @@ contains
     ! TRANSPORT PROPERTIES
     cea%fmt(4) = cea%fmt(6)
     if (cea%Nplt > 0) then
-       do i = 1, cea%Npt
+       do i = 1, Npt
           if (i > ione) then
              if (mvis > 0) cea%Pltout(i+cea%Iplt-ione, mvis) = cea%Vis(i)
              if (mcond > 0) cea%Pltout(i+cea%Iplt-ione, mcond) = cea%Coneql(i)
@@ -1487,9 +1490,9 @@ contains
        end do
     end if
 
-    call VARFMT(cea, cea%Vis)
+    call VARFMT(cea, cea%Vis, Npt)
 
-    write(IOOUT, cea%fmt) 'VISC,MILLIPOISE', (cea%Vis(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'VISC,MILLIPOISE', (cea%Vis(j), j = 1, Npt)
 
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
@@ -1498,20 +1501,20 @@ contains
     if (cea%Eql) then
        write(IOOUT, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
-       write(IOOUT, cea%fmt) fc, (cea%Cpeql(j), j = 1, cea%Npt)
+       write(IOOUT, cea%fmt) fc, (cea%Cpeql(j), j = 1, Npt)
        ! CONDUCTIVITY
-       write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Coneql(j), j = 1, cea%Npt)
+       write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Coneql(j), j = 1, Npt)
        ! PRANDTL NUMBER
-       write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Preql(j), j = 1, cea%Npt)
+       write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Preql(j), j = 1, Npt)
     end if
 
     write(IOOUT, '(/"  WITH FROZEN REACTIONS"/)')
     ! SPECIFIC HEAT
-    write(IOOUT, cea%fmt) fc, (cea%Cpfro(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) fc, (cea%Cpfro(j), j = 1, Npt)
     ! CONDUCTIVITY
-    write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Confro(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'CONDUCTIVITY    ', (cea%Confro(j), j = 1, Npt)
     ! PRANDTL NUMBER
-    write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Prfro(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'PRANDTL NUMBER  ', (cea%Prfro(j), j = 1, Npt)
 
     return
   end subroutine OUT4
@@ -1519,7 +1522,7 @@ contains
 
   subroutine REACT(cea)
     !***********************************************************************
-    ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM subroutine INPUT.
+    ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
     !***********************************************************************
     use mod_types
     implicit none
@@ -1871,7 +1874,7 @@ contains
     ! PRESSURE RATIOS
     if (cea%Iopt == 0) then
        write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
-       call VARFMT(cea, [(cea%points(cea%iOF, j)%App, j = 1, cea%Npt)])
+       call VARFMT(cea, [(cea%points(cea%iOF, j)%App, j = 1, cea%Npt)], cea%Npt)
        write(IOOUT, cea%fmt) 'Pinf/P         ', (cea%points(cea%iOF, j)%App, j = 1, cea%Npt)
     else
        nex = nex - 1
@@ -1880,11 +1883,11 @@ contains
        do i = 2, cea%Npt
           cea%X(i) = cea%Ppp(1) / cea%Ppp(i)
        end do
-       call VARFMT(cea, cea%X)
+       call VARFMT(cea, cea%X, cea%Npt)
        write(IOOUT, cea%fmt) 'Pinj/P         ', (cea%X(i), i = 1, cea%Npt)
     end if
 
-    call OUT2(cea)
+    call OUT2(cea, cea%Npt)
 
     mppf  = 0
     mppj  = 0
@@ -1952,13 +1955,13 @@ contains
     if (cea%Gammas(i23) == 0) cea%Vmoc(i23) = 0
     cea%fmt(7) = '3,'
     write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%Vmoc(j), j = 1, cea%Npt)
-    if (cea%Trnspt) call OUT4(cea)
+    if (cea%Trnspt) call OUT4(cea, cea%Npt)
     write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
 
     ! AREA RATIO
     cea%fmt(4) = '9x,'
     cea%fmt(i46) = '9x,'
-    call VARFMT(cea, [(cea%points(cea%iOF, i)%AeAt, i = 1, cea%Npt)])
+    call VARFMT(cea, [(cea%points(cea%iOF, i)%AeAt, i = 1, cea%Npt)], cea%Npt)
     cea%fmt(5) = ' '
     cea%fmt(i57) = ' '
     write(IOOUT, cea%fmt) 'Ae/At          ', (cea%points(cea%iOF, j)%AeAt, j = 2, cea%Npt)
@@ -2037,7 +2040,7 @@ contains
 
           if (line == 3 .or. k == cea%Ngc) then
              if (line == 0) then
-                call OUT3(cea)
+                call OUT3(cea, cea%Npt)
                 return
              end if
              write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), cea%X(ln), ln = 1, line)
@@ -2046,17 +2049,17 @@ contains
        end do
     end if
 
-    call OUT3(cea)
+    call OUT3(cea, cea%Npt)
     return
   end subroutine RKTOUT
 
 
   subroutine UTHERM(cea, readOK)
     !***********************************************************************
-    ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD format AND WRITE
+    ! READ THERMO DATA FROM I/O UNIT 7 IN RECORD FORMAT AND WRITE
     ! UNFORMATTED ON NEW FILE.  DATA ARE REORDERED GASES FIRST.
     !
-    ! UTHERM IS CALLED FROM subroutine INPUT.
+    ! UTHERM IS CALLED FROM SUBROUTINE INPUT.
     !
     ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY AND USED BY ITSELF TO
     ! PROCESS THE THERMO DATA.
@@ -2330,10 +2333,10 @@ contains
 
   subroutine UTRAN(filename, io_input, io_log, readOK)
     !***********************************************************************
-    ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD format AND WRITE
+    ! READ TRANSPORT PROPERTIES FORM I/O UNIT 7 IN RECORD FORMAT AND WRITE
     ! UNFORMATTED ON NEW FILE.
     !
-    ! UTRAN IS CALLED FROM subroutine INPUT AFTER A RECORD WITH 'tran'
+    ! UTRAN IS CALLED FROM SUBROUTINE INPUT AFTER A RECORD WITH 'tran'
     ! IN COLUMNS 1-4 HAS BEEN READ.
     !
     ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY  AND USED BY ITSELF TO
@@ -2475,15 +2478,16 @@ contains
   end subroutine EFMT
 
 
-  subroutine VARFMT(cea, Vx)
+  subroutine VARFMT(cea, Vx, Npt)
     !***********************************************************************
-    ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-format IN
-    ! VARIABLE format FMT.
+    ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-FORMAT IN
+    ! VARIABLE FORMAT FMT.
     !***********************************************************************
     use mod_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
+    integer, intent(in):: Npt
 
     ! DUMMY ARGUMENTS
     real(8), intent(in):: Vx(Ncol)
@@ -2491,7 +2495,7 @@ contains
     integer:: i, k
     real(8):: vi
 
-    do i = 1, cea%Npt
+    do i = 1, Npt
        vi = abs(Vx(i))
        k = 2*i + 3
        cea%fmt(k) = '5,'

@@ -389,9 +389,9 @@ contains
                 write(IOOUT, '(/" BURNED GAS"/)')
 
                 cea%fmt(4) = cea%fmt(6)
-                call OUT2(cea)
+                call OUT2(cea, cea%Npt)
 
-                if (cea%Trnspt) call OUT4(cea)
+                if (cea%Trnspt) call OUT4(cea, cea%Npt)
 
                 write(IOOUT, '(/" DETONATION PARAMETERS"/)')
 
@@ -422,7 +422,7 @@ contains
 
                 cea%Eql = .true.
 
-                call OUT3(cea)
+                call OUT3(cea, cea%Npt)
 
                 cea%Iplt = min(cea%Iplt+cea%Npt, 500)
 
@@ -3101,9 +3101,7 @@ contains
           write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%Mach1(j), j = 1, cea%Nsk)
           cea%fmt(7) = '2,'
           write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%U1(j), j = 1, cea%Nsk)
-
-          cea%Npt = cea%Nsk
-          call OUT2(cea)
+          call OUT2(cea, cea%Nsk)
 
           ! BEGIN CALCULATIONS FOR 2ND CONDITION
           if (cea%Incdeq) cea%Eql = .true.
@@ -3306,10 +3304,9 @@ contains
              cea%fmt(7) = '2,'
              write(IOOUT, cea%fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, cea%ipt)
 
-             cea%Npt = cea%ipt
-             call OUT2(cea)
+             call OUT2(cea, cea%ipt)
 
-             if (cea%Trnspt) call OUT4(cea)
+             if (cea%Trnspt) call OUT4(cea, cea%ipt)
              write(IOOUT, *)
              cea%fmt(7) = '3,'
              write(IOOUT, cea%fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, cea%ipt)
@@ -3337,11 +3334,11 @@ contains
                    end do
                 else
                    cea%Eql = .true.
-                   call OUT3(cea)
+                   call OUT3(cea, cea%ipt)
                    cea%Eql = .false.
                 end if
              else
-                call OUT3(cea)
+                call OUT3(cea, cea%ipt)
              end if
 
              cea%Iplt = min(cea%Iplt + cea%ipt, 500)
@@ -3488,9 +3485,9 @@ contains
              end if
              call OUT1(cea)
              write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
-             call OUT2(cea)
-             if (cea%Trnspt) call OUT4(cea)
-             call OUT3(cea)
+             call OUT2(cea, cea%Npt)
+             if (cea%Trnspt) call OUT4(cea, cea%Npt)
+             call OUT3(cea, cea%Npt)
              cea%Iplt = min(cea%Iplt + cea%Npt, 500)
 
              if ((ip == cea%Np .and. it == cea%Nt .or. cea%Tt == 0) .and. iof == cea%Nof) then
