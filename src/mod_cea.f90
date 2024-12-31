@@ -158,8 +158,9 @@ contains
     integer:: ip, it
     real(8):: a11, a12, a21, a22, alam, alpha, amm, b1, b2, d, gam, &
          p1, pp1, rk, rr1, T1, tem, tt1, ud, x1, x2
-    real(8):: cpl(Ncol), gm1(Ncol), h1(Ncol), pub(Ncol), rrho(Ncol), tub(Ncol)
 
+    integer:: i_col_start
+    real(8), dimension(cea%max_points):: cpl, gm1, h1, pub, rrho, tub
 
     cea%Eql = .true.
 
@@ -184,6 +185,8 @@ contains
              cea%ipt = (it - 1) * cea%Np + ip
              cea%Npt = mod(cea%ipt - 1, Ncol) + 1
 
+             i_col_start = int((cea%ipt - 1) / Ncol) * Ncol + 1
+
              if (cea%ipt > 1) then
                 if (cea%Isv == 1) cea%Isv = -1
                 call SETEN(cea)
@@ -198,22 +201,23 @@ contains
              if (cea%Tt == 0) return
              if (cea%Detdbg) call OUT1(cea)
 
-             h1(cea%Npt) = cea%Hsub0 * cea%R
-             tub(cea%Npt) = T1
-             pub(cea%Npt) = p1
-             cpl(cea%Npt) = cea%Cpmix * cea%R
+             h1(cea%ipt) = cea%Hsub0 * cea%R
+
+             tub(cea%ipt) = T1
+             pub(cea%ipt) = p1
+             cpl(cea%ipt) = cea%Cpmix * cea%R
              cea%Tt = 3800
              pp1 = 15
              cea%Pp = pp1 * p1
 
              ! CALCULATE ENTHALPY FOR INITIAL ESTIMATE OF T2(TT AFTER EQLBRM)
-             cea%Hsub0 = h1(cea%Npt) / cea%R + 0.75 * T1 * pp1 / cea%Wmix
+             cea%Hsub0 = h1(cea%ipt) / cea%R + 0.75 * T1 * pp1 / cea%Wmix
              cea%Tp = .false.
              cea%Hp = .true.
 
              call EQLBRM(cea)
 
-             cea%Hsub0 = h1(cea%Npt) / cea%R
+             cea%Hsub0 = h1(cea%ipt) / cea%R
              cea%Hp = .false.
 
              if (cea%Tt /= 0) then
@@ -256,7 +260,7 @@ contains
                    a21 = 0.5 * gam * (rr1**2 - 1 - cea%Dlvpt(cea%Npt) * (1 + rr1**2)) + cea%Dlvtp(cea%Npt) - 1
                    a22 = -0.5 * gam * cea%Dlvtp(cea%Npt) * (rr1**2 + 1) - cea%Wm(cea%Npt) * cea%Cpr(cea%Npt)
                    b1 = 1 / pp1 - 1 + gam * (rr1 - 1)
-                   b2 = cea%Wm(cea%Npt) * (cea%Hsum(cea%Npt) - h1(cea%Npt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
+                   b2 = cea%Wm(cea%Npt) * (cea%Hsum(cea%Npt) - h1(cea%ipt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
                    d = a11 * a22 - a12 * a21
                    x1 = (a22 * b1 - a12 * b2) / d
                    x2 = (a11 * b2 - a21 * b1) / d
@@ -284,13 +288,13 @@ contains
 
                 if (cea%Tt /= 0) then
                    if (itr < 8) then
-                      rrho(cea%Npt) = rr1
-                      if (cpl(cea%Npt) == 0) then
-                         gm1(cea%Npt) = 0
+                      rrho(cea%ipt) = rr1
+                      if (cpl(cea%ipt) == 0) then
+                         gm1(cea%ipt) = 0
                          cea%Vmoc(cea%Npt) = 0
                       else
-                         gm1(cea%Npt) = cpl(cea%Npt) / (cpl(cea%Npt) - cea%R / cea%Wmix)
-                         cea%Vmoc(cea%Npt) = ud / sqrt(R0 * gm1(cea%Npt) * T1 / cea%Wmix)
+                         gm1(cea%ipt) = cpl(cea%ipt) / (cpl(cea%ipt) - cea%R / cea%Wmix)
+                         cea%Vmoc(cea%Npt) = ud / sqrt(R0 * gm1(cea%ipt) * T1 / cea%Wmix)
                       end if
                    else
                       write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
@@ -346,43 +350,46 @@ contains
                 cea%fmt(5) = ' '
                 cea%fmt(7) = '4,'
 
-                do i = 1, cea%Npt
+                do i = i_col_start, cea%ipt
+                   j = i - i_col_start + 1
                    if (cea%SIunit) then
-                      cea%V(i) = pub(i)
+                      cea%V(j) = pub(i)
                       unit = 'BAR'
                    else
-                      cea%V(i) = pub(i) / 1.01325d0
+                      cea%V(j) = pub(i) / 1.01325d0
                       unit = 'ATM'
                    end if
-                   if (mp > 0) cea%Pltout(i+cea%Iplt, mp) = cea%V(i)
+                   if (mp > 0) cea%Pltout(j+cea%Iplt, mp) = cea%V(j)
                 end do
 
                 write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (cea%V(j), j = 1, cea%Npt)
 
                 cea%fmt(7) = '2,'
-                write(IOOUT, cea%fmt) ft1, (tub(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) ft1, (tub(i), i = i_col_start, cea%ipt)
 
-                if (.not. cea%SIunit) write(IOOUT, cea%fmt) fh1, (h1(j), j = 1, cea%Npt)
-                if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(j), j = 1, cea%Npt)
+                if (.not. cea%SIunit) write(IOOUT, cea%fmt) fh1, (h1(i), i = i_col_start, cea%ipt)
+                if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(i), i = i_col_start, cea%ipt)
 
-                do concurrent (i = 1:cea%Npt)
-                   cea%V(i) = cea%Wmix
-                   cea%Sonvel(i) = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
+                do concurrent (i = i_col_start:cea%ipt)
+                   j = i - i_col_start + 1
+                   cea%V(j) = cea%Wmix
+                   cea%Sonvel(j) = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
                 end do
 
                 cea%fmt(7) = '3,'
                 write(IOOUT, cea%fmt) fm1, (cea%V(j), j = 1, cea%Npt)
                 cea%fmt(7) = '4,'
-                write(IOOUT, cea%fmt) fg1, (gm1(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) fg1, (gm1(i), i = i_col_start, cea%ipt)
                 cea%fmt(7) = '1,'
                 write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (cea%Sonvel(j), j = 1, cea%Npt)
 
                 if (cea%Nplt > 0) then
-                   do i = 1, cea%Npt
-                      if (mt > 0)   cea%Pltout(i+cea%Iplt, mt) = tub(i)
-                      if (mgam > 0) cea%Pltout(i+cea%Iplt, mgam) = gm1(i)
-                      if (mh > 0)   cea%Pltout(i+cea%Iplt, mh) = h1(i)
-                      if (mson > 0) cea%Pltout(i+cea%Iplt, mson) = cea%Sonvel(i)
+                   do i = i_col_start, cea%ipt
+                      j = i - i_col_start + 1
+                      if (mt > 0)   cea%Pltout(j+cea%Iplt, mt) = tub(i)
+                      if (mgam > 0) cea%Pltout(j+cea%Iplt, mgam) = gm1(i)
+                      if (mh > 0)   cea%Pltout(j+cea%Iplt, mh) = h1(i)
+                      if (mson > 0) cea%Pltout(j+cea%Iplt, mson) = cea%Sonvel(j)
                    end do
                 end if
 
@@ -397,12 +404,13 @@ contains
 
                 cea%fmt(7) = '3,'
 
-                do i = 1, cea%Npt
-                   cea%V(i) = cea%Ppp(i) / pub(i)
-                   cea%Pcp(i) = cea%Ttt(i) / tub(i)
-                   cea%Sonvel(i) = cea%Sonvel(i) * rrho(i)
-                   if (mmach > 0) cea%Pltout(i+cea%Iplt, mmach) = cea%Vmoc(i)
-                   if (mdv > 0)   cea%Pltout(i+cea%Iplt, mdv) = cea%Sonvel(i)
+                do i = i_col_start, cea%ipt
+                   j = i - i_col_start + 1
+                   cea%V(j) = cea%Ppp(j) / pub(i)
+                   cea%Pcp(j) = cea%Ttt(j) / tub(i)
+                   cea%Sonvel(j) = cea%Sonvel(j) * rrho(i)
+                   if (mmach > 0) cea%Pltout(j+cea%Iplt, mmach) = cea%Vmoc(j)
+                   if (mdv > 0)   cea%Pltout(j+cea%Iplt, mdv) = cea%Sonvel(j)
                 end do
 
                 write(IOOUT, cea%fmt) fpp1, (cea%V(j), j = 1, cea%Npt)
@@ -414,7 +422,7 @@ contains
 
                 cea%fmt(7) = '4,'
                 write(IOOUT, cea%fmt) fmm1, (cea%V(j), j = 1, cea%Npt)
-                write(IOOUT, cea%fmt) frr1, (rrho(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) frr1, (rrho(i), i = i_col_start, cea%ipt)
                 write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%Vmoc(j), j = 1, cea%Npt)
 
                 cea%fmt(7) = '1,'
