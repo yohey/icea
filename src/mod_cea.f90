@@ -3013,6 +3013,8 @@ contains
          p21l, p2p1(Ncol), pmn, rho12, rho52, rrho(Ncol), sg(78), T1, T21, &
          t21l, t2t1(Ncol), ttmax, u1u2(Ncol), uis(13), utwo(Ncol), uu, wmx, ww
 
+    type(CEA_Point), pointer:: p
+
     if (cea%Trace == 0) cea%Trace = 5.E-9
     cea%Tp = .true.
     cea%Cpmix = 0
@@ -3026,17 +3028,17 @@ contains
     seql = cea%Incdeq
     if (cea%T(1) == 0) cea%T(1) = cea%Rtemp(1)
     do i = 1, cea%Nsk
-       uis(i) = cea%U1(i)
-       mis(i) = cea%Mach1(i)
-       if (cea%Mach1(i) == 0 .and. cea%U1(i) == 0) exit
+       uis(i) = cea%points(1, i)%U1
+       mis(i) = cea%points(1, i)%Mach1
+       if (cea%points(1, i)%Mach1 == 0 .and. cea%points(1, i)%U1 == 0) exit
     end do
     if (cea%Nsk > Ncol) then
        write(IOOUT, '(/" WARNING!!  ONLY ", I2, " u1 OR mach1 VALUES ALLOWED (SHCK)")') Ncol
        cea%Nsk = Ncol
     end if
     if (.not. cea%Short) then
-       write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (cea%U1(i), i = 1, cea%Nsk)
-       write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (cea%Mach1(i), i = 1, cea%Nsk)
+       write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (cea%points(1, i)%U1, i = 1, cea%Nsk)
+       write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (cea%points(1, i)%Mach1, i = 1, cea%Nsk)
     end if
 
     do iof = 1, cea%Nof
@@ -3060,6 +3062,8 @@ contains
           end if
 
           do i = 1, cea%Nsk
+             p => cea%points(iof, i)
+
              cea%Ppp(i) = cea%P(i)
              cea%Ttt(i) = cea%T(i)
 
@@ -3085,8 +3089,8 @@ contains
 
              if (cea%Cpmix /= 0) cea%Gamma1 = cea%Cpmix / (cea%Cpmix - 1/cea%Wmix)
              cea%A1 = sqrt(R0 * cea%Gamma1 * cea%Tt / cea%Wmix)
-             if (cea%U1(i) == 0) cea%U1(i) = cea%A1 * cea%Mach1(i)
-             if (cea%Mach1(i) == 0.) cea%Mach1(i) = cea%U1(i) / cea%A1
+             if (p%U1 == 0) p%U1 = cea%A1 * p%Mach1
+             if (p%Mach1 == 0) p%Mach1 = p%U1 / cea%A1
              cea%Wm(i) = cea%Wmix
              cea%Cpr(i) = cea%Cpmix
              cea%Gammas(i) = cea%Gamma1
@@ -3106,9 +3110,9 @@ contains
           cea%fmt(4) = '13'
           cea%fmt(5) = ' '
           cea%fmt(7) = '4,'
-          write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%Mach1(j), j = 1, cea%Nsk)
+          write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%points(iof, j)%Mach1, j = 1, cea%Nsk)
           cea%fmt(7) = '2,'
-          write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%U1(j), j = 1, cea%Nsk)
+          write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%points(iof, j)%U1, j = 1, cea%Nsk)
           call OUT2(cea, cea%Nsk)
 
           ! BEGIN CALCULATIONS FOR 2ND CONDITION
@@ -3116,8 +3120,10 @@ contains
 
           cea%ipt = 1
           do
+             p => cea%points(iof, cea%ipt)
+
              cea%Gamma1 = cea%Gammas(cea%ipt)
-             uu = cea%U1(cea%ipt)
+             uu = p%U1
              wmx = cea%Wm(cea%ipt)
              p1 = cea%Ppp(cea%ipt)
              T1 = cea%Ttt(cea%ipt)
@@ -3130,11 +3136,11 @@ contains
                 b2 = (-1 - mu12rt - T21) / 2
                 p21 = -b2 + sqrt(b2**2 - T21)
              else
-                p21 = (2 * cea%Gamma1 * cea%Mach1(cea%ipt)**2 - cea%Gamma1 + 1) / (cea%Gamma1 + 1)
+                p21 = (2 * cea%Gamma1 * p%Mach1**2 - cea%Gamma1 + 1) / (cea%Gamma1 + 1)
                 ! THE FOLLOWING IMPROVED FORMULATION FOR THE INITIAL ESTIMATE FOR THE
                 ! 2ND CONDITION WAS MADE AND TESTED BY S. GORDON 7/10/89.
                 if (.not. cea%Eql) then
-                   T21 = p21 * (2 / cea%Mach1(cea%ipt)**2 + cea%Gamma1 - 1) / (cea%Gamma1 + 1)
+                   T21 = p21 * (2 / p%Mach1**2 + cea%Gamma1 - 1) / (cea%Gamma1 + 1)
                 else
                    cea%Pp = p21 * p1
                    cea%Tp = .false.
@@ -3237,10 +3243,12 @@ contains
                 end if
              end do
 
+             p => cea%points(iof, cea%ipt)
+
              if (.not. cea%Eql .or. cea%Tt /= 0) then
                 if (itr > 60) then
                    write(IOOUT, '(/6x, " WARNING!!  NO CONVERGENCE FOR u1=", F8.1, &
-                        & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') cea%U1(cea%ipt)
+                        & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') p%U1
                 end if
 
                 if ((itr > 60) .or. (ax < 0.00005) .or. ((.not. cea%Eql) .and. (.not. cea%Incdeq) .and. (cea%Tt == 0))) then
@@ -3291,8 +3299,8 @@ contains
              cea%ipt = cea%ipt + 1
 
              if (cea%Eql) then
-                write(stderr, *) '[DEBUG] SHCK: call SETEN(', cea%Isv, cea%Npt, ')'
                 cea%Npt = cea%ipt
+                write(stderr, *) '[DEBUG] SHCK: call SETEN(', cea%Isv, cea%Npt, ')'
                 call SETEN(cea)
              end if
 
@@ -3400,10 +3408,9 @@ contains
           cea%Eql = .false.
        end do
 
-
-       do i = 1, cea%Nsk
-          cea%U1(i) = uis(i)
-          cea%Mach1(i) = mis(i)
+       do concurrent (i = 1:cea%Nsk)
+          cea%points(iof, i)%U1 = uis(i)
+          cea%points(iof, i)%Mach1 = mis(i)
        end do
 
 #ifndef NDEBUG

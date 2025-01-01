@@ -31,6 +31,7 @@ module mod_types
      real(8), pointer:: B0(:)
      real(8), pointer:: B0p(:, :)
      real(8):: AeAt, App
+     real(8):: U1, Mach1
   end type CEA_Point
 
 
@@ -99,7 +100,7 @@ module mod_types
 
      integer:: Nsk
      logical:: Incdeq, Incdfz, Refleq, Reflfz, Shkdbg
-     real(8):: U1(Ncol), Mach1(Ncol), A1, Gamma1
+     real(8):: A1, Gamma1
 
      integer:: Nm, Nr, Ntape
      integer:: Ind(maxTr), Jcm(maxEl)
@@ -127,6 +128,11 @@ contains
     cea%max_points = maxT * maxPv
 
     allocate(cea%points(maxMix, cea%max_points))
+
+    do concurrent (i = 1:maxMix, j = 1:cea%max_points)
+       cea%points(i, j)%U1 = 0
+       cea%points(i, j)%Mach1 = 0
+    end do
 
     do concurrent (i = 1:maxMix)
        allocate(cea%points(i, 1)%B0(maxEl))

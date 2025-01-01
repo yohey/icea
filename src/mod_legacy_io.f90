@@ -409,8 +409,6 @@ contains
                 cea%Pcp(i+Ncol) = 0
                 cea%Supar(i) = 0
                 cea%Subar(i) = 0
-                cea%Mach1(i) = 0
-                cea%U1(i) = 0
              end do
              cea%Gamma1 = 0
              phi = .false.
@@ -754,7 +752,9 @@ contains
                 cea%Nsk = Ncol
                 write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', cea%Nsk
              end if
-             cea%U1(1:cea%Nsk) = mix(1:cea%Nsk)
+             do concurrent (i = 1:maxMix, j = 1:cea%Nsk)
+                cea%points(1, j)%U1 = mix(j)
+             end do
 
           else if (cx4 == 'mach') then
              cea%Nsk = nmix
@@ -762,7 +762,9 @@ contains
                 cea%Nsk = Ncol
                 write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', cea%Nsk
              end if
-             cea%Mach1(1:cea%Nsk) = mix(1:cea%Nsk)
+             do concurrent (i = 1:maxMix, j = 1:cea%Nsk)
+                cea%points(1, j)%Mach1 = mix(j)
+             end do
 
           else if (cx3 == 'sub') then
              cea%Nsub = nmix
