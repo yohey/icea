@@ -62,6 +62,10 @@ contains
        call write_plt_file(cea(1:num_cases), plt_filename)
     end if
 
+#ifndef NDEBUG
+    call write_legacy_output_for_debug(cea, out_filename(:len_trim(out_filename)-4) // '.debug.out')
+#endif
+
     return
   end subroutine run_all_cases
 

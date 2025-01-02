@@ -2546,4 +2546,102 @@ contains
     return
   end subroutine write_plt_file
 
+
+#ifndef NDEBUG
+  subroutine write_legacy_output_for_debug(cea, filename)
+    use mod_types, only: CEA_Problem
+    implicit none
+
+    type(CEA_Problem), intent(in):: cea(:)
+    character(*), intent(in):: filename
+
+    integer:: num_cases
+    integer:: icase, io_out
+
+    num_cases = size(cea)
+
+    open(newunit = io_out, file = trim(filename), form = 'formatted')
+
+    write(io_out, '(/" *******************************************************************************")')
+    write(io_out, '(/, 9x, "NASA-GLENN CHEMICAL EQUILIBRIUM PROGRAM CEA2,", &
+                   & " MAY 21, 2004", /19x, "BY  BONNIE MCBRIDE", &
+                   & " AND SANFORD GORDON", /5x, &
+                   & " REFS: NASA RP-1311, PART I, 1994", &
+                   & " AND NASA RP-1311, PART II, 1996")')
+    write(io_out, '(/" *******************************************************************************")')
+
+    do icase = 1, num_cases
+       write(io_out, *)
+       call write_legacy_output_case_for_debug(cea(icase), io_out)
+    end do
+
+    close(io_out)
+
+    return
+  end subroutine write_legacy_output_for_debug
+
+
+  subroutine write_legacy_output_case_for_debug(cea, io_out)
+    use mod_types, only: CEA_Problem, Ncol
+    implicit none
+
+    type(CEA_Problem), intent(in):: cea
+    integer, intent(in):: io_out
+
+    integer:: i, j, iof, it, ip, ipt, num_outputs
+    logical:: incd, refl
+
+    write(io_out, '(" CASE = ", a15)') cea%Case
+
+    if (.not. cea%Short) then
+       incd = (cea%Shock .and. (cea%Incdfz .or. cea%Incdeq))
+       refl = (cea%Shock .and. (cea%Reflfz .or. cea%Refleq))
+
+       write(io_out, '(/" OPTIONS: TP=", l1, "  HP=", l1, "  SP=", l1, "  TV=", l1, &
+            & "  UV=", l1, "  SV=", l1, "  DETN=", l1, "  SHOCK=", l1, &
+            & "  REFL=", l1, "  INCD=", l1, /" RKT=", l1, "  FROZ=", l1, &
+            & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
+            & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
+            cea%Tp, (cea%Hp .and. .not. cea%Vol), cea%Sp, (cea%Tp .and. cea%Vol), (cea%Hp .and. cea%Vol), &
+            (cea%Sp .and. cea%Vol), cea%Detn, cea%Shock, refl, incd, cea%Rkt, cea%Froz, cea%Eql, cea%Ions, &
+            cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
+
+       if (cea%T(1) > 0) then
+          write(io_out, '(/" T,K =", 7f11.4)') (cea%T(i), i = 1, cea%Nt)
+       end if
+
+       write(io_out, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6)') cea%Trace, cea%S0
+
+       if (cea%Np > 0 .and. cea%Vol) then
+          write(io_out, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (cea%V(i) * 1.d-05, i = 1, cea%Np)
+       end if
+    end if
+
+    if (cea%Rkt) then
+       if (.not. cea%Short) then
+          write(io_out, '(/" Pc,BAR =", 7f13.6)') (cea%P(i), i = 1, cea%Np)
+          write(io_out, '(/" Pc/P =", 9f11.4)') (cea%Pcp(i), i = 1, cea%Npp)
+          write(io_out, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
+          write(io_out, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
+          write(io_out, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
+       end if
+    else
+       if (.not. cea%Vol .and. .not. cea%Short) write(io_out, '(/" P,BAR =", 7f13.6)') (cea%P(i), i = 1, cea%Np)
+    end if
+
+    num_outputs = (cea%Nt * cea%Np) / Ncol
+    if (mod(cea%Nt * cea%Np, Ncol) > 0) num_outputs = num_outputs + 1
+
+    do iof = 1, cea%Nof
+       do ipt = 1, num_outputs
+          write(io_out, *)
+          write(io_out, *) '[DEBUG] iof, ipt = ', iof, ipt, num_outputs
+          call OUT1(cea, io_out)
+       end do
+    end do
+
+    return
+  end subroutine write_legacy_output_case_for_debug
+#endif
+
 end module mod_legacy_io
