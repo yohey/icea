@@ -484,9 +484,7 @@ contains
     real(8):: smalno = 1e-6, smnol = -13.815511
     logical:: mask(cea%Ng)
 
-    type(CEA_Point), pointer:: pN !< current point
     type(CEA_Point), pointer:: p !< current point
-    pN => cea%points(cea%iOF, cea%Npt)
     p => cea%points(cea%iOF, cea%ipt)
 
     ixsing = 0
@@ -865,8 +863,8 @@ contains
 
              le = cea%Nlm
 
-             if (any(abs(pN%B0(1:cea%Nlm)) >= 1.d-06 .and. &
-                  abs(pN%B0(1:cea%Nlm) - sum(spread(cea%En(1:cea%Ngc, cea%Npt), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
+             if (any(abs(p%B0(1:cea%Nlm)) >= 1.d-06 .and. &
+                  abs(p%B0(1:cea%Nlm) - sum(spread(cea%En(1:cea%Ngc, cea%Npt), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
                   > cea%Bcheck)) go to 500
 
              if (cea%Trace /= 0.) then
@@ -1258,7 +1256,7 @@ contains
           ensol = cea%En(cea%Jsol, cea%Npt)
           cea%En(cea%Jsol, cea%Npt) = cea%En(cea%Jsol, cea%Npt) + cea%En(cea%Jliq, cea%Npt)
           cea%Dlvtp(cea%Npt) = 0
-          pN%Cpr = 0
+          p%Cpr = 0
           cea%Gammas(cea%Npt) = 0
           cea%Pderiv = .true.
 
@@ -1386,9 +1384,9 @@ contains
 
              ! CALCULATE NEW COEFFICIENTS
              if (tem /= 1) then
-                pN%B0(lc) = pN%B0(lc) / tem
-                pN%B0p(lc, 1) = pN%B0p(lc, 1) / tem
-                pN%B0p(lc, 2) = pN%B0p(lc, 2) / tem
+                p%B0(lc) = p%B0(lc) / tem
+                p%B0p(lc, 1) = p%B0p(lc, 1) / tem
+                p%B0p(lc, 2) = p%B0p(lc, 2) / tem
 
                 do concurrent (j = 1:cea%Nspx)
                    cea%A(lc, j) = cea%A(lc, j) / tem
@@ -1407,9 +1405,9 @@ contains
                       cea%A(i, j) = 0
                    end do
 
-                   pN%B0(i) = pN%B0(i) - pN%B0(lc) * tem
-                   pN%B0p(i, 1) = pN%B0p(i, 1) - pN%B0p(lc, 1) * tem
-                   pN%B0p(i, 2) = pN%B0p(i, 2) - pN%B0p(lc, 2) * tem
+                   p%B0(i) = p%B0(i) - p%B0(lc) * tem
+                   p%B0p(i, 1) = p%B0p(i, 1) - p%B0p(lc, 1) * tem
+                   p%B0p(i, 2) = p%B0p(i, 2) - p%B0p(lc, 2) * tem
                 end if
              end do
           end if
@@ -1450,17 +1448,17 @@ contains
           aa = cea%Atwt(cea%Msing)
           cea%Atwt(cea%Msing) = cea%Atwt(cea%Nlm)
           cea%Atwt(cea%Nlm) = aa
-          aa = pN%B0(cea%Msing)
-          pN%B0(cea%Msing) = pN%B0(cea%Nlm)
-          pN%B0(cea%Nlm) = aa
+          aa = p%B0(cea%Msing)
+          p%B0(cea%Msing) = p%B0(cea%Nlm)
+          p%B0(cea%Nlm) = aa
           aa = pisave(cea%Msing)
           pisave(cea%Msing) = pisave(cea%Nlm)
           pisave(cea%Nlm) = aa
 
           do i = 1, 2
-             aa = pN%B0p(cea%Msing, i)
-             pN%B0p(cea%Msing, i) = pN%B0p(cea%Nlm, i)
-             pN%B0p(cea%Nlm, i) = aa
+             aa = p%B0p(cea%Msing, i)
+             p%B0p(cea%Msing, i) = p%B0p(cea%Nlm, i)
+             p%B0p(cea%Nlm, i) = aa
           end do
        end if
     else if (.not. newcom .and. cea%Trace == 0.) then
@@ -1496,7 +1494,7 @@ contains
     if (cea%Debug(cea%Npt)) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
          & e13.6, 3x, "S/R=", e13.6, /3x, "M=", e13.6, 3x, "CP/R=", e13.6, 3x, &
          & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
-         cea%Npt, cea%Pp, cea%Tt, cea%Hsum(cea%Npt), cea%Ssum(cea%Npt), cea%Wm(cea%Npt), pN%Cpr, &
+         cea%Npt, cea%Pp, cea%Tt, cea%Hsum(cea%Npt), cea%Ssum(cea%Npt), cea%Wm(cea%Npt), p%Cpr, &
          cea%Dlvpt(cea%Npt), cea%Dlvtp(cea%Npt), cea%Gammas(cea%Npt), cea%Vlm(cea%Npt)
 
     if (cea%Tt >= cea%Tg(1) .and. cea%Tt <= cea%Tg(4)) go to 1600
@@ -1776,7 +1774,7 @@ contains
     real(8):: energyl, f, h, ss, sss, term, term1
 
     type(CEA_Point), pointer:: p !< current point
-    p => cea%points(cea%iOF, cea%Npt)
+    p => cea%points(cea%iOF, cea%ipt)
 
     iq = cea%Nlm + cea%Npr
     cea%Iq1 = iq + 1
