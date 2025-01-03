@@ -2072,508 +2072,509 @@ contains
     end do
 
     ! LOOP FOR EACH O/F
-    iof = 0
-100 it = 1
-    iof = iof + 1
-    cea%Oxfl = cea%Oxf(iof)
-    if (cea%T(1) /= 0.) then
-       cea%Tp = .true.
-    else
-       cea%Hp = .true.
-    end if
-    cea%Sp = .false.
-    call NEWOF(cea)
-    if (cea%T(1) /= 0) cea%Tt = cea%T(1)
-    ! LOOP FOR CHAMBER PRESSURES
-200 do ip = 1, cea%Np
-       itnum = 0
-       cea%Area = .false.
-       if (cea%T(1) == 0) cea%Hp = .true.
-       if (cea%T(1) /= 0) cea%Tp = .true.
-       cea%Sp = .false.
-       cea%Eql = .true.
-       isub = 1
-       cea%Isup = 1
-       cea%Pp = cea%P(ip)
-       pinf = cea%Pp
-       ipp = 1
-       itrot = 3
-       isupsv = 1
-       niter = 1
-       cea%Page1 = .true.
-       iplt1 = iplte
-       cea%Iplt = iplte
-       done = .false.
-       ! LOOP FOR OUTPUT COLUMNS
-250    nar = cea%Npt
-       if (cea%Eql) then
-          call EQLBRM(cea)
-          if (cea%Npt == cea%Nfz) cprf = cea%Cpsum
+    do iof = 1, cea%Nof
+       it = 1
+       cea%Oxfl = cea%Oxf(iof)
+       if (cea%T(1) /= 0.) then
+          cea%Tp = .true.
        else
-          call FROZEN(cea)
+          cea%Hp = .true.
        end if
-       ! TT = 0 IF NO CONVERGENCE
-       if (cea%Tt /= 0.) then
-          ! TEST FOR FINITE AREA COMBUSTOR
-          if (.not. cea%Fac) go to 400
-          pinjas = cea%P(ip) * pa
-          pinj = pinjas
-          if (cea%Npt <= 2) then
-             if (cea%Npt == 1 .and. cea%Trnspt) call TRANP(cea)
-             if (cea%Npt == 2) pinf = cea%Ppp(2)
-          end if
-          if (cea%Npt /= 1) go to 400
-          ! INITIAL ESTIMATE FOR PC (AND ACAT IF NOT ASSIGNED)
-          do i = 1, 4
-             prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
-             ppa = pinj * prat
-             if (cea%Iopt == 1) go to 260
-             cea%Acat = ppa / (cea%Ma * 2350)
-             if (cea%Acat >= 1) then
-                pratsv = prat
-                if (cea%Debugf) then
-                   if (i <= 1) write(IOOUT, '(/"  ITERATION", 9x, "PC", 7x, "CONTRACTION RATIO")')
-                   write(IOOUT, '(5x, i2, 7x, f12.2, 3x, f12.6)') i, ppa, cea%Acat
-                end if
-             else
-                write(IOOUT, '(/" INPUT VALUE OF mdot/a =", f12.3, " IS TOO LARGE."/ &
-                     & " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') cea%Ma
-                cea%Tt = 0
-                go to 1400
-             end if
-          end do
-          cea%Subar(1) = cea%Acat
-260       p => cea%points(cea%iOF, 1)
-          cea%Pp = ppa / pa
-          p%App = cea%Pp / cea%Ppp(1)
-          go to 1100
-       else
-          if (cea%Npt < 1) go to 1400
-          if (.not. cea%Area) go to 600
-          cea%Npt = nar - 1
-          cea%Isup = cea%Nsup + 2
-          cea%Isv = 0
+       cea%Sp = .false.
+       call NEWOF(cea)
+       if (cea%T(1) /= 0) cea%Tt = cea%T(1)
+       ! LOOP FOR CHAMBER PRESSURES
+200    do ip = 1, cea%Np
           itnum = 0
-          go to 950
-       end if
-300    cea%Hp = .true.
-       cea%Sp = .false.
-       niter = niter + 1
-       cea%Isv = 0
-       cea%Npt = 2
-       ipp = 2
-       call SETEN(cea)
-       go to 250
-350    done = .true.
-       p => cea%points(cea%iOF, 1)
-       p%App = cea%Ppp(2) / cea%Ppp(1)
-       cea%Area = .false.
-       if (cea%Nsub > 1) isub = 2
-       cea%Isv = 4
-       cea%Npt = 2
-       ipp = min(4, cea%Npp)
-       call SETEN(cea)
-       p => cea%points(cea%iOF, 2)
-       cea%Cpr(2) = cea%Cpr(4)
-       cea%Dlvpt(2) = cea%Dlvpt(4)
-       cea%Dlvtp(2) = cea%Dlvtp(4)
-       cea%Gammas(2) = cea%Gammas(4)
-       cea%Hsum(2) = cea%Hsum(4)
-       cea%Ppp(2) = cea%Ppp(4)
-       p%App = cea%Ppp(1)/pinf
-       cea%Ssum(2) = cea%Ssum(4)
-       cea%Totn(2) = cea%Totn(4)
-       cea%Ttt(2) = cea%Ttt(4)
-       cea%Vlm(2) = cea%Vlm(4)
-       cea%Wm(2) = cea%Wm(4)
-       if (.not. cea%Short) write(IOOUT, '(" END OF CHAMBER ITERATIONS")')
-       go to 600
-       ! INITIALIZE FOR THROAT
-400    if (ipp > nipp) then
-          usq = 2 * (cea%Hsum(1) - cea%Hsum(cea%Npt)) * R0
-          if (ipp > nptth) go to 600
-          ! THROAT
-          if (.not. thi) then
-             cea%Vv = cea%Vlm(nptth)
-             pvg = cea%Pp * cea%Vv * cea%Gammas(nptth)
-             if (pvg == 0) then
-                write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
-                go to 550
-             else
-                msq = usq / pvg
-                if (cea%Debug(1) .or. cea%Debug(2)) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
-                dh = abs(msq - 1)
-                if (dh <= 0.4d-4) go to 550
-                if (itrot > 0) then
-                   p1 = cea%Pp
-                   if (cea%Jsol /= 0) then
-                      tmelt = cea%Tt
-                      cea%Pp = cea%Pp * (1 + msq * cea%Gammas(nptth)) / (cea%Gammas(nptth) + 1)
-                   else if (tmelt == 0) then
-                      cea%Pp = cea%Pp * (1 + msq * cea%Gammas(nptth)) / (cea%Gammas(nptth) + 1)
-                   else
-                      write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
-                      p => cea%points(cea%iOF, nptth)
-                      dlt = log(tmelt / cea%Tt)
-                      dd = dlt * cea%Cpr(nptth) / (cea%Enn * cea%Dlvtp(nptth))
-                      cea%Pp = cea%Pp * EXP(dd)
-                      p%App = cea%P(ip) / cea%Pp
-                      if (cea%Fac) p%App = pinf / cea%Pp
-                      if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') p%App
-                      thi = .true.
-                      go to 250
+          cea%Area = .false.
+          if (cea%T(1) == 0) cea%Hp = .true.
+          if (cea%T(1) /= 0) cea%Tp = .true.
+          cea%Sp = .false.
+          cea%Eql = .true.
+          isub = 1
+          cea%Isup = 1
+          cea%Pp = cea%P(ip)
+          pinf = cea%Pp
+          ipp = 1
+          itrot = 3
+          isupsv = 1
+          niter = 1
+          cea%Page1 = .true.
+          iplt1 = iplte
+          cea%Iplt = iplte
+          done = .false.
+          ! LOOP FOR OUTPUT COLUMNS
+250       nar = cea%Npt
+          if (cea%Eql) then
+             call EQLBRM(cea)
+             if (cea%Npt == cea%Nfz) cprf = cea%Cpsum
+          else
+             call FROZEN(cea)
+          end if
+          ! TT = 0 IF NO CONVERGENCE
+          if (cea%Tt /= 0.) then
+             ! TEST FOR FINITE AREA COMBUSTOR
+             if (.not. cea%Fac) go to 400
+             pinjas = cea%P(ip) * pa
+             pinj = pinjas
+             if (cea%Npt <= 2) then
+                if (cea%Npt == 1 .and. cea%Trnspt) call TRANP(cea)
+                if (cea%Npt == 2) pinf = cea%Ppp(2)
+             end if
+             if (cea%Npt /= 1) go to 400
+             ! INITIAL ESTIMATE FOR PC (AND ACAT IF NOT ASSIGNED)
+             do i = 1, 4
+                prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
+                ppa = pinj * prat
+                if (cea%Iopt == 1) go to 260
+                cea%Acat = ppa / (cea%Ma * 2350)
+                if (cea%Acat >= 1) then
+                   pratsv = prat
+                   if (cea%Debugf) then
+                      if (i <= 1) write(IOOUT, '(/"  ITERATION", 9x, "PC", 7x, "CONTRACTION RATIO")')
+                      write(IOOUT, '(5x, i2, 7x, f12.2, 3x, f12.6)') i, ppa, cea%Acat
                    end if
-                   go to 500
-                else if (itrot < 0) then
-                   if (itrot < -19) then
-                      write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
-                      go to 550
-                   else
-                      if (cea%Npr /= npr1) go to 550
-                      cea%Pp = cea%Pp - dp
-                      go to 500
-                   end if
-                else if (cea%Npr == npr1) then
+                else
+                   write(IOOUT, '(/" INPUT VALUE OF mdot/a =", f12.3, " IS TOO LARGE."/ &
+                        & " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') cea%Ma
+                   cea%Tt = 0
+                   go to 1400
+                end if
+             end do
+             cea%Subar(1) = cea%Acat
+260          p => cea%points(cea%iOF, 1)
+             cea%Pp = ppa / pa
+             p%App = cea%Pp / cea%Ppp(1)
+             go to 1100
+          else
+             if (cea%Npt < 1) go to 1400
+             if (.not. cea%Area) go to 600
+             cea%Npt = nar - 1
+             cea%Isup = cea%Nsup + 2
+             cea%Isv = 0
+             itnum = 0
+             go to 950
+          end if
+300       cea%Hp = .true.
+          cea%Sp = .false.
+          niter = niter + 1
+          cea%Isv = 0
+          cea%Npt = 2
+          ipp = 2
+          call SETEN(cea)
+          go to 250
+350       done = .true.
+          p => cea%points(cea%iOF, 1)
+          p%App = cea%Ppp(2) / cea%Ppp(1)
+          cea%Area = .false.
+          if (cea%Nsub > 1) isub = 2
+          cea%Isv = 4
+          cea%Npt = 2
+          ipp = min(4, cea%Npp)
+          call SETEN(cea)
+          p => cea%points(cea%iOF, 2)
+          cea%Cpr(2) = cea%Cpr(4)
+          cea%Dlvpt(2) = cea%Dlvpt(4)
+          cea%Dlvtp(2) = cea%Dlvtp(4)
+          cea%Gammas(2) = cea%Gammas(4)
+          cea%Hsum(2) = cea%Hsum(4)
+          cea%Ppp(2) = cea%Ppp(4)
+          p%App = cea%Ppp(1)/pinf
+          cea%Ssum(2) = cea%Ssum(4)
+          cea%Totn(2) = cea%Totn(4)
+          cea%Ttt(2) = cea%Ttt(4)
+          cea%Vlm(2) = cea%Vlm(4)
+          cea%Wm(2) = cea%Wm(4)
+          if (.not. cea%Short) write(IOOUT, '(" END OF CHAMBER ITERATIONS")')
+          go to 600
+          ! INITIALIZE FOR THROAT
+400       if (ipp > nipp) then
+             usq = 2 * (cea%Hsum(1) - cea%Hsum(cea%Npt)) * R0
+             if (ipp > nptth) go to 600
+             ! THROAT
+             if (.not. thi) then
+                cea%Vv = cea%Vlm(nptth)
+                pvg = cea%Pp * cea%Vv * cea%Gammas(nptth)
+                if (pvg == 0) then
                    write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                    go to 550
                 else
-                   dp = abs(cea%Pp - p1) / 20
-                   cea%Pp = max(cea%Pp, p1)
-                   write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
-                   cea%Pp = cea%Pp - dp
-                   go to 500
+                   msq = usq / pvg
+                   if (cea%Debug(1) .or. cea%Debug(2)) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
+                   dh = abs(msq - 1)
+                   if (dh <= 0.4d-4) go to 550
+                   if (itrot > 0) then
+                      p1 = cea%Pp
+                      if (cea%Jsol /= 0) then
+                         tmelt = cea%Tt
+                         cea%Pp = cea%Pp * (1 + msq * cea%Gammas(nptth)) / (cea%Gammas(nptth) + 1)
+                      else if (tmelt == 0) then
+                         cea%Pp = cea%Pp * (1 + msq * cea%Gammas(nptth)) / (cea%Gammas(nptth) + 1)
+                      else
+                         write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
+                         p => cea%points(cea%iOF, nptth)
+                         dlt = log(tmelt / cea%Tt)
+                         dd = dlt * cea%Cpr(nptth) / (cea%Enn * cea%Dlvtp(nptth))
+                         cea%Pp = cea%Pp * EXP(dd)
+                         p%App = cea%P(ip) / cea%Pp
+                         if (cea%Fac) p%App = pinf / cea%Pp
+                         if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') p%App
+                         thi = .true.
+                         go to 250
+                      end if
+                      go to 500
+                   else if (itrot < 0) then
+                      if (itrot < -19) then
+                         write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
+                         go to 550
+                      else
+                         if (cea%Npr /= npr1) go to 550
+                         cea%Pp = cea%Pp - dp
+                         go to 500
+                      end if
+                   else if (cea%Npr == npr1) then
+                      write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
+                      go to 550
+                   else
+                      dp = abs(cea%Pp - p1) / 20
+                      cea%Pp = max(cea%Pp, p1)
+                      write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
+                      cea%Pp = cea%Pp - dp
+                      go to 500
+                   end if
                 end if
+             else
+                cea%Gammas(nptth) = 0
+                go to 550
              end if
           else
-             cea%Gammas(nptth) = 0
-             go to 550
+             if (.not. cea%Fac .and. cea%Trnspt) call TRANP(cea)
+             if (cea%Npt == cea%Nfz) cea%Eql = seql
+             cea%Tp = .false.
+             cea%Hp = .false.
+             cea%Sp = .true.
+             cea%S0 = cea%Ssum(i12)
           end if
-       else
-          if (.not. cea%Fac .and. cea%Trnspt) call TRANP(cea)
+450       tmelt = 0
+          itrot = 3
+          thi = .false.
+          p => cea%points(cea%iOF, nptth)
+          p%App = ((cea%Gammas(i12) + 1) / 2)**(cea%Gammas(i12) / (cea%Gammas(i12) - 1))
+          if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') p%App
+          cea%Pp = Pinf / p%App
+          cea%Isv = -i12
+          go to 1200
+500       npr1 = cea%Npr
+          p => cea%points(cea%iOF, nptth)
+          p%App = cea%P(ip) / cea%Pp
+          if (cea%Fac) p%App = Pinf / cea%Pp
+          if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') p%App
+          itrot = itrot - 1
+          go to 250
+550       cea%Awt = cea%Enn * cea%Tt / (cea%Pp * sqrt(usq))
+          p => cea%points(cea%iOF, nptth)
+          pcplt = log(p%App)
+600       cea%Isv = 0
+          cea%points(cea%iOF, cea%Npt)%AeAt = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
+          if (cea%Tt == 0) go to 1150
+          if (cea%Area) go to 750
+          if (cea%Trnspt .and. (.not. cea%Fac .or. done .or. cea%Npt > 2)) call TRANP(cea)
           if (cea%Npt == cea%Nfz) cea%Eql = seql
-          cea%Tp = .false.
-          cea%Hp = .false.
-          cea%Sp = .true.
-          cea%S0 = cea%Ssum(i12)
-       end if
-450    tmelt = 0
-       itrot = 3
-       thi = .false.
-       p => cea%points(cea%iOF, nptth)
-       p%App = ((cea%Gammas(i12) + 1) / 2)**(cea%Gammas(i12) / (cea%Gammas(i12) - 1))
-       if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') p%App
-       cea%Pp = Pinf / p%App
-       cea%Isv = -i12
-       go to 1200
-500    npr1 = cea%Npr
-       p => cea%points(cea%iOF, nptth)
-       p%App = cea%P(ip) / cea%Pp
-       if (cea%Fac) p%App = Pinf / cea%Pp
-       if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') p%App
-       itrot = itrot - 1
-       go to 250
-550    cea%Awt = cea%Enn * cea%Tt / (cea%Pp * sqrt(usq))
-       p => cea%points(cea%iOF, nptth)
-       pcplt = log(p%App)
-600    cea%Isv = 0
-       cea%points(cea%iOF, cea%Npt)%AeAt = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
-       if (cea%Tt == 0) go to 1150
-       if (cea%Area) go to 750
-       if (cea%Trnspt .and. (.not. cea%Fac .or. done .or. cea%Npt > 2)) call TRANP(cea)
-       if (cea%Npt == cea%Nfz) cea%Eql = seql
-       if (cea%Fac) then
-          if (cea%Npt == nptth) then
-             cea%Area = .true.
-             go to 750
-          else if (cea%Npt == 2 .and. done) then
-             cea%Npt = 3
-             !  The following statement was corrected 1/30/2004.  Only fac parameters 
-             !    after combustion were affected--generally extra or missing points.
-             !  (remove) if (ipp <= cea%Npp) ipp = ipp - 1
-             if (ipp < cea%Npp .or. cea%Npp == 4) ipp = ipp - 1
+          if (cea%Fac) then
+             if (cea%Npt == nptth) then
+                cea%Area = .true.
+                go to 750
+             else if (cea%Npt == 2 .and. done) then
+                cea%Npt = 3
+                !  The following statement was corrected 1/30/2004.  Only fac parameters 
+                !    after combustion were affected--generally extra or missing points.
+                !  (remove) if (ipp <= cea%Npp) ipp = ipp - 1
+                if (ipp < cea%Npp .or. cea%Npp == 4) ipp = ipp - 1
+             end if
           end if
-       end if
-650    if (ipp < cea%Npp) go to 1100
-700    if (cea%Nsub == i01 .and. cea%Nsup == 0) go to 1150
-       cea%Area = .true.
-       ! PCP ESTIMATES FOR AREA RATIOS
-750    if (itnum == 0) then
-          dlnp = 1
-          itnum = 1
-          aratio = cea%Subar(isub)
-          if ((.not. cea%Fac .or. done) .and. cea%Nsub <= i01) aratio = cea%Supar(cea%Isup)
-          if (.not. cea%Eql .and. cea%Nfz >= 3) then
-             if (aratio <= cea%points(cea%iOF, cea%Nfz)%Aeat) then
-                write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
-                     & " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
-                     & "LESS THAN THE VALUE AT POINT nfz =", i3, " (ROCKET)")') cea%Nfz
+650       if (ipp < cea%Npp) go to 1100
+700       if (cea%Nsub == i01 .and. cea%Nsup == 0) go to 1150
+          cea%Area = .true.
+          ! PCP ESTIMATES FOR AREA RATIOS
+750       if (itnum == 0) then
+             dlnp = 1
+             itnum = 1
+             aratio = cea%Subar(isub)
+             if ((.not. cea%Fac .or. done) .and. cea%Nsub <= i01) aratio = cea%Supar(cea%Isup)
+             if (.not. cea%Eql .and. cea%Nfz >= 3) then
+                if (aratio <= cea%points(cea%iOF, cea%Nfz)%Aeat) then
+                   write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
+                        & " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
+                        & "LESS THAN THE VALUE AT POINT nfz =", i3, " (ROCKET)")') cea%Nfz
+                   go to 1050
+                end if
+             end if
+             if (aratio  <  1) then
+                write(IOOUT, '(/" AN ASSIGNED AREA RATIO IS < 1 (ROCKET)")')
                 go to 1050
              end if
-          end if
-          if (aratio  <  1) then
-             write(IOOUT, '(/" AN ASSIGNED AREA RATIO IS < 1 (ROCKET)")')
-             go to 1050
-          end if
-          eln = log(aratio)
-          if (cea%Fac) then
-             if (.not. done) go to 800
-          end if
-          if (cea%Nsub <= i01) then
-             if (cea%Nfz == ipp) isupsv = cea%Isup
-             if (cea%Supar(cea%Isup) < 2) then
-                appl = sqrt(eln*(1.535d0 + 3.294d0 * eln)) + pcplt
-                go to 1100
+             eln = log(aratio)
+             if (cea%Fac) then
+                if (.not. done) go to 800
+             end if
+             if (cea%Nsub <= i01) then
+                if (cea%Nfz == ipp) isupsv = cea%Isup
+                if (cea%Supar(cea%Isup) < 2) then
+                   appl = sqrt(eln*(1.535d0 + 3.294d0 * eln)) + pcplt
+                   go to 1100
+                else
+                   if (cea%Isup > isup1) then
+                      if (cea%Supar(cea%Isup-1) >= 2) go to 850
+                   end if
+                   appl = cea%Gammas(nptth) + eln * 1.4
+                   go to 1100
+                end if
+             end if
+             ! TEST FOR CONVERGENCE ON AREA RATIO.
+          else if (cea%Gammas(cea%Npt) > 0) then
+             check = 0.00004
+             p => cea%points(cea%iOF, cea%Npt)
+             if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
+                  & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
+                  itnum, aratio, p%AeAt, p%App, dlnp
+             if (abs(cea%points(cea%iOF, cea%Npt)%AeAt - Aratio) / Aratio <= check) go to 900
+             if (abs(dlnp) < 0.00004) go to 900
+             aeatl = log(cea%points(cea%iOF, cea%Npt)%AeAt)
+             itnum = itnum + 1
+             if (itnum > 10) then
+                write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
+                go to 900
              else
-                if (cea%Isup > isup1) then
-                   if (cea%Supar(cea%Isup-1) >= 2) go to 850
-                end if
-                appl = cea%Gammas(nptth) + eln * 1.4
-                go to 1100
+                ! IMPROVED PCP ESTIMATES.
+                asq = cea%Gammas(cea%Npt) * cea%Enn * R0 * cea%Tt
+                dlnpe = cea%Gammas(cea%Npt) * usq / (usq - asq)
+                go to 850
              end if
-          end if
-          ! TEST FOR CONVERGENCE ON AREA RATIO.
-       else if (cea%Gammas(cea%Npt) > 0) then
-          check = 0.00004
-          p => cea%points(cea%iOF, cea%Npt)
-          if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
-               & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
-               itnum, aratio, p%AeAt, p%App, dlnp
-          if (abs(cea%points(cea%iOF, cea%Npt)%AeAt - Aratio) / Aratio <= check) go to 900
-          if (abs(dlnp) < 0.00004) go to 900
-          aeatl = log(cea%points(cea%iOF, cea%Npt)%AeAt)
-          itnum = itnum + 1
-          if (itnum > 10) then
-             write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
-             go to 900
           else
-             ! IMPROVED PCP ESTIMATES.
-             asq = cea%Gammas(cea%Npt) * cea%Enn * R0 * cea%Tt
-             dlnpe = cea%Gammas(cea%Npt) * usq / (usq - asq)
-             go to 850
+             write(IOOUT, '(/" WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ", &
+                  & "BECAUSE GAMMAs", /, " CALCULATION IMPOSSIBLE. (ROCKET)")')
+             cea%Npt = cea%Npt - 1
+             if (cea%Nsub <= 0) isup1 = 100
+             if (cea%Nsub < 0.) cea%Nsup = cea%Isup - 1
+             if (cea%Nsub > 0) cea%Nsub = isub - 1
+             go to 1000
           end if
-       else
-          write(IOOUT, '(/" WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ", &
-               & "BECAUSE GAMMAs", /, " CALCULATION IMPOSSIBLE. (ROCKET)")')
-          cea%Npt = cea%Npt - 1
-          if (cea%Nsub <= 0) isup1 = 100
-          if (cea%Nsub < 0.) cea%Nsup = cea%Isup - 1
-          if (cea%Nsub > 0) cea%Nsub = isub - 1
-          go to 1000
-       end if
-800    appl = pcplt / (cea%Subar(isub) + (10.587 * eln**2 + 9.454) * eln)
-       if (Aratio < 1.09) appl = 0.9 * appl
-       if (Aratio > 10) appl = appl / Aratio
-       if (isub > 1 .or. cea%Npt == Ncol) go to 1100
-       go to 1200
-850    dlnp = dlnpe * eln - dlnpe * aeatl
-       appl = appl + dlnp
-       if (itnum == 1) go to 1100
-       if (appl < 0.) appl = 0.000001
-       p => cea%points(cea%iOF, cea%Npt)
-       p%App = EXP(appl)
-       cea%Pp = Pinf / p%App
-       go to 250
-       ! CONVERGENCE HAS BEEN REACHED FOR ASSIGNED AREA RATIO
-900    cea%points(cea%iOF, cea%Npt)%AeAt = Aratio
-       if (cea%Fac) then
-          if (.not. done) then
-             if (cea%Iopt == 1) then
-                ! OPTION 1 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
-                ! PRESSURE AND CONTRACTION RATIO. IMPROVED ESTIMATE FOR PC
-                cea%Area = .false.
-                itnum = 0
-                ppa = cea%Ppp(cea%Npt) * pa
-                pinj = ppa + 1.d05 * usq / cea%Vlm(cea%Npt)
-                test = (pinj - pinjas) / pinjas
-                pcpa = pinf * pa
-                if (cea%Debugf) then
-                   write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
-                        & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
-                   write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
-                end if
-                if (abs(test) < 0.00002) go to 350
-                prat = pinjas / pinj
-                cea%Pp = pinf * prat
-                go to 300
-             else if (cea%Iopt == 2) then
-                ! OPTION 2 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
-                ! PRESSURE AND MASS FLOW PER UNIT AREA. IMPROVED ESTIMATE FOR PC
-                ! AND ACAT
-                acatsv = cea%Acat
-                pratsv = prat
-                cea%Area = .false.
-                itnum = 0
-                ppa = cea%Ppp(4) * pa
-                pinj = ppa + 1.d05 * usq / cea%Vlm(4)
-                mat = pa / (cea%Awt * R0)
-                cea%Acat = mat / cea%Ma
-                prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
-                test = (pinj - pinjas) / pinjas
-                pcpa = pinf * pa
-                if (cea%Debugf) then
-                   write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
-                        & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
-                   write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
-                end if
-                if (abs(test) < 0.00002) go to 350
-                pjrat = pinj / pinjas
-                cea%Pp = pinf
-                do i = 1, 2
-                   pracat = pratsv / prat
-                   pr = pjrat * pracat
-                   cea%Pp = cea%Pp / pr
-                   pcpa = cea%Pp * pa
-                   cea%Acat = cea%Acat / pr
-                   cea%Subar(1) = cea%Acat
+800       appl = pcplt / (cea%Subar(isub) + (10.587 * eln**2 + 9.454) * eln)
+          if (Aratio < 1.09) appl = 0.9 * appl
+          if (Aratio > 10) appl = appl / Aratio
+          if (isub > 1 .or. cea%Npt == Ncol) go to 1100
+          go to 1200
+850       dlnp = dlnpe * eln - dlnpe * aeatl
+          appl = appl + dlnp
+          if (itnum == 1) go to 1100
+          if (appl < 0.) appl = 0.000001
+          p => cea%points(cea%iOF, cea%Npt)
+          p%App = EXP(appl)
+          cea%Pp = Pinf / p%App
+          go to 250
+          ! CONVERGENCE HAS BEEN REACHED FOR ASSIGNED AREA RATIO
+900       cea%points(cea%iOF, cea%Npt)%AeAt = Aratio
+          if (cea%Fac) then
+             if (.not. done) then
+                if (cea%Iopt == 1) then
+                   ! OPTION 1 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
+                   ! PRESSURE AND CONTRACTION RATIO. IMPROVED ESTIMATE FOR PC
+                   cea%Area = .false.
+                   itnum = 0
+                   ppa = cea%Ppp(cea%Npt) * pa
+                   pinj = ppa + 1.d05 * usq / cea%Vlm(cea%Npt)
+                   test = (pinj - pinjas) / pinjas
+                   pcpa = pinf * pa
+                   if (cea%Debugf) then
+                      write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
+                           & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
+                      write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
+                   end if
+                   if (abs(test) < 0.00002) go to 350
+                   prat = pinjas / pinj
+                   cea%Pp = pinf * prat
+                   go to 300
+                else if (cea%Iopt == 2) then
+                   ! OPTION 2 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
+                   ! PRESSURE AND MASS FLOW PER UNIT AREA. IMPROVED ESTIMATE FOR PC
+                   ! AND ACAT
+                   acatsv = cea%Acat
                    pratsv = prat
-                   pjrat = 1
+                   cea%Area = .false.
+                   itnum = 0
+                   ppa = cea%Ppp(4) * pa
+                   pinj = ppa + 1.d05 * usq / cea%Vlm(4)
+                   mat = pa / (cea%Awt * R0)
+                   cea%Acat = mat / cea%Ma
                    prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
-                   if (cea%Debugf) write(IOOUT, '(" NEW PC = ", f10.2, 2x, "NEW ACAT = ", f9.6, 2x, "PJRAT =", &
-                        & f10.7, " PRACAT =", f10.7)') pcpa, cea%Acat, pjrat, pracat
-                end do
-                go to 300
+                   test = (pinj - pinjas) / pinjas
+                   pcpa = pinf * pa
+                   if (cea%Debugf) then
+                      write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
+                           & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
+                      write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
+                   end if
+                   if (abs(test) < 0.00002) go to 350
+                   pjrat = pinj / pinjas
+                   cea%Pp = pinf
+                   do i = 1, 2
+                      pracat = pratsv / prat
+                      pr = pjrat * pracat
+                      cea%Pp = cea%Pp / pr
+                      pcpa = cea%Pp * pa
+                      cea%Acat = cea%Acat / pr
+                      cea%Subar(1) = cea%Acat
+                      pratsv = prat
+                      pjrat = 1
+                      prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
+                      if (cea%Debugf) write(IOOUT, '(" NEW PC = ", f10.2, 2x, "NEW ACAT = ", f9.6, 2x, "PJRAT =", &
+                           & f10.7, " PRACAT =", f10.7)') pcpa, cea%Acat, pjrat, pracat
+                   end do
+                   go to 300
+                end if
              end if
           end if
-       end if
-950    if (cea%Trnspt) call TRANP(cea)
-       if (cea%Npt == cea%Nfz) cea%Eql = seql
-1000   itnum = 0
-       if (cea%Nsub > i01) then
-          isub = isub + 1
-          if (isub <= cea%Nsub) go to 750
-          isub = 1
-          cea%Nsub = -cea%Nsub
+950       if (cea%Trnspt) call TRANP(cea)
+          if (cea%Npt == cea%Nfz) cea%Eql = seql
+1000      itnum = 0
+          if (cea%Nsub > i01) then
+             isub = isub + 1
+             if (isub <= cea%Nsub) go to 750
+             isub = 1
+             cea%Nsub = -cea%Nsub
+             if (cea%Isup <= cea%Nsup) go to 750
+             cea%Area = .false.
+             go to 1150
+          end if
+1050      cea%Isup = cea%Isup + 1
+          itnum = 0
           if (cea%Isup <= cea%Nsup) go to 750
+          cea%Isup = isupsv
           cea%Area = .false.
           go to 1150
-       end if
-1050   cea%Isup = cea%Isup + 1
-       itnum = 0
-       if (cea%Isup <= cea%Nsup) go to 750
-       cea%Isup = isupsv
-       cea%Area = .false.
-       go to 1150
-       ! TEST FOR OUTPUT -- SCHEDULES COMPLETE OR NPT=Ncol
-1100   cea%Isv = cea%Npt
-       if (cea%Npt /= Ncol) go to 1200
-1150   if (.not. cea%Eql) then
-          if (cea%Nfz <= 1) then
-             cea%Cpr(cea%Nfz) = cprf
-             cea%Gammas(cea%Nfz) = cprf / (cprf - 1 / cea%Wm(cea%Nfz))
-          end if
-       end if
-       call RKTOUT(cea, it)
-       cea%Iplt = cea%Iplt + cea%Npt
-       if (.not. cea%Page1) then
-          cea%Iplt = cea%Iplt - 2
-          if (cea%Iopt /= 0) cea%Iplt = cea%Iplt - 1
-          cea%Iplt = min(cea%Iplt, 500)
-       else
-          cea%Page1 = .false.
-       end if
-       iplte = max(iplte, cea%Iplt)
-       dlnp = 1
-       if (cea%Tt == 0) cea%Area = .false.
-       if (.not. cea%Eql .and. cea%Tt == 0.) write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
-            & "POINT IS MORE", /, " THAN 50 K BELOW THE TEMPERATURE", &
-            & " RANGE OF A CONDENSED SPECIES (ROCKET)")')
-       if (cea%Isv == 0) then
-          ! PCP, SUBAR, AND SUPAR SCHEDULES COMPLETED
-          if (cea%Nsub < 0) cea%Nsub = -cea%Nsub
-          if (.not. cea%Froz .or. .not. cea%Eql) go to 1300
-          ! SET UP FOR FROZEN.
-          if (cea%Eql) cea%Iplt = iplt1
-          cea%Eql = .false.
-          cea%Page1 = .true.
-          call SETEN(cea)
-          cea%Tt = cea%Ttt(cea%Nfz)
-          ipp = cea%Nfz
-          if (cea%Nfz == cea%Npt) go to 1150
-          cea%Npt = cea%Nfz
-          cea%Enn = 1./cea%Wm(cea%Nfz)
-          if (cea%Nfz == 1) go to 450
-          if (cea%Nsub > 0) then
-             cea%Nsub = -cea%Nsub
-             write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
-                  & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
-          end if
-          p => cea%points(cea%iOF, cea%Nfz)
-          if (p%App < cea%points(cea%iOF, nptth)%App) then
-             write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
-                  & "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
-                  & "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
-          else
-             if (cea%Nfz < cea%Npp) go to 1200
-             go to 700
-          end if
-          go to 1300
-       else
-          if (cea%Eql) write(IOOUT, '(////)')
-          cea%Npt = nptth
-       end if
-       ! SET INDICES AND ESTIMATES FOR NEXT POINT.
-1200   cea%Npt = cea%Npt + 1
-       if (cea%Eql .or. (cea%Isv == -i12 .and. .not. seql)) then
-          ! THE FOLLOWING STATEMENT WAS ADDED TO TAKE CARE OF A SITUATION
-          ! WHERE EQLBRM WENT SINGULAR WHEN STARTING FROM ESTIMATES WHERE
-          ! BOTH SOLID AND LIQUID WERE INCLUDED.  JULY 27, 1990.
-          if (cea%Jliq /= 0 .and. cea%Isv > 0) cea%Isv = 0
-          call SETEN(cea)
-       end if
-1250   ipp = ipp + 1
-       p => cea%points(cea%iOF, cea%Npt)
-       if (cea%Npt > nptth) then
-          if (cea%Area) then
-             p%App = EXP(appl)
-          else
-             p%App = cea%Pcp(ipp - nptth)
-             if (cea%Fac) p%App = p%App * Pinf / cea%Ppp(1)
-             if (.not. cea%Eql .and. p%App < cea%points(cea%iOF, cea%Nfz)%App) then
-                write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
-                     & " WHERE THE ASSIGNED", /, &
-                     & " PRESSURE RATIOS WERE LESS THAN ", &
-                     & "THE VALUE AT POINT nfz =", i3, " (ROCKET)")') cea%Nfz
-                go to 1250
+          ! TEST FOR OUTPUT -- SCHEDULES COMPLETE OR NPT=Ncol
+1100      cea%Isv = cea%Npt
+          if (cea%Npt /= Ncol) go to 1200
+1150      if (.not. cea%Eql) then
+             if (cea%Nfz <= 1) then
+                cea%Cpr(cea%Nfz) = cprf
+                cea%Gammas(cea%Nfz) = cprf / (cprf - 1 / cea%Wm(cea%Nfz))
              end if
           end if
-          cea%Pp = pinf / p%App
-          if (cea%Fac) then
+          call RKTOUT(cea, it)
+          cea%Iplt = cea%Iplt + cea%Npt
+          if (.not. cea%Page1) then
+             cea%Iplt = cea%Iplt - 2
+             if (cea%Iopt /= 0) cea%Iplt = cea%Iplt - 1
+             cea%Iplt = min(cea%Iplt, 500)
+          else
+             cea%Page1 = .false.
+          end if
+          iplte = max(iplte, cea%Iplt)
+          dlnp = 1
+          if (cea%Tt == 0) cea%Area = .false.
+          if (.not. cea%Eql .and. cea%Tt == 0.) write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
+               & "POINT IS MORE", /, " THAN 50 K BELOW THE TEMPERATURE", &
+               & " RANGE OF A CONDENSED SPECIES (ROCKET)")')
+          if (cea%Isv == 0) then
+             ! PCP, SUBAR, AND SUPAR SCHEDULES COMPLETED
+             if (cea%Nsub < 0) cea%Nsub = -cea%Nsub
+             if (.not. cea%Froz .or. .not. cea%Eql) go to 1300
+             ! SET UP FOR FROZEN.
+             if (cea%Eql) cea%Iplt = iplt1
+             cea%Eql = .false.
+             cea%Page1 = .true.
+             call SETEN(cea)
+             cea%Tt = cea%Ttt(cea%Nfz)
+             ipp = cea%Nfz
+             if (cea%Nfz == cea%Npt) go to 1150
+             cea%Npt = cea%Nfz
+             cea%Enn = 1./cea%Wm(cea%Nfz)
+             if (cea%Nfz == 1) go to 450
+             if (cea%Nsub > 0) then
+                cea%Nsub = -cea%Nsub
+                write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
+                     & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
+             end if
+             p => cea%points(cea%iOF, cea%Nfz)
+             if (p%App < cea%points(cea%iOF, nptth)%App) then
+                write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
+                     & "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
+                     & "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
+             else
+                if (cea%Nfz < cea%Npp) go to 1200
+                go to 700
+             end if
+             go to 1300
+          else
+             if (cea%Eql) write(IOOUT, '(////)')
+             cea%Npt = nptth
+          end if
+          ! SET INDICES AND ESTIMATES FOR NEXT POINT.
+1200      cea%Npt = cea%Npt + 1
+          if (cea%Eql .or. (cea%Isv == -i12 .and. .not. seql)) then
+             ! THE FOLLOWING STATEMENT WAS ADDED TO TAKE CARE OF A SITUATION
+             ! WHERE EQLBRM WENT SINGULAR WHEN STARTING FROM ESTIMATES WHERE
+             ! BOTH SOLID AND LIQUID WERE INCLUDED.  JULY 27, 1990.
+             if (cea%Jliq /= 0 .and. cea%Isv > 0) cea%Isv = 0
+             call SETEN(cea)
+          end if
+1250      ipp = ipp + 1
+          p => cea%points(cea%iOF, cea%Npt)
+          if (cea%Npt > nptth) then
              if (cea%Area) then
-                if (isub <= cea%Nsub .and. isub > i01 .and. aratio >= cea%points(cea%iOF, 2)%AeAt) then
-                   write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
-                        & "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
-                        & ".  POINT OMITTED (ROCKET)")') aratio, cea%points(cea%iOF, 2)%AeAt
-                   cea%Npt = cea%Npt - 1
-                   go to 1000
+                p%App = EXP(appl)
+             else
+                p%App = cea%Pcp(ipp - nptth)
+                if (cea%Fac) p%App = p%App * Pinf / cea%Ppp(1)
+                if (.not. cea%Eql .and. p%App < cea%points(cea%iOF, cea%Nfz)%App) then
+                   write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
+                        & " WHERE THE ASSIGNED", /, &
+                        & " PRESSURE RATIOS WERE LESS THAN ", &
+                        & "THE VALUE AT POINT nfz =", i3, " (ROCKET)")') cea%Nfz
+                   go to 1250
                 end if
-             else if (cea%Npt > nptth .and. cea%Pcp(ipp-3) < cea%Ppp(1) / cea%Ppp(2)) then
-                write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
-                     & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
-                     & ". POINT OMITTED", " (ROCKET)")') cea%Pcp(ipp-3), cea%Ppp(1) / cea%Ppp(2)
-                cea%Npt = cea%Npt - 1
-                go to 650
+             end if
+             cea%Pp = pinf / p%App
+             if (cea%Fac) then
+                if (cea%Area) then
+                   if (isub <= cea%Nsub .and. isub > i01 .and. aratio >= cea%points(cea%iOF, 2)%AeAt) then
+                      write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
+                           & "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
+                           & ".  POINT OMITTED (ROCKET)")') aratio, cea%points(cea%iOF, 2)%AeAt
+                      cea%Npt = cea%Npt - 1
+                      go to 1000
+                   end if
+                else if (cea%Npt > nptth .and. cea%Pcp(ipp-3) < cea%Ppp(1) / cea%Ppp(2)) then
+                   write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
+                        & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
+                        & ". POINT OMITTED", " (ROCKET)")') cea%Pcp(ipp-3), cea%Ppp(1) / cea%Ppp(2)
+                   cea%Npt = cea%Npt - 1
+                   go to 650
+                end if
              end if
           end if
+          go to 250
+1300      cea%Npt = 1
+          ! CHECK FOR COMPLETED SCHEDULES -
+          ! 1) CHAMBER PRESSURES(IP = NP)
+          ! 2) CHAMBER TEMPERATURES(IT = NT)
+          ! 3) O/F VALUES(IOF = NOF)
+          if (ip == cea%Np .and. it == cea%Nt .and. iof == cea%Nof) go to 1400
+          write(IOOUT, '(////)')
+          call SETEN(cea)
+          cea%Tt = cea%Ttt(i12)
+       end do
+
+       if (it < cea%Nt) then
+          it = it + 1
+          cea%Tt = cea%T(it)
+          go to 200
        end if
-       go to 250
-1300   cea%Npt = 1
-       ! CHECK FOR COMPLETED SCHEDULES -
-       ! 1) CHAMBER PRESSURES(IP = NP)
-       ! 2) CHAMBER TEMPERATURES(IT = NT)
-       ! 3) O/F VALUES(IOF = NOF)
-       if (ip == cea%Np .and. it == cea%Nt .and. iof == cea%Nof) go to 1400
-       write(IOOUT, '(////)')
-       call SETEN(cea)
-       cea%Tt = cea%Ttt(i12)
     end do
-    if (it < cea%Nt) then
-       it = it + 1
-       cea%Tt = cea%T(it)
-       go to 200
-    else if (iof < cea%Nof) then
-       go to 100
-    end if
+
 1400 cea%Iplt = max(cea%Iplt, iplte)
+
     return
   end subroutine ROCKET
 
