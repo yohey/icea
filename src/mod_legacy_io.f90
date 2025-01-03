@@ -1132,22 +1132,62 @@ contains
   end subroutine OUT1
 
 
-  subroutine OUT2(cea, Npt, io_out)
+  subroutine OUT2(cea, Npt, i_col_end, io_out)
     !***********************************************************************
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
     use mod_constants, only: R0
-    use mod_types, only: CEA_Problem
+    use mod_types, only: CEA_Problem, CEA_Point, Ncol
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
     integer, intent(in):: Npt
+    integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
     character(15):: fgi, fh, fp, frh, fs, fu
     integer:: i, j
     integer, save:: mcp, mdvp, mdvt, meq, mfa, mg, mgam, mh, mie, mm, mmw, mof, mp, mpf, mph, mrho, ms, mson, mt
     real(8):: pfactor, vnum
+
+    type(CEA_Point), pointer:: p !< current point
+
+    integer:: i_col_start
+    integer:: n_cols_print
+    integer:: n_cols_fixed
+    integer, allocatable:: i_cols_print(:)
+    real(8), allocatable:: out_cp(:)
+
+    if (cea%Rkt) then
+       if (cea%Fac) then
+          n_cols_fixed = 3
+       else
+          n_cols_fixed = 2
+       end if
+    else
+       n_cols_fixed = 0
+    end if
+
+    i_col_start = ((i_col_end - n_cols_fixed - 1) / (Ncol - n_cols_fixed)) * (Ncol - n_cols_fixed) + n_cols_fixed + 1
+    n_cols_print = i_col_end - i_col_start + n_cols_fixed + 1
+
+    allocate(i_cols_print(n_cols_print))
+
+    i_cols_print(:) = -1
+    do concurrent (i = 1:n_cols_fixed)
+       i_cols_print(i) = i
+    end do
+    do concurrent (i = i_col_start:i_col_end)
+       j = i - i_col_start + n_cols_fixed + 1
+       i_cols_print(j) = i
+    end do
+
+    allocate(out_cp(n_cols_print))
+
+    do i = 1, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       out_cp(i) = p%Cpr * cea%R
+    end do
 
     ione = 0
     if (cea%Rkt .and. .not. cea%Page1) then
@@ -1316,14 +1356,15 @@ contains
     write(io_out, cea%fmt) fu, (cea%X(j), j = 1, Npt)
 
     ! GIBBS ENERGY
-    do i = 1, Npt
+    do i = 1, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
        cea%X(i) = (cea%Hsum(i) - cea%Ttt(i) * cea%Ssum(i)) * cea%R
        if (cea%Nplt /= 0 .and. i > ione) then
           if (mg > 0) cea%Pltout(i+cea%Iplt-ione, mg) = cea%X(i)
           if (mm > 0) cea%Pltout(i+cea%Iplt-ione, mm) = cea%Wm(i)
           if (mmw > 0) cea%Pltout(i+cea%Iplt-ione, mmw) = 1 / cea%Totn(i)
           if (ms > 0) cea%Pltout(i+cea%Iplt-ione, ms) = cea%Ssum(i) * cea%R
-          if (mcp > 0) cea%Pltout(i+cea%Iplt-ione, mcp) = cea%Cpr(i) * cea%R
+          if (mcp > 0) cea%Pltout(i+cea%Iplt-ione, mcp) = p%Cpr * cea%R
           if (mgam > 0) cea%Pltout(i+cea%Iplt-ione, mgam) = cea%Gammas(i)
           if (mdvt > 0) cea%Pltout(i+cea%Iplt-ione, mdvt) = cea%Dlvtp(i)
           if (mdvp > 0) cea%Pltout(i+cea%Iplt-ione, mdvp) = cea%Dlvpt(i)
@@ -1353,7 +1394,7 @@ contains
     if (cea%Eql) write(io_out, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
 
     ! HEAT CAPACITY
-    write(io_out, cea%fmt) fc, (cea%Cpr(j) * cea%R, j = 1, Npt)
+    write(io_out, cea%fmt) fc, out_cp(:)
 
     ! GAMMA(S)
     cea%fmt(7) = '4,'
@@ -1375,7 +1416,7 @@ contains
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
-    use mod_types, only: CEA_Problem
+    use mod_types, only: CEA_Problem, Ncol
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1387,6 +1428,10 @@ contains
     integer:: i, k, m, im, kin
     integer, save:: notuse
     real(8):: tra
+
+    integer:: i_col_start
+    i_col_start = ((cea%ipt - 1) / Ncol) * Ncol + 1
+!!$    write(0, *) '[DEBUG] OUT3: cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt = ', cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt
 
     tra = 5.d-6
     if (cea%Trace /= 0.) tra = cea%Trace
@@ -1467,7 +1512,7 @@ contains
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
-    use mod_types, only: CEA_Problem
+    use mod_types, only: CEA_Problem, Ncol
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1475,6 +1520,10 @@ contains
     integer, intent(in):: io_out
 
     integer:: i, j
+
+    integer:: i_col_start
+    i_col_start = ((cea%ipt - 1) / Ncol) * Ncol + 1
+!!$    write(0, *) '[DEBUG] OUT4: cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt = ', cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt
 
     write(io_out, *)
     write(io_out, '(" TRANSPORT PROPERTIES (GASES ONLY)")')
@@ -1895,7 +1944,7 @@ contains
        write(IOOUT, cea%fmt) 'Pinj/P         ', (cea%X(i), i = 1, cea%Npt)
     end if
 
-    call OUT2(cea, cea%Npt, IOOUT)
+    call OUT2(cea, cea%Npt, cea%ipt, IOOUT)
 
     mppf  = 0
     mppj  = 0
