@@ -1,0 +1,118 @@
+#
+# Example 8 mod
+#
+problem case = Example-8-mod
+        rocket
+        equilibrium
+        o/f = 5.55157  
+        p,bar = 53.3172
+        subar = 1.58
+        pi/p = 10, 100, 1000
+        supar = 25, 50, 75
+
+reac    fuel = H2(L)  wt% = 100.  t(k) = 20.27 
+        oxid = O2(L)  wt% = 100.  t(k) = 90.17 
+
+output  siunits
+
+end
+
+#
+# Example 9 mod
+#
+problem case = Example-9-mod
+        rocket
+        fac
+        p,bar = 53.3172
+        acat = 1.58  
+        o/f = 5.55157
+        pi/p = 10, 100, 1000
+        supar = 25, 50, 75
+
+reac    fuel = H2(L)  wt% = 100.  t,k = 20.27 
+        oxid = O2(L)  wt% = 100.  t,k = 90.17
+
+output  siunits  
+
+end
+
+#
+# Example 10 mod
+#
+problem case = Example-10-mod
+        rocket
+        fac
+        o/f = 5.55157
+        p,bar = 53.3172
+        ma = 1333.9  
+        pi/p = 10, 100, 1000
+        sup-ae/at = 25, 50, 75
+
+reac    fuel = H2(L)  t,k = 20.27
+        oxid = O2(L)  t,k = 90.17
+
+output  short
+
+end
+
+#
+# Example 11 mod
+#
+problem case = Example-11-mod
+        rocket
+        equilibrium
+        ions
+        p,psia = 1000
+        pi/p = 68.0457
+        sub,ae/at = 10
+        sup,ae/at = 10, 20, 100
+
+reac    fuel = Li(cr)  moles = 1.     t(k) = 298.15  
+        oxid = F2(L)   moles = .5556  t(k) = 85.02   
+
+output  siunits  transport
+
+end
+
+#
+# Example 12 mod
+#
+problem case = Example-12-mod
+        rocket
+        eql
+        frozen
+        p,psia = 1000
+        pi/p = 68.0457
+        nfz = 2
+        supersonic = 5, 10, 25, 50, 75, 100, 150, 200
+        o/f= 2.5
+
+reac    fuel = CH6N2(L)  rho,g/cc = 0.874
+        oxid = N2O4(L)   rho,g/cc = 1.431
+
+only    CO  CO2  H  HNO  HNO2  HO2  H2  H2O  H2O2  N    NO      NO2
+        N2  N2O  O  OH   O2    HCO  NH  CH4  NH2   NH3  H2O(L)  C(gr)
+
+output  siunits  massf  plot aeat t p ivac isp mach cf
+
+end
+
+#
+# Example 13 mod
+#
+problem case = Example-13-mod
+        rocket
+        equilibrium
+        p,psia = 3000
+        pi/p = 3, 10, 30, 300
+        %fuel = 67.
+
+reac    fuel = N2H4(L)  wt% =  80  t = 298.15
+        fuel = Be(a)    wt% =  20  t = 298.15
+        oxid = H2O2(L)  wt% = 100  t = 298.15
+
+output  trace = 1.e-10 calories
+
+insert  BeO(L)
+
+end
