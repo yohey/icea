@@ -1909,15 +1909,26 @@ contains
     real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
     type(CEA_Point), pointer:: p !< current point
-    type(CEA_Point), pointer:: p1, p23
+    type(CEA_Point), pointer:: p1, p2, p23
 
     integer:: i_col_end
     integer:: n_cols_print
     integer, allocatable:: i_cols_print(:)
 
+    real(8), allocatable:: out_AeAt(:), out_App(:)
+
     i_col_end = cea%ipt
     call get_print_cols(cea, i_col_end, i_cols_print)
     n_cols_print = size(i_cols_print)
+
+    allocate(out_AeAt(n_cols_print))
+    allocate(out_App(n_cols_print))
+
+    do i = 1, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       out_AeAt(i) = p%AeAt
+       out_App(i) = p%App
+    end do
 
 
     if (.not. cea%Eql) then
@@ -1939,8 +1950,9 @@ contains
 
     i23 = 2
     if (cea%Iopt > 0) then
-       if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), cea%points(cea%iOF, 2)%App
-       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%Ma, cea%points(cea%iOF, 2)%App
+       p2 => cea%points(cea%iOF, 2)
+       if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), p2%App
+       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%Ma, p2%App
        i23 = 3
     end if
 
@@ -1961,8 +1973,8 @@ contains
     ! PRESSURE RATIOS
     if (cea%Iopt == 0) then
        write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
-       call VARFMT(cea, [(cea%points(cea%iOF, j)%App, j = 1, cea%Npt)], cea%Npt)
-       write(IOOUT, cea%fmt) 'Pinf/P         ', (cea%points(cea%iOF, j)%App, j = 1, cea%Npt)
+       call VARFMT(cea, out_App, n_cols_print)
+       write(IOOUT, cea%fmt) 'Pinf/P         ', out_App(:)
     else
        nex = nex - 1
        write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
@@ -2052,10 +2064,10 @@ contains
     ! AREA RATIO
     cea%fmt(4) = '9x,'
     cea%fmt(i46) = '9x,'
-    call VARFMT(cea, [(cea%points(cea%iOF, i)%AeAt, i = 1, cea%Npt)], cea%Npt)
+    call VARFMT(cea, out_AeAt, n_cols_print)
     cea%fmt(5) = ' '
     cea%fmt(i57) = ' '
-    write(IOOUT, cea%fmt) 'Ae/At          ', (cea%points(cea%iOF, j)%AeAt, j = 2, cea%Npt)
+    write(IOOUT, cea%fmt) 'Ae/At          ', out_AeAt(2:)
 
     ! C*
     cea%fmt(i57) = '13'
@@ -2079,18 +2091,19 @@ contains
     write(IOOUT, cea%fmt) fi, (cea%Spim(j), j = 2, cea%Npt)
 
     if (cea%Nplt > 0) then
+       p1 => cea%points(cea%iOF, 1)
        cea%Spim(1) = 0
-       cea%points(cea%iOF, 1)%AeAt = 0
+       p1%AeAt = 0
        cea%Vmoc(1) = 0
        vaci(1) = 0
        cea%X(1) = 0
        cea%Spim(1) = 0
-       do i = ione + 1, cea%Npt
-          p => cea%points(cea%iOF, i)
+       do i = ione + 1, n_cols_print
+          p => cea%points(cea%iOF, i_cols_print(i))
           if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = cea%Ppp(1) / cea%Ppp(i)
           if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = p%App
           if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = cea%Vmoc(i)
-          if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = cea%points(cea%iOF, i)%AeAt
+          if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = p%AeAt
           if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = cea%X(i)
           if (mivac > 0) cea%Pltout(i+cea%Iplt-ione, mivac) = vaci(i)
           if (misp > 0)  cea%Pltout(i+cea%Iplt-ione, misp)  = cea%Spim(i)
@@ -2132,6 +2145,8 @@ contains
           if (line == 3 .or. k == cea%Ngc) then
              if (line == 0) then
                 call OUT3(cea, cea%Npt, IOOUT)
+                deallocate(out_AeAt)
+                deallocate(out_App)
                 return
              end if
              write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), cea%X(ln), ln = 1, line)
@@ -2141,6 +2156,10 @@ contains
     end if
 
     call OUT3(cea, cea%Npt, IOOUT)
+
+    deallocate(out_AeAt)
+    deallocate(out_App)
+
     return
   end subroutine RKTOUT
 

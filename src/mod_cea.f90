@@ -2014,13 +2014,13 @@ contains
     logical:: done, seql, thi
     real(8):: a1l = -1.26505, b1 = 1.0257, c1 = -1.2318, pa = 1e5
     real(8):: acatsv, aeatl, appl, aratio, asq, check, cprf, dd, dh, &
-         dlnp, dlnpe, dlt, dp, eln, mat, msq, p1, pcpa, pcplt, pinf, pinj, &
+         dlnp, dlnpe, dlt, dp, eln, mat, msq, Pp_old, pcpa, pcplt, pinf, pinj, &
          pinjas, pjrat, ppa, pr, pracat, prat, pratsv, pvg, test, tmelt, usq
     integer:: ip, it
 
     integer:: iar
     type(CEA_Point), pointer:: p !< current point
-    type(CEA_Point), pointer:: p2, p4, p12
+    type(CEA_Point), pointer:: p1, p2, p4, p12
     type(CEA_Point), pointer:: pfz
     type(CEA_Point), pointer:: pth
 
@@ -2164,9 +2164,9 @@ contains
 
                 if (i > 4) cea%Subar(1) = cea%Acat
 
-                p => cea%points(cea%iOF, 1)
+                p1 => cea%points(cea%iOF, 1)
                 cea%Pp = ppa / pa
-                p%App = cea%Pp / cea%Ppp(1)
+                p1%App = cea%Pp / cea%Ppp(1)
                 go to 1100
 
              else
@@ -2198,7 +2198,7 @@ contains
                       dh = abs(msq - 1)
                       if (dh <= 0.4d-4) go to 550
                       if (itrot > 0) then
-                         p1 = cea%Pp
+                         Pp_old = cea%Pp
                          if (cea%Jsol /= 0) then
                             tmelt = cea%Tt
                             cea%Pp = cea%Pp * (1 + msq * pth%Gammas) / (pth%Gammas + 1)
@@ -2229,8 +2229,8 @@ contains
                          write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                          go to 550
                       else
-                         dp = abs(cea%Pp - p1) / 20
-                         cea%Pp = max(cea%Pp, p1)
+                         dp = abs(cea%Pp - Pp_old) / 20
+                         cea%Pp = max(cea%Pp, Pp_old)
                          write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                          cea%Pp = cea%Pp - dp
                          go to 500
@@ -2270,7 +2270,8 @@ contains
              pcplt = log(pth%App)
 
 600          cea%Isv = 0
-             cea%points(cea%iOF, cea%Npt)%AeAt = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
+             p => cea%points(cea%iOF, cea%ipt)
+             p%AeAt = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
              if (cea%Tt == 0) go to 1150
              if (cea%Area) go to 750
              if (cea%Trnspt .and. (.not. cea%Fac .or. done .or. cea%Npt > 2)) call TRANP(cea)
@@ -2337,13 +2338,13 @@ contains
                 ! TEST FOR CONVERGENCE ON AREA RATIO.
              else if (p%Gammas > 0) then
                 check = 0.00004
-                p => cea%points(cea%iOF, cea%Npt)
+                p => cea%points(cea%iOF, cea%ipt)
                 if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
                      & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
                      itnum, aratio, p%AeAt, p%App, dlnp
-                if (abs(cea%points(cea%iOF, cea%Npt)%AeAt - Aratio) / Aratio <= check) go to 900
+                if (abs(p%AeAt - Aratio) / Aratio <= check) go to 900
                 if (abs(dlnp) < 0.00004) go to 900
-                aeatl = log(cea%points(cea%iOF, cea%Npt)%AeAt)
+                aeatl = log(p%AeAt)
                 itnum = itnum + 1
                 if (itnum > 10) then
                    write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
@@ -2370,13 +2371,14 @@ contains
              appl = appl + dlnp
              if (itnum == 1) go to 1100
              if (appl < 0.) appl = 0.000001
-             p => cea%points(cea%iOF, cea%Npt)
+             p => cea%points(cea%iOF, cea%ipt)
              p%App = EXP(appl)
              cea%Pp = Pinf / p%App
              go to 250
 
              ! CONVERGENCE HAS BEEN REACHED FOR ASSIGNED AREA RATIO
-900          cea%points(cea%iOF, cea%Npt)%AeAt = Aratio
+900          p = cea%points(cea%iOF, cea%ipt)
+             p%AeAt = Aratio
              if (cea%Fac .and. .not. done) then
                 if (cea%Iopt == 1) then
                    ! OPTION 1 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
@@ -2545,7 +2547,7 @@ contains
                         & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
                 end if
 
-                if (pfz%App < cea%points(cea%iOF, nptth)%App) then
+                if (pfz%App < pth%App) then
                    write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
                         & "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
                         & "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
@@ -2570,7 +2572,7 @@ contains
                 call SETEN(cea)
              end if
 
-             p => cea%points(cea%iOF, cea%Npt)
+             p => cea%points(cea%iOF, cea%ipt)
 
              do
                 ipp = ipp + 1
