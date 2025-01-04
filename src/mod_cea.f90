@@ -229,7 +229,7 @@ contains
              cea%Hp = .false.
 
              if (cea%Tt /= 0) then
-                gam = cea%Gammas(cea%Npt)
+                gam = p%Gammas
                 tt1 = cea%Tt / T1
                 ii = 0
                 tem = tt1 - 0.75 * pp1 / (p%Cpr * cea%Wmix)
@@ -260,15 +260,15 @@ contains
 
                    if (cea%Tt == 0) exit
 
-                   gam = cea%Gammas(cea%Npt)
+                   gam = p%Gammas
                    amm = cea%Wm(cea%Npt) / cea%Wmix
                    rr1 = pp1 * amm / tt1
-                   a11 = 1 / pp1 + gam * rr1 * cea%Dlvpt(cea%Npt)
-                   a12 = gam * rr1 * cea%Dlvtp(cea%Npt)
-                   a21 = 0.5 * gam * (rr1**2 - 1 - cea%Dlvpt(cea%Npt) * (1 + rr1**2)) + cea%Dlvtp(cea%Npt) - 1
-                   a22 = -0.5 * gam * cea%Dlvtp(cea%Npt) * (rr1**2 + 1) - cea%Wm(cea%Npt) * p%Cpr
+                   a11 = 1 / pp1 + gam * rr1 * p%Dlvpt
+                   a12 = gam * rr1 * p%Dlvtp
+                   a21 = 0.5 * gam * (rr1**2 - 1 - p%Dlvpt * (1 + rr1**2)) + p%Dlvtp - 1
+                   a22 = -0.5 * gam * p%Dlvtp * (rr1**2 + 1) - cea%Wm(cea%Npt) * p%Cpr
                    b1 = 1 / pp1 - 1 + gam * (rr1 - 1)
-                   b2 = cea%Wm(cea%Npt) * (cea%Hsum(cea%Npt) - h1(cea%ipt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
+                   b2 = cea%Wm(cea%Npt) * (p%Hsum - h1(cea%ipt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
                    d = a11 * a22 - a12 * a21
                    x1 = (a22 * b1 - a12 * b2) / d
                    x2 = (a11 * b2 - a21 * b1) / d
@@ -949,7 +949,7 @@ contains
 
        else if (.not. cea%Pderiv) then
           ! TEMPERATURE DERIVATIVES--CONVG=T, PDERIV=F
-          cea%Dlvtp(cea%Npt) = 1. - cea%X(cea%Iq1)
+          p%Dlvtp = 1. - cea%X(cea%Iq1)
           p%Cpr = cea%G(iq2, iq2)
 
           p%Cpr = p%Cpr - sum(cea%G(iq2, 1:cea%Iq1) * cea%X(1:cea%Iq1))
@@ -959,13 +959,13 @@ contains
           go to 500
 
        else
-          cea%Dlvpt(cea%Npt) = -1 + cea%X(cea%Iq1)
+          p%Dlvpt = -1 + cea%X(cea%Iq1)
           if (cea%Jliq == 0) then
-             cea%Gammas(cea%Npt) = -1 / (cea%Dlvpt(cea%Npt) + (cea%Dlvtp(cea%Npt)**2) * cea%Enn / p%Cpr)
+             p%Gammas = -1 / (p%Dlvpt + (p%Dlvtp**2) * cea%Enn / p%Cpr)
           else
              cea%En(cea%Jsol, cea%Npt) = ensol
-             cea%Hsum(cea%Npt) = cea%Hsum(cea%Npt) + cea%En(cea%Jliq, cea%Npt) * (cea%H0(cea%Jliq) - cea%H0(cea%Jsol))
-             cea%Gammas(cea%Npt) = -1. / cea%Dlvpt(cea%Npt)
+             p%Hsum = p%Hsum + cea%En(cea%Jliq, cea%Npt) * (cea%H0(cea%Jliq) - cea%H0(cea%Jsol))
+             p%Gammas = -1. / p%Dlvpt
              cea%Npr = cea%Npr + 1
              cea%Jcond(cea%Npr) = cea%Jliq
           end if
@@ -976,10 +976,10 @@ contains
     else
        if (cea%Convg) then
           write(IOOUT, '(/" DERIVATIVE MATRIX SINGULAR (EQLBRM)")')
-          cea%Dlvpt(cea%Npt) = -1
-          cea%Dlvtp(cea%Npt) = 1
+          p%Dlvpt = -1
+          p%Dlvtp = 1
           p%Cpr = cea%Cpsum
-          cea%Gammas(cea%Npt) = -1 / (cea%Dlvpt(cea%Npt) + cea%Dlvtp(cea%Npt)**2 * cea%Enn / p%Cpr)
+          p%Gammas = -1 / (p%Dlvpt + p%Dlvtp**2 * cea%Enn / p%Cpr)
           go to 1400
 
        else
@@ -1255,9 +1255,9 @@ contains
        if (cea%Jsol /= 0) then
           ensol = cea%En(cea%Jsol, cea%Npt)
           cea%En(cea%Jsol, cea%Npt) = cea%En(cea%Jsol, cea%Npt) + cea%En(cea%Jliq, cea%Npt)
-          cea%Dlvtp(cea%Npt) = 0
+          p%Dlvtp = 0
           p%Cpr = 0
-          cea%Gammas(cea%Npt) = 0
+          p%Gammas = 0
           cea%Pderiv = .true.
 
           do k = 1, cea%Npr
@@ -1472,7 +1472,7 @@ contains
 1400 cea%Ttt(cea%Npt) = cea%Tt
     cea%Ppp(cea%Npt) = cea%Pp
     cea%Vlm(cea%Npt) = R0 * cea%Enn * cea%Tt / cea%Pp
-    cea%Hsum(cea%Npt) = cea%Hsum(cea%Npt) * cea%Tt
+    p%Hsum = p%Hsum * cea%Tt
     cea%Wm(cea%Npt) = 1. / cea%Enn
     gasfrc = cea%Enn/cea%Totn(cea%Npt)
 
@@ -1494,8 +1494,8 @@ contains
     if (cea%Debug(cea%Npt)) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
          & e13.6, 3x, "S/R=", e13.6, /3x, "M=", e13.6, 3x, "CP/R=", e13.6, 3x, &
          & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
-         cea%Npt, cea%Pp, cea%Tt, cea%Hsum(cea%Npt), cea%Ssum(cea%Npt), cea%Wm(cea%Npt), p%Cpr, &
-         cea%Dlvpt(cea%Npt), cea%Dlvtp(cea%Npt), cea%Gammas(cea%Npt), cea%Vlm(cea%Npt)
+         cea%Npt, cea%Pp, cea%Tt, p%Hsum, cea%Ssum(cea%Npt), cea%Wm(cea%Npt), p%Cpr, &
+         p%Dlvpt, p%Dlvtp, p%Gammas, cea%Vlm(cea%Npt)
 
     if (cea%Tt >= cea%Tg(1) .and. cea%Tt <= cea%Tg(4)) go to 1600
 
@@ -1558,14 +1558,14 @@ contains
        end if
 
        if (cea%Convg) then
-          cea%Hsum(cea%Npt) = sum(cea%En(1:cea%Ngc, cea%Nfz) * cea%H0(1:cea%Ngc)) * cea%Tt
+          p%Hsum = sum(cea%En(1:cea%Ngc, cea%Nfz) * cea%H0(1:cea%Ngc)) * cea%Tt
 
           cea%Ttt(cea%Npt) = cea%Tt
-          cea%Gammas(cea%Npt) = cea%Cpsum / (cea%Cpsum - 1 / cea%Wm(cea%Nfz))
+          p%Gammas = cea%Cpsum / (cea%Cpsum - 1 / cea%Wm(cea%Nfz))
           cea%Vlm(cea%Npt) = R0 * cea%Tt / (cea%Wm(cea%Nfz) * cea%Pp)
           cea%Wm(cea%Npt) = cea%Wm(cea%Nfz)
-          cea%Dlvpt(cea%Npt) = -1
-          cea%Dlvtp(cea%Npt) = 1
+          p%Dlvpt = -1
+          p%Dlvtp = 1
           cea%Totn(cea%Npt) = cea%Totn(cea%Nfz)
           cea%Ppp(cea%Npt) = cea%Pp
           p%Cpr = cea%Cpsum
@@ -1785,7 +1785,7 @@ contains
     cea%Imat = kmat - 1
     cea%G = 0
     sss = 0
-    cea%Hsum(cea%Npt) = 0
+    p%Hsum = 0
 
     ! BEGIN SET-UP OF ITERATION OR DERIVATIVE MATRIX
     do j = 1, cea%Ng
@@ -1844,7 +1844,7 @@ contains
 
           cea%G(kk, iq2) = cea%H0(j)
           cea%G(kk, kmat) = cea%Mu(j)
-          cea%Hsum(cea%Npt) = cea%Hsum(cea%Npt) + cea%H0(j) * cea%En(j, cea%Npt)
+          p%Hsum = p%Hsum + cea%H0(j) * cea%En(j, cea%Npt)
 
           if (cea%Sp) then
              sss = sss + cea%S(j) * cea%En(j, cea%Npt)
@@ -1854,7 +1854,7 @@ contains
     end if
 
     sss = sss + cea%G(iq2, cea%Iq1)
-    cea%Hsum(cea%Npt) = cea%Hsum(cea%Npt) + cea%G(cea%Iq1, iq2)
+    p%Hsum = p%Hsum + cea%G(cea%Iq1, iq2)
     cea%G(cea%Iq1, cea%Iq1) = cea%Sumn - cea%Enn
 
     ! REFLECT SYMMETRIC PORTIONS OF THE MATRIX
@@ -1878,7 +1878,7 @@ contains
        ! COMPLETE ENERGY ROW AND TEMPERATURE COLUMN
        if (kmat /= iq2) then
           if (cea%Sp) energyl = cea%S0 + cea%Enn - cea%Sumn - sss
-          if (cea%Hp) energyl = cea%Hsub0/cea%Tt - cea%Hsum(cea%Npt)
+          if (cea%Hp) energyl = cea%Hsub0/cea%Tt - p%Hsum
           cea%G(iq2, iq3) = cea%G(iq2, iq3) + energyl
           cea%G(iq2, iq2) = cea%G(iq2, iq2) + cea%Cpsum
        end if
@@ -2020,6 +2020,7 @@ contains
 
     integer:: iar
     type(CEA_Point), pointer:: p !< current point
+    type(CEA_Point), pointer:: p2, p4, p12
     type(CEA_Point), pointer:: pfz
     type(CEA_Point), pointer:: pth
 
@@ -2181,12 +2182,13 @@ contains
 
              ! INITIALIZE FOR THROAT
 400          if (ipp > nipp) then
-                usq = 2 * (cea%Hsum(1) - cea%Hsum(cea%Npt)) * R0
+                p => cea%points(cea%iOF, cea%ipt)
+                usq = 2 * (cea%points(cea%iOF, 1)%Hsum - p%Hsum) * R0
                 if (ipp > nptth) go to 600
                 ! THROAT
                 if (.not. thi) then
                    cea%Vv = cea%Vlm(nptth)
-                   pvg = cea%Pp * cea%Vv * cea%Gammas(nptth)
+                   pvg = cea%Pp * cea%Vv * pth%Gammas
                    if (pvg == 0) then
                       write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                       go to 550
@@ -2199,13 +2201,13 @@ contains
                          p1 = cea%Pp
                          if (cea%Jsol /= 0) then
                             tmelt = cea%Tt
-                            cea%Pp = cea%Pp * (1 + msq * cea%Gammas(nptth)) / (cea%Gammas(nptth) + 1)
+                            cea%Pp = cea%Pp * (1 + msq * pth%Gammas) / (pth%Gammas + 1)
                          else if (tmelt == 0) then
-                            cea%Pp = cea%Pp * (1 + msq * cea%Gammas(nptth)) / (cea%Gammas(nptth) + 1)
+                            cea%Pp = cea%Pp * (1 + msq * pth%Gammas) / (pth%Gammas + 1)
                          else
                             write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                             dlt = log(tmelt / cea%Tt)
-                            dd = dlt * pth%Cpr / (cea%Enn * cea%Dlvtp(nptth))
+                            dd = dlt * pth%Cpr / (cea%Enn * pth%Dlvtp)
                             cea%Pp = cea%Pp * EXP(dd)
                             pth%App = cea%P(ip) / cea%Pp
                             if (cea%Fac) pth%App = pinf / cea%Pp
@@ -2235,7 +2237,7 @@ contains
                       end if
                    end if
                 else
-                   cea%Gammas(nptth) = 0
+                   pth%Gammas = 0
                    go to 550
                 end if
              else
@@ -2247,10 +2249,11 @@ contains
                 cea%S0 = cea%Ssum(i12)
              end if
 
-450          tmelt = 0
+450          p12 => cea%points(cea%iOF, i12)
+             tmelt = 0
              itrot = 3
              thi = .false.
-             pth%App = ((cea%Gammas(i12) + 1) / 2)**(cea%Gammas(i12) / (cea%Gammas(i12) - 1))
+             pth%App = ((p12%Gammas + 1) / 2)**(p12%Gammas / (p12%Gammas - 1))
              if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') pth%App
              cea%Pp = Pinf / pth%App
              cea%Isv = -i12
@@ -2292,7 +2295,8 @@ contains
              cea%Area = .true.
 
              ! PCP ESTIMATES FOR AREA RATIOS
-750          if (itnum == 0) then
+750          p => cea%points(cea%iOF, cea%ipt)
+             if (itnum == 0) then
                 dlnp = 1
                 itnum = 1
                 aratio = cea%Subar(isub)
@@ -2319,7 +2323,7 @@ contains
                       if (cea%Isup > isup1) then
                          if (cea%Supar(cea%Isup-1) >= 2) go to 850
                       end if
-                      appl = cea%Gammas(nptth) + eln * 1.4
+                      appl = pth%Gammas + eln * 1.4
                    end if
                    go to 1100
                 end if
@@ -2331,7 +2335,7 @@ contains
                 go to 1200
 
                 ! TEST FOR CONVERGENCE ON AREA RATIO.
-             else if (cea%Gammas(cea%Npt) > 0) then
+             else if (p%Gammas > 0) then
                 check = 0.00004
                 p => cea%points(cea%iOF, cea%Npt)
                 if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
@@ -2345,9 +2349,10 @@ contains
                    write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
                    go to 900
                 else
+                   p => cea%points(cea%iOF, cea%ipt)
                    ! IMPROVED PCP ESTIMATES.
-                   asq = cea%Gammas(cea%Npt) * cea%Enn * R0 * cea%Tt
-                   dlnpe = cea%Gammas(cea%Npt) * usq / (usq - asq)
+                   asq = p%Gammas * cea%Enn * R0 * cea%Tt
+                   dlnpe = p%Gammas * usq / (usq - asq)
                    go to 850
                 end if
              else
@@ -2420,14 +2425,15 @@ contains
                    cea%ipt = 2
                    ipp = min(4, cea%Npp)
                    call SETEN(cea)
-                   p => cea%points(cea%iOF, 2)
-                   p%Cpr = cea%points(cea%iOF, 4)%Cpr
-                   cea%Dlvpt(2) = cea%Dlvpt(4)
-                   cea%Dlvtp(2) = cea%Dlvtp(4)
-                   cea%Gammas(2) = cea%Gammas(4)
-                   cea%Hsum(2) = cea%Hsum(4)
+                   p2 => cea%points(cea%iOF, 2)
+                   p4 => cea%points(cea%iOF, 4)
+                   p2%Cpr = p4%Cpr
+                   p2%Dlvpt = p4%Dlvpt
+                   p2%Dlvtp = p4%Dlvtp
+                   p2%Gammas = p4%Gammas
+                   p2%Hsum = p4%Hsum
                    cea%Ppp(2) = cea%Ppp(4)
-                   p%App = cea%Ppp(1)/pinf
+                   p2%App = cea%Ppp(1)/pinf
                    cea%Ssum(2) = cea%Ssum(4)
                    cea%Totn(2) = cea%Totn(4)
                    cea%Ttt(2) = cea%Ttt(4)
@@ -2497,7 +2503,7 @@ contains
 1150         if (.not. cea%Eql) then
                 if (cea%Nfz <= 1) then
                    pfz%Cpr = cprf
-                   cea%Gammas(cea%Nfz) = cprf / (cprf - 1 / cea%Wm(cea%Nfz))
+                   pfz%Gammas = cprf / (cprf - 1 / cea%Wm(cea%Nfz))
                 end if
              end if
 
@@ -3068,7 +3074,7 @@ contains
          p21l, p2p1(Ncol), pmn, rho12, rho52, rrho(Ncol), sg(78), T1, T21, &
          t21l, t2t1(Ncol), ttmax, u1u2(Ncol), uis(13), utwo(Ncol), uu, wmx, ww
 
-    type(CEA_Point), pointer:: p
+    type(CEA_Point), pointer:: p, p_prev
 
     if (cea%Trace == 0) cea%Trace = 5.E-9
     cea%Tp = .true.
@@ -3111,8 +3117,9 @@ contains
           if (.not. cea%Incdeq) then
              ! FROZEN
              do i = 1, cea%Nsk
-                cea%Dlvtp(i) = 1
-                cea%Dlvpt(i) = -1
+                p => cea%points(iof, i)
+                p%Dlvtp = 1
+                p%Dlvpt = -1
              end do
           end if
 
@@ -3123,10 +3130,11 @@ contains
              cea%Ttt(i) = cea%T(i)
 
              if (i > 1) then
+                p_prev => cea%points(iof, i-1)
                 if (cea%Ppp(i) == 0) cea%Ppp(i) = cea%Ppp(i-1)
                 if (cea%Ttt(i) == 0) cea%Ttt(i) = cea%Ttt(i-1)
                 cea%Ssum(i) = cea%Ssum(i-1)
-                cea%Hsum(i) = cea%Hsum(i-1)
+                p%Hsum = p_prev%Hsum
              end if
 
              if (i == 1 .or. cea%Ttt(i) /= cea%Tt .or. cea%Ppp(i) /= cea%Pp) then
@@ -3135,7 +3143,7 @@ contains
                 if (cea%Tt >= cea%Tg(1) * 0.8d0) then
                    cea%Npt = i
                    call HCALC(cea)
-                   cea%Hsum(i) = cea%Hsub0
+                   p%Hsum = cea%Hsub0
                 else
                    write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') cea%Tt, i
                    return
@@ -3148,7 +3156,7 @@ contains
              if (p%Mach1 == 0) p%Mach1 = p%U1 / cea%A1
              cea%Wm(i) = cea%Wmix
              p%Cpr = cea%Cpmix
-             cea%Gammas(i) = cea%Gamma1
+             p%Gammas = cea%Gamma1
              cea%Vlm(i) = R0 * cea%Tt / (cea%Wmix * cea%Pp)
           end do
 
@@ -3177,12 +3185,12 @@ contains
           do
              p => cea%points(iof, cea%ipt)
 
-             cea%Gamma1 = cea%Gammas(cea%ipt)
+             cea%Gamma1 = p%Gammas
              uu = p%U1
              wmx = cea%Wm(cea%ipt)
              p1 = cea%Ppp(cea%ipt)
              T1 = cea%Ttt(cea%ipt)
-             hs = cea%Hsum(cea%ipt)
+             hs = p%Hsum
              if (refl) uu = u1u2(cea%ipt)
              mu12rt = wmx * uu**2 / (R0 * T1)
              if (refl) then
@@ -3229,16 +3237,16 @@ contains
                       cea%Npt = cea%ipt
                       call HCALC(cea)
                       if (cea%Tt == 0) exit
-                      cea%Hsum(cea%ipt) = cea%Hsub0
+                      p%Hsum = cea%Hsub0
                       p%Cpr = cea%Cpmix
                    else
                       call CPHS(cea)
                       p%Cpr = cea%Cpsum
-                      cea%Hsum(cea%ipt) = 0
+                      p%Hsum = 0
                       do j = 1, cea%Ng
-                         cea%Hsum(cea%ipt) = cea%Hsum(cea%ipt) + cea%H0(j) * cea%En(j, cea%ipt)
+                         p%Hsum = p%Hsum + cea%H0(j) * cea%En(j, cea%ipt)
                       end do
-                      cea%Hsum(cea%ipt) = cea%Hsum(cea%ipt) * cea%Tt
+                      p%Hsum = p%Hsum * cea%Tt
                    end if
                 else
                    cea%Npt = cea%ipt
@@ -3250,17 +3258,17 @@ contains
                 gg = rho12 * mu12rt
                 rho52 = 1 / rho12
                 if (refl) gg = -mu12rt * rho52 / (rho52 - 1)**2
-                cea%G(1, 1) = -gg * cea%Dlvpt(cea%ipt) - p21
-                cea%G(1, 2) = -gg * cea%Dlvtp(cea%ipt)
+                cea%G(1, 1) = -gg * p%Dlvpt - p21
+                cea%G(1, 2) = -gg * p%Dlvtp
                 cea%G(1, 3) = p21 - 1 + gg - mu12rt
                 if (refl) cea%G(1, 3) = p21 - 1 + gg * (rho52 - 1)
                 gg = gg * T1 / wmx
                 if (.not. refl) gg = gg * rho12
-                cea%G(2, 1) = -gg * cea%Dlvpt(cea%ipt) + cea%Tt * (cea%Dlvtp(cea%ipt) - 1) / cea%Wm(cea%ipt)
-                cea%G(2, 2) = -gg * cea%Dlvtp(cea%ipt) - cea%Tt * p%Cpr
+                cea%G(2, 1) = -gg * p%Dlvpt + cea%Tt * (p%Dlvtp - 1) / cea%Wm(cea%ipt)
+                cea%G(2, 2) = -gg * p%Dlvtp - cea%Tt * p%Cpr
                 gg = 1 - rho12**2
                 if (refl) gg = (rho52 + 1) / (rho52 - 1)
-                cea%G(2, 3) = cea%Hsum(cea%ipt) - hs - uu**2 * gg / (2 * R0)
+                cea%G(2, 3) = p%Hsum - hs - uu**2 * gg / (2 * R0)
                 cea%X(3) = cea%G(1, 1) * cea%G(2, 2) - cea%G(1, 2) * cea%G(2, 1)
                 cea%X(1) = (cea%G(1, 3) * cea%G(2, 2) - cea%G(2, 3) * cea%G(1, 2)) / cea%X(3)
                 cea%X(2) = (cea%G(1, 1) * cea%G(2, 3) - cea%G(2, 1) * cea%G(1, 3)) / cea%X(3)
@@ -3268,7 +3276,7 @@ contains
                    write(IOOUT, '(/" G(I,J)  ", 3E15.8)') cea%G(1, 1), cea%G(1, 2), cea%G(1, 3)
                    write(IOOUT, '(/" G(I,J)  ", 3E15.8)') cea%G(2, 1), cea%G(2, 2), cea%G(2, 3)
                    write(IOOUT, '(/" X       ", 2E15.8)') cea%X(1), cea%X(2)
-                   write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') cea%Hsum(cea%ipt), hs, uu, uu * rho12
+                   write(IOOUT, '(/" HSUM HS UU U2 ", 4E15.8)') p%Hsum, hs, uu, uu * rho12
                 end if
                 ax = abs(cea%X(1))
                 axx = abs(cea%X(2))
@@ -3320,7 +3328,7 @@ contains
                          ! FROZEN
                          cea%Ppp(cea%ipt) = cea%Pp
                          cea%Ttt(cea%ipt) = cea%Tt
-                         cea%Gammas(cea%ipt) = p%Cpr / (p%Cpr - 1 / wmx)
+                         p%Gammas = p%Cpr / (p%Cpr - 1 / wmx)
                          cea%Vlm(cea%ipt) = R0 * cea%Tt / (wmx * cea%Pp)
                          if (cea%Incdeq) then
                             cea%Ssum(cea%ipt) = 0
@@ -3425,12 +3433,13 @@ contains
                       if (cea%Refleq) then
                          j = 1
                          do i = 1, cea%ipt
+                            p => cea%points(iof, i)
                             sg(j)   = u1u2(i)
                             sg(j+1) = cea%Wm(i)
                             sg(j+2) = cea%Ppp(i)
                             sg(j+3) = cea%Ttt(i)
-                            sg(j+4) = cea%Hsum(i)
-                            sg(j+5) = cea%Gammas(i)
+                            sg(j+4) = p%Hsum
+                            sg(j+5) = p%Gammas
                             j = j + 6
                          end do
                       end if
@@ -3440,12 +3449,13 @@ contains
                 else if (.not. cea%Eql .and. cea%Refleq) then
                    j = 1
                    do i = 1, cea%ipt
+                      p => cea%points(iof, i)
                       u1u2(i) = sg(j)
                       cea%Wm(i) = sg(j+1)
                       cea%Ppp(i) = sg(j+2)
                       cea%Ttt(i) = sg(j+3)
-                      cea%Hsum(i) = sg(j+4)
-                      cea%Gammas(i) = sg(j+5)
+                      p%Hsum = sg(j+4)
+                      p%Gammas = sg(j+5)
                       j = j + 6
                    end do
                    cea%Eql = .true.

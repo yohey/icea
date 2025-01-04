@@ -1152,41 +1152,25 @@ contains
 
     type(CEA_Point), pointer:: p !< current point
 
-    integer:: i_col_start
     integer:: n_cols_print
-    integer:: n_cols_fixed
     integer, allocatable:: i_cols_print(:)
-    real(8), allocatable:: out_cp(:)
 
-    if (cea%Rkt) then
-       if (cea%Fac) then
-          n_cols_fixed = 3
-       else
-          n_cols_fixed = 2
-       end if
-    else
-       n_cols_fixed = 0
-    end if
+    real(8), allocatable:: out_cp(:), out_gamma(:), out_Dlvpt(:), out_Dlvtp(:)
 
-    i_col_start = ((i_col_end - n_cols_fixed - 1) / (Ncol - n_cols_fixed)) * (Ncol - n_cols_fixed) + n_cols_fixed + 1
-    n_cols_print = i_col_end - i_col_start + n_cols_fixed + 1
-
-    allocate(i_cols_print(n_cols_print))
-
-    i_cols_print(:) = -1
-    do concurrent (i = 1:n_cols_fixed)
-       i_cols_print(i) = i
-    end do
-    do concurrent (i = i_col_start:i_col_end)
-       j = i - i_col_start + n_cols_fixed + 1
-       i_cols_print(j) = i
-    end do
+    call get_print_cols(cea, i_col_end, i_cols_print)
+    n_cols_print = size(i_cols_print)
 
     allocate(out_cp(n_cols_print))
+    allocate(out_gamma(n_cols_print))
+    allocate(out_Dlvpt(n_cols_print))
+    allocate(out_Dlvtp(n_cols_print))
 
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
        out_cp(i) = p%Cpr * cea%R
+       out_gamma(i) = p%Gammas
+       out_Dlvpt(i) = p%Dlvpt
+       out_Dlvtp(i) = p%Dlvtp
     end do
 
     ione = 0
@@ -1339,8 +1323,9 @@ contains
     call EFMT(cea%fmt(4), frh, cea%X, Npt)
 
     ! ENTHALPY
-    do i = 1, Npt
-       cea%X(i) = cea%Hsum(i) * cea%R
+    do i = 1, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       cea%X(i) = p%Hsum * cea%R
        if (cea%Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+cea%Iplt-ione, mh) = cea%X(i)
     end do
     cea%fmt(4) = cea%fmt(6)
@@ -1348,8 +1333,9 @@ contains
     write(io_out, cea%fmt) fh, (cea%X(j), j = 1, Npt)
 
     ! INTERNAL ENERGY
-    do i = 1, Npt
-       cea%X(i) = (cea%Hsum(i) - cea%Ppp(i) * cea%Vlm(i) / R0) * cea%R
+    do i = 1, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       cea%X(i) = (p%Hsum - cea%Ppp(i) * cea%Vlm(i) / R0) * cea%R
        if (cea%Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+cea%Iplt-ione, mie) = cea%X(i)
     end do
     call VARFMT(cea, cea%X, Npt)
@@ -1358,16 +1344,16 @@ contains
     ! GIBBS ENERGY
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%X(i) = (cea%Hsum(i) - cea%Ttt(i) * cea%Ssum(i)) * cea%R
+       cea%X(i) = (p%Hsum - cea%Ttt(i) * cea%Ssum(i)) * cea%R
        if (cea%Nplt /= 0 .and. i > ione) then
           if (mg > 0) cea%Pltout(i+cea%Iplt-ione, mg) = cea%X(i)
           if (mm > 0) cea%Pltout(i+cea%Iplt-ione, mm) = cea%Wm(i)
           if (mmw > 0) cea%Pltout(i+cea%Iplt-ione, mmw) = 1 / cea%Totn(i)
           if (ms > 0) cea%Pltout(i+cea%Iplt-ione, ms) = cea%Ssum(i) * cea%R
           if (mcp > 0) cea%Pltout(i+cea%Iplt-ione, mcp) = p%Cpr * cea%R
-          if (mgam > 0) cea%Pltout(i+cea%Iplt-ione, mgam) = cea%Gammas(i)
-          if (mdvt > 0) cea%Pltout(i+cea%Iplt-ione, mdvt) = cea%Dlvtp(i)
-          if (mdvp > 0) cea%Pltout(i+cea%Iplt-ione, mdvp) = cea%Dlvpt(i)
+          if (mgam > 0) cea%Pltout(i+cea%Iplt-ione, mgam) = p%Gammas
+          if (mdvt > 0) cea%Pltout(i+cea%Iplt-ione, mdvt) = p%Dlvtp
+          if (mdvp > 0) cea%Pltout(i+cea%Iplt-ione, mdvp) = p%Dlvpt
        end if
     end do
     call VARFMT(cea, cea%X, Npt)
@@ -1387,26 +1373,32 @@ contains
 
     ! (DLV/DLP)T
     cea%fmt(7) = '5,'
-    if (cea%Eql) write(io_out, cea%fmt) '(dLV/dLP)t      ', (cea%Dlvpt(j), j = 1, Npt)
+    if (cea%Eql) write(io_out, cea%fmt) '(dLV/dLP)t      ', out_Dlvpt(:)
 
     ! (DLV/DLT)P
     cea%fmt(7) = '4,'
-    if (cea%Eql) write(io_out, cea%fmt) '(dLV/dLT)p      ', (cea%Dlvtp(j), j = 1, Npt)
+    if (cea%Eql) write(io_out, cea%fmt) '(dLV/dLT)p      ', out_Dlvtp(:)
 
     ! HEAT CAPACITY
     write(io_out, cea%fmt) fc, out_cp(:)
 
     ! GAMMA(S)
     cea%fmt(7) = '4,'
-    write(io_out, cea%fmt) 'GAMMAs          ', (cea%Gammas(j), j = 1, Npt)
+    write(io_out, cea%fmt) 'GAMMAs          ', out_gamma(:)
 
     ! SONIC VELOCITY
     cea%fmt(7) = '1,'
-    do i = 1, Npt
-       cea%Sonvel(i) = sqrt(R0 * cea%Gammas(i) * cea%Ttt(i) / cea%Wm(i))
+    do i = 1, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       cea%Sonvel(i) = sqrt(R0 * p%Gammas * cea%Ttt(i) / cea%Wm(i))
        if (cea%Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+cea%Iplt-ione, mson) = cea%Sonvel(i)
     end do
     write(io_out, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, Npt)
+
+    deallocate(out_cp)
+    deallocate(out_gamma)
+    deallocate(out_Dlvpt)
+    deallocate(out_Dlvtp)
 
     return
   end subroutine OUT2
@@ -1428,10 +1420,6 @@ contains
     integer:: i, k, m, im, kin
     integer, save:: notuse
     real(8):: tra
-
-    integer:: i_col_start
-    i_col_start = ((cea%ipt - 1) / Ncol) * Ncol + 1
-!!$    write(0, *) '[DEBUG] OUT3: cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt = ', cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt
 
     tra = 5.d-6
     if (cea%Trace /= 0.) tra = cea%Trace
@@ -1521,10 +1509,6 @@ contains
 
     integer:: i, j
 
-    integer:: i_col_start
-    i_col_start = ((cea%ipt - 1) / Ncol) * Ncol + 1
-!!$    write(0, *) '[DEBUG] OUT4: cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt = ', cea%iOF, i_col_start, cea%ipt, cea%Npt, Npt
-
     write(io_out, *)
     write(io_out, '(" TRANSPORT PROPERTIES (GASES ONLY)")')
     if (cea%SIunit) then
@@ -1575,6 +1559,42 @@ contains
 
     return
   end subroutine OUT4
+
+
+  subroutine get_print_cols(cea, i_col_end, i_cols_print)
+    use mod_types, only: CEA_Problem, Ncol
+    implicit none
+
+    type(CEA_Problem), intent(in):: cea
+    integer, intent(in):: i_col_end
+    integer, allocatable, intent(out):: i_cols_print(:)
+    integer:: i, i_col_start, n_cols_print, n_cols_fixed
+
+    if (cea%Rkt) then
+       if (cea%Fac) then
+          n_cols_fixed = 3
+       else
+          n_cols_fixed = 2
+       end if
+    else
+       n_cols_fixed = 0
+    end if
+
+    i_col_start = ((i_col_end - n_cols_fixed - 1) / (Ncol - n_cols_fixed)) * (Ncol - n_cols_fixed) + n_cols_fixed + 1
+    n_cols_print = i_col_end - i_col_start + n_cols_fixed + 1
+
+    allocate(i_cols_print(n_cols_print))
+
+    i_cols_print(:) = -1
+    do concurrent (i = 1:n_cols_fixed)
+       i_cols_print(i) = i
+    end do
+    do concurrent (i = i_col_start:i_col_end)
+       i_cols_print(i - i_col_start + n_cols_fixed + 1) = i
+    end do
+
+    return
+  end subroutine get_print_cols
 
 
   subroutine REACT(cea)
@@ -1889,6 +1909,16 @@ contains
     real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
     type(CEA_Point), pointer:: p !< current point
+    type(CEA_Point), pointer:: p1, p23
+
+    integer:: i_col_end
+    integer:: n_cols_print
+    integer, allocatable:: i_cols_print(:)
+
+    i_col_end = cea%ipt
+    call get_print_cols(cea, i_col_end, i_cols_print)
+    n_cols_print = size(i_cols_print)
+
 
     if (.not. cea%Eql) then
        write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
@@ -1994,8 +2024,11 @@ contains
        fi = 'Isp, LB-SEC/LB'
     end if
 
-    do k = 2, cea%Npt
-       cea%Spim(k) = sqrt(2 * R0 * (cea%Hsum(1) - cea%Hsum(k))) / agv
+    p1 => cea%points(cea%iOF, 1)
+
+    do k = 2, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(k))
+       cea%Spim(k) = sqrt(2 * R0 * (p1%Hsum - p%Hsum)) / agv
        ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
        aw = R0 * cea%Ttt(k) / (cea%Ppp(k) * cea%Wm(k) * cea%Spim(k) * agv**2)
        if (k == i23) then
@@ -2009,7 +2042,8 @@ contains
 
     ! MACH NUMBER
     cea%Vmoc(1) = 0
-    if (cea%Gammas(i23) == 0) cea%Vmoc(i23) = 0
+    p23 => cea%points(cea%iOF, i_cols_print(i23))
+    if (p23%Gammas == 0) cea%Vmoc(i23) = 0
     cea%fmt(7) = '3,'
     write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%Vmoc(j), j = 1, cea%Npt)
     if (cea%Trnspt) call OUT4(cea, cea%Npt, IOOUT)

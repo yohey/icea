@@ -30,7 +30,7 @@ module mod_types
   type:: CEA_Point
      real(8), pointer:: B0(:)
      real(8), pointer:: B0p(:, :)
-     real(8):: Cpr
+     real(8):: Cpr, Dlvpt, Dlvtp, Gammas, Hsum
      ! ROCKET
      real(8):: AeAt, App
      ! SHCK
@@ -84,7 +84,6 @@ module mod_types
      character(10):: Thdate
      character(15):: Case, Energy(maxR), Omit(0:maxNgc), Pltvar(20), Prod(0:maxNgc), Rname(maxR)
 
-     real(8):: Dlvpt(Ncol), Dlvtp(Ncol), Gammas(Ncol), Hsum(Ncol)
      real(8):: Ppp(Ncol), Ssum(Ncol), Totn(Ncol), Ttt(Ncol), Vlm(Ncol), Wm(Ncol)
      real(8):: Pltout(500, 20)
 
