@@ -1156,6 +1156,7 @@ contains
     integer, allocatable:: i_cols_print(:)
 
     real(8), allocatable:: out_cp(:), out_gamma(:), out_Dlvpt(:), out_Dlvtp(:)
+    real(8), allocatable:: out_Ppp(:), out_Ssum(:), out_Totn(:), out_Ttt(:), out_Wm(:)
 
     call get_print_cols(cea, i_col_end, i_cols_print)
     n_cols_print = size(i_cols_print)
@@ -1164,6 +1165,11 @@ contains
     allocate(out_gamma(n_cols_print))
     allocate(out_Dlvpt(n_cols_print))
     allocate(out_Dlvtp(n_cols_print))
+    allocate(out_Ppp(n_cols_print))
+    allocate(out_Ssum(n_cols_print))
+    allocate(out_Totn(n_cols_print))
+    allocate(out_Ttt(n_cols_print))
+    allocate(out_Wm(n_cols_print))
 
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
@@ -1171,6 +1177,11 @@ contains
        out_gamma(i) = p%Gammas
        out_Dlvpt(i) = p%Dlvpt
        out_Dlvtp(i) = p%Dlvtp
+       out_Ppp(i) = p%Ppp
+       out_Ssum(i) = p%Ssum
+       out_Totn(i) = p%Totn
+       out_Ttt(i) = p%Ttt
+       out_Wm(i) = p%Wm
     end do
 
     ione = 0
@@ -1297,27 +1308,27 @@ contains
     cea%fmt(4) = cea%fmt(6)
 
     ! PRESSURE
-    call VARFMT(cea, cea%Ppp, Npt)
+    call VARFMT(cea, out_Ppp, n_cols_print)
 
-    do i = 1, Npt
-       cea%X(i) = cea%Ppp(i) * pfactor
+    do i = 1, n_cols_print
        if (cea%Nplt /= 0 .and. i > ione) then
-          if (mp > 0) cea%Pltout(i + cea%Iplt - ione, mp) = cea%X(i)
-          if (mt > 0) cea%Pltout(i + cea%Iplt - ione, mt) = cea%Ttt(i)
+          if (mp > 0) cea%Pltout(i + cea%Iplt - ione, mp) = out_Ppp(i) * pfactor
+          if (mt > 0) cea%Pltout(i + cea%Iplt - ione, mt) = out_Ttt(i)
        end if
     end do
 
-    write(io_out, cea%fmt) fp, (cea%X(j), j = 1, Npt)
+    write(io_out, cea%fmt) fp, out_Ppp(:) * pfactor
 
     ! TEMPERATURE
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '2,'
-    write(io_out, cea%fmt) 'T, K            ', (cea%Ttt(j), j = 1, Npt)
+    write(io_out, cea%fmt) 'T, K            ', out_Ttt(:)
 
     ! DENSITY
     do i = 1, Npt
-       if (cea%Vlm(i) /= 0) cea%X(i) = vnum / cea%Vlm(i)
+       p => cea%points(cea%iOF, i_cols_print(i))
+       if (p%Vlm /= 0) cea%X(i) = vnum / p%Vlm
        if (cea%Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+cea%Iplt-ione, mrho) = cea%X(i)
     end do
     call EFMT(cea%fmt(4), frh, cea%X, Npt)
@@ -1335,7 +1346,7 @@ contains
     ! INTERNAL ENERGY
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%X(i) = (p%Hsum - cea%Ppp(i) * cea%Vlm(i) / R0) * cea%R
+       cea%X(i) = (p%Hsum - p%Ppp * p%Vlm / R0) * cea%R
        if (cea%Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+cea%Iplt-ione, mie) = cea%X(i)
     end do
     call VARFMT(cea, cea%X, Npt)
@@ -1344,12 +1355,12 @@ contains
     ! GIBBS ENERGY
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%X(i) = (p%Hsum - cea%Ttt(i) * cea%Ssum(i)) * cea%R
+       cea%X(i) = (p%Hsum - p%Ttt * p%Ssum) * cea%R
        if (cea%Nplt /= 0 .and. i > ione) then
           if (mg > 0) cea%Pltout(i+cea%Iplt-ione, mg) = cea%X(i)
-          if (mm > 0) cea%Pltout(i+cea%Iplt-ione, mm) = cea%Wm(i)
-          if (mmw > 0) cea%Pltout(i+cea%Iplt-ione, mmw) = 1 / cea%Totn(i)
-          if (ms > 0) cea%Pltout(i+cea%Iplt-ione, ms) = cea%Ssum(i) * cea%R
+          if (mm > 0) cea%Pltout(i+cea%Iplt-ione, mm) = p%Wm
+          if (mmw > 0) cea%Pltout(i+cea%Iplt-ione, mmw) = 1 / p%Totn
+          if (ms > 0) cea%Pltout(i+cea%Iplt-ione, ms) = p%Ssum * cea%R
           if (mcp > 0) cea%Pltout(i+cea%Iplt-ione, mcp) = p%Cpr * cea%R
           if (mgam > 0) cea%Pltout(i+cea%Iplt-ione, mgam) = p%Gammas
           if (mdvt > 0) cea%Pltout(i+cea%Iplt-ione, mdvt) = p%Dlvtp
@@ -1363,13 +1374,13 @@ contains
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
     cea%fmt(7) = '4,'
-    write(io_out, cea%fmt) fs, (cea%Ssum(j) * cea%R, j = 1, Npt)
+    write(io_out, cea%fmt) fs, out_Ssum(:) * cea%R
     write(io_out, *)
 
     ! MOLECULAR WEIGHT
     cea%fmt(7) = '3,'
-    write(io_out, cea%fmt) 'M, (1/n)        ', (cea%Wm(j), j = 1, Npt)
-    if (.not. cea%Gonly) write(io_out, cea%fmt) 'MW, MOL WT      ', (1/cea%Totn(j), j = 1, Npt)
+    write(io_out, cea%fmt) 'M, (1/n)        ', out_Wm(:)
+    if (.not. cea%Gonly) write(io_out, cea%fmt) 'MW, MOL WT      ', 1 / out_Totn(:)
 
     ! (DLV/DLP)T
     cea%fmt(7) = '5,'
@@ -1390,7 +1401,7 @@ contains
     cea%fmt(7) = '1,'
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%Sonvel(i) = sqrt(R0 * p%Gammas * cea%Ttt(i) / cea%Wm(i))
+       cea%Sonvel(i) = sqrt(R0 * p%Gammas * p%Ttt / p%Wm)
        if (cea%Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+cea%Iplt-ione, mson) = cea%Sonvel(i)
     end do
     write(io_out, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, Npt)
@@ -1404,15 +1415,16 @@ contains
   end subroutine OUT2
 
 
-  subroutine OUT3(cea, Npt, io_out)
+  subroutine OUT3(cea, Npt, i_col_end, io_out)
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
-    use mod_types, only: CEA_Problem, Ncol
+    use mod_types, only: CEA_Problem, CEA_Point, Ncol
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
     integer, intent(in):: Npt
+    integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
     character(4):: mamo
@@ -1420,6 +1432,14 @@ contains
     integer:: i, k, m, im, kin
     integer, save:: notuse
     real(8):: tra
+
+    type(CEA_Point), pointer:: p
+
+    integer:: n_cols_print
+    integer, allocatable:: i_cols_print(:)
+
+    call get_print_cols(cea, i_col_end, i_cols_print)
+    n_cols_print = size(i_cols_print)
 
     tra = 5.d-6
     if (cea%Trace /= 0.) tra = cea%Trace
@@ -1452,11 +1472,13 @@ contains
           end if
 
           kin = 0
-          do i = 1, Npt
+          do i = 1, n_cols_print
+             p => cea%points(cea%iOF, i_cols_print(i))
+
              if (cea%Massf) then
                 tem = cea%Mw(k)
              else
-                tem = 1 / cea%Totn(i)
+                tem = 1 / p%Totn
              end if
              if (k <= cea%Ng) then
                 cea%X(i) = cea%En(k, i) * tem
@@ -1496,7 +1518,7 @@ contains
   end subroutine OUT3
 
 
-  subroutine OUT4(cea, Npt, io_out)
+  subroutine OUT4(cea, Npt, i_col_end, io_out)
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
@@ -1505,9 +1527,16 @@ contains
 
     type(CEA_Problem), intent(inout):: cea
     integer, intent(in):: Npt
+    integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
     integer:: i, j
+
+    integer:: n_cols_print
+    integer, allocatable:: i_cols_print(:)
+
+    call get_print_cols(cea, i_col_end, i_cols_print)
+    n_cols_print = size(i_cols_print)
 
     write(io_out, *)
     write(io_out, '(" TRANSPORT PROPERTIES (GASES ONLY)")')
@@ -1909,6 +1938,7 @@ contains
     real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
     type(CEA_Point), pointer:: p !< current point
+    type(CEA_Point), pointer:: pfz
     type(CEA_Point), pointer:: p1, p2, p23
 
     integer:: i_col_end
@@ -1930,7 +1960,6 @@ contains
        out_App(i) = p%App
     end do
 
-
     if (.not. cea%Eql) then
        write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
        if (cea%Nfz > 1) write(IOOUT, '(33x, "AFTER POINT", i2)') cea%Nfz
@@ -1943,14 +1972,17 @@ contains
        end if
     end if
 
-    if (cea%Ttt(1) == cea%T(it)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
+    pfz => cea%points(cea%iOF, cea%Nfz)
+    p1 => cea%points(cea%iOF, 1)
+    p2 => cea%points(cea%iOF, 2)
 
-    tem = cea%Ppp(1) * 14.696006d0 / 1.01325d0
+    if (p1%Ttt == cea%T(it)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
+
+    tem = p1%Ppp * 14.696006d0 / 1.01325d0
     write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
 
     i23 = 2
     if (cea%Iopt > 0) then
-       p2 => cea%points(cea%iOF, 2)
        if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), p2%App
        if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%Ma, p2%App
        i23 = 3
@@ -1979,8 +2011,9 @@ contains
        nex = nex - 1
        write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
        cea%X(1) = 1.d0
-       do i = 2, cea%Npt
-          cea%X(i) = cea%Ppp(1) / cea%Ppp(i)
+       do i = 2, n_cols_print
+          p => cea%points(cea%iOF, i_cols_print(i))
+          cea%X(i) = p1%Ppp / p%Ppp
        end do
        call VARFMT(cea, cea%X, cea%Npt)
        write(IOOUT, cea%fmt) 'Pinj/P         ', (cea%X(i), i = 1, cea%Npt)
@@ -2036,18 +2069,16 @@ contains
        fi = 'Isp, LB-SEC/LB'
     end if
 
-    p1 => cea%points(cea%iOF, 1)
-
     do k = 2, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(k))
        cea%Spim(k) = sqrt(2 * R0 * (p1%Hsum - p%Hsum)) / agv
        ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
-       aw = R0 * cea%Ttt(k) / (cea%Ppp(k) * cea%Wm(k) * cea%Spim(k) * agv**2)
+       aw = R0 * p%Ttt / (p%Ppp * p%Wm * cea%Spim(k) * agv**2)
        if (k == i23) then
-          if (cea%Iopt == 0) cea%Cstr = gc * cea%Ppp(1) * aw
-          if (cea%Iopt /= 0) cea%Cstr = gc * cea%Ppp(1) / cea%points(cea%iOF, 2)%App * aw
+          if (cea%Iopt == 0) cea%Cstr = gc * p1%Ppp * aw
+          if (cea%Iopt /= 0) cea%Cstr = gc * p1%Ppp / cea%points(cea%iOF, 2)%App * aw
        end if
-       vaci(k) = cea%Spim(k) + cea%Ppp(k) * aw
+       vaci(k) = cea%Spim(k) + p%Ppp * aw
        cea%Vmoc(k) = 0
        if (cea%Sonvel(k) /= 0) cea%Vmoc(k) = cea%Spim(k) * agv / cea%Sonvel(k)
     end do
@@ -2058,7 +2089,7 @@ contains
     if (p23%Gammas == 0) cea%Vmoc(i23) = 0
     cea%fmt(7) = '3,'
     write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%Vmoc(j), j = 1, cea%Npt)
-    if (cea%Trnspt) call OUT4(cea, cea%Npt, IOOUT)
+    if (cea%Trnspt) call OUT4(cea, cea%Npt, cea%ipt, IOOUT)
     write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
 
     ! AREA RATIO
@@ -2100,7 +2131,7 @@ contains
        cea%Spim(1) = 0
        do i = ione + 1, n_cols_print
           p => cea%points(cea%iOF, i_cols_print(i))
-          if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = cea%Ppp(1) / cea%Ppp(i)
+          if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = p1%Ppp / p%Ppp
           if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = p%App
           if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = cea%Vmoc(i)
           if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = p%AeAt
@@ -2125,7 +2156,7 @@ contains
           write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
        else
           write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
-          ww = 1 / cea%Totn(cea%Nfz)
+          ww = 1 / pfz%Totn
        end if
 
        ! MOLE (OR MASS) FRACTIONS - FROZEN
@@ -2144,7 +2175,7 @@ contains
 
           if (line == 3 .or. k == cea%Ngc) then
              if (line == 0) then
-                call OUT3(cea, cea%Npt, IOOUT)
+                call OUT3(cea, cea%Npt, cea%ipt, IOOUT)
                 deallocate(out_AeAt)
                 deallocate(out_App)
                 return
@@ -2155,7 +2186,7 @@ contains
        end do
     end if
 
-    call OUT3(cea, cea%Npt, IOOUT)
+    call OUT3(cea, cea%Npt, cea%ipt, IOOUT)
 
     deallocate(out_AeAt)
     deallocate(out_App)

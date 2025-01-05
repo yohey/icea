@@ -164,6 +164,7 @@ contains
          p1, pp1, rk, rr1, T1, tem, tt1, ud, x1, x2
 
     type(CEA_Point), pointer:: p !< current point
+    type(CEA_Point), pointer:: p_tmp
 
     integer:: i_col_start
     real(8), dimension(cea%max_points):: cpl, gm1, h1, pub, rrho, tub
@@ -233,7 +234,7 @@ contains
                 tt1 = cea%Tt / T1
                 ii = 0
                 tem = tt1 - 0.75 * pp1 / (p%Cpr * cea%Wmix)
-                amm = cea%Wm(cea%Npt) / cea%Wmix
+                amm = p%Wm / cea%Wmix
 
                 if (cea%Detdbg) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') cea%Tt
 
@@ -261,14 +262,14 @@ contains
                    if (cea%Tt == 0) exit
 
                    gam = p%Gammas
-                   amm = cea%Wm(cea%Npt) / cea%Wmix
+                   amm = p%Wm / cea%Wmix
                    rr1 = pp1 * amm / tt1
                    a11 = 1 / pp1 + gam * rr1 * p%Dlvpt
                    a12 = gam * rr1 * p%Dlvtp
                    a21 = 0.5 * gam * (rr1**2 - 1 - p%Dlvpt * (1 + rr1**2)) + p%Dlvtp - 1
-                   a22 = -0.5 * gam * p%Dlvtp * (rr1**2 + 1) - cea%Wm(cea%Npt) * p%Cpr
+                   a22 = -0.5 * gam * p%Dlvtp * (rr1**2 + 1) - p%Wm * p%Cpr
                    b1 = 1 / pp1 - 1 + gam * (rr1 - 1)
-                   b2 = cea%Wm(cea%Npt) * (p%Hsum - h1(cea%ipt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
+                   b2 = p%Wm * (p%Hsum - h1(cea%ipt) / cea%R) / cea%Tt - 0.5 * gam * (rr1**2 - 1)
                    d = a11 * a22 - a12 * a21
                    x1 = (a22 * b1 - a12 * b2) / d
                    x2 = (a11 * b2 - a21 * b1) / d
@@ -284,7 +285,7 @@ contains
                    tt1 = tt1 * exp(x2 * alam)
 
                    cea%Tt = T1 * tt1
-                   ud = rr1 * sqrt(R0 * gam * cea%Tt/cea%Wm(cea%Npt))
+                   ud = rr1 * sqrt(R0 * gam * cea%Tt/p%Wm)
 
                    if (cea%Detdbg) write(IOOUT, '(/" ITER =", i2, 5x, "P/P1 =", e15.8, /7x, "T/T1 =", e15.8, 5x, &
                         & "RHO/RHO1 =", e15.8, /7x, "DEL LN P/P1 =", e15.8, 5x, &
@@ -406,16 +407,17 @@ contains
                 cea%fmt(4) = cea%fmt(6)
                 call OUT2(cea, cea%Npt, cea%ipt, IOOUT)
 
-                if (cea%Trnspt) call OUT4(cea, cea%Npt, IOOUT)
+                if (cea%Trnspt) call OUT4(cea, cea%Npt, cea%ipt, IOOUT)
 
                 write(IOOUT, '(/" DETONATION PARAMETERS"/)')
 
                 cea%fmt(7) = '3,'
 
                 do i = i_col_start, cea%ipt
+                   p_tmp => cea%points(cea%iOF, i)
                    j = i - i_col_start + 1
-                   cea%V(j) = cea%Ppp(j) / pub(i)
-                   cea%Pcp(j) = cea%Ttt(j) / tub(i)
+                   cea%V(j) = p_tmp%Ppp / pub(i)
+                   cea%Pcp(j) = p_tmp%Ttt / tub(i)
                    cea%Sonvel(j) = cea%Sonvel(j) * rrho(i)
                    if (mmach > 0) cea%Pltout(j+cea%Iplt, mmach) = cea%Vmoc(j)
                    if (mdv > 0)   cea%Pltout(j+cea%Iplt, mdv) = cea%Sonvel(j)
@@ -424,8 +426,10 @@ contains
                 write(IOOUT, cea%fmt) fpp1, (cea%V(j), j = 1, cea%Npt)
                 write(IOOUT, cea%fmt) ftt1, (cea%Pcp(j), j = 1, cea%Npt)
 
-                do concurrent (i = 1:cea%Npt)
-                   cea%V(i) = cea%Wm(i) / cea%Wmix
+                do concurrent (i = i_col_start:cea%ipt)
+                   p_tmp => cea%points(cea%iOF, i)
+                   j = i - i_col_start + 1
+                   cea%V(j) = p_tmp%Wm / cea%Wmix
                 end do
 
                 cea%fmt(7) = '4,'
@@ -438,7 +442,7 @@ contains
 
                 cea%Eql = .true.
 
-                call OUT3(cea, cea%Npt, IOOUT)
+                call OUT3(cea, cea%Npt, cea%ipt, IOOUT)
 
                 cea%Iplt = min(cea%Iplt+cea%Npt, 500)
 
@@ -745,7 +749,7 @@ contains
           end if
 
           ! APPLY CORRECTIONS TO ESTIMATES
-          cea%Totn(cea%Npt) = 0
+          p%Totn = 0
 
           do concurrent (j = 1:cea%Ng)
              cea%Enln(j) = cea%Enln(j) + ambda * cea%Deln(j)
@@ -763,7 +767,7 @@ contains
              end do
           end if
 
-          cea%Totn(cea%Npt) = cea%Totn(cea%Npt) + sum(cea%En(1:cea%Ng, cea%Npt))
+          p%Totn = p%Totn + sum(cea%En(1:cea%Ng, cea%Npt))
 
           if (cea%Ions .and. cea%Elmt(cea%Nlm) == 'E') then
              mask = .false.
@@ -771,16 +775,16 @@ contains
                 cea%En(j, cea%Npt) = exp(cea%Enln(j))
                 mask(j) = .true.
              end do
-             cea%Totn(cea%Npt) = cea%Totn(cea%Npt) + sum(cea%En(1:cea%Ng, cea%Npt), mask=mask)
+             p%Totn = p%Totn + sum(cea%En(1:cea%Ng, cea%Npt), mask=mask)
           end if
 
-          cea%Sumn = cea%Totn(cea%Npt)
+          cea%Sumn = p%Totn
 
           if (cea%Npr /= 0) then
              do concurrent (k = 1:cea%Npr)
                 cea%En(cea%Jcond(k), cea%Npt) = cea%En(cea%Jcond(k), cea%Npt) + ambda * cea%Deln(cea%Jcond(k))
              end do
-             cea%Totn(cea%Npt) = cea%Totn(cea%Npt) + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt))
+             p%Totn = p%Totn + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt))
           end if
 
           if (.not. cea%Tp) then
@@ -849,14 +853,14 @@ contains
              end if
 
           else
-             if (abs(cea%X(cea%Iq1) * cea%Enn / cea%Totn(cea%Npt)) > 0.5E-5 .or. &
-                  any(abs(cea%Deln(1:cea%Ng)) * cea%En(1:cea%Ng, cea%Npt) / cea%Totn(cea%Npt) > 0.5d-5) .or. &
+             if (abs(cea%X(cea%Iq1) * cea%Enn / p%Totn) > 0.5E-5 .or. &
+                  any(abs(cea%Deln(1:cea%Ng)) * cea%En(1:cea%Ng, cea%Npt) / p%Totn > 0.5d-5) .or. &
                   abs(dlnt) > 1.d-04) go to 500
 
              if (cea%Npr /= 0) then
                 do k = 1, cea%Npr
                    j = cea%Jcond(k)
-                   if (abs(cea%Deln(j)/cea%Totn(cea%Npt)) > 0.5d-5) go to 500
+                   if (abs(cea%Deln(j) / p%Totn) > 0.5d-5) go to 500
                    if (cea%En(j, cea%Npt) < 0) go to 700
                 end do
              end if
@@ -1073,16 +1077,16 @@ contains
     end if
 
     ! CALCULATE ENTROPY, CHECK ON DELTA S FOR SP PROBLEMS
-600 cea%Ssum(cea%Npt) = sum(cea%En(1:cea%Ng, cea%Npt) * (cea%S(1:cea%Ng) - cea%Enln(1:cea%Ng) - cea%Tm))
+600 p%Ssum = sum(cea%En(1:cea%Ng, cea%Npt) * (cea%S(1:cea%Ng) - cea%Enln(1:cea%Ng) - cea%Tm))
 
     if (cea%Npr > 0) then
-       cea%Ssum(cea%Npt) = cea%Ssum(cea%Npt) + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt) * cea%S(cea%Jcond(1:cea%Npr)))
+       p%Ssum = p%Ssum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt) * cea%S(cea%Jcond(1:cea%Npr)))
     end if
 
     if (.not. cea%Sp) then
        cea%Convg = .true.
     else
-       tem = cea%Ssum(cea%Npt) - cea%S0
+       tem = p%Ssum - cea%S0
        if (abs(tem) > 0.0005) go to 500
        if (cea%Debug(cea%Npt)) write(IOOUT, '(/" DELTA S/R =", e15.8)') tem
        cea%Convg = .true.
@@ -1469,12 +1473,12 @@ contains
     tsize = xsize
     go to 500
 
-1400 cea%Ttt(cea%Npt) = cea%Tt
-    cea%Ppp(cea%Npt) = cea%Pp
-    cea%Vlm(cea%Npt) = R0 * cea%Enn * cea%Tt / cea%Pp
+1400 p%Ttt = cea%Tt
+    p%Ppp = cea%Pp
+    p%Vlm = R0 * cea%Enn * cea%Tt / cea%Pp
     p%Hsum = p%Hsum * cea%Tt
-    cea%Wm(cea%Npt) = 1. / cea%Enn
-    gasfrc = cea%Enn/cea%Totn(cea%Npt)
+    p%Wm = 1. / cea%Enn
+    gasfrc = cea%Enn/p%Totn
 
     if (gasfrc < 0.0001) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", i3, " DUE TO", &
          & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') cea%Npt, gasfrc
@@ -1494,8 +1498,7 @@ contains
     if (cea%Debug(cea%Npt)) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
          & e13.6, 3x, "S/R=", e13.6, /3x, "M=", e13.6, 3x, "CP/R=", e13.6, 3x, &
          & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
-         cea%Npt, cea%Pp, cea%Tt, p%Hsum, cea%Ssum(cea%Npt), cea%Wm(cea%Npt), p%Cpr, &
-         p%Dlvpt, p%Dlvtp, p%Gammas, cea%Vlm(cea%Npt)
+         cea%Npt, cea%Pp, cea%Tt, p%Hsum, p%Ssum, p%Wm, p%Cpr, p%Dlvpt, p%Dlvtp, p%Gammas, p%Vlm
 
     if (cea%Tt >= cea%Tg(1) .and. cea%Tt <= cea%Tg(4)) go to 1600
 
@@ -1536,11 +1539,14 @@ contains
     real(8):: dlnt, dlpm
 
     type(CEA_Point), pointer:: p !< current point
+    type(CEA_Point), pointer:: pfz
+
     p => cea%points(cea%iOF, cea%ipt)
+    pfz => cea%points(cea%iOF, cea%Nfz)
 
     cea%Convg = .false.
     cea%Tln = log(cea%Tt)
-    dlpm = log(cea%Pp * cea%Wm(cea%Nfz))
+    dlpm = log(cea%Pp * pfz%Wm)
 
     do concurrent (j = 1:cea%Ng, cea%En(j, cea%Nfz) /= 0)
        cea%Deln(j) = -(log(cea%En(j, cea%Nfz)) + dlpm)
@@ -1550,24 +1556,24 @@ contains
        call CPHS(cea)
 
        cea%Cpsum = sum(cea%En(1:cea%Ng, cea%Nfz) * cea%Cp(1:cea%Ng))
-       cea%Ssum(cea%Npt) = sum(cea%En(1:cea%Ng, cea%Nfz) * (cea%S(1:cea%Ng) + cea%Deln(1:cea%Ng)))
+       p%Ssum = sum(cea%En(1:cea%Ng, cea%Nfz) * (cea%S(1:cea%Ng) + cea%Deln(1:cea%Ng)))
 
        if (cea%Npr /= 0) then
           cea%Cpsum = cea%Cpsum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%Cp(cea%Jcond(1:cea%Npr)))
-          cea%Ssum(cea%Npt) = cea%Ssum(cea%Npt) + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%S(cea%Jcond(1:cea%Npr)))
+          p%Ssum = p%Ssum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%S(cea%Jcond(1:cea%Npr)))
        end if
 
        if (cea%Convg) then
           p%Hsum = sum(cea%En(1:cea%Ngc, cea%Nfz) * cea%H0(1:cea%Ngc)) * cea%Tt
 
-          cea%Ttt(cea%Npt) = cea%Tt
-          p%Gammas = cea%Cpsum / (cea%Cpsum - 1 / cea%Wm(cea%Nfz))
-          cea%Vlm(cea%Npt) = R0 * cea%Tt / (cea%Wm(cea%Nfz) * cea%Pp)
-          cea%Wm(cea%Npt) = cea%Wm(cea%Nfz)
+          p%Ttt = cea%Tt
+          p%Gammas = cea%Cpsum / (cea%Cpsum - 1 / pfz%Wm)
+          p%Vlm = R0 * cea%Tt / (pfz%Wm * cea%Pp)
+          p%Wm = pfz%Wm
           p%Dlvpt = -1
           p%Dlvtp = 1
-          cea%Totn(cea%Npt) = cea%Totn(cea%Nfz)
-          cea%Ppp(cea%Npt) = cea%Pp
+          p%Totn = pfz%Totn
+          p%Ppp = cea%Pp
           p%Cpr = cea%Cpsum
 
           if (cea%Tt >= cea%Tg(1) * 0.8d0) then
@@ -1581,7 +1587,7 @@ contains
           return
 
        else
-          dlnt = (cea%Ssum(cea%Nfz) - cea%Ssum(cea%Npt)) / cea%Cpsum
+          dlnt = (pfz%Ssum - p%Ssum) / cea%Cpsum
           cea%Tln = cea%Tln + dlnt
           if (abs(dlnt) < 0.5d-4) cea%Convg = .true.
           cea%Tt = exp(cea%Tln)
@@ -1616,12 +1622,15 @@ contains
     real(8):: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), Tsave
     integer:: io_thermo
 
+    type(CEA_Point), pointer:: p !< current point
+    p => cea%points(cea%iOF, cea%ipt)
+
     Tsave = cea%Tt
 
     cea%Tm = 0
     if (cea%Pp > 0) cea%Tm = log(cea%Pp * cea%Wmix)
 
-    cea%Ssum(cea%Npt) = 0
+    p%Ssum = 0
     cea%Hpp(1) = 0
     cea%Hpp(2) = 0
     cea%Hsub0 = 0
@@ -1748,7 +1757,7 @@ contains
 
        ! FOR CONDENSED SPECIES:  SJ = S(J)
        sj = cea%S(j) - log(enj) - cea%Tm
-       cea%Ssum(cea%Npt) = cea%Ssum(cea%Npt) + enj * sj
+       p%Ssum = p%Ssum + enj * sj
        er = cea%H0(j) * enj * cea%Tt
        cea%Hsub0 = cea%Hsub0 + er
        cea%Hpp(k) = cea%Hpp(k) + er
@@ -2096,6 +2105,10 @@ contains
 
        cea%ipt = 1
 
+       p1 => cea%points(cea%iOF, 1)
+       p2 => cea%points(cea%iOF, 2)
+       p4 => cea%points(cea%iOF, 4)
+       p12 => cea%points(cea%iOF, i12)
        pfz => cea%points(cea%iOF, cea%Nfz)
        pth => cea%points(cea%iOF, nptth)
 
@@ -2126,6 +2139,7 @@ contains
              ! LOOP FOR OUTPUT COLUMNS
 250          nar = cea%Npt
              iar = cea%ipt
+             p => cea%points(cea%iOF, cea%ipt)
              if (cea%Eql) then
                 call EQLBRM(cea)
                 if (cea%ipt == cea%Nfz) cprf = cea%Cpsum
@@ -2139,7 +2153,7 @@ contains
                 pinjas = cea%P(ip) * pa
                 pinj = pinjas
                 if (cea%ipt == 1 .and. cea%Trnspt) call TRANP(cea)
-                if (cea%ipt == 2) pinf = cea%Ppp(2)
+                if (cea%ipt == 2) pinf = p%Ppp
                 if (cea%ipt /= 1) go to 400
 
                 ! INITIAL ESTIMATE FOR PC (AND ACAT IF NOT ASSIGNED)
@@ -2164,9 +2178,8 @@ contains
 
                 if (i > 4) cea%Subar(1) = cea%Acat
 
-                p1 => cea%points(cea%iOF, 1)
                 cea%Pp = ppa / pa
-                p1%App = cea%Pp / cea%Ppp(1)
+                p1%App = cea%Pp / p1%Ppp
                 go to 1100
 
              else
@@ -2187,7 +2200,7 @@ contains
                 if (ipp > nptth) go to 600
                 ! THROAT
                 if (.not. thi) then
-                   cea%Vv = cea%Vlm(nptth)
+                   cea%Vv = pth%Vlm
                    pvg = cea%Pp * cea%Vv * pth%Gammas
                    if (pvg == 0) then
                       write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
@@ -2246,11 +2259,10 @@ contains
                 cea%Tp = .false.
                 cea%Hp = .false.
                 cea%Sp = .true.
-                cea%S0 = cea%Ssum(i12)
+                cea%S0 = p12%Ssum
              end if
 
-450          p12 => cea%points(cea%iOF, i12)
-             tmelt = 0
+450          tmelt = 0
              itrot = 3
              thi = .false.
              pth%App = ((p12%Gammas + 1) / 2)**(p12%Gammas / (p12%Gammas - 1))
@@ -2271,7 +2283,7 @@ contains
 
 600          cea%Isv = 0
              p => cea%points(cea%iOF, cea%ipt)
-             p%AeAt = cea%Enn * cea%Ttt(cea%Npt) / (cea%Pp * sqrt(usq) * cea%Awt)
+             p%AeAt = cea%Enn * p%Ttt / (cea%Pp * sqrt(usq) * cea%Awt)
              if (cea%Tt == 0) go to 1150
              if (cea%Area) go to 750
              if (cea%Trnspt .and. (.not. cea%Fac .or. done .or. cea%Npt > 2)) call TRANP(cea)
@@ -2385,8 +2397,8 @@ contains
                    ! PRESSURE AND CONTRACTION RATIO. IMPROVED ESTIMATE FOR PC
                    cea%Area = .false.
                    itnum = 0
-                   ppa = cea%Ppp(cea%Npt) * pa
-                   pinj = ppa + 1.d05 * usq / cea%Vlm(cea%Npt)
+                   ppa = p%Ppp * pa
+                   pinj = ppa + 1.d05 * usq / p%Vlm
                    test = (pinj - pinjas) / pinjas
                    pcpa = pinf * pa
                    if (cea%Debugf) then
@@ -2402,8 +2414,8 @@ contains
                    pratsv = prat
                    cea%Area = .false.
                    itnum = 0
-                   ppa = cea%Ppp(4) * pa
-                   pinj = ppa + 1.d05 * usq / cea%Vlm(4)
+                   ppa = p4%Ppp * pa
+                   pinj = ppa + 1.d05 * usq / p4%Vlm
                    mat = pa / (cea%Awt * R0)
                    cea%Acat = mat / cea%Ma
                    prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
@@ -2418,8 +2430,7 @@ contains
 
                 if (abs(test) < 0.00002) then
                    done = .true.
-                   p => cea%points(cea%iOF, 1)
-                   p%App = cea%Ppp(2) / cea%Ppp(1)
+                   p1%App = p2%Ppp / p1%Ppp
                    cea%Area = .false.
                    if (cea%Nsub > 1) isub = 2
                    cea%Isv = 4
@@ -2427,20 +2438,18 @@ contains
                    cea%ipt = 2
                    ipp = min(4, cea%Npp)
                    call SETEN(cea)
-                   p2 => cea%points(cea%iOF, 2)
-                   p4 => cea%points(cea%iOF, 4)
                    p2%Cpr = p4%Cpr
                    p2%Dlvpt = p4%Dlvpt
                    p2%Dlvtp = p4%Dlvtp
                    p2%Gammas = p4%Gammas
                    p2%Hsum = p4%Hsum
-                   cea%Ppp(2) = cea%Ppp(4)
-                   p2%App = cea%Ppp(1)/pinf
-                   cea%Ssum(2) = cea%Ssum(4)
-                   cea%Totn(2) = cea%Totn(4)
-                   cea%Ttt(2) = cea%Ttt(4)
-                   cea%Vlm(2) = cea%Vlm(4)
-                   cea%Wm(2) = cea%Wm(4)
+                   p2%Ppp = p4%Ppp
+                   p2%App = p1%Ppp/pinf
+                   p2%Ssum = p4%Ssum
+                   p2%Totn = p4%Totn
+                   p2%Ttt = p4%Ttt
+                   p2%Vlm = p4%Vlm
+                   p2%Wm = p4%Wm
                    if (.not. cea%Short) write(IOOUT, '(" END OF CHAMBER ITERATIONS")')
                    go to 600
                 end if
@@ -2505,7 +2514,7 @@ contains
 1150         if (.not. cea%Eql) then
                 if (cea%Nfz <= 1) then
                    pfz%Cpr = cprf
-                   pfz%Gammas = cprf / (cprf - 1 / cea%Wm(cea%Nfz))
+                   pfz%Gammas = cprf / (cprf - 1 / pfz%Wm)
                 end if
              end if
 
@@ -2534,12 +2543,12 @@ contains
                 cea%Eql = .false.
                 cea%Page1 = .true.
                 call SETEN(cea)
-                cea%Tt = cea%Ttt(cea%Nfz)
+                cea%Tt = pfz%Ttt
                 ipp = cea%Nfz
                 if (cea%Nfz == cea%Npt) go to 1150
                 cea%Npt = cea%Nfz
                 cea%ipt = cea%Nfz
-                cea%Enn = 1./cea%Wm(cea%Nfz)
+                cea%Enn = 1 / pfz%Wm
                 if (cea%Nfz == 1) go to 450
                 if (cea%Nsub > 0) then
                    cea%Nsub = -cea%Nsub
@@ -2581,7 +2590,7 @@ contains
                       p%App = EXP(appl)
                    else
                       p%App = cea%Pcp(ipp - nptth)
-                      if (cea%Fac) p%App = p%App * Pinf / cea%Ppp(1)
+                      if (cea%Fac) p%App = p%App * Pinf / p1%Ppp
                       if (.not. cea%Eql .and. p%App < pfz%App) then
                          write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
                               & " WHERE THE ASSIGNED", /, &
@@ -2601,10 +2610,10 @@ contains
                             cea%ipt = cea%ipt - 1
                             go to 1000
                          end if
-                      else if (cea%Npt > nptth .and. cea%Pcp(ipp-3) < cea%Ppp(1) / cea%Ppp(2)) then
+                      else if (cea%Npt > nptth .and. cea%Pcp(ipp-3) < p1%Ppp / p2%Ppp) then
                          write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
                               & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
-                              & ". POINT OMITTED", " (ROCKET)")') cea%Pcp(ipp-3), cea%Ppp(1) / cea%Ppp(2)
+                              & ". POINT OMITTED", " (ROCKET)")') cea%Pcp(ipp-3), p1%Ppp / p2%Ppp
                          cea%Npt = cea%Npt - 1
                          cea%ipt = cea%ipt - 1
                          go to 650
@@ -2626,7 +2635,7 @@ contains
              if (ip == cea%Np .and. it == cea%Nt .and. iof == cea%Nof) exit iofLoop
              write(IOOUT, '(////)')
              call SETEN(cea)
-             cea%Tt = cea%Ttt(i12)
+             cea%Tt = p12%Ttt
           end do
        end do
     end do iofLoop
@@ -2993,6 +3002,7 @@ contains
 
     ! LOCAL VARIABLES
     integer:: j
+    type(CEA_Point), pointer:: psv
 
     if (cea%Isv > 0) then
        ! USE COMPOSITIONS FROM PREVIOUS POINT
@@ -3002,7 +3012,8 @@ contains
     else if (cea%Isv < 0) then
        ! FIRST T--SAVE COMPOSITIONS FOR FUTURE POINTS WITH THIS T
        cea%Isv = -cea%Isv
-       cea%Tsave = cea%Ttt(cea%Isv)
+       psv => cea%points(cea%iOF, cea%Isv)
+       cea%Tsave = psv%Ttt
        cea%Ensave = cea%Enn
        cea%Enlsav = cea%Ennl
        cea%lsav = cea%lsave
@@ -3128,22 +3139,23 @@ contains
           do i = 1, cea%Nsk
              p => cea%points(iof, i)
 
-             cea%Ppp(i) = cea%P(i)
-             cea%Ttt(i) = cea%T(i)
+             p%Ppp = cea%P(i)
+             p%Ttt = cea%T(i)
 
              if (i > 1) then
                 p_prev => cea%points(iof, i-1)
-                if (cea%Ppp(i) == 0) cea%Ppp(i) = cea%Ppp(i-1)
-                if (cea%Ttt(i) == 0) cea%Ttt(i) = cea%Ttt(i-1)
-                cea%Ssum(i) = cea%Ssum(i-1)
+                if (p%Ppp == 0) p%Ppp = p_prev%Ppp
+                if (p%Ttt == 0) p%Ttt = p_prev%Ttt
+                p%Ssum = p_prev%Ssum
                 p%Hsum = p_prev%Hsum
              end if
 
-             if (i == 1 .or. cea%Ttt(i) /= cea%Tt .or. cea%Ppp(i) /= cea%Pp) then
-                cea%Pp = cea%Ppp(i)
-                cea%Tt = cea%Ttt(i)
+             if (i == 1 .or. p%Ttt /= cea%Tt .or. p%Ppp /= cea%Pp) then
+                cea%Pp = p%Ppp
+                cea%Tt = p%Ttt
                 if (cea%Tt >= cea%Tg(1) * 0.8d0) then
                    cea%Npt = i
+                   cea%ipt = i
                    call HCALC(cea)
                    p%Hsum = cea%Hsub0
                 else
@@ -3156,10 +3168,10 @@ contains
              cea%A1 = sqrt(R0 * cea%Gamma1 * cea%Tt / cea%Wmix)
              if (p%U1 == 0) p%U1 = cea%A1 * p%Mach1
              if (p%Mach1 == 0) p%Mach1 = p%U1 / cea%A1
-             cea%Wm(i) = cea%Wmix
+             p%Wm = cea%Wmix
              p%Cpr = cea%Cpmix
              p%Gammas = cea%Gamma1
-             cea%Vlm(i) = R0 * cea%Tt / (cea%Wmix * cea%Pp)
+             p%Vlm = R0 * cea%Tt / (cea%Wmix * cea%Pp)
           end do
 
           ! OUTPUT--1ST CONDITION
@@ -3189,9 +3201,9 @@ contains
 
              cea%Gamma1 = p%Gammas
              uu = p%U1
-             wmx = cea%Wm(cea%ipt)
-             p1 = cea%Ppp(cea%ipt)
-             T1 = cea%Ttt(cea%ipt)
+             wmx = p%Wm
+             p1 = p%Ppp
+             T1 = p%Ttt
              hs = p%Hsum
              if (refl) uu = u1u2(cea%ipt)
              mu12rt = wmx * uu**2 / (R0 * T1)
@@ -3216,7 +3228,7 @@ contains
                    call EQLBRM(cea)
                    cea%ipt = cea%Npt
 
-                   T21 = cea%Ttt(cea%ipt) / T1
+                   T21 = p%Ttt / T1
                    cea%Hp = .false.
                    cea%Tp = .true.
                 end if
@@ -3256,7 +3268,7 @@ contains
                    cea%ipt = cea%Npt
                    if (cea%Tt == 0) exit
                 end if
-                rho12 = wmx * T21 / (cea%Wm(cea%ipt) * p21)
+                rho12 = wmx * T21 / (p%Wm * p21)
                 gg = rho12 * mu12rt
                 rho52 = 1 / rho12
                 if (refl) gg = -mu12rt * rho52 / (rho52 - 1)**2
@@ -3266,7 +3278,7 @@ contains
                 if (refl) cea%G(1, 3) = p21 - 1 + gg * (rho52 - 1)
                 gg = gg * T1 / wmx
                 if (.not. refl) gg = gg * rho12
-                cea%G(2, 1) = -gg * p%Dlvpt + cea%Tt * (p%Dlvtp - 1) / cea%Wm(cea%ipt)
+                cea%G(2, 1) = -gg * p%Dlvpt + cea%Tt * (p%Dlvtp - 1) / p%Wm
                 cea%G(2, 2) = -gg * p%Dlvtp - cea%Tt * p%Cpr
                 gg = 1 - rho12**2
                 if (refl) gg = (rho52 + 1) / (rho52 - 1)
@@ -3320,7 +3332,7 @@ contains
                    ! CONVERGED OR TOOK 60 ITERATIONS WITHOUT CONVERGING.
                    ! STORE RESULTS.
                    rrho(cea%ipt) = rho52
-                   m2m1(cea%ipt) = cea%Wm(cea%ipt) / wmx
+                   m2m1(cea%ipt) = p%Wm / wmx
                    p2p1(cea%ipt) = p21
                    t2t1(cea%ipt) = T21
                    utwo(cea%ipt) = uu * rho12
@@ -3328,15 +3340,15 @@ contains
                    if (cea%Tt >= cea%Tg(1) * 0.8d0 .and. cea%Tt <= cea%Tg(4) * 1.1d0) then
                       if (.not. cea%Eql) then
                          ! FROZEN
-                         cea%Ppp(cea%ipt) = cea%Pp
-                         cea%Ttt(cea%ipt) = cea%Tt
+                         p%Ppp = cea%Pp
+                         p%Ttt = cea%Tt
                          p%Gammas = p%Cpr / (p%Cpr - 1 / wmx)
-                         cea%Vlm(cea%ipt) = R0 * cea%Tt / (wmx * cea%Pp)
+                         p%Vlm = R0 * cea%Tt / (wmx * cea%Pp)
                          if (cea%Incdeq) then
-                            cea%Ssum(cea%ipt) = 0
+                            p%Ssum = 0
                             do j = 1, cea%Ngc
                                pmn = cea%Pp * wmx * cea%En(j, cea%ipt)
-                               if (cea%En(j, cea%ipt) > 0) cea%Ssum(cea%ipt) = cea%Ssum(cea%ipt) + cea%En(j, cea%ipt) * (cea%S(j) - log(pmn))
+                               if (cea%En(j, cea%ipt) > 0) p%Ssum = p%Ssum + cea%En(j, cea%ipt) * (cea%S(j) - log(pmn))
                             end do
                          end if
                       end if
@@ -3387,7 +3399,7 @@ contains
 
              call OUT2(cea, cea%ipt, cea%ipt, IOOUT)
 
-             if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
+             if (cea%Trnspt) call OUT4(cea, cea%ipt, cea%ipt, IOOUT)
              write(IOOUT, *)
              cea%fmt(7) = '3,'
              write(IOOUT, cea%fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, cea%ipt)
@@ -3415,11 +3427,11 @@ contains
                    end do
                 else
                    cea%Eql = .true.
-                   call OUT3(cea, cea%ipt, IOOUT)
+                   call OUT3(cea, cea%ipt, cea%ipt, IOOUT)
                    cea%Eql = .false.
                 end if
              else
-                call OUT3(cea, cea%ipt, IOOUT)
+                call OUT3(cea, cea%ipt, cea%ipt, IOOUT)
              end if
 
              cea%Iplt = min(cea%Iplt + cea%ipt, 500)
@@ -3437,9 +3449,9 @@ contains
                          do i = 1, cea%ipt
                             p => cea%points(iof, i)
                             sg(j)   = u1u2(i)
-                            sg(j+1) = cea%Wm(i)
-                            sg(j+2) = cea%Ppp(i)
-                            sg(j+3) = cea%Ttt(i)
+                            sg(j+1) = p%Wm
+                            sg(j+2) = p%Ppp
+                            sg(j+3) = p%Ttt
                             sg(j+4) = p%Hsum
                             sg(j+5) = p%Gammas
                             j = j + 6
@@ -3453,9 +3465,9 @@ contains
                    do i = 1, cea%ipt
                       p => cea%points(iof, i)
                       u1u2(i) = sg(j)
-                      cea%Wm(i) = sg(j+1)
-                      cea%Ppp(i) = sg(j+2)
-                      cea%Ttt(i) = sg(j+3)
+                      p%Wm = sg(j+1)
+                      p%Ppp = sg(j+2)
+                      p%Ttt = sg(j+3)
                       p%Hsum = sg(j+4)
                       p%Gammas = sg(j+5)
                       j = j + 6
@@ -3568,8 +3580,8 @@ contains
              call OUT1(cea, IOOUT)
              write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
              call OUT2(cea, cea%Npt, cea%ipt, IOOUT)
-             if (cea%Trnspt) call OUT4(cea, cea%Npt, IOOUT)
-             call OUT3(cea, cea%Npt, IOOUT)
+             if (cea%Trnspt) call OUT4(cea, cea%Npt, cea%ipt, IOOUT)
+             call OUT3(cea, cea%Npt, cea%ipt, IOOUT)
              cea%Iplt = min(cea%Iplt + cea%Npt, 500)
 
              if ((ip == cea%Np .and. it == cea%Nt .or. cea%Tt == 0) .and. iof == cea%Nof) then
@@ -3605,6 +3617,11 @@ contains
          stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
          trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
 
+    type(CEA_Point), pointer:: p !< current point
+    type(CEA_Point), pointer:: p1
+
+    p1 => cea%points(cea%iOF, 1)
+
     if (.not. cea%Eql) then
        if (.not. cea%Shock) then
           if (.not. setx) then
@@ -3624,7 +3641,7 @@ contains
                 j = cea%Jray(i)
                 cea%Ind(i) = j
                 cea%Wmol(i) = cea%Mw(j)
-                cea%Xs(i) = cea%En(j, 1) * cea%Wm(1)
+                cea%Xs(i) = cea%En(j, 1) * p1%Wm
              end do
           end if
           go to 300
@@ -3632,10 +3649,11 @@ contains
     end if
 
     ! PICK OUT IMPORTANT SPECIES
+    p => cea%points(cea%iOF, cea%ipt)
     cea%Nm = 0
     total = 0
-    enmin = 1.0d-11 / cea%Wm(cea%Npt)
-    testot = 0.999999999d0 / cea%Wm(cea%Npt)
+    enmin = 1.0d-11 / p%Wm
+    testot = 0.999999999d0 / p%Wm
     do i = 1, cea%Lsave
        j = cea%Jcm(i)
        if (cea%En(j, cea%Npt) <= 0 .and. j <= cea%Ngc) then
@@ -3647,7 +3665,7 @@ contains
        if (cea%Mw(j) < 1) enel = cea%En(j, cea%Npt)
        cea%En(j, cea%Npt) = -cea%En(j, cea%Npt)
     end do
-    testen = 1 / (cea%Ng * cea%Wm(cea%Npt))
+    testen = 1 / (cea%Ng * p%Wm)
 
     if (total <= testot) then
        outerLoop1: do loop = 1, cea%Ng
