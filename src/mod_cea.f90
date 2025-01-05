@@ -3915,6 +3915,9 @@ contains
          psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
          stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
 
+    type(CEA_Point), pointer:: p !< current point
+    p => cea%points(cea%iOF, cea%ipt)
+
     call TRANIN(cea)
     ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
     nmm = cea%Nm - 1
@@ -3923,8 +3926,8 @@ contains
        phi(i, i) = 1
        psi(i, i) = 1
     end do
-    cea%Confro(cea%Npt) = 0
-    cea%Vis(cea%Npt) = 0
+    p%Confro = 0
+    p%Vis = 0
     do i = 1, nmm
        i1 = i + 1
        !DIR$ IVDEP
@@ -3944,8 +3947,8 @@ contains
           sumc = sumc + psi(i, j) * cea%Xs(j)
           sumv = sumv + phi(i, j) * cea%Xs(j)
        end do
-       cea%Vis(cea%Npt) = cea%Vis(cea%Npt) + cea%Eta(i, i) * cea%Xs(i) / sumv
-       cea%Confro(cea%Npt) = cea%Confro(cea%Npt) + cea%Con(i) * cea%Xs(i) / sumc
+       p%Vis = p%Vis + cea%Eta(i, i) * cea%Xs(i) / sumv
+       p%Confro = p%Confro + cea%Con(i) * cea%Xs(i) / sumc
     end do
     if (cea%Eql .and. cea%Nr > 0) then
        ! CALCULATE REACTION HEAT CAPACITY AND THERMAL CONDUCTIVITY
@@ -4037,23 +4040,23 @@ contains
        reacon = 0
     end if
     ! CALCULATE OTHER ANSWERS
-    cea%Cpfro(cea%Npt) = 0
+    p%Cpfro = 0
     wtmol = 0
     do i = 1, cea%Nm
-       cea%Cpfro(cea%Npt) = cea%Cpfro(cea%Npt) + cea%Xs(i) * cea%Cprr(i)
+       p%Cpfro = p%Cpfro + cea%Xs(i) * cea%Cprr(i)
        wtmol = wtmol + cea%Xs(i) * cea%Wmol(i)
     end do
-    cea%Cpfro(cea%Npt) = cea%Cpfro(cea%Npt) * cea%R / wtmol
-    cea%Confro(cea%Npt) = cea%Confro(cea%Npt) / 1000
-    if (.not. cea%SIunit) cea%Confro(cea%Npt) = cea%Confro(cea%Npt) / 4.184d0
-    cea%Vis(cea%Npt) = cea%Vis(cea%Npt) / 1000
-    cea%Prfro(cea%Npt) = cea%Vis(cea%Npt) * cea%Cpfro(cea%Npt) / cea%Confro(cea%Npt)
+    p%Cpfro = p%Cpfro * cea%R / wtmol
+    p%Confro = p%Confro / 1000
+    if (.not. cea%SIunit) p%Confro = p%Confro / 4.184d0
+    p%Vis = p%Vis / 1000
+    p%Prfro = p%Vis * p%Cpfro / p%Confro
     if (cea%Eql) then
        cpreac = cpreac / wtmol
        reacon = reacon / 1000
-       cea%Cpeql(cea%Npt) = cpreac + cea%Cpfro(cea%Npt)
-       cea%Coneql(cea%Npt) = cea%Confro(cea%Npt) + reacon
-       cea%Preql(cea%Npt) = cea%Vis(cea%Npt) * cea%Cpeql(cea%Npt) / cea%Coneql(cea%Npt)
+       p%Cpeql = cpreac + p%Cpfro
+       p%Coneql = p%Confro + reacon
+       p%Preql = p%Vis * p%Cpeql / p%Coneql
     end if
   end subroutine TRANP
 

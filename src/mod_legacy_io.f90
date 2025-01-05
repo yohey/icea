@@ -1410,6 +1410,11 @@ contains
     deallocate(out_gamma)
     deallocate(out_Dlvpt)
     deallocate(out_Dlvtp)
+    deallocate(out_Ppp)
+    deallocate(out_Ssum)
+    deallocate(out_Totn)
+    deallocate(out_Ttt)
+    deallocate(out_Wm)
 
     return
   end subroutine OUT2
@@ -1522,7 +1527,7 @@ contains
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
-    use mod_types, only: CEA_Problem, Ncol
+    use mod_types, only: CEA_Problem, CEA_Point, Ncol
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1532,11 +1537,34 @@ contains
 
     integer:: i, j
 
+    type(CEA_Point), pointer:: p !< current point
+
     integer:: n_cols_print
     integer, allocatable:: i_cols_print(:)
 
+    real(8), allocatable:: out_Coneql(:), out_Confro(:), out_Cpeql(:), out_Cpfro(:), out_Preql(:), out_Prfro(:), out_Vis(:)
+
     call get_print_cols(cea, i_col_end, i_cols_print)
     n_cols_print = size(i_cols_print)
+
+    allocate(out_Coneql(n_cols_print))
+    allocate(out_Confro(n_cols_print))
+    allocate(out_Cpeql(n_cols_print))
+    allocate(out_Cpfro(n_cols_print))
+    allocate(out_Preql(n_cols_print))
+    allocate(out_Prfro(n_cols_print))
+    allocate(out_Vis(n_cols_print))
+
+    do i = 1, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       out_Coneql(i) = p%Coneql
+       out_Confro(i) = p%Confro
+       out_Cpeql(i) = p%Cpeql
+       out_Cpfro(i) = p%Cpfro
+       out_Preql(i) = p%Preql
+       out_Prfro(i) = p%Prfro
+       out_Vis(i) = p%Vis
+    end do
 
     write(io_out, *)
     write(io_out, '(" TRANSPORT PROPERTIES (GASES ONLY)")')
@@ -1549,20 +1577,21 @@ contains
     ! TRANSPORT PROPERTIES
     cea%fmt(4) = cea%fmt(6)
     if (cea%Nplt > 0) then
-       do i = 1, Npt
+       do i = 1, n_cols_print
+          p => cea%points(cea%iOF, i_cols_print(i))
           if (i > ione) then
-             if (mvis > 0) cea%Pltout(i+cea%Iplt-ione, mvis) = cea%Vis(i)
-             if (mcond > 0) cea%Pltout(i+cea%Iplt-ione, mcond) = cea%Coneql(i)
-             if (mpn > 0) cea%Pltout(i+cea%Iplt-ione, mpn) = cea%Preql(i)
-             if (mcondf > 0) cea%Pltout(i+cea%Iplt-ione, mcondf) = cea%Confro(i)
-             if (mpnf > 0) cea%Pltout(i+cea%Iplt-ione, mpnf) = cea%Prfro(i)
+             if (mvis > 0) cea%Pltout(i+cea%Iplt-ione, mvis) = p%Vis
+             if (mcond > 0) cea%Pltout(i+cea%Iplt-ione, mcond) = p%Coneql
+             if (mpn > 0) cea%Pltout(i+cea%Iplt-ione, mpn) = p%Preql
+             if (mcondf > 0) cea%Pltout(i+cea%Iplt-ione, mcondf) = p%Confro
+             if (mpnf > 0) cea%Pltout(i+cea%Iplt-ione, mpnf) = p%Prfro
           end if
        end do
     end if
 
-    call VARFMT(cea, cea%Vis, Npt)
+    call VARFMT(cea, out_Vis, n_cols_print)
 
-    write(io_out, cea%fmt) 'VISC,MILLIPOISE', (cea%Vis(j), j = 1, Npt)
+    write(io_out, cea%fmt) 'VISC,MILLIPOISE', out_Vis(:)
 
     cea%fmt(4) = '13'
     cea%fmt(5) = ' '
@@ -1571,20 +1600,28 @@ contains
     if (cea%Eql) then
        write(io_out, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
-       write(io_out, cea%fmt) fc, (cea%Cpeql(j), j = 1, Npt)
+       write(io_out, cea%fmt) fc, out_Cpeql(:)
        ! CONDUCTIVITY
-       write(io_out, cea%fmt) 'CONDUCTIVITY    ', (cea%Coneql(j), j = 1, Npt)
+       write(io_out, cea%fmt) 'CONDUCTIVITY    ', out_Coneql(:)
        ! PRANDTL NUMBER
-       write(io_out, cea%fmt) 'PRANDTL NUMBER  ', (cea%Preql(j), j = 1, Npt)
+       write(io_out, cea%fmt) 'PRANDTL NUMBER  ', out_Preql(:)
     end if
 
     write(io_out, '(/"  WITH FROZEN REACTIONS"/)')
     ! SPECIFIC HEAT
-    write(io_out, cea%fmt) fc, (cea%Cpfro(j), j = 1, Npt)
+    write(io_out, cea%fmt) fc, out_Cpfro(:)
     ! CONDUCTIVITY
-    write(io_out, cea%fmt) 'CONDUCTIVITY    ', (cea%Confro(j), j = 1, Npt)
+    write(io_out, cea%fmt) 'CONDUCTIVITY    ', out_Confro(:)
     ! PRANDTL NUMBER
-    write(io_out, cea%fmt) 'PRANDTL NUMBER  ', (cea%Prfro(j), j = 1, Npt)
+    write(io_out, cea%fmt) 'PRANDTL NUMBER  ', out_Prfro(:)
+
+    deallocate(out_Coneql)
+    deallocate(out_Confro)
+    deallocate(out_Cpeql)
+    deallocate(out_Cpfro)
+    deallocate(out_Preql)
+    deallocate(out_Prfro)
+    deallocate(out_Vis)
 
     return
   end subroutine OUT4

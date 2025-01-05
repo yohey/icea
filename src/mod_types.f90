@@ -36,6 +36,8 @@ module mod_types
      real(8):: AeAt, App
      ! SHCK
      real(8):: U1, Mach1
+     ! TRANP
+     real(8):: Coneql, Confro, Cpeql, Cpfro, Preql, Prfro, Vis
   end type CEA_Point
 
 
@@ -108,8 +110,6 @@ module mod_types
      integer:: Ind(maxTr), Jcm(maxEl)
      real(8):: Cprr(maxTr), Con(maxTr), Wmol(maxTr), Xs(maxTr)
      real(8):: Eta(maxTr, maxTr), Stc(maxTr, maxTr)
-
-     real(8):: Coneql(Ncol), Confro(Ncol), Cpeql(Ncol), Cpfro(Ncol), Preql(Ncol), Prfro(Ncol), Vis(Ncol)
 
      ! Information used in variable output format
      character(4):: fmt(30) = [character(4):: '(1X', ',A15', ',', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
