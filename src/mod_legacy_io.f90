@@ -555,8 +555,8 @@ contains
              if (cea%Rkt) then
                 if (cea%Nt == 0) cea%Hp = .true.
                 if (.not. cea%Short) then
-                   write(cea%io_log, '(/" Pc,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
-                   write(cea%io_log, '(/" Pc/P =", 9f11.4)') (cea%Pcp(jj), jj = 1, cea%Npp)
+                   write(cea%io_log, '(/" Pc,BAR =", 7f13.6)') cea%P(1:cea%Np)
+                   write(cea%io_log, '(/" Pc/P =", 9f11.4)') cea%Pcp(1:cea%Npp)
                    write(cea%io_log, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
                    write(cea%io_log, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
                    write(cea%io_log, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
@@ -1157,6 +1157,7 @@ contains
 
     real(8), allocatable:: out_cp(:), out_gamma(:), out_Dlvpt(:), out_Dlvtp(:)
     real(8), allocatable:: out_Ppp(:), out_Ssum(:), out_Totn(:), out_Ttt(:), out_Wm(:)
+    real(8), allocatable:: out_Sonvel(:)
 
     call get_print_cols(cea, i_col_end, i_cols_print)
     n_cols_print = size(i_cols_print)
@@ -1170,6 +1171,7 @@ contains
     allocate(out_Totn(n_cols_print))
     allocate(out_Ttt(n_cols_print))
     allocate(out_Wm(n_cols_print))
+    allocate(out_Sonvel(n_cols_print))
 
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
@@ -1401,10 +1403,11 @@ contains
     cea%fmt(7) = '1,'
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%Sonvel(i) = sqrt(R0 * p%Gammas * p%Ttt / p%Wm)
-       if (cea%Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+cea%Iplt-ione, mson) = cea%Sonvel(i)
+       p%Sonvel = sqrt(R0 * p%Gammas * p%Ttt / p%Wm)
+       out_Sonvel(i) = p%Sonvel
+       if (cea%Nplt /= 0 .and. i > ione .and. mson > 0) cea%Pltout(i+cea%Iplt-ione, mson) = p%Sonvel
     end do
-    write(io_out, cea%fmt) 'SON VEL,M/SEC   ', (cea%Sonvel(j), j = 1, Npt)
+    write(io_out, cea%fmt) 'SON VEL,M/SEC   ', out_Sonvel(:)
 
     deallocate(out_cp)
     deallocate(out_gamma)
@@ -2108,24 +2111,24 @@ contains
 
     do k = 2, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(k))
-       cea%Spim(k) = sqrt(2 * R0 * (p1%Hsum - p%Hsum)) / agv
+       p%Spim = sqrt(2 * R0 * (p1%Hsum - p%Hsum)) / agv
        ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
-       aw = R0 * p%Ttt / (p%Ppp * p%Wm * cea%Spim(k) * agv**2)
+       aw = R0 * p%Ttt / (p%Ppp * p%Wm * p%Spim * agv**2)
        if (k == i23) then
           if (cea%Iopt == 0) cea%Cstr = gc * p1%Ppp * aw
           if (cea%Iopt /= 0) cea%Cstr = gc * p1%Ppp / cea%points(cea%iOF, 2)%App * aw
        end if
-       vaci(k) = cea%Spim(k) + p%Ppp * aw
-       cea%Vmoc(k) = 0
-       if (cea%Sonvel(k) /= 0) cea%Vmoc(k) = cea%Spim(k) * agv / cea%Sonvel(k)
+       vaci(k) = p%Spim + p%Ppp * aw
+       p%Vmoc = 0
+       if (p%Sonvel /= 0) p%Vmoc = p%Spim * agv / p%Sonvel
     end do
 
     ! MACH NUMBER
-    cea%Vmoc(1) = 0
+    p1%Vmoc = 0
     p23 => cea%points(cea%iOF, i_cols_print(i23))
-    if (p23%Gammas == 0) cea%Vmoc(i23) = 0
+    if (p23%Gammas == 0) p23%Vmoc = 0
     cea%fmt(7) = '3,'
-    write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%Vmoc(j), j = 1, cea%Npt)
+    write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%points(cea%iOF, i_cols_print(i))%Vmoc, i = 1, n_cols_print)
     if (cea%Trnspt) call OUT4(cea, cea%Npt, cea%ipt, IOOUT)
     write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
 
@@ -2145,8 +2148,9 @@ contains
 
     ! CF - THRUST COEFICIENT
     cea%fmt(i79) = '4,'
-    do i = 2, cea%Npt
-       cea%X(i) = gc * cea%Spim(i) / cea%Cstr
+    do i = 2, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       cea%X(i) = gc * p%Spim / cea%Cstr
     end do
     write(IOOUT, cea%fmt) 'CF             ', (cea%X(j), j = 2, cea%Npt)
 
@@ -2156,25 +2160,24 @@ contains
     write(IOOUT, cea%fmt) fiv, (vaci(j), j = 2, cea%Npt)
 
     ! SPECIFIC IMPULSE
-    write(IOOUT, cea%fmt) fi, (cea%Spim(j), j = 2, cea%Npt)
+    write(IOOUT, cea%fmt) fi, (cea%points(cea%iOF, i_cols_print(i))%Spim, i = 2, n_cols_print)
 
     if (cea%Nplt > 0) then
        p1 => cea%points(cea%iOF, 1)
-       cea%Spim(1) = 0
+       p1%Spim = 0
        p1%AeAt = 0
-       cea%Vmoc(1) = 0
+       p1%Vmoc = 0
        vaci(1) = 0
        cea%X(1) = 0
-       cea%Spim(1) = 0
        do i = ione + 1, n_cols_print
           p => cea%points(cea%iOF, i_cols_print(i))
           if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = p1%Ppp / p%Ppp
           if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = p%App
-          if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = cea%Vmoc(i)
+          if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = p%Vmoc
           if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = p%AeAt
           if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = cea%X(i)
           if (mivac > 0) cea%Pltout(i+cea%Iplt-ione, mivac) = vaci(i)
-          if (misp > 0)  cea%Pltout(i+cea%Iplt-ione, misp)  = cea%Spim(i)
+          if (misp > 0)  cea%Pltout(i+cea%Iplt-ione, misp)  = p%Spim
        end do
     end if
 
@@ -2789,8 +2792,8 @@ contains
 
     if (cea%Rkt) then
        if (.not. cea%Short) then
-          write(io_out, '(/" Pc,BAR =", 7f13.6)') (cea%P(i), i = 1, cea%Np)
-          write(io_out, '(/" Pc/P =", 9f11.4)') (cea%Pcp(i), i = 1, cea%Npp)
+          write(io_out, '(/" Pc,BAR =", 7f13.6)') cea%P(1:cea%Np)
+          write(io_out, '(/" Pc/P =", 9f11.4)') cea%Pcp(1:cea%Npp)
           write(io_out, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
           write(io_out, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
           write(io_out, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat

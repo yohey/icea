@@ -32,6 +32,7 @@ module mod_types
      real(8), pointer:: B0p(:, :)
      real(8):: Cpr, Dlvpt, Dlvtp, Gammas, Hsum
      real(8):: Ppp, Ssum, Totn, Ttt, Vlm, Wm
+     real(8):: Sonvel, Spim, Vmoc
      ! ROCKET
      real(8):: AeAt, App
      ! SHCK
@@ -100,7 +101,7 @@ module mod_types
      integer:: Iopt, Isup, Nfz, Npp, Nsub, Nsup
      logical:: Area, Debugf, Fac, Froz, Page1, Rkt
      real(8):: Acat, Awt, Cstr, Tcest, Ma
-     real(8):: Pcp(2*Ncol), Sonvel(Ncol), Spim(Ncol), Subar(13), Supar(13), Vmoc(Ncol)
+     real(8):: Pcp(2*Ncol), Subar(13), Supar(13)
 
      integer:: Nsk
      logical:: Incdeq, Incdfz, Refleq, Reflfz, Shkdbg

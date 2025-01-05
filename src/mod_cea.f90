@@ -300,10 +300,10 @@ contains
                       rrho(cea%ipt) = rr1
                       if (cpl(cea%ipt) == 0) then
                          gm1(cea%ipt) = 0
-                         cea%Vmoc(cea%Npt) = 0
+                         p%Vmoc = 0
                       else
                          gm1(cea%ipt) = cpl(cea%ipt) / (cpl(cea%ipt) - cea%R / cea%Wmix)
-                         cea%Vmoc(cea%Npt) = ud / sqrt(R0 * gm1(cea%ipt) * T1 / cea%Wmix)
+                         p%Vmoc = ud / sqrt(R0 * gm1(cea%ipt) * T1 / cea%Wmix)
                       end if
                    else
                       write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
@@ -380,9 +380,10 @@ contains
                 if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(i), i = i_col_start, cea%ipt)
 
                 do concurrent (i = i_col_start:cea%ipt)
+                   p => cea%points(cea%iOF, i)
                    j = i - i_col_start + 1
                    cea%V(j) = cea%Wmix
-                   cea%Sonvel(j) = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
+                   p%Sonvel = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
                 end do
 
                 cea%fmt(7) = '3,'
@@ -390,15 +391,16 @@ contains
                 cea%fmt(7) = '4,'
                 write(IOOUT, cea%fmt) fg1, (gm1(i), i = i_col_start, cea%ipt)
                 cea%fmt(7) = '1,'
-                write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (cea%Sonvel(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (cea%points(cea%iOF, i)%Sonvel, i = i_col_start, cea%ipt)
 
                 if (cea%Nplt > 0) then
                    do i = i_col_start, cea%ipt
+                      p => cea%points(cea%iOF, i)
                       j = i - i_col_start + 1
                       if (mt > 0)   cea%Pltout(j+cea%Iplt, mt) = tub(i)
                       if (mgam > 0) cea%Pltout(j+cea%Iplt, mgam) = gm1(i)
                       if (mh > 0)   cea%Pltout(j+cea%Iplt, mh) = h1(i)
-                      if (mson > 0) cea%Pltout(j+cea%Iplt, mson) = cea%Sonvel(j)
+                      if (mson > 0) cea%Pltout(j+cea%Iplt, mson) = p%Sonvel
                    end do
                 end if
 
@@ -418,13 +420,13 @@ contains
                    j = i - i_col_start + 1
                    cea%V(j) = p_tmp%Ppp / pub(i)
                    cea%Pcp(j) = p_tmp%Ttt / tub(i)
-                   cea%Sonvel(j) = cea%Sonvel(j) * rrho(i)
-                   if (mmach > 0) cea%Pltout(j+cea%Iplt, mmach) = cea%Vmoc(j)
-                   if (mdv > 0)   cea%Pltout(j+cea%Iplt, mdv) = cea%Sonvel(j)
+                   p_tmp%Sonvel = p_tmp%Sonvel * rrho(i)
+                   if (mmach > 0) cea%Pltout(j+cea%Iplt, mmach) = p_tmp%Vmoc
+                   if (mdv > 0)   cea%Pltout(j+cea%Iplt, mdv) = p_tmp%Sonvel
                 end do
 
-                write(IOOUT, cea%fmt) fpp1, (cea%V(j), j = 1, cea%Npt)
-                write(IOOUT, cea%fmt) ftt1, (cea%Pcp(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) fpp1, cea%V(1:cea%Npt)
+                write(IOOUT, cea%fmt) ftt1, cea%Pcp(1:cea%Npt)
 
                 do concurrent (i = i_col_start:cea%ipt)
                    p_tmp => cea%points(cea%iOF, i)
@@ -435,10 +437,10 @@ contains
                 cea%fmt(7) = '4,'
                 write(IOOUT, cea%fmt) fmm1, (cea%V(j), j = 1, cea%Npt)
                 write(IOOUT, cea%fmt) frr1, (rrho(i), i = i_col_start, cea%ipt)
-                write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%Vmoc(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%points(cea%iOF, i)%Vmoc, i = i_col_start, cea%ipt)
 
                 cea%fmt(7) = '1,'
-                write(IOOUT, cea%fmt) fdv, (cea%Sonvel(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) fdv, (cea%points(cea%iOF, i)%Sonvel, i = i_col_start, cea%ipt)
 
                 cea%Eql = .true.
 
