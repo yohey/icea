@@ -28,6 +28,7 @@ module mod_types
 
 
   type:: CEA_Point
+     real(8):: En(maxNgc)
      real(8), pointer:: B0(:)
      real(8), pointer:: B0p(:, :)
      real(8):: Cpr, Dlvpt, Dlvtp, Gammas, Hsum
@@ -66,7 +67,6 @@ module mod_types
 
      real(8):: Enn, Ennl, Sumn
      real(8):: Deln(maxNgc), Enln(maxNgc), Sln(maxNgc)
-     real(8):: En(maxNgc, Ncol)
 
      integer:: Iplt, Nc, Ng, Ngp1, Nlm, Nplt, Nof, Nomit, Nonly, Np, Npr, Ngc, Nsert, Nspr, Nspx, Nt
      integer:: Jcond(45), Jx(maxEl), Nfla(maxR), Ifz(maxNc)
@@ -133,6 +133,7 @@ contains
     allocate(cea%points(maxMix, cea%max_points))
 
     do concurrent (i = 1:maxMix, j = 1:cea%max_points)
+       cea%points(i, j)%En(:) = 0
        cea%points(i, j)%U1 = 0
        cea%points(i, j)%Mach1 = 0
     end do

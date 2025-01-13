@@ -197,7 +197,7 @@ contains
              p => cea%points(cea%iOF, cea%ipt)
 
              if (cea%ipt > 1) then
-                if (cea%Isv == 1) cea%Isv = -1
+                if (mod(cea%Isv, Ncol) == 1) cea%Isv = -cea%Isv
                 call SETEN(cea)
              end if
 
@@ -315,7 +315,7 @@ contains
                    cea%Isv = 0
 
                    if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
-                      cea%Isv = cea%Npt
+                      cea%Isv = cea%ipt
                       if (cea%Npt /= Ncol) cycle
                    end if
                 end if
@@ -544,8 +544,8 @@ contains
        if (cea%Tt <= cea%Temp(2, kc)) then
           if (kg /= 0) then
              cea%Jcond(k) = j + kg
-             cea%En(j+kg, cea%Npt) = cea%En(j, cea%Npt)
-             cea%En(j, cea%Npt) = 0
+             p%En(j+kg) = p%En(j)
+             p%En(j) = 0
 
              if (cea%Prod(j) /= cea%Prod(j+kg) .and. .not. cea%Short) &
                   & write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') cea%Prod(j), cea%Prod(j+kg)
@@ -564,7 +564,7 @@ contains
 
     write(IOOUT, '(" REMOVE ", A16)') cea%Prod(j)
 
-    cea%En(j, cea%Npt) = 0
+    p%En(j) = 0
     cea%Enln(j) = 0
     cea%Deln(j) = 0
 
@@ -591,7 +591,7 @@ contains
        tem = exp(-tsize)
        do i = cea%Lsave + 1, cea%Nlm
           do concurrent (j = 1:cea%Ng, cea%A(i, j) /= 0)
-             cea%En(j, cea%Npt) = tem
+             p%En(j) = tem
              cea%Enln(j) = -tsize
           end do
        end do
@@ -615,10 +615,10 @@ contains
 
     ! BEGIN ITERATION
 500 if (cpcalc) then
-       cea%Cpsum = sum(cea%En(1:cea%Ng, cea%Npt) * cea%Cp(1:cea%Ng))
+       cea%Cpsum = sum(p%En(1:cea%Ng) * cea%Cp(1:cea%Ng))
 
        if (cea%Npr /= 0) then
-          cea%Cpsum = cea%Cpsum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt) * cea%Cp(cea%Jcond(1:cea%Npr)))
+          cea%Cpsum = cea%Cpsum + sum(p%En(cea%Jcond(1:cea%Npr)) * cea%Cp(cea%Jcond(1:cea%Npr)))
           cpcalc = .false.
        end if
     end if
@@ -675,7 +675,6 @@ contains
              end if
 
              cea%Deln(j) = -cea%Mu(j) + cea%H0(j) * dlnt + sum0
-
 
 !!$           cea%Deln(j) = cea%Deln(j) + sum(A(1:cea%Nlm, j) * X(1:cea%Nlm)) ???
              do k = 1, cea%Nlm
@@ -746,7 +745,7 @@ contains
 
              do j = 1, cea%Ngc
                 write(IOOUT, '(1X, A16, 4E15.6, /35x, 3E15.6)') &
-                     cea%Prod(j), cea%En(j, cea%Npt), cea%Enln(j), cea%Deln(j), cea%H0(j), cea%S(j), cea%H0(j) - cea%S(j), cea%Mu(j)
+                     cea%Prod(j), p%En(j), cea%Enln(j), cea%Deln(j), cea%H0(j), cea%S(j), cea%H0(j) - cea%S(j), cea%Mu(j)
              end do
           end if
 
@@ -757,36 +756,36 @@ contains
              cea%Enln(j) = cea%Enln(j) + ambda * cea%Deln(j)
           end do
 
-          cea%En(1:cea%Ng, cea%Npt) = 0
+          p%En(1:cea%Ng) = 0
 
           if (lelim == 0) then
              do concurrent (j = 1:cea%Ng, (cea%Enln(j) - cea%Ennl + tsize) > 0)
-                cea%En(j, cea%Npt) = exp(cea%Enln(j))
+                p%En(j) = exp(cea%Enln(j))
              end do
           else
              do concurrent (j = 1:cea%Ng, all(cea%A(lelim:ls, j) == 0))
-                cea%En(j, cea%Npt) = exp(cea%Enln(j))
+                p%En(j) = exp(cea%Enln(j))
              end do
           end if
 
-          p%Totn = p%Totn + sum(cea%En(1:cea%Ng, cea%Npt))
+          p%Totn = p%Totn + sum(p%En(1:cea%Ng))
 
           if (cea%Ions .and. cea%Elmt(cea%Nlm) == 'E') then
              mask = .false.
-             do concurrent (j = 1:cea%Ng, cea%A(ls, j) /= 0 .and. cea%En(j, cea%Npt) == 0 .and. (cea%Enln(j) - cea%Ennl + esize) > 0)
-                cea%En(j, cea%Npt) = exp(cea%Enln(j))
+             do concurrent (j = 1:cea%Ng, cea%A(ls, j) /= 0 .and. p%En(j) == 0 .and. (cea%Enln(j) - cea%Ennl + esize) > 0)
+                p%En(j) = exp(cea%Enln(j))
                 mask(j) = .true.
              end do
-             p%Totn = p%Totn + sum(cea%En(1:cea%Ng, cea%Npt), mask=mask)
+             p%Totn = p%Totn + sum(p%En(1:cea%Ng), mask=mask)
           end if
 
           cea%Sumn = p%Totn
 
           if (cea%Npr /= 0) then
              do concurrent (k = 1:cea%Npr)
-                cea%En(cea%Jcond(k), cea%Npt) = cea%En(cea%Jcond(k), cea%Npt) + ambda * cea%Deln(cea%Jcond(k))
+                p%En(cea%Jcond(k)) = p%En(cea%Jcond(k)) + ambda * cea%Deln(cea%Jcond(k))
              end do
-             p%Totn = p%Totn + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt))
+             p%Totn = p%Totn + sum(p%En(cea%Jcond(1:cea%Npr)))
           end if
 
           if (.not. cea%Tp) then
@@ -809,7 +808,7 @@ contains
 
           if (cea%Elmt(cea%Nlm) == 'E') then
              ! CHECK ON REMOVING IONS
-             if (all(cea%A(cea%Nlm, 1:cea%Ngc) == 0 .or. cea%En(1:cea%Ngc, cea%Npt) <= 0)) then
+             if (all(cea%A(cea%Nlm, 1:cea%Ngc) == 0 .or. p%En(1:cea%Ngc) <= 0)) then
                 pie = cea%X(cea%Nlm)
                 lelim = cea%Nlm
                 cea%Nlm = cea%Nlm - 1
@@ -839,7 +838,7 @@ contains
                 xln = log(xi)
 
                 do concurrent (j = 1:cea%Ng)
-                   cea%En(j, cea%Npt) = xi
+                   p%En(j) = xi
                    cea%Enln(j) = xln
                 end do
 
@@ -856,21 +855,21 @@ contains
 
           else
              if (abs(cea%X(cea%Iq1) * cea%Enn / p%Totn) > 0.5E-5 .or. &
-                  any(abs(cea%Deln(1:cea%Ng)) * cea%En(1:cea%Ng, cea%Npt) / p%Totn > 0.5d-5) .or. &
+                  any(abs(cea%Deln(1:cea%Ng)) * p%En(1:cea%Ng) / p%Totn > 0.5d-5) .or. &
                   abs(dlnt) > 1.d-04) go to 500
 
              if (cea%Npr /= 0) then
                 do k = 1, cea%Npr
                    j = cea%Jcond(k)
                    if (abs(cea%Deln(j) / p%Totn) > 0.5d-5) go to 500
-                   if (cea%En(j, cea%Npt) < 0) go to 700
+                   if (p%En(j) < 0) go to 700
                 end do
              end if
 
              le = cea%Nlm
 
              if (any(abs(p%B0(1:cea%Nlm)) >= 1.d-06 .and. &
-                  abs(p%B0(1:cea%Nlm) - sum(spread(cea%En(1:cea%Ngc, cea%Npt), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
+                  abs(p%B0(1:cea%Nlm) - sum(spread(p%En(1:cea%Ngc), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
                   > cea%Bcheck)) go to 500
 
              if (cea%Trace /= 0.) then
@@ -911,14 +910,14 @@ contains
 
                    do j = 1, cea%Ng
                       if (cea%A(ls, j) /= 0) then
-                         cea%En(j, cea%Npt) = 0
+                         p%En(j) = 0
                          tem = 0
 
                          if (cea%Enln(j) > -87) tem = exp(cea%Enln(j))
 
                          if ((cea%Enln(j)-cea%Ennl+tsize) > 0 .and. cea%Elmt(cea%Nlm) == 'E') then
                             pie = 0
-                            cea%En(j, cea%Npt) = tem
+                            p%En(j) = tem
                          end if
 
                          aa = cea%A(ls, j) * tem
@@ -969,8 +968,8 @@ contains
           if (cea%Jliq == 0) then
              p%Gammas = -1 / (p%Dlvpt + (p%Dlvtp**2) * cea%Enn / p%Cpr)
           else
-             cea%En(cea%Jsol, cea%Npt) = ensol
-             p%Hsum = p%Hsum + cea%En(cea%Jliq, cea%Npt) * (cea%H0(cea%Jliq) - cea%H0(cea%Jsol))
+             p%En(cea%Jsol) = ensol
+             p%Hsum = p%Hsum + p%En(cea%Jliq) * (cea%H0(cea%Jliq) - cea%H0(cea%Jsol))
              p%Gammas = -1. / p%Dlvpt
              cea%Npr = cea%Npr + 1
              cea%Jcond(cea%Npr) = cea%Jliq
@@ -1004,8 +1003,8 @@ contains
                    if (jcondi /= jdelg) then
                       do ll = 1, cea%Nlm
                          if (cea%A(ll, jdelg) /= 0 .and. cea%A(ll, jcondi) /= 0) then
-                            if (cea%En(jcondi, cea%Npt) <= ween) then
-                               ween = cea%En(jcondi, cea%Npt)
+                            if (p%En(jcondi) <= ween) then
+                               ween = p%En(jcondi)
                                j = jcondi
                                k = i
                             end if
@@ -1040,7 +1039,7 @@ contains
                          if (cea%Elmt(cea%Nlm) /= 'E') go to 1100
 
                          do concurrent (j = 1:cea%Ng, cea%A(cea%Nlm, j) /= 0)
-                            cea%En(j, cea%Npt) = 0
+                            p%En(j) = 0
                          end do
 
                          pie = cea%X(cea%Nlm)
@@ -1061,8 +1060,8 @@ contains
                 end if
 
                 do concurrent (j = 1:cea%Ng, &
-                     .not. (cea%Ions .and. cea%Elmt(cea%Nlm) /= 'E' .and. cea%A(ls, j) /= 0) .and. cea%En(j, cea%Npt) == 0)
-                   cea%En(j, cea%Npt) = smalno
+                     .not. (cea%Ions .and. cea%Elmt(cea%Nlm) /= 'E' .and. cea%A(ls, j) /= 0) .and. p%En(j) == 0)
+                   p%En(j) = smalno
                    cea%Enln(j) = smnol
                 end do
 
@@ -1079,10 +1078,10 @@ contains
     end if
 
     ! CALCULATE ENTROPY, CHECK ON DELTA S FOR SP PROBLEMS
-600 p%Ssum = sum(cea%En(1:cea%Ng, cea%Npt) * (cea%S(1:cea%Ng) - cea%Enln(1:cea%Ng) - cea%Tm))
+600 p%Ssum = sum(p%En(1:cea%Ng) * (cea%S(1:cea%Ng) - cea%Enln(1:cea%Ng) - cea%Tm))
 
     if (cea%Npr > 0) then
-       p%Ssum = p%Ssum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Npt) * cea%S(cea%Jcond(1:cea%Npr)))
+       p%Ssum = p%Ssum + sum(p%En(cea%Jcond(1:cea%Npr)) * cea%S(cea%Jcond(1:cea%Npr)))
     end if
 
     if (.not. cea%Sp) then
@@ -1127,8 +1126,8 @@ contains
 
           do k = 1, cea%Npr
              j = cea%Jcond(k)
-             if (cea%En(j, cea%Npt) * cea%Cp(j) <= bigneg) then
-                bigneg = cea%En(j, cea%Npt) * cea%Cp(j)
+             if (p%En(j) * cea%Cp(j) <= bigneg) then
+                bigneg = p%En(j) * cea%Cp(j)
                 jneg = j
                 kneg = k
              end if
@@ -1195,10 +1194,10 @@ contains
              j = inc + cea%Ng
 
              if (cea%Debug(cea%Npt)) then
-                write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') cea%Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), cea%En(j, cea%Npt)
+                write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') cea%Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), p%En(j)
              end if
 
-             if (cea%En(j, cea%Npt) <= 0) then
+             if (p%En(j) <= 0) then
                 if (cea%Tt > cea%Temp(1, inc) .or. cea%Temp(1, inc) == cea%Tg(1)) then
                    if (cea%Tt <= cea%Temp(2, inc)) then
                       delg = (cea%H0(j) - cea%S(j) - sum(cea%A(1:cea%Nlm, j) * cea%X(1:cea%Nlm))) / cea%Mw(j)
@@ -1237,15 +1236,15 @@ contains
           cea%Tln = log(cea%Tt)
           cea%Jsol = min(j, jkg)
           cea%Jliq = cea%Jsol + 1
-          cea%En(jkg, cea%Npt) = 0.5d0 * cea%En(j, cea%Npt)
-          cea%En(j, cea%Npt) = cea%En(jkg, cea%Npt)
+          p%En(jkg) = 0.5d0 * p%En(j)
+          p%En(j) = p%En(jkg)
           j = jkg
           go to 800
 
           ! WRONG PHASE INCLUDED FOR T INTERVAL, SWITCH EN
-740       cea%En(jkg, cea%Npt) = cea%En(j, cea%Npt)
+740       p%En(jkg) = p%En(j)
           cea%Jcond(ipr) = jkg
-          cea%En(j, cea%Npt) = 0
+          p%En(j) = 0
           jsw = j
 
           if (cea%Prod(j) /= cea%Prod(jkg) .and. .not. cea%Short) &
@@ -1259,8 +1258,8 @@ contains
        ! TEMPORARILY REMOVE LIQ TO PREVENT SINGULAR DERIVATIVE MATRIX.
 750    cea%Sumn = cea%Enn
        if (cea%Jsol /= 0) then
-          ensol = cea%En(cea%Jsol, cea%Npt)
-          cea%En(cea%Jsol, cea%Npt) = cea%En(cea%Jsol, cea%Npt) + cea%En(cea%Jliq, cea%Npt)
+          ensol = p%En(cea%Jsol)
+          p%En(cea%Jsol) = p%En(cea%Jsol) + p%En(cea%Jliq)
           p%Dlvtp = 0
           p%Cpr = 0
           p%Gammas = 0
@@ -1293,7 +1292,7 @@ contains
     go to 500
 
     ! REMOVE CONDENSED SPECIES
-1000 cea%En(j, cea%Npt) = 0
+1000 p%En(j) = 0
     cea%Deln(j) = 0
     cea%Enln(j) = 0
 
@@ -1325,9 +1324,9 @@ contains
 1200 bigen = -1d-35
 
     do j = 1, cea%Ng
-       if (cea%En(j, cea%Npt) > bigen) then
+       if (p%En(j) > bigen) then
           if (.not. cea%Ions .or. cea%A(ls, j) == 0) then
-             bigen = cea%En(j, cea%Npt)
+             bigen = p%En(j)
              jbx = j
           end if
        end if
@@ -1362,12 +1361,12 @@ contains
           end if
        end do
 
-       cea%En(jbx, cea%Npt) = -cea%En(jbx, cea%Npt)
+       p%En(jbx) = -p%En(jbx)
        if (njc < nn) go to 1200
     end if
 
     do concurrent (j = 1:cea%Ng)
-       cea%En(j, cea%Npt) = abs(cea%En(j, cea%Npt))
+       p%En(j) = abs(p%En(j))
     end do
 
     if (newcom) then
@@ -1488,11 +1487,11 @@ contains
     if (cea%Trace /= 0) then
        if (lelim == 0) then
           do concurrent (j = 1:cea%Ng, cea%Enln(j) > -87)
-             cea%En(j, cea%Npt) = exp(cea%Enln(j))
+             p%En(j) = exp(cea%Enln(j))
           end do
        else
           do concurrent (j = 1:cea%Ng, all(cea%A(lelim:ls, j) == 0))
-             cea%En(j, cea%Npt) = exp(cea%Enln(j))
+             p%En(j) = exp(cea%Enln(j))
           end do
        end if
     end if
@@ -1550,23 +1549,23 @@ contains
     cea%Tln = log(cea%Tt)
     dlpm = log(cea%Pp * pfz%Wm)
 
-    do concurrent (j = 1:cea%Ng, cea%En(j, cea%Nfz) /= 0)
-       cea%Deln(j) = -(log(cea%En(j, cea%Nfz)) + dlpm)
+    do concurrent (j = 1:cea%Ng, pfz%En(j) /= 0)
+       cea%Deln(j) = -(log(pfz%En(j)) + dlpm)
     end do
 
     do iter = 1, 8
        call CPHS(cea)
 
-       cea%Cpsum = sum(cea%En(1:cea%Ng, cea%Nfz) * cea%Cp(1:cea%Ng))
-       p%Ssum = sum(cea%En(1:cea%Ng, cea%Nfz) * (cea%S(1:cea%Ng) + cea%Deln(1:cea%Ng)))
+       cea%Cpsum = sum(pfz%En(1:cea%Ng) * cea%Cp(1:cea%Ng))
+       p%Ssum = sum(pfz%En(1:cea%Ng) * (cea%S(1:cea%Ng) + cea%Deln(1:cea%Ng)))
 
        if (cea%Npr /= 0) then
-          cea%Cpsum = cea%Cpsum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%Cp(cea%Jcond(1:cea%Npr)))
-          p%Ssum = p%Ssum + sum(cea%En(cea%Jcond(1:cea%Npr), cea%Nfz) * cea%S(cea%Jcond(1:cea%Npr)))
+          cea%Cpsum = cea%Cpsum + sum(pfz%En(cea%Jcond(1:cea%Npr)) * cea%Cp(cea%Jcond(1:cea%Npr)))
+          p%Ssum = p%Ssum + sum(pfz%En(cea%Jcond(1:cea%Npr)) * cea%S(cea%Jcond(1:cea%Npr)))
        end if
 
        if (cea%Convg) then
-          p%Hsum = sum(cea%En(1:cea%Ngc, cea%Nfz) * cea%H0(1:cea%Ngc)) * cea%Tt
+          p%Hsum = sum(pfz%En(1:cea%Ngc) * cea%H0(1:cea%Ngc)) * cea%Tt
 
           p%Ttt = cea%Tt
           p%Gammas = cea%Cpsum / (cea%Cpsum - 1 / pfz%Wm)
@@ -1579,7 +1578,7 @@ contains
           p%Cpr = cea%Cpsum
 
           if (cea%Tt >= cea%Tg(1) * 0.8d0) then
-             if (all(cea%En(cea%Ngp1:cea%Ngc, cea%Nfz) == 0)) return
+             if (all(pfz%En(cea%Ngp1:cea%Ngc) == 0)) return
              if (all(cea%Temp(1, cea%Ngp1-cea%Ng:cea%Ngc-cea%Ng) - 50 <= cea%Tt &
                   .and. cea%Tt <= cea%Temp(2, cea%Ngp1-cea%Ng:cea%Ngc-cea%Ng) + 50)) return
           end if
@@ -1738,7 +1737,7 @@ contains
        if (k == 1) enj = enj * cea%Oxfl
 
        cea%Tln = log(cea%Tt)
-       cea%En(j, cea%Npt) = enj
+       p%En(j) = enj
        l = 1
 
        if (ifaz <= 0) then
@@ -1785,6 +1784,7 @@ contains
     real(8):: energyl, f, h, ss, sss, term, term1
 
     type(CEA_Point), pointer:: p !< current point
+
     p => cea%points(cea%iOF, cea%ipt)
 
     iq = cea%Nlm + cea%Npr
@@ -1801,16 +1801,16 @@ contains
     ! BEGIN SET-UP OF ITERATION OR DERIVATIVE MATRIX
     do j = 1, cea%Ng
        cea%Mu(j) = cea%H0(j) - cea%S(j) + cea%Enln(j) + cea%Tm
-       if (cea%En(j, cea%Npt) /= 0) then
-          h = cea%H0(j) * cea%En(j, cea%Npt)
-          f = cea%Mu(j) * cea%En(j, cea%Npt)
+       if (p%En(j) /= 0) then
+          h = cea%H0(j) * p%En(j)
+          f = cea%Mu(j) * p%En(j)
           ss = h - f
           term1 = h
           if (kmat == iq2) term1 = f
 
           do i = 1, cea%Nlm
              if (cea%A(i, j) /= 0) then
-                term = cea%A(i, j) * cea%En(j, cea%Npt)
+                term = cea%A(i, j) * p%En(j)
                 do concurrent (k = i:cea%Nlm)
                    cea%G(i, k) = cea%G(i, k) + cea%A(k, j) * term
                 end do
@@ -1850,15 +1850,15 @@ contains
 
           do concurrent (i = 1:cea%Nlm)
              cea%G(i, kk) = cea%A(i, j)
-             cea%G(i, kmat) = cea%G(i, kmat) - cea%A(i, j) * cea%En(j, cea%Npt)
+             cea%G(i, kmat) = cea%G(i, kmat) - cea%A(i, j) * p%En(j)
           end do
 
           cea%G(kk, iq2) = cea%H0(j)
           cea%G(kk, kmat) = cea%Mu(j)
-          p%Hsum = p%Hsum + cea%H0(j) * cea%En(j, cea%Npt)
+          p%Hsum = p%Hsum + cea%H0(j) * p%En(j)
 
           if (cea%Sp) then
-             sss = sss + cea%S(j) * cea%En(j, cea%Npt)
+             sss = sss + cea%S(j) * p%En(j)
              cea%G(iq2, kk) = cea%S(j)
           end if
        end do
@@ -1950,9 +1950,10 @@ contains
     type(CEA_Point), pointer:: p !< current point
 
     cea%iOF = cea%iOF + 1
+    cea%ipt = 1
     cea%Npt = 1
 
-    p => cea%points(cea%iOF, cea%Npt)
+    p => cea%points(cea%iOF, cea%ipt)
 
     if (.not. cea%Short) write(IOOUT, '(/" O/F = ", f10.6)') cea%Oxfl
     cea%Eqrat = 0
@@ -2510,7 +2511,7 @@ contains
              go to 1150
 
              ! TEST FOR OUTPUT -- SCHEDULES COMPLETE OR NPT=Ncol
-1100         cea%Isv = cea%Npt
+1100         cea%Isv = cea%ipt
              if (cea%ipt <= nptth .or. mod(cea%ipt - nptth, Ncol - nptth) > 0) go to 1200
 
 1150         if (.not. cea%Eql) then
@@ -2663,7 +2664,7 @@ contains
           cea%Nlm = cea%Nlm + 1
           cea%Elmt(cea%Nlm) = 'E'
 
-          do concurrent (i = 1:maxMix, j = 1:Ncol)
+          do concurrent (i = 1:maxMix, j = 1:cea%max_points)
              cea%points(i, j)%B0p(cea%Nlm, 1) = 0
              cea%points(i, j)%B0p(cea%Nlm, 2) = 0
           end do
@@ -2694,10 +2695,12 @@ contains
     xi = cea%Enn/xi
     xln = log(xi)
 
-    cea%En(cea%Ng+1:cea%Ng+cea%Nc, 1) = 0
-    cea%Enln(cea%Ng+1:cea%Ng+cea%Nc) = 0
+    do concurrent (i = 1:maxMix)
+       cea%points(i, 1)%En(cea%Ng+1:cea%Ng+cea%Nc) = 0
+       cea%points(i, 1)%En(1:cea%Ng) = xi
+    end do
 
-    cea%En(1:cea%Ng, 1) = xi
+    cea%Enln(cea%Ng+1:cea%Ng+cea%Nc) = 0
     cea%Enln(1:cea%Ng) = xln
 
     if (cea%Nc /= 0 .and. cea%Nsert /= 0) then
@@ -3004,12 +3007,16 @@ contains
 
     ! LOCAL VARIABLES
     integer:: j
+    type(CEA_Point), pointer:: p
     type(CEA_Point), pointer:: psv
+
+    p => cea%points(cea%iOF, cea%ipt)
 
     if (cea%Isv > 0) then
        ! USE COMPOSITIONS FROM PREVIOUS POINT
+       psv => cea%points(cea%iOF, cea%Isv)
        do j = 1, cea%Ngc
-          cea%En(j, cea%Npt) = cea%En(j, cea%Isv)
+          p%En(j) = psv%En(j)
        end do
     else if (cea%Isv < 0) then
        ! FIRST T--SAVE COMPOSITIONS FOR FUTURE POINTS WITH THIS T
@@ -3023,21 +3030,21 @@ contains
           cea%Sln(j) = cea%Enln(j)
        end do
        do j = 1, cea%Ng
-          cea%En(j, cea%Npt) = cea%En(j, cea%Isv)
+          p%En(j) = psv%En(j)
        end do
        cea%Npr = 0
        do j = cea%Ngp1, cea%Ngc
-          cea%Sln(j) = cea%En(j, cea%Isv)
-          cea%En(j, cea%Npt) = cea%Sln(j)
+          cea%Sln(j) = psv%En(j)
+          p%En(j) = cea%Sln(j)
           if (cea%Jliq == j) then
-             cea%En(cea%Jsol, cea%Npt) = cea%En(cea%Jsol, cea%Isv) + cea%En(cea%Jliq, cea%Isv)
-             cea%En(cea%Jliq, cea%Npt) = 0
+             p%En(cea%Jsol) = psv%En(cea%Jsol) + psv%En(cea%Jliq)
+             p%En(cea%Jliq) = 0
              cea%Jsol = 0
              cea%Jliq = 0
              cea%Tsave = cea%Tsave - 5
              cea%Tt = cea%Tsave
              cea%Sln(j) = 0
-          else if (cea%En(j, cea%Npt) > 0) then
+          else if (p%En(j) > 0) then
              cea%Npr = cea%Npr + 1
              cea%Jcond(cea%Npr) = j
           end if
@@ -3051,17 +3058,17 @@ contains
        cea%lsave = cea%lsav
        cea%Npr = 0
        do j = cea%Ngp1, cea%Ngc
-          cea%En(j, cea%Npt) = cea%Sln(j)
-          if (cea%En(j, cea%Npt) > 0.d0) then
+          p%En(j) = cea%Sln(j)
+          if (p%En(j) > 0.d0) then
              cea%Npr = cea%Npr + 1
              cea%Jcond(cea%Npr) = j
           end if
        end do
        do j = 1, cea%Ng
-          cea%En(j, cea%Npt) = 0
+          p%En(j) = 0
           cea%Enln(j) = cea%Sln(j)
           if (cea%Sln(j) /= 0) then
-             if ((cea%Enln(j) - cea%Ennl + 18.5) > 0) cea%En(j, cea%Npt) = exp(cea%Enln(j))
+             if ((cea%Enln(j) - cea%Ennl + 18.5) > 0) p%En(j) = exp(cea%Enln(j))
           end if
        end do
        if (.not. cea%Tp) cea%Tt = cea%Tsave
@@ -3226,9 +3233,7 @@ contains
                    cea%Hp = .true.
                    cea%Hsub0 = hs + uu**2 / (2 * R0)
 
-                   cea%Npt = cea%ipt
                    call EQLBRM(cea)
-                   cea%ipt = cea%Npt
 
                    T21 = p%Ttt / T1
                    cea%Hp = .false.
@@ -3260,14 +3265,13 @@ contains
                       p%Cpr = cea%Cpsum
                       p%Hsum = 0
                       do j = 1, cea%Ng
-                         p%Hsum = p%Hsum + cea%H0(j) * cea%En(j, cea%ipt)
+                         p%Hsum = p%Hsum + cea%H0(j) * p%En(j)
                       end do
                       p%Hsum = p%Hsum * cea%Tt
                    end if
                 else
-                   cea%Npt = cea%ipt
                    call EQLBRM(cea)
-                   cea%ipt = cea%Npt
+
                    if (cea%Tt == 0) exit
                 end if
                 rho12 = wmx * T21 / (p%Wm * p21)
@@ -3349,8 +3353,8 @@ contains
                          if (cea%Incdeq) then
                             p%Ssum = 0
                             do j = 1, cea%Ngc
-                               pmn = cea%Pp * wmx * cea%En(j, cea%ipt)
-                               if (cea%En(j, cea%ipt) > 0) p%Ssum = p%Ssum + cea%En(j, cea%ipt) * (cea%S(j) - log(pmn))
+                               pmn = cea%Pp * wmx * p%En(j)
+                               if (p%En(j) > 0) p%Ssum = p%Ssum + p%En(j) * (cea%S(j) - log(pmn))
                             end do
                          end if
                       end if
@@ -3425,7 +3429,7 @@ contains
                    do n = 1, cea%Nreac
                       j = cea%Jray(n)
                       if (cea%Massf) ww = cea%Mw(j)
-                      write(IOOUT, '(" ", A16, F8.5, 12F9.5)') cea%Prod(j), (cea%En(j, i) * ww, i = 1, cea%ipt)
+                      write(IOOUT, '(" ", A16, F8.5, 12F9.5)') cea%Prod(j), (cea%points(cea%iOF, i)%En(j) * ww, i = 1, cea%ipt)
                    end do
                 else
                    cea%Eql = .true.
@@ -3547,7 +3551,7 @@ contains
                 else if (cea%Nt /= 1 .and. (it == 1 .or. cea%Tt == 0.)) then
                    cea%Isv = 0
                 else
-                   cea%Isv = mod(cea%ipt - 2, Ncol) + 1
+                   cea%Isv = cea%ipt - 1
                 end if
                 call SETEN(cea)
              end if
@@ -3643,7 +3647,7 @@ contains
                 j = cea%Jray(i)
                 cea%Ind(i) = j
                 cea%Wmol(i) = cea%Mw(j)
-                cea%Xs(i) = cea%En(j, 1) * p1%Wm
+                cea%Xs(i) = p1%En(j) * p1%Wm
              end do
           end if
           go to 300
@@ -3658,14 +3662,14 @@ contains
     testot = 0.999999999d0 / p%Wm
     do i = 1, cea%Lsave
        j = cea%Jcm(i)
-       if (cea%En(j, cea%Npt) <= 0 .and. j <= cea%Ngc) then
-          if ((cea%Enln(j) - cea%Ennl + 25.328436d0) > 0) cea%En(j, cea%Npt) = exp(cea%Enln(j))
+       if (p%En(j) <= 0 .and. j <= cea%Ngc) then
+          if ((cea%Enln(j) - cea%Ennl + 25.328436d0) > 0) p%En(j) = exp(cea%Enln(j))
        end if
        cea%Nm = cea%Nm + 1
        cea%Ind(cea%Nm) = j
-       total = total + cea%En(j, cea%Npt)
-       if (cea%Mw(j) < 1) enel = cea%En(j, cea%Npt)
-       cea%En(j, cea%Npt) = -cea%En(j, cea%Npt)
+       total = total + p%En(j)
+       if (cea%Mw(j) < 1) enel = p%En(j)
+       p%En(j) = -p%En(j)
     end do
     testen = 1 / (cea%Ng * p%Wm)
 
@@ -3674,16 +3678,16 @@ contains
           testen = testen / 10
 
           do j = 1, cea%Ng
-             if (cea%En(j, cea%Npt) >= testen) then
+             if (p%En(j) >= testen) then
                 if (cea%Nm >= maxTr) then
                    write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
                         & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') cea%Nm, cea%Npt
                    exit outerLoop1
                 else
-                   total = total + cea%En(j, cea%Npt)
+                   total = total + p%En(j)
                    cea%Nm = cea%Nm + 1
                    cea%Ind(cea%Nm) = j
-                   cea%En(j, cea%Npt) = -cea%En(j, cea%Npt)
+                   p%En(j) = -p%En(j)
                 end if
              end if
           end do
@@ -3694,12 +3698,12 @@ contains
 
     ! CALCULATE MOLE FRACTIONS FROM THE EN(J, NPT)
     do j = 1, cea%Ng
-       cea%En(j, cea%Npt) = abs(cea%En(j, cea%Npt))
+       p%En(j) = abs(p%En(j))
     end do
     do i = 1, cea%Nm
        j = cea%Ind(i)
        cea%Wmol(i) = cea%Mw(j)
-       cea%Xs(i) = cea%En(j, cea%Npt) / total
+       cea%Xs(i) = p%En(j) / total
     end do
     if (cea%Npt == cea%Nfz) then
        nms = cea%Nm
