@@ -1988,7 +1988,7 @@ contains
     integer:: n_cols_print
     integer, allocatable:: i_cols_print(:)
 
-    real(8), allocatable:: out_AeAt(:), out_App(:)
+    real(8), allocatable:: out_AeAt(:), out_App(:), X(:)
 
     i_col_end = cea%ipt
     call get_print_cols(cea, i_col_end, i_cols_print)
@@ -1996,6 +1996,7 @@ contains
 
     allocate(out_AeAt(n_cols_print))
     allocate(out_App(n_cols_print))
+    allocate(X(n_cols_print))
 
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
@@ -2034,7 +2035,7 @@ contains
     call OUT1(cea, IOOUT)
 
     cea%fmt(4) = cea%fmt(6)
-    nex = cea%Npt - 2
+    nex = n_cols_print - 2
     if (cea%Page1) then
        ione = 0
        i46 = 4
@@ -2053,13 +2054,13 @@ contains
     else
        nex = nex - 1
        write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
-       cea%X(1) = 1.d0
+       X(1) = 1.d0
        do i = 2, n_cols_print
           p => cea%points(cea%iOF, i_cols_print(i))
-          cea%X(i) = p1%Ppp / p%Ppp
+          X(i) = p1%Ppp / p%Ppp
        end do
-       call VARFMT(cea, cea%X, cea%Npt)
-       write(IOOUT, cea%fmt) 'Pinj/P         ', (cea%X(i), i = 1, cea%Npt)
+       call VARFMT(cea, X, n_cols_print)
+       write(IOOUT, cea%fmt) 'Pinj/P         ', X(:)
     end if
 
     call OUT2(cea, cea%ipt, IOOUT)
@@ -2147,20 +2148,20 @@ contains
     cea%fmt(i57) = '13'
     cea%fmt(i68) = cea%fmt(i68 + 2)
     cea%fmt(i79) = '1,'
-    write(IOOUT, cea%fmt) fr, (cea%Cstr, j = 2, cea%Npt)
+    write(IOOUT, cea%fmt) fr, (cea%Cstr, j = 2, n_cols_print)
 
     ! CF - THRUST COEFICIENT
     cea%fmt(i79) = '4,'
     do i = 2, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%X(i) = gc * p%Spim / cea%Cstr
+       X(i) = gc * p%Spim / cea%Cstr
     end do
-    write(IOOUT, cea%fmt) 'CF             ', (cea%X(j), j = 2, cea%Npt)
+    write(IOOUT, cea%fmt) 'CF             ', X(2:n_cols_print)
 
     ! VACUUM IMPULSE
     cea%fmt(i57) = '13'
     cea%fmt(i79) = '1,'
-    write(IOOUT, cea%fmt) fiv, (vaci(j), j = 2, cea%Npt)
+    write(IOOUT, cea%fmt) fiv, vaci(2:n_cols_print)
 
     ! SPECIFIC IMPULSE
     write(IOOUT, cea%fmt) fi, (cea%points(cea%iOF, i_cols_print(i))%Spim, i = 2, n_cols_print)
@@ -2171,14 +2172,14 @@ contains
        p1%AeAt = 0
        p1%Vmoc = 0
        vaci(1) = 0
-       cea%X(1) = 0
+       X(1) = 0
        do i = ione + 1, n_cols_print
           p => cea%points(cea%iOF, i_cols_print(i))
           if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = p1%Ppp / p%Ppp
           if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = p%App
           if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = p%Vmoc
           if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = p%AeAt
-          if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = cea%X(i)
+          if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = X(i)
           if (mivac > 0) cea%Pltout(i+cea%Iplt-ione, mivac) = vaci(i)
           if (misp > 0)  cea%Pltout(i+cea%Iplt-ione, misp)  = p%Spim
        end do
@@ -2209,9 +2210,9 @@ contains
 
        do k = 1, cea%Ngc
           if (cea%Massf) ww = cea%Mw(k)
-          cea%X(line+1) = pfz%En(k) * ww
+          X(line+1) = pfz%En(k) * ww
 
-          if (cea%X(line+1) >= tra) then
+          if (X(line+1) >= tra) then
              line = line + 1
              z(line) = cea%Prod(k)
           end if
@@ -2223,7 +2224,7 @@ contains
                 deallocate(out_App)
                 return
              end if
-             write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), cea%X(ln), ln = 1, line)
+             write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), X(ln), ln = 1, line)
              line = 0
           end if
        end do
