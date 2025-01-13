@@ -167,7 +167,7 @@ contains
     type(CEA_Point), pointer:: p_tmp
 
     integer:: i_col_start
-    real(8), dimension(cea%max_points):: cpl, gm1, h1, pub, rrho, tub, V
+    real(8), dimension(cea%max_points):: cpl, gm1, h1, pub, rrho, tub, V, Pcp
 
     cea%Eql = .true.
 
@@ -257,7 +257,7 @@ contains
 
                    call EQLBRM(cea)
 
-                   if (cea%Npt == 0) exit iofLoop
+                   if (cea%ipt == 0) exit iofLoop
 
                    if (cea%Tt == 0) exit
 
@@ -316,7 +316,7 @@ contains
 
                    if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
                       cea%Isv = cea%ipt
-                      if (cea%Npt /= Ncol) cycle
+                      if (mod(cea%ipt, Ncol) /= 0) cycle
                    end if
                 end if
 
@@ -360,7 +360,6 @@ contains
                 cea%fmt(7) = '4,'
 
                 do i = i_col_start, cea%ipt
-                   j = i - i_col_start + 1
                    if (cea%SIunit) then
                       V(i) = pub(i)
                       unit = 'BAR'
@@ -368,7 +367,7 @@ contains
                       V(i) = pub(i) / 1.01325d0
                       unit = 'ATM'
                    end if
-                   if (mp > 0) cea%Pltout(j+cea%Iplt, mp) = V(i)
+                   if (mp > 0) cea%Pltout(i, mp) = V(i)
                 end do
 
                 write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (V(i), i = i_col_start, cea%ipt)
@@ -395,11 +394,10 @@ contains
                 if (cea%Nplt > 0) then
                    do i = i_col_start, cea%ipt
                       p => cea%points(cea%iOF, i)
-                      j = i - i_col_start + 1
-                      if (mt > 0)   cea%Pltout(j+cea%Iplt, mt) = tub(i)
-                      if (mgam > 0) cea%Pltout(j+cea%Iplt, mgam) = gm1(i)
-                      if (mh > 0)   cea%Pltout(j+cea%Iplt, mh) = h1(i)
-                      if (mson > 0) cea%Pltout(j+cea%Iplt, mson) = p%Sonvel
+                      if (mt > 0)   cea%Pltout(i, mt) = tub(i)
+                      if (mgam > 0) cea%Pltout(i, mgam) = gm1(i)
+                      if (mh > 0)   cea%Pltout(i, mh) = h1(i)
+                      if (mson > 0) cea%Pltout(i, mson) = p%Sonvel
                    end do
                 end if
 
@@ -416,16 +414,15 @@ contains
 
                 do i = i_col_start, cea%ipt
                    p_tmp => cea%points(cea%iOF, i)
-                   j = i - i_col_start + 1
                    V(i) = p_tmp%Ppp / pub(i)
-                   cea%Pcp(j) = p_tmp%Ttt / tub(i)
+                   Pcp(i) = p_tmp%Ttt / tub(i)
                    p_tmp%Sonvel = p_tmp%Sonvel * rrho(i)
-                   if (mmach > 0) cea%Pltout(j+cea%Iplt, mmach) = p_tmp%Vmoc
-                   if (mdv > 0)   cea%Pltout(j+cea%Iplt, mdv) = p_tmp%Sonvel
+                   if (mmach > 0) cea%Pltout(i, mmach) = p_tmp%Vmoc
+                   if (mdv > 0)   cea%Pltout(i, mdv) = p_tmp%Sonvel
                 end do
 
                 write(IOOUT, cea%fmt) fpp1, V(i_col_start:cea%ipt)
-                write(IOOUT, cea%fmt) ftt1, cea%Pcp(1:cea%Npt)
+                write(IOOUT, cea%fmt) ftt1, Pcp(i_col_start:cea%ipt)
 
                 do concurrent (i = i_col_start:cea%ipt)
                    p_tmp => cea%points(cea%iOF, i)
@@ -444,7 +441,7 @@ contains
 
                 call OUT3(cea, cea%ipt, IOOUT)
 
-                cea%Iplt = min(cea%Iplt+cea%Npt, 500)
+                cea%Iplt = min(cea%ipt, 500)
 
                 if (cea%Isv == 0 .and. iof == cea%Nof) exit iofLoop
                 if (cea%Np == 1 .and. cea%Nt == 1) cycle iofLoop
@@ -454,7 +451,7 @@ contains
           end do
        end do
 
-       cea%Iplt = min(cea%Iplt + cea%Npt - 1, 500)
+       cea%Iplt = min(cea%ipt - 1, 500)
 
     end do iofLoop
 
