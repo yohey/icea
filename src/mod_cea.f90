@@ -2253,7 +2253,7 @@ contains
                 end if
              else
                 if (.not. cea%Fac .and. cea%Trnspt) call TRANP(cea)
-                if (cea%Npt == cea%Nfz) cea%Eql = seql
+                if (cea%ipt == cea%Nfz) cea%Eql = seql
                 cea%Tp = .false.
                 cea%Hp = .false.
                 cea%Sp = .true.
@@ -2284,13 +2284,13 @@ contains
              p%AeAt = cea%Enn * p%Ttt / (cea%Pp * sqrt(usq) * cea%Awt)
              if (cea%Tt == 0) go to 1150
              if (cea%Area) go to 750
-             if (cea%Trnspt .and. (.not. cea%Fac .or. done .or. cea%Npt > 2)) call TRANP(cea)
-             if (cea%Npt == cea%Nfz) cea%Eql = seql
+             if (cea%Trnspt .and. (.not. cea%Fac .or. done .or. cea%ipt > 2)) call TRANP(cea)
+             if (cea%ipt == cea%Nfz) cea%Eql = seql
              if (cea%Fac) then
-                if (cea%Npt == nptth) then
+                if (cea%ipt == nptth) then
                    cea%Area = .true.
                    go to 750
-                else if (cea%Npt == 2 .and. done) then
+                else if (cea%ipt == 2 .and. done) then
                    cea%Npt = 3
                    cea%ipt = 3
                    !  The following statement was corrected 1/30/2004.  Only fac parameters 
@@ -2342,7 +2342,7 @@ contains
                 appl = pcplt / (cea%Subar(isub) + (10.587 * eln**2 + 9.454) * eln)
                 if (Aratio < 1.09) appl = 0.9 * appl
                 if (Aratio > 10) appl = appl / Aratio
-                if (isub > 1 .or. cea%Npt == Ncol) go to 1100
+                if (isub > 1 .or. mod(cea%ipt, Ncol) == 0) go to 1100
                 go to 1200
 
                 ! TEST FOR CONVERGENCE ON AREA RATIO.
@@ -2485,7 +2485,7 @@ contains
              end if
 
 950          if (cea%Trnspt) call TRANP(cea)
-             if (cea%Npt == cea%Nfz) cea%Eql = seql
+             if (cea%ipt == cea%Nfz) cea%Eql = seql
 
 1000         itnum = 0
              if (cea%Nsub > i01) then
@@ -2543,7 +2543,7 @@ contains
                 call SETEN(cea)
                 cea%Tt = pfz%Ttt
                 ipp = cea%Nfz
-                if (cea%Nfz == cea%Npt) go to 1150
+                if (cea%Nfz == cea%ipt) go to 1150
                 cea%Npt = cea%Nfz
                 cea%ipt = cea%Nfz
                 cea%Enn = 1 / pfz%Wm
@@ -2583,7 +2583,7 @@ contains
 
              do
                 ipp = ipp + 1
-                if (cea%Npt > nptth) then
+                if (cea%ipt > nptth) then
                    if (cea%Area) then
                       p%App = EXP(appl)
                    else
@@ -2608,7 +2608,7 @@ contains
                             cea%ipt = cea%ipt - 1
                             go to 1000
                          end if
-                      else if (cea%Npt > nptth .and. cea%Pcp(ipp-3) < p1%Ppp / p2%Ppp) then
+                      else if (cea%ipt > nptth .and. cea%Pcp(ipp-3) < p1%Ppp / p2%Ppp) then
                          write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
                               & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
                               & ". POINT OMITTED", " (ROCKET)")') cea%Pcp(ipp-3), p1%Ppp / p2%Ppp
@@ -3493,9 +3493,9 @@ contains
           cea%points(iof, i)%Mach1 = mis(i)
        end do
 
-#ifndef NDEBUG
-       call print_debug(cea, iof)
-#endif
+!!$#ifndef NDEBUG
+!!$       call print_debug(cea, iof)
+!!$#endif
     end do
 
     cea%Tp = .false.
@@ -3556,9 +3556,9 @@ contains
              call EQLBRM(cea)
 
              if (cea%Npt == 0) then
-#ifndef NDEBUG
-                call print_debug(cea, iof)
-#endif
+!!$#ifndef NDEBUG
+!!$                call print_debug(cea, iof)
+!!$#endif
                 return
              end if
 
@@ -3586,9 +3586,9 @@ contains
              cea%Iplt = min(cea%Iplt + cea%Npt, 500)
 
              if ((ip == cea%Np .and. it == cea%Nt .or. cea%Tt == 0) .and. iof == cea%Nof) then
-#ifndef NDEBUG
-                call print_debug(cea, iof)
-#endif
+!!$#ifndef NDEBUG
+!!$                call print_debug(cea, iof)
+!!$#endif
                 return
              end if
 
