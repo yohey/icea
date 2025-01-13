@@ -1131,7 +1131,7 @@ contains
   end subroutine OUT1
 
 
-  subroutine OUT2(cea, Npt, i_col_end, io_out)
+  subroutine OUT2(cea, i_col_end, io_out)
     !***********************************************************************
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
@@ -1140,7 +1140,6 @@ contains
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
-    integer, intent(in):: Npt
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
@@ -1157,6 +1156,7 @@ contains
     real(8), allocatable:: out_cp(:), out_gamma(:), out_Dlvpt(:), out_Dlvtp(:)
     real(8), allocatable:: out_Ppp(:), out_Ssum(:), out_Totn(:), out_Ttt(:), out_Wm(:)
     real(8), allocatable:: out_Sonvel(:)
+    real(8), allocatable:: X(:)
 
     call get_print_cols(cea, i_col_end, i_cols_print)
     n_cols_print = size(i_cols_print)
@@ -1171,6 +1171,7 @@ contains
     allocate(out_Ttt(n_cols_print))
     allocate(out_Wm(n_cols_print))
     allocate(out_Sonvel(n_cols_print))
+    allocate(X(n_cols_print))
 
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
@@ -1276,7 +1277,7 @@ contains
           end if
        end if
     end do
-    do i = cea%Iplt + 1, cea%Iplt + Npt
+    do i = cea%Iplt + 1, cea%Iplt + n_cols_print
        if (mof > 0) cea%Pltout(i, mof) = cea%Oxfl
        if (mpf > 0) cea%Pltout(i, mpf) = pfuel
        if (mph > 0) cea%Pltout(i, mph) = phi
@@ -1327,38 +1328,38 @@ contains
     write(io_out, cea%fmt) 'T, K            ', out_Ttt(:)
 
     ! DENSITY
-    do i = 1, Npt
+    do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       if (p%Vlm /= 0) cea%X(i) = vnum / p%Vlm
-       if (cea%Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+cea%Iplt-ione, mrho) = cea%X(i)
+       if (p%Vlm /= 0) X(i) = vnum / p%Vlm
+       if (cea%Nplt /= 0 .and. i > ione .and. mrho > 0) cea%Pltout(i+cea%Iplt-ione, mrho) = X(i)
     end do
-    call EFMT(cea%fmt(4), frh, cea%X, Npt)
+    call EFMT(cea%fmt(4), frh, X, n_cols_print)
 
     ! ENTHALPY
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%X(i) = p%Hsum * cea%R
-       if (cea%Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+cea%Iplt-ione, mh) = cea%X(i)
+       X(i) = p%Hsum * cea%R
+       if (cea%Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+cea%Iplt-ione, mh) = X(i)
     end do
     cea%fmt(4) = cea%fmt(6)
-    call VARFMT(cea, cea%X, Npt)
-    write(io_out, cea%fmt) fh, (cea%X(j), j = 1, Npt)
+    call VARFMT(cea, X, n_cols_print)
+    write(io_out, cea%fmt) fh, X(1:n_cols_print)
 
     ! INTERNAL ENERGY
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%X(i) = (p%Hsum - p%Ppp * p%Vlm / R0) * cea%R
-       if (cea%Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+cea%Iplt-ione, mie) = cea%X(i)
+       X(i) = (p%Hsum - p%Ppp * p%Vlm / R0) * cea%R
+       if (cea%Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+cea%Iplt-ione, mie) = X(i)
     end do
-    call VARFMT(cea, cea%X, Npt)
-    write(io_out, cea%fmt) fu, (cea%X(j), j = 1, Npt)
+    call VARFMT(cea, X, n_cols_print)
+    write(io_out, cea%fmt) fu, X(1:n_cols_print)
 
     ! GIBBS ENERGY
     do i = 1, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
-       cea%X(i) = (p%Hsum - p%Ttt * p%Ssum) * cea%R
+       X(i) = (p%Hsum - p%Ttt * p%Ssum) * cea%R
        if (cea%Nplt /= 0 .and. i > ione) then
-          if (mg > 0) cea%Pltout(i+cea%Iplt-ione, mg) = cea%X(i)
+          if (mg > 0) cea%Pltout(i+cea%Iplt-ione, mg) = X(i)
           if (mm > 0) cea%Pltout(i+cea%Iplt-ione, mm) = p%Wm
           if (mmw > 0) cea%Pltout(i+cea%Iplt-ione, mmw) = 1 / p%Totn
           if (ms > 0) cea%Pltout(i+cea%Iplt-ione, ms) = p%Ssum * cea%R
@@ -1368,8 +1369,8 @@ contains
           if (mdvp > 0) cea%Pltout(i+cea%Iplt-ione, mdvp) = p%Dlvpt
        end if
     end do
-    call VARFMT(cea, cea%X, Npt)
-    write(io_out, cea%fmt) fgi, (cea%X(j), j = 1, Npt)
+    call VARFMT(cea, X, n_cols_print)
+    write(io_out, cea%fmt) fgi, X(1:n_cols_print)
 
     ! ENTROPY
     cea%fmt(4) = '13'
@@ -1422,7 +1423,7 @@ contains
   end subroutine OUT2
 
 
-  subroutine OUT3(cea, Npt, i_col_end, io_out)
+  subroutine OUT3(cea, i_col_end, io_out)
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
@@ -1430,7 +1431,6 @@ contains
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
-    integer, intent(in):: Npt
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
@@ -1444,9 +1444,11 @@ contains
 
     integer:: n_cols_print
     integer, allocatable:: i_cols_print(:)
+    real(8), allocatable:: X(:)
 
     call get_print_cols(cea, i_col_end, i_cols_print)
     n_cols_print = size(i_cols_print)
+    allocate(X(n_cols_print))
 
     tra = 5.d-6
     if (cea%Trace /= 0.) tra = cea%Trace
@@ -1488,20 +1490,20 @@ contains
                 tem = 1 / p%Totn
              end if
              if (k <= cea%Ng) then
-                cea%X(i) = p%En(k) * tem
+                X(i) = p%En(k) * tem
              else
-                if (cea%Prod(k) /= cea%Prod(k-1)) cea%X(i) = 0
-                if (p%En(k) > 0) cea%X(i) = p%En(k) * tem
+                if (cea%Prod(k) /= cea%Prod(k-1)) X(i) = 0
+                if (p%En(k) > 0) X(i) = p%En(k) * tem
              end if
-             if (cea%Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+cea%Iplt-ione, im) = cea%X(i)
-             if (kOK .and. cea%X(i) >= tra) kin = 1
+             if (cea%Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+cea%Iplt-ione, im) = X(i)
+             if (kOK .and. X(i) >= tra) kin = 1
           end do
 
           if (kin == 1) then
              if (cea%Trace == 0) then
-                write(io_out, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), (cea%X(i), i = 1, Npt)
+                write(io_out, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), X(1:n_cols_print)
              else
-                call EFMT(cea%fmt(4), cea%Prod(k), cea%X, Npt)
+                call EFMT(cea%fmt(4), cea%Prod(k), X, n_cols_print)
              end if
              if (cea%Prod(k) == cea%Omit(notuse)) notuse = notuse - 1
           else if (cea%Prod(k) /= cea%Prod(k-1)) then
@@ -1521,11 +1523,14 @@ contains
 
     if (.not. cea%Moles) write(io_out, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
          & " OXIDANT IN TOTAL OXIDANTS")')
+
+    deallocate(X)
+
     return
   end subroutine OUT3
 
 
-  subroutine OUT4(cea, Npt, i_col_end, io_out)
+  subroutine OUT4(cea, i_col_end, io_out)
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
@@ -1533,7 +1538,6 @@ contains
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
-    integer, intent(in):: Npt
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
@@ -2058,7 +2062,7 @@ contains
        write(IOOUT, cea%fmt) 'Pinj/P         ', (cea%X(i), i = 1, cea%Npt)
     end if
 
-    call OUT2(cea, cea%Npt, cea%ipt, IOOUT)
+    call OUT2(cea, cea%ipt, IOOUT)
 
     mppf  = 0
     mppj  = 0
@@ -2128,7 +2132,7 @@ contains
     if (p23%Gammas == 0) p23%Vmoc = 0
     cea%fmt(7) = '3,'
     write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%points(cea%iOF, i_cols_print(i))%Vmoc, i = 1, n_cols_print)
-    if (cea%Trnspt) call OUT4(cea, cea%Npt, cea%ipt, IOOUT)
+    if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
     write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
 
     ! AREA RATIO
@@ -2214,7 +2218,7 @@ contains
 
           if (line == 3 .or. k == cea%Ngc) then
              if (line == 0) then
-                call OUT3(cea, cea%Npt, cea%ipt, IOOUT)
+                call OUT3(cea, cea%ipt, IOOUT)
                 deallocate(out_AeAt)
                 deallocate(out_App)
                 return
@@ -2225,7 +2229,7 @@ contains
        end do
     end if
 
-    call OUT3(cea, cea%Npt, cea%ipt, IOOUT)
+    call OUT3(cea, cea%ipt, IOOUT)
 
     deallocate(out_AeAt)
     deallocate(out_App)
