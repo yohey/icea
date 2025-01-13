@@ -128,7 +128,7 @@ contains
     character(2):: cx2
     character(3):: cx3
     logical:: eqrats, incd, phi, pltdat, reacts, refl
-    integer:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
+    integer:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix, iof
     real(8):: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
 
 
@@ -144,7 +144,6 @@ contains
     cea%Trace = 0
     cea%Short = .false.
     cea%Massf = .false.
-    cea%Debug(1:Ncol) = .false.
     cea%Nplt = 0
     cea%SIunit = .true.
     pltdat = .false.
@@ -226,8 +225,8 @@ contains
                       cea%Massf = .true.
 
                    else if (cx3 == 'deb' .or. cx3 == 'dbg') then
-                      do concurrent (j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol)
-                         cea%Debug(int(dpin(j))) = .true.
+                      do concurrent (iof = 1:maxMix, j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol)
+                         cea%points(iof, int(dpin(j)))%Debug = .true.
                       end do
                       do concurrent (j = i+1:ncin, lcin(j) == i)
                          lcin(j) = 0

@@ -607,7 +607,7 @@ contains
        write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))') (cea%Elmt(i), i = 1, cea%Nlm)
     end if
 
-    if (cea%Debug(cea%Npt)) then
+    if (p%Debug) then
        do i = 1, cea%Nlm
           cmp(i) = cea%Elmt(i)
        end do
@@ -631,7 +631,7 @@ contains
 
     if (cea%Convg) cea%Imat = cea%Imat - 1
 
-    if (cea%Debug(cea%Npt)) then
+    if (p%Debug) then
        if (.not. cea%Convg) then
           write(IOOUT, '(/" ITERATION", I3, 6X, "MATRIX ")') numb
        else
@@ -649,7 +649,7 @@ contains
     call gauss_elimination(cea%G(1:cea%Imat, 1:cea%Imat+1), cea%X(1:cea%Imat), cea%Msing)
 
     if (cea%Msing == 0) then
-       if (cea%Debug(cea%Npt)) then
+       if (p%Debug) then
           write(IOOUT, '(/" SOLUTION VECTOR", /, 6x, 5A15/8X, 5A15)') (cmp(k), k = 1, le)
           write(IOOUT, '(3X, 5E15.6)') (cea%X(i), i = 1, cea%Imat)
        end if
@@ -726,7 +726,7 @@ contains
              ilamb = ilamb1
           end if
 
-          if (cea%Debug(cea%Npt)) then
+          if (p%Debug) then
              ! INTERMEDIATE OUTPUT
              write(IOOUT, '(/" T=", E15.8, " ENN=", E15.8, " ENNL=", E15.8, " PP=", E15.8, &
                   & /" LN P/N=", E15.8, " AMBDA=", E15.8)') cea%Tt, cea%Enn, cea%Ennl, cea%Pp, cea%Tm, ambda
@@ -933,7 +933,7 @@ contains
                          cea%Enln(j) = cea%Enln(j) + cea%A(ls, j) * dpie
                       end do
 
-                      if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", i4, "  DELTA PI =", e14.7)') iter, dpie
+                      if (p%Debug) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", i4, "  DELTA PI =", e14.7)') iter, dpie
 
                       if (abs(dpie) > 0.0001) then
                          cea%X(le) = cea%X(le) + dpie
@@ -1089,7 +1089,7 @@ contains
     else
        tem = p%Ssum - cea%S0
        if (abs(tem) > 0.0005) go to 500
-       if (cea%Debug(cea%Npt)) write(IOOUT, '(/" DELTA S/R =", e15.8)') tem
+       if (p%Debug) write(IOOUT, '(/" DELTA S/R =", e15.8)') tem
        cea%Convg = .true.
     end if
 
@@ -1193,7 +1193,7 @@ contains
           do inc = 1, cea%Nc
              j = inc + cea%Ng
 
-             if (cea%Debug(cea%Npt)) then
+             if (p%Debug) then
                 write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') cea%Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), p%En(j)
              end if
 
@@ -1212,7 +1212,7 @@ contains
                          ipr = ipr - 1
                       end if
 
-                      if (cea%Debug(cea%Npt)) then
+                      if (p%Debug) then
                          write(IOOUT, '(" [G0j-SUM(Aij*PIi)]/Mj =", E15.7, 9X, "MAX NEG DELTA G =", E15.7)') delg, sizeg
                       end if
                    end if
@@ -1418,7 +1418,7 @@ contains
           end if
        end do
 
-       if (cea%Debug(cea%Npt)) then
+       if (p%Debug) then
           write(IOOUT, '(/" NEW COMPONENTS")')
           write(IOOUT, '(/2x, 6A12)') (cmp(k), k = 1, nn)
        end if
@@ -1496,7 +1496,7 @@ contains
        end if
     end if
 
-    if (cea%Debug(cea%Npt)) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
+    if (p%Debug) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
          & e13.6, 3x, "S/R=", e13.6, /3x, "M=", e13.6, 3x, "CP/R=", e13.6, 3x, &
          & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
          cea%Npt, cea%Pp, cea%Tt, p%Hsum, p%Ssum, p%Wm, p%Cpr, p%Dlvpt, p%Dlvtp, p%Gammas, p%Vlm
@@ -2210,7 +2210,7 @@ contains
                       go to 550
                    else
                       msq = usq / pvg
-                      if (cea%Debug(1) .or. cea%Debug(2)) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
+                      if (p1%Debug .or. p2%Debug) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
                       dh = abs(msq - 1)
                       if (dh <= 0.4d-4) go to 550
                       if (itrot > 0) then
@@ -2354,7 +2354,7 @@ contains
              else if (p%Gammas > 0) then
                 check = 0.00004
                 p => cea%points(cea%iOF, cea%ipt)
-                if (cea%Debug(cea%Npt)) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
+                if (p%Debug) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
                      & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
                      itnum, aratio, p%AeAt, p%App, dlnp
                 if (abs(p%AeAt - Aratio) / Aratio <= check) go to 900

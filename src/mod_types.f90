@@ -28,6 +28,7 @@ module mod_types
 
 
   type:: CEA_Point
+     logical:: Debug
      real(8):: En(maxNgc)
      real(8), pointer:: B0(:)
      real(8), pointer:: B0p(:, :)
@@ -76,7 +77,7 @@ module mod_types
 
      integer:: Imat, Iq1, Jliq, Jsol, Msing
 
-     logical:: Convg, Debug(Ncol), Detdbg, Detn, Eql, Gonly, Hp, Ions, Massf, Moles
+     logical:: Convg, Detdbg, Detn, Eql, Gonly, Hp, Ions, Massf, Moles
      logical:: Pderiv, Shock, Short, SIunit, Sp, Tp, Trnspt, Vol
 
      real(8):: Eqrat, Hsub0, Oxfl, Pp, R, Size, S0, Tln, Tm, Trace, Tt, Viscns, Vv
@@ -133,6 +134,7 @@ contains
     allocate(cea%points(maxMix, cea%max_points))
 
     do concurrent (i = 1:maxMix, j = 1:cea%max_points)
+       cea%points(i, j)%Debug = .false.
        cea%points(i, j)%En(:) = 0
        cea%points(i, j)%U1 = 0
        cea%points(i, j)%Mach1 = 0
