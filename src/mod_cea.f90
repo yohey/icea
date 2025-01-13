@@ -167,7 +167,7 @@ contains
     type(CEA_Point), pointer:: p_tmp
 
     integer:: i_col_start
-    real(8), dimension(cea%max_points):: cpl, gm1, h1, pub, rrho, tub
+    real(8), dimension(cea%max_points):: cpl, gm1, h1, pub, rrho, tub, V
 
     cea%Eql = .true.
 
@@ -362,16 +362,16 @@ contains
                 do i = i_col_start, cea%ipt
                    j = i - i_col_start + 1
                    if (cea%SIunit) then
-                      cea%V(j) = pub(i)
+                      V(i) = pub(i)
                       unit = 'BAR'
                    else
-                      cea%V(j) = pub(i) / 1.01325d0
+                      V(i) = pub(i) / 1.01325d0
                       unit = 'ATM'
                    end if
-                   if (mp > 0) cea%Pltout(j+cea%Iplt, mp) = cea%V(j)
+                   if (mp > 0) cea%Pltout(j+cea%Iplt, mp) = V(i)
                 end do
 
-                write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (cea%V(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (V(i), i = i_col_start, cea%ipt)
 
                 cea%fmt(7) = '2,'
                 write(IOOUT, cea%fmt) ft1, (tub(i), i = i_col_start, cea%ipt)
@@ -381,13 +381,12 @@ contains
 
                 do concurrent (i = i_col_start:cea%ipt)
                    p => cea%points(cea%iOF, i)
-                   j = i - i_col_start + 1
-                   cea%V(j) = cea%Wmix
+                   V(i) = cea%Wmix
                    p%Sonvel = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
                 end do
 
                 cea%fmt(7) = '3,'
-                write(IOOUT, cea%fmt) fm1, (cea%V(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) fm1, (V(i), i = i_col_start, cea%ipt)
                 cea%fmt(7) = '4,'
                 write(IOOUT, cea%fmt) fg1, (gm1(i), i = i_col_start, cea%ipt)
                 cea%fmt(7) = '1,'
@@ -418,24 +417,23 @@ contains
                 do i = i_col_start, cea%ipt
                    p_tmp => cea%points(cea%iOF, i)
                    j = i - i_col_start + 1
-                   cea%V(j) = p_tmp%Ppp / pub(i)
+                   V(i) = p_tmp%Ppp / pub(i)
                    cea%Pcp(j) = p_tmp%Ttt / tub(i)
                    p_tmp%Sonvel = p_tmp%Sonvel * rrho(i)
                    if (mmach > 0) cea%Pltout(j+cea%Iplt, mmach) = p_tmp%Vmoc
                    if (mdv > 0)   cea%Pltout(j+cea%Iplt, mdv) = p_tmp%Sonvel
                 end do
 
-                write(IOOUT, cea%fmt) fpp1, cea%V(1:cea%Npt)
+                write(IOOUT, cea%fmt) fpp1, V(i_col_start:cea%ipt)
                 write(IOOUT, cea%fmt) ftt1, cea%Pcp(1:cea%Npt)
 
                 do concurrent (i = i_col_start:cea%ipt)
                    p_tmp => cea%points(cea%iOF, i)
-                   j = i - i_col_start + 1
-                   cea%V(j) = p_tmp%Wm / cea%Wmix
+                   V(i) = p_tmp%Wm / cea%Wmix
                 end do
 
                 cea%fmt(7) = '4,'
-                write(IOOUT, cea%fmt) fmm1, (cea%V(j), j = 1, cea%Npt)
+                write(IOOUT, cea%fmt) fmm1, (V(i), i = i_col_start, cea%ipt)
                 write(IOOUT, cea%fmt) frr1, (rrho(i), i = i_col_start, cea%ipt)
                 write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%points(cea%iOF, i)%Vmoc, i = i_col_start, cea%ipt)
 
