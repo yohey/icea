@@ -102,6 +102,7 @@ contains
        end do
 
        cea(icase)%invalid_case = (.not. caseOK) .or. (.not. readOK)
+       cea(icase)%legacy_mode = .true.
     end do
 
     close(IOINP)

@@ -16,15 +16,15 @@ program main
   if (legacy_mode) then
      call read_legacy_input(cea, inp_filename)
 
-     call run_all_cases(cea, out_filename, plt_filename)
-
-     deallocate(cea)
-
   else
      write(stderr, *) '[ERROR] Not implemented yet.'
      error stop
 
   end if
+
+  call run_all_cases(cea, out_filename, plt_filename)
+
+  deallocate(cea)
 
   stop
 end program main

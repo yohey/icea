@@ -17,27 +17,34 @@ contains
     character(MAX_FILENAME), intent(in), optional:: out_filename
     character(MAX_FILENAME), intent(in), optional:: plt_filename
     integer:: icase, num_cases
+    logical:: any_legacy_mode, is_opened
 
     num_cases = size(cea)
+
+    any_legacy_mode = any([(cea(icase)%legacy_mode, icase = 1, num_cases)])
 
     do icase = 1, num_cases
        call read_libraries(cea(icase))
     end do
 
-    if (present(out_filename)) then
-       call open_legacy_output(IOOUT, out_filename)
-    else
-       call open_legacy_output(IOOUT)
+    if (any_legacy_mode) then
+       if (present(out_filename)) then
+          call open_legacy_output(IOOUT, out_filename)
+       else
+          call open_legacy_output(IOOUT)
+       end if
     end if
 
     do icase = 1, num_cases
-       !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
-       if (icase >= 2) then
-          cea(icase)%Mu(:) = cea(icase-1)%Mu(:)
+       if (cea(icase)%legacy_mode) then
+          !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
+          if (icase >= 2) then
+             cea(icase)%Mu(:) = cea(icase-1)%Mu(:)
+          end if
+          !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
        end if
-       !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
 
-       call write_input_log(cea(icase)%io_log, IOOUT)
+       if (cea(icase)%legacy_mode) call write_input_log(cea(icase)%io_log, IOOUT)
 
        if (cea(icase)%invalid_case) cycle
 
@@ -52,7 +59,8 @@ contains
        end if
     end do
 
-    close(IOOUT)
+    inquire(IOOUT, opened = is_opened)
+    if (is_opened) close(IOOUT)
 
     if (present(plt_filename)) then
        call write_plt_file(cea(1:num_cases), plt_filename)
@@ -203,7 +211,7 @@ contains
              call HCALC(cea)
 
              if (cea%Tt == 0) return
-             if (cea%Detdbg) call OUT1(cea, IOOUT)
+             if (cea%legacy_mode .and. cea%Detdbg) call OUT1(cea, IOOUT)
 
              h1(cea%ipt) = cea%Hsub0 * cea%R
 
@@ -231,7 +239,7 @@ contains
                 tem = tt1 - 0.75 * pp1 / (p%Cpr * cea%Wmix)
                 amm = p%Wm / cea%Wmix
 
-                if (cea%Detdbg) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') cea%Tt
+                if (cea%legacy_mode .and. cea%Detdbg) write(IOOUT, '(/" T EST.=", F8.2/11X, "P/P1", 17X, "T/T1")') cea%Tt
 
                 ! LOOP FOR IMPROVING T2/T1 AND P2/P1 INITIAL ESTIMATE.
                 do ii = 1, 3
@@ -239,7 +247,7 @@ contains
                    pp1 = (1 + gam) * (1 + sqrt(1 - 4 * gam * alpha / (1 + gam)**2)) / (2 * gam * alpha)
                    rk = pp1 * alpha
                    tt1 = tem + 0.5 * pp1 * gam * (rk**2 - 1) / (cea%Wmix * p%Cpr * rk)
-                   if (cea%Detdbg) write(IOOUT, '(i5, 2e20.8)') ii, pp1, tt1
+                   if (cea%legacy_mode .and. cea%Detdbg) write(IOOUT, '(i5, 2e20.8)') ii, pp1, tt1
                 end do
 
                 cea%Tp = .true.
@@ -282,7 +290,8 @@ contains
                    cea%Tt = T1 * tt1
                    ud = rr1 * sqrt(R0 * gam * cea%Tt/p%Wm)
 
-                   if (cea%Detdbg) write(IOOUT, '(/" ITER =", i2, 5x, "P/P1 =", e15.8, /7x, "T/T1 =", e15.8, 5x, &
+                   if (cea%legacy_mode .and. cea%Detdbg) &
+                        write(IOOUT, '(/" ITER =", i2, 5x, "P/P1 =", e15.8, /7x, "T/T1 =", e15.8, 5x, &
                         & "RHO/RHO1 =", e15.8, /7x, "DEL LN P/P1 =", e15.8, 5x, &
                         & "DEL LN T/T1 =", e15.8)') itr, pp1, tt1, rr1, x1, x2
 
@@ -301,7 +310,7 @@ contains
                          p%Vmoc = ud / sqrt(R0 * gm1(cea%ipt) * T1 / cea%Wmix)
                       end if
                    else
-                      write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
+                      if (cea%legacy_mode) write(IOOUT, '(/" CONSERVATION EQNS NOT SATISFIED IN 8 ITERATIONS (DETON)")')
                       cea%Tt = 0
                    end if
 
@@ -316,8 +325,10 @@ contains
                 end if
 
                 ! OUTPUT
-                write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
-                call OUT1(cea, IOOUT)
+                if (cea%legacy_mode) then
+                   write(IOOUT, '(//, 21X, "DETONATION PROPERTIES OF AN IDEAL REACTING GAS")')
+                   call OUT1(cea, IOOUT)
+                end if
 
                 ! SET MXX ARRAY FOR PLOTTING PARAMETERS
                 mp    = 0
@@ -348,7 +359,7 @@ contains
                    end if
                 end do
 
-                write(IOOUT, '(/" UNBURNED GAS"/)')
+                if (cea%legacy_mode) write(IOOUT, '(/" UNBURNED GAS"/)')
 
                 cea%fmt(4) = '13'
                 cea%fmt(5) = ' '
@@ -365,13 +376,15 @@ contains
                    if (mp > 0) cea%Pltout(i, mp) = V(i)
                 end do
 
-                write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (V(i), i = i_col_start, cea%ipt)
+                if (cea%legacy_mode) then
+                   write(IOOUT, cea%fmt) 'P1, ' // unit // '        ', (V(i), i = i_col_start, cea%ipt)
 
-                cea%fmt(7) = '2,'
-                write(IOOUT, cea%fmt) ft1, (tub(i), i = i_col_start, cea%ipt)
+                   cea%fmt(7) = '2,'
+                   write(IOOUT, cea%fmt) ft1, (tub(i), i = i_col_start, cea%ipt)
 
-                if (.not. cea%SIunit) write(IOOUT, cea%fmt) fh1, (h1(i), i = i_col_start, cea%ipt)
-                if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(i), i = i_col_start, cea%ipt)
+                   if (.not. cea%SIunit) write(IOOUT, cea%fmt) fh1, (h1(i), i = i_col_start, cea%ipt)
+                   if (cea%SIunit) write(IOOUT, cea%fmt) fhs1, (h1(i), i = i_col_start, cea%ipt)
+                end if
 
                 do concurrent (i = i_col_start:cea%ipt)
                    p => cea%points(cea%iOF, i)
@@ -379,12 +392,14 @@ contains
                    p%Sonvel = sqrt(R0 * gm1(i) * tub(i) / cea%Wmix)
                 end do
 
-                cea%fmt(7) = '3,'
-                write(IOOUT, cea%fmt) fm1, (V(i), i = i_col_start, cea%ipt)
-                cea%fmt(7) = '4,'
-                write(IOOUT, cea%fmt) fg1, (gm1(i), i = i_col_start, cea%ipt)
-                cea%fmt(7) = '1,'
-                write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (cea%points(cea%iOF, i)%Sonvel, i = i_col_start, cea%ipt)
+                if (cea%legacy_mode) then
+                   cea%fmt(7) = '3,'
+                   write(IOOUT, cea%fmt) fm1, (V(i), i = i_col_start, cea%ipt)
+                   cea%fmt(7) = '4,'
+                   write(IOOUT, cea%fmt) fg1, (gm1(i), i = i_col_start, cea%ipt)
+                   cea%fmt(7) = '1,'
+                   write(IOOUT, cea%fmt) 'SON VEL1,M/SEC ', (cea%points(cea%iOF, i)%Sonvel, i = i_col_start, cea%ipt)
+                end if
 
                 if (cea%Nplt > 0) then
                    do i = i_col_start, cea%ipt
@@ -396,16 +411,18 @@ contains
                    end do
                 end if
 
-                write(IOOUT, '(/" BURNED GAS"/)')
+                if (cea%legacy_mode) then
+                   write(IOOUT, '(/" BURNED GAS"/)')
 
-                cea%fmt(4) = cea%fmt(6)
-                call OUT2(cea, cea%ipt, IOOUT)
+                   cea%fmt(4) = cea%fmt(6)
+                   call OUT2(cea, cea%ipt, IOOUT)
 
-                if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
+                   if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
 
-                write(IOOUT, '(/" DETONATION PARAMETERS"/)')
+                   write(IOOUT, '(/" DETONATION PARAMETERS"/)')
 
-                cea%fmt(7) = '3,'
+                   cea%fmt(7) = '3,'
+                end if
 
                 do i = i_col_start, cea%ipt
                    p_tmp => cea%points(cea%iOF, i)
@@ -416,32 +433,36 @@ contains
                    if (mdv > 0)   cea%Pltout(i, mdv) = p_tmp%Sonvel
                 end do
 
-                write(IOOUT, cea%fmt) fpp1, V(i_col_start:cea%ipt)
-                write(IOOUT, cea%fmt) ftt1, Pcp(i_col_start:cea%ipt)
+                if (cea%legacy_mode) then
+                   write(IOOUT, cea%fmt) fpp1, V(i_col_start:cea%ipt)
+                   write(IOOUT, cea%fmt) ftt1, Pcp(i_col_start:cea%ipt)
+                end if
 
                 do concurrent (i = i_col_start:cea%ipt)
                    p_tmp => cea%points(cea%iOF, i)
                    V(i) = p_tmp%Wm / cea%Wmix
                 end do
 
-                cea%fmt(7) = '4,'
-                write(IOOUT, cea%fmt) fmm1, (V(i), i = i_col_start, cea%ipt)
-                write(IOOUT, cea%fmt) frr1, (rrho(i), i = i_col_start, cea%ipt)
-                write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%points(cea%iOF, i)%Vmoc, i = i_col_start, cea%ipt)
+                if (cea%legacy_mode) then
+                   cea%fmt(7) = '4,'
+                   write(IOOUT, cea%fmt) fmm1, (V(i), i = i_col_start, cea%ipt)
+                   write(IOOUT, cea%fmt) frr1, (rrho(i), i = i_col_start, cea%ipt)
+                   write(IOOUT, cea%fmt) 'DET MACH NUMBER', (cea%points(cea%iOF, i)%Vmoc, i = i_col_start, cea%ipt)
 
-                cea%fmt(7) = '1,'
-                write(IOOUT, cea%fmt) fdv, (cea%points(cea%iOF, i)%Sonvel, i = i_col_start, cea%ipt)
+                   cea%fmt(7) = '1,'
+                   write(IOOUT, cea%fmt) fdv, (cea%points(cea%iOF, i)%Sonvel, i = i_col_start, cea%ipt)
+                end if
 
                 cea%Eql = .true.
 
-                call OUT3(cea, cea%ipt, IOOUT)
+                if (cea%legacy_mode) call OUT3(cea, cea%ipt, IOOUT)
 
                 cea%Iplt = min(cea%ipt, 500)
 
                 if (cea%Isv == 0 .and. iof == cea%Nof) exit iofLoop
                 if (cea%Np == 1 .and. cea%Nt == 1) cycle iofLoop
 
-                write(IOOUT, '(///)')
+                if (cea%legacy_mode) write(IOOUT, '(///)')
              end if
           end do
        end do
@@ -547,8 +568,8 @@ contains
              p%En(j+kg) = p%En(j)
              p%En(j) = 0
 
-             if (cea%Prod(j) /= cea%Prod(j+kg) .and. .not. cea%Short) &
-                  & write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') cea%Prod(j), cea%Prod(j+kg)
+             if (cea%legacy_mode .and. cea%Prod(j) /= cea%Prod(j+kg) .and. .not. cea%Short) &
+                  write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') cea%Prod(j), cea%Prod(j+kg)
           end if
           go to 300
        else if (kc >= cea%Nc .or. cea%Ifz(kc+1) <= cea%Ifz(kc)) then
@@ -562,7 +583,7 @@ contains
        go to 100
     end if
 
-    write(IOOUT, '(" REMOVE ", A16)') cea%Prod(j)
+    if (cea%legacy_mode) write(IOOUT, '(" REMOVE ", A16)') cea%Prod(j)
 
     p%En(j) = 0
     cea%Enln(j) = 0
@@ -603,7 +624,7 @@ contains
 
     if (cea%Ions) lz = ls - 1
 
-    if (Npt == 1 .and. .not. cea%Shock .and. .not. cea%Short) then
+    if (cea%legacy_mode .and. Npt == 1 .and. .not. cea%Shock .and. .not. cea%Short) then
        write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))') (cea%Elmt(i), i = 1, cea%Nlm)
     end if
 
@@ -631,7 +652,7 @@ contains
 
     if (cea%Convg) cea%Imat = cea%Imat - 1
 
-    if (p%Debug) then
+    if (cea%legacy_mode .and. p%Debug) then
        if (.not. cea%Convg) then
           write(IOOUT, '(/" ITERATION", I3, 6X, "MATRIX ")') numb
        else
@@ -649,7 +670,7 @@ contains
     call gauss_elimination(cea%G(1:cea%Imat, 1:cea%Imat+1), cea%X(1:cea%Imat), cea%Msing)
 
     if (cea%Msing == 0) then
-       if (p%Debug) then
+       if (cea%legacy_mode .and. p%Debug) then
           write(IOOUT, '(/" SOLUTION VECTOR", /, 6x, 5A15/8X, 5A15)') (cmp(k), k = 1, le)
           write(IOOUT, '(3X, 5E15.6)') (cea%X(i), i = 1, cea%Imat)
        end if
@@ -726,7 +747,7 @@ contains
              ilamb = ilamb1
           end if
 
-          if (p%Debug) then
+          if (cea%legacy_mode .and. p%Debug) then
              ! INTERMEDIATE OUTPUT
              write(IOOUT, '(/" T=", E15.8, " ENN=", E15.8, " ENNL=", E15.8, " PP=", E15.8, &
                   & /" LN P/N=", E15.8, " AMBDA=", E15.8)') cea%Tt, cea%Enn, cea%Ennl, cea%Pp, cea%Tm, ambda
@@ -818,7 +839,7 @@ contains
 
           ! TEST FOR CONVERGENCE
           if (numb > maxitn) then
-             write(IOOUT, '(/, I4, " ITERATIONS DID NOT SATISFY CONVERGENCE", /, 15x, &
+             if (cea%legacy_mode) write(IOOUT, '(/, I4, " ITERATIONS DID NOT SATISFY CONVERGENCE", /, 15x, &
                   & " REQUIREMENTS FOR THE POINT", I5, " (EQLBRM)")') maxitn, Npt
 
              if (cea%Nc == 0 .or. i2many) go to 1500
@@ -828,7 +849,7 @@ contains
              if (.not. cea%Hp .or. Npt /= 1 .or. cea%Tt > 100.) then
                 if (cea%Npr /= 1 .or. cea%Enn > 1.E-4) go to 1500
                 ! HIGH TEMPERATURE, INCLUDED CONDENSED CONDITION
-                write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
+                if (cea%legacy_mode) write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
 
                 cea%Enn = 0.1
                 cea%Ennl = -2.3025851
@@ -847,7 +868,7 @@ contains
                 go to 1000
 
              else
-                write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
+                if (cea%legacy_mode) write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
                      & "VE BEEN INSERTED,", &
                      & /" RESTART WITH insert DATASET (EQLBRM)")')
                 go to 1500
@@ -933,14 +954,15 @@ contains
                          cea%Enln(j) = cea%Enln(j) + cea%A(ls, j) * dpie
                       end do
 
-                      if (p%Debug) write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", i4, "  DELTA PI =", e14.7)') iter, dpie
+                      if (cea%legacy_mode .and. p%Debug) &
+                           write(IOOUT, '(/" ELECTRON BALANCE ITER NO. =", i4, "  DELTA PI =", e14.7)') iter, dpie
 
                       if (abs(dpie) > 0.0001) then
                          cea%X(le) = cea%X(le) + dpie
                          iter = iter + 1
 
                          if (iter <= 80) go to 566
-                         write(IOOUT, '(/" DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)")')
+                         if (cea%legacy_mode) write(IOOUT, '(/" DID NOT CONVERGE ON ELECTRON BALANCE (EQLBRM)")')
                          go to 1500
 
                       else if (cea%Elmt(cea%Nlm) == 'E' .and. pie /= 0) then
@@ -980,7 +1002,7 @@ contains
        ! SINGULAR MATRIX
     else
        if (cea%Convg) then
-          write(IOOUT, '(/" DERIVATIVE MATRIX SINGULAR (EQLBRM)")')
+          if (cea%legacy_mode) write(IOOUT, '(/" DERIVATIVE MATRIX SINGULAR (EQLBRM)")')
           p%Dlvpt = -1
           p%Dlvtp = 1
           p%Cpr = cea%Cpsum
@@ -988,7 +1010,7 @@ contains
           go to 1400
 
        else
-          write(IOOUT, '(/" SINGULAR MATRIX, ITERATION", I3, "  VARIABLE", I3, "(EQLBRM)")') numb, cea%Msing
+          if (cea%legacy_mode) write(IOOUT, '(/" SINGULAR MATRIX, ITERATION", I3, "  VARIABLE", I3, "(EQLBRM)")') numb, cea%Msing
           lsing = cea%Msing
           ixsing = ixsing + 1
           if (ixsing <= 8) then
@@ -1015,7 +1037,7 @@ contains
                 end do
 
                 if (j > 0) then
-                   write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
+                   if (cea%legacy_mode) write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
                    go to 1000
                 end if
 
@@ -1024,7 +1046,7 @@ contains
                    if (cea%Msing < cea%Iq1) then
                       if (reduce .and. cea%Msing <= cea%Nlm) then
                          if (cea%Nlm < lelim) go to 1500
-                         write(IOOUT, '(/" WARNING!! POINT", I3, &
+                         if (cea%legacy_mode) write(IOOUT, '(/" WARNING!! POINT", I3, &
                               & " USES A REDUCED SET OF COMPONENTS", / &
                               & " SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.", &
                               & / &
@@ -1067,7 +1089,7 @@ contains
 
                 go to 500
              else
-                write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
+                if (cea%legacy_mode) write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", &
                      & "VE BEEN INSERTED,", &
                      & /" RESTART WITH insert DATASET (EQLBRM)")')
              end if
@@ -1089,7 +1111,7 @@ contains
     else
        tem = p%Ssum - cea%S0
        if (abs(tem) > 0.0005) go to 500
-       if (p%Debug) write(IOOUT, '(/" DELTA S/R =", e15.8)') tem
+       if (cea%legacy_mode .and. p%Debug) write(IOOUT, '(/" DELTA S/R =", e15.8)') tem
        cea%Convg = .true.
     end if
 
@@ -1098,7 +1120,7 @@ contains
 
     if (ncvg > lncvg) then
        ! ERROR, SET TT=0
-       write(IOOUT, '(/, I3, " CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED", " SPECIES (EQLBRM)")') lncvg
+       if (cea%legacy_mode) write(IOOUT, '(/, I3, " CONVERGENCES FAILED TO ESTABLISH SET OF CONDENSED", " SPECIES (EQLBRM)")') lncvg
        go to 1500
     else
        if (.not. cea%Shock) then
@@ -1106,13 +1128,13 @@ contains
              xx(il) = cea%X(il)
           end do
 
-          if (.not. cea%Short) then
+          if (cea%legacy_mode .and. .not. cea%Short) then
              if (newcom) write(IOOUT, '(/" POINT ITN", 6x, "T", 10x, 4a12/(18x, 5a12))') (cmp(k), k = 1, le)
              write(IOOUT, '(i4, i5, 5f12.3, /(12x, 5f12.3))') Npt, numb, cea%Tt, (xx(il), il = 1, le)
           end if
 
           if (.not. cea%Tp .and. cea%Npr == 0 .and. cea%Tt <= cea%Tg(1) * 0.2d0) then
-             write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", "VE BEEN INSERTED,", &
+             if (cea%legacy_mode) write(IOOUT, '(/" LOW TEMPERATURE IMPLIES A CONDENSED SPECIES SHOULD HA", "VE BEEN INSERTED,", &
                   & /" RESTART WITH insert DATASET (EQLBRM)")')
              go to 1500
           end if
@@ -1193,7 +1215,7 @@ contains
           do inc = 1, cea%Nc
              j = inc + cea%Ng
 
-             if (p%Debug) then
+             if (cea%legacy_mode .and. p%Debug) then
                 write(IOOUT, '(/1x, a15, 2f10.3, 3x, e15.7)') cea%Prod(j), cea%Temp(1, inc), cea%Temp(2, inc), p%En(j)
              end if
 
@@ -1212,7 +1234,7 @@ contains
                          ipr = ipr - 1
                       end if
 
-                      if (p%Debug) then
+                      if (cea%legacy_mode .and. p%Debug) then
                          write(IOOUT, '(" [G0j-SUM(Aij*PIi)]/Mj =", E15.7, 9X, "MAX NEG DELTA G =", E15.7)') delg, sizeg
                       end if
                    end if
@@ -1226,7 +1248,8 @@ contains
              j = jdelg
              go to 800
           else
-             write(IOOUT, '(/" REINSERTION OF ", A16, " LIKELY TO CAUSE SINGULARITY, ", "(EQLBRM)")') cea%Prod(jcons)
+             if (cea%legacy_mode) &
+                  write(IOOUT, '(/" REINSERTION OF ", A16, " LIKELY TO CAUSE SINGULARITY, ", "(EQLBRM)")') cea%Prod(jcons)
              go to 1500
           end if
 
@@ -1247,7 +1270,7 @@ contains
           p%En(j) = 0
           jsw = j
 
-          if (cea%Prod(j) /= cea%Prod(jkg) .and. .not. cea%Short) &
+          if (cea%legacy_mode .and. cea%Prod(j) /= cea%Prod(jkg) .and. .not. cea%Short) &
                write(IOOUT, '(" PHASE CHANGE, REPLACE ", A16, "WITH ", A16)') cea%Prod(j), cea%Prod(jkg)
 
           j = jkg
@@ -1283,7 +1306,7 @@ contains
     cea%Jcond(2:cea%Npr) = cea%Jcond(1:cea%Npr-1)
     cea%Jcond(1) = j
 
-    if (.not. cea%Short) write(IOOUT, '(" ADD ", a16)') cea%Prod(j)
+    if (cea%legacy_mode .and. .not. cea%Short) write(IOOUT, '(" ADD ", a16)') cea%Prod(j)
 
 900 inc = j - cea%Ng
     cea%Convg = .false.
@@ -1298,7 +1321,7 @@ contains
 
     cea%Jcond(k:cea%Npr) = cea%Jcond(k+1:cea%Npr+1)
 
-    if (.not. cea%Short) write(IOOUT, '(" REMOVE ", A16)') cea%Prod(j)
+    if (cea%legacy_mode .and. .not. cea%Short) write(IOOUT, '(" REMOVE ", A16)') cea%Prod(j)
 
     cea%Npr = cea%Npr - 1
     do i = 1, cea%Nlm
@@ -1418,7 +1441,7 @@ contains
           end if
        end do
 
-       if (p%Debug) then
+       if (cea%legacy_mode .and. p%Debug) then
           write(IOOUT, '(/" NEW COMPONENTS")')
           write(IOOUT, '(/2x, 6A12)') (cmp(k), k = 1, nn)
        end if
@@ -1481,7 +1504,7 @@ contains
     p%Wm = 1. / cea%Enn
     gasfrc = cea%Enn/p%Totn
 
-    if (gasfrc < 0.0001) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", i3, " DUE TO", &
+    if (cea%legacy_mode .and. gasfrc < 0.0001) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", i3, " DUE TO", &
          & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') Npt, gasfrc
 
     if (cea%Trace /= 0) then
@@ -1496,7 +1519,7 @@ contains
        end if
     end if
 
-    if (p%Debug) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
+    if (cea%legacy_mode .and. p%Debug) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
          & e13.6, 3x, "S/R=", e13.6, /3x, "M=", e13.6, 3x, "CP/R=", e13.6, 3x, &
          & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
          Npt, cea%Pp, cea%Tt, p%Hsum, p%Ssum, p%Wm, p%Cpr, p%Dlvpt, p%Dlvtp, p%Gammas, p%Vlm
@@ -1505,7 +1528,7 @@ contains
 
     if (cea%Shock) go to 1600
 
-    write(IOOUT, '(" THE TEMPERATURE=", e12.4, " IS OUT OF RANGE FOR POINT", i5, "(EQLBRM)")') cea%Tt, Npt
+    if (cea%legacy_mode) write(IOOUT, '(" THE TEMPERATURE=", e12.4, " IS OUT OF RANGE FOR POINT", i5, "(EQLBRM)")') cea%Tt, Npt
 
     if (cea%Tt >= cea%Tg(1) * 0.8d0 .and. cea%Tt <= cea%Tg(4) * 1.1d0) go to 1600
 
@@ -1513,7 +1536,7 @@ contains
 
 1500 cea%Tt = 0
     cea%ipt = cea%ipt - 1
-    write(IOOUT, '(/" CALCULATIONS STOPPED AFTER POINT", I3, "(EQLBRM)")') Npt
+    if (cea%legacy_mode) write(IOOUT, '(/" CALCULATIONS STOPPED AFTER POINT", I3, "(EQLBRM)")') Npt
 
 1600 cea%Lsave = cea%Nlm
     cea%Nlm = ls
@@ -1595,7 +1618,7 @@ contains
        end if
     end do
 
-    write(IOOUT, '(/" FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)")')
+    if (cea%legacy_mode) write(IOOUT, '(/" FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)")')
 
     cea%Tt = 0
     cea%ipt = cea%Nfz - 1
@@ -1656,7 +1679,7 @@ contains
              if (cea%Rname(n) == cea%Prod(j) .or. '*' // cea%Rname(n) == cea%Prod(j)) then
                 cea%Jray(n) = j
                 if (j > cea%Ng) then
-                   write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
+                   if (cea%legacy_mode) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
                    cea%Tt = 0
                    cea%Cpmix = 0
                    return
@@ -1704,8 +1727,10 @@ contains
                    go to 50
 
                 else
-                   if (ifaz > 0) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
-                   if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') cea%Rname(n)
+                   if (cea%legacy_mode) then
+                      if (ifaz > 0) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
+                      if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') cea%Rname(n)
+                   end if
                    cea%Tt = 0
                    cea%Cpmix = 0
                    close(io_thermo)
@@ -1717,7 +1742,7 @@ contains
           close(io_thermo)
 
           cea%Nspr = cea%Nspr - 1
-          write(IOOUT, '(/" ERROR IN DATA FOR ", a15, " CHECK NAME AND TEMPERATURE", &
+          if (cea%legacy_mode) write(IOOUT, '(/" ERROR IN DATA FOR ", a15, " CHECK NAME AND TEMPERATURE", &
                & " RANGE IN", /, " thermo.inp (HCALC)")') cea%Rname(n)
 
           cea%Energy(n) = ' '
@@ -1954,7 +1979,7 @@ contains
 
     p => cea%points(cea%iOF, cea%ipt)
 
-    if (.not. cea%Short) write(IOOUT, '(/" O/F = ", f10.6)') cea%Oxfl
+    if (cea%legacy_mode .and. .not. cea%Short) write(IOOUT, '(/" O/F = ", f10.6)') cea%Oxfl
     cea%Eqrat = 0
     tem = cea%Oxfl + 1
     v2 = (cea%Oxfl * cea%Vmin(1) + cea%Vmin(2)) / tem
@@ -1992,7 +2017,7 @@ contains
     cea%Jsol = 0
     cea%Jliq = 0
 
-    if (.not. cea%Short) then
+    if (cea%legacy_mode .and. .not. cea%Short) then
        write(IOOUT, '(/, 23x, "EFFECTIVE FUEL", 5x, "EFFECTIVE OXIDANT", 8x, "MIXTURE")')
        if (cea%Vol) write(IOOUT, '(" INTERNAL ENERGY", 11x, "u(2)/R", 14x, "u(1)/R", 14x, "u0/R")')
        if (.not. cea%Vol) write(IOOUT, '(" ENTHALPY", 18x, "h(2)/R", 14x, "h(1)/R", 15x, "h0/R")')
@@ -2002,7 +2027,7 @@ contains
 
     do i = 1, cea%Nlm
        j = cea%Jcm(i)
-       if (.not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), p%B0p(i, 2), p%B0p(i, 1), p%B0(i)
+       if (cea%legacy_mode .and. .not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), p%B0p(i, 2), p%B0p(i, 1), p%B0(i)
     end do
 
     return
@@ -2057,7 +2082,7 @@ contains
        else if (cea%Ma /= 0) then
           cea%Iopt = 2
        else
-          write(IOOUT, '(/" FATAL ERROR!! EITHER mdot OR ac/at MISSING FOR fac PROBLEM (ROCKET)")')
+          if (cea%legacy_mode) write(IOOUT, '(/" FATAL ERROR!! EITHER mdot OR ac/at MISSING FOR fac PROBLEM (ROCKET)")')
           cea%Tt = 0
           cea%Iplt = max(cea%Iplt, iplte)
           return
@@ -2076,12 +2101,12 @@ contains
        cea%Subar(1) = cea%Acat
     else if (.not. cea%Eql .and. cea%Nfz > 1 .and. cea%Nsub > 0) then
        cea%Nsub = 0
-       write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
+       if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
             & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
     end if
     nn = nn + cea%Nsub + cea%Nsup
     if (cea%Nfz > 2 .and. nn > Ncol-2) then
-       write(IOOUT, '(/" WARNING!!  nfz NOT ALLOWED TO BE > 2 IF THE TOTAL", /, &
+       if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  nfz NOT ALLOWED TO BE > 2 IF THE TOTAL", /, &
             & " NUMBER OF POINTS IS >", i3, " (ROCKET)")') Ncol - 2
        cea%Nfz = 1
        cea%Froz = .false.
@@ -2165,12 +2190,12 @@ contains
                    cea%Acat = ppa / (cea%Ma * 2350)
                    if (cea%Acat >= 1) then
                       pratsv = prat
-                      if (cea%Debugf) then
+                      if (cea%legacy_mode .and. cea%Debugf) then
                          if (i <= 1) write(IOOUT, '(/"  ITERATION", 9x, "PC", 7x, "CONTRACTION RATIO")')
                          write(IOOUT, '(5x, i2, 7x, f12.2, 3x, f12.6)') i, ppa, cea%Acat
                       end if
                    else
-                      write(IOOUT, '(/" INPUT VALUE OF mdot/a =", f12.3, " IS TOO LARGE."/ &
+                      if (cea%legacy_mode) write(IOOUT, '(/" INPUT VALUE OF mdot/a =", f12.3, " IS TOO LARGE."/ &
                            & " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') cea%Ma
                       cea%Tt = 0
                       exit iofLoop
@@ -2203,11 +2228,11 @@ contains
                    cea%Vv = pth%Vlm
                    pvg = cea%Pp * cea%Vv * pth%Gammas
                    if (pvg == 0) then
-                      write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
+                      if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                       go to 550
                    else
                       msq = usq / pvg
-                      if (p1%Debug .or. p2%Debug) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
+                      if (cea%legacy_mode .and. p1%Debug .or. p2%Debug) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
                       dh = abs(msq - 1)
                       if (dh <= 0.4d-4) go to 550
                       if (itrot > 0) then
@@ -2218,20 +2243,20 @@ contains
                          else if (tmelt == 0) then
                             cea%Pp = cea%Pp * (1 + msq * pth%Gammas) / (pth%Gammas + 1)
                          else
-                            write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
+                            if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                             dlt = log(tmelt / cea%Tt)
                             dd = dlt * pth%Cpr / (cea%Enn * pth%Dlvtp)
                             cea%Pp = cea%Pp * EXP(dd)
                             pth%App = cea%P(ip) / cea%Pp
                             if (cea%Fac) pth%App = pinf / cea%Pp
-                            if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') pth%App
+                            if (cea%legacy_mode .and. cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", F9.6)') pth%App
                             thi = .true.
                             go to 250
                          end if
                          go to 500
                       else if (itrot < 0) then
                          if (itrot < -19) then
-                            write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
+                            if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                             go to 550
                          else
                             if (cea%Npr /= npr1) go to 550
@@ -2239,12 +2264,12 @@ contains
                             go to 500
                          end if
                       else if (cea%Npr == npr1) then
-                         write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
+                         if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  DIFFICULTY IN LOCATING THROAT (ROCKET)")')
                          go to 550
                       else
                          dp = abs(cea%Pp - Pp_old) / 20
                          cea%Pp = max(cea%Pp, Pp_old)
-                         write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
+                         if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  DISCONTINUITY AT THE THROAT (ROCKET)")')
                          cea%Pp = cea%Pp - dp
                          go to 500
                       end if
@@ -2266,7 +2291,7 @@ contains
              itrot = 3
              thi = .false.
              pth%App = ((p12%Gammas + 1) / 2)**(p12%Gammas / (p12%Gammas - 1))
-             if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') pth%App
+             if (cea%legacy_mode .and. cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') pth%App
              cea%Pp = Pinf / pth%App
              cea%Isv = -i12
              go to 1200
@@ -2274,7 +2299,7 @@ contains
 500          npr1 = cea%Npr
              pth%App = cea%P(ip) / cea%Pp
              if (cea%Fac) pth%App = Pinf / cea%Pp
-             if (cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') pth%App
+             if (cea%legacy_mode .and. cea%Eql .and. .not. cea%Short) write(IOOUT, '(" Pinf/Pt =", f9.6)') pth%App
              itrot = itrot - 1
              go to 250
 
@@ -2315,14 +2340,14 @@ contains
                 if ((.not. cea%Fac .or. done) .and. cea%Nsub <= i01) aratio = cea%Supar(cea%Isup)
                 if (.not. cea%Eql .and. cea%Nfz >= 3) then
                    if (aratio <= pfz%Aeat) then
-                      write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
+                      if (cea%legacy_mode) write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
                            & " WHERE THE ASSIGNED", /, " SUPERSONIC AREA RATIOS WERE ", &
                            & "LESS THAN THE VALUE AT POINT nfz =", i3, " (ROCKET)")') cea%Nfz
                       go to 1050
                    end if
                 end if
                 if (aratio  <  1) then
-                   write(IOOUT, '(/" AN ASSIGNED AREA RATIO IS < 1 (ROCKET)")')
+                   if (cea%legacy_mode) write(IOOUT, '(/" AN ASSIGNED AREA RATIO IS < 1 (ROCKET)")')
                    go to 1050
                 end if
                 eln = log(aratio)
@@ -2350,7 +2375,7 @@ contains
              else if (p%Gammas > 0) then
                 check = 0.00004
                 p => cea%points(cea%iOF, cea%ipt)
-                if (p%Debug) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
+                if (cea%legacy_mode .and. p%Debug) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
                      & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
                      itnum, aratio, p%AeAt, p%App, dlnp
                 if (abs(p%AeAt - Aratio) / Aratio <= check) go to 900
@@ -2358,7 +2383,7 @@ contains
                 aeatl = log(p%AeAt)
                 itnum = itnum + 1
                 if (itnum > 10) then
-                   write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
+                   if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
                    go to 900
                 else
                    p => cea%points(cea%iOF, cea%ipt)
@@ -2368,7 +2393,7 @@ contains
                    go to 850
                 end if
              else
-                write(IOOUT, '(/" WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ", &
+                if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ", &
                      & "BECAUSE GAMMAs", /, " CALCULATION IMPOSSIBLE. (ROCKET)")')
                 cea%ipt = cea%ipt - 1
                 if (cea%Nsub <= 0) isup1 = 100
@@ -2399,7 +2424,7 @@ contains
                    pinj = ppa + 1.d05 * usq / p%Vlm
                    test = (pinj - pinjas) / pinjas
                    pcpa = pinf * pa
-                   if (cea%Debugf) then
+                   if (cea%legacy_mode .and. cea%Debugf) then
                       write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
                            & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
                       write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
@@ -2419,7 +2444,7 @@ contains
                    prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
                    test = (pinj - pinjas) / pinjas
                    pcpa = pinf * pa
-                   if (cea%Debugf) then
+                   if (cea%legacy_mode .and. cea%Debugf) then
                       write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
                            & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
                       write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
@@ -2447,7 +2472,7 @@ contains
                    p2%Ttt = p4%Ttt
                    p2%Vlm = p4%Vlm
                    p2%Wm = p4%Wm
-                   if (.not. cea%Short) write(IOOUT, '(" END OF CHAMBER ITERATIONS")')
+                   if (cea%legacy_mode .and. .not. cea%Short) write(IOOUT, '(" END OF CHAMBER ITERATIONS")')
                    go to 600
                 end if
 
@@ -2467,7 +2492,8 @@ contains
                       pratsv = prat
                       pjrat = 1
                       prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
-                      if (cea%Debugf) write(IOOUT, '(" NEW PC = ", f10.2, 2x, "NEW ACAT = ", f9.6, 2x, "PJRAT =", &
+                      if (cea%legacy_mode .and. cea%Debugf) &
+                           write(IOOUT, '(" NEW PC = ", f10.2, 2x, "NEW ACAT = ", f9.6, 2x, "PJRAT =", &
                            & f10.7, " PRACAT =", f10.7)') pcpa, cea%Acat, pjrat, pracat
                    end do
                 end if
@@ -2527,7 +2553,8 @@ contains
              iplte = max(iplte, cea%Iplt)
              dlnp = 1
              if (cea%Tt == 0) cea%Area = .false.
-             if (.not. cea%Eql .and. cea%Tt == 0.) write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
+             if (cea%legacy_mode .and. .not. cea%Eql .and. cea%Tt == 0.) &
+                  write(IOOUT, '(/" WARNING!!  CALCULATIONS WERE STOPPED BECAUSE NEXT ", &
                   & "POINT IS MORE", /, " THAN 50 K BELOW THE TEMPERATURE", &
                   & " RANGE OF A CONDENSED SPECIES (ROCKET)")')
              if (cea%Isv == 0) then
@@ -2547,12 +2574,12 @@ contains
                 if (cea%Nfz == 1) go to 450
                 if (cea%Nsub > 0) then
                    cea%Nsub = -cea%Nsub
-                   write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
+                   if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
                         & " RATIOS WERE OMITTED SINCE nfz IS GREATER THAN 1 (ROCKET)")')
                 end if
 
                 if (pfz%App < pth%App) then
-                   write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
+                   if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  FREEZING IS NOT ALLOWED AT A SUBSONIC ", &
                         & "PRESSURE RATIO FOR nfz GREATER"/" THAN 1. FROZEN ", &
                         & "PERFORMANCE CALCULATIONS WERE OMITTED (ROCKET)")')
                    go to 1300
@@ -2561,7 +2588,7 @@ contains
                    go to 700
                 end if
              else
-                if (cea%Eql) write(IOOUT, '(////)')
+                if (cea%legacy_mode .and. cea%Eql) write(IOOUT, '(////)')
              end if
 
              ! SET INDICES AND ESTIMATES FOR NEXT POINT.
@@ -2585,7 +2612,8 @@ contains
                       p%App = cea%Pcp(ipp - nptth)
                       if (cea%Fac) p%App = p%App * Pinf / p1%Ppp
                       if (.not. cea%Eql .and. p%App < pfz%App) then
-                         write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
+                         if (cea%legacy_mode) &
+                              write(IOOUT, '(/, " WARNING!! FOR FROZEN PERFORMANCE, POINTS WERE OMITTED", &
                               & " WHERE THE ASSIGNED", /, &
                               & " PRESSURE RATIOS WERE LESS THAN ", &
                               & "THE VALUE AT POINT nfz =", i3, " (ROCKET)")') cea%Nfz
@@ -2596,14 +2624,16 @@ contains
                    if (cea%Fac) then
                       if (cea%Area) then
                          if (isub <= cea%Nsub .and. isub > i01 .and. aratio >= cea%points(cea%iOF, 2)%AeAt) then
-                            write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
+                            if (cea%legacy_mode) &
+                                 write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
                                  & "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
                                  & ".  POINT OMITTED (ROCKET)")') aratio, cea%points(cea%iOF, 2)%AeAt
                             cea%ipt = cea%ipt - 1
                             go to 1000
                          end if
                       else if (cea%ipt > nptth .and. cea%Pcp(ipp-3) < p1%Ppp / p2%Ppp) then
-                         write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
+                         if (cea%legacy_mode) &
+                              write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
                               & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
                               & ". POINT OMITTED", " (ROCKET)")') cea%Pcp(ipp-3), p1%Ppp / p2%Ppp
                          cea%ipt = cea%ipt - 1
@@ -2623,7 +2653,7 @@ contains
              ! 2) CHAMBER TEMPERATURES(IT = NT)
              ! 3) O/F VALUES(IOF = NOF)
              if (ip == cea%Np .and. it == cea%Nt .and. iof == cea%Nof) exit iofLoop
-             write(IOOUT, '(////)')
+             if (cea%legacy_mode) write(IOOUT, '(////)')
              call SETEN(cea)
              cea%Tt = p12%Ttt
           end do
@@ -3089,7 +3119,7 @@ contains
     cea%Tp = .true.
     cea%Cpmix = 0
     srefl = .false.
-    if (.not. cea%Short) then
+    if (cea%legacy_mode .and. .not. cea%Short) then
        write(IOOUT, '(/"   *** INPUT FOR SHOCK PROBLEMS ***")')
        write(IOOUT, '(/" INCDEQ =", L2, "   REFLEQ =", L2, "   INCDFZ =", L2, "    REFLFZ =", L2)') &
             cea%Incdeq, cea%Refleq, cea%Incdfz, cea%Reflfz
@@ -3106,7 +3136,7 @@ contains
        write(IOOUT, '(/" WARNING!!  ONLY ", I2, " u1 OR mach1 VALUES ALLOWED (SHCK)")') Ncol
        cea%Nsk = Ncol
     end if
-    if (.not. cea%Short) then
+    if (cea%legacy_mode .and. .not. cea%Short) then
        write(IOOUT, '(/1p, " U1 =   ", 5E13.6, /(8X, 5E13.6))') (cea%points(1, i)%U1, i = 1, cea%Nsk)
        write(IOOUT, '(/1p, " MACH1 =", 5E13.6, /(8X, 5E13.6))') (cea%points(1, i)%Mach1, i = 1, cea%Nsk)
     end if
@@ -3154,7 +3184,8 @@ contains
                    call HCALC(cea)
                    p%Hsum = cea%Hsub0
                 else
-                   write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') cea%Tt, i
+                   if (cea%legacy_mode) &
+                        write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') cea%Tt, i
                    return
                 end if
              end if
@@ -3169,23 +3200,25 @@ contains
              p%Vlm = R0 * cea%Tt / (cea%Wmix * cea%Pp)
           end do
 
-          ! OUTPUT--1ST CONDITION
-          write(IOOUT, '(////25X, "SHOCK WAVE PARAMETERS ASSUMING")')
-          if (.not. cea%Incdeq) then
-             write(IOOUT, '(/, 17X, " FROZEN COMPOSITION FOR INCIDENT SHOCKED CONDITI1ONS"//)')
-          else
-             write(IOOUT, '(/, 16X, " EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED CONDITIONS"//)')
+          if (cea%legacy_mode) then
+             ! OUTPUT--1ST CONDITION
+             write(IOOUT, '(////25X, "SHOCK WAVE PARAMETERS ASSUMING")')
+             if (.not. cea%Incdeq) then
+                write(IOOUT, '(/, 17X, " FROZEN COMPOSITION FOR INCIDENT SHOCKED CONDITI1ONS"//)')
+             else
+                write(IOOUT, '(/, 16X, " EQUILIBRIUM COMPOSITION FOR INCIDENT SHOCKED CONDITIONS"//)')
+             end if
+             cea%Eql = .false.
+             call OUT1(cea, IOOUT)
+             write(IOOUT, '(/" INITIAL GAS (1)")')
+             cea%fmt(4) = '13'
+             cea%fmt(5) = ' '
+             cea%fmt(7) = '4,'
+             write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%points(iof, j)%Mach1, j = 1, cea%Nsk)
+             cea%fmt(7) = '2,'
+             write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%points(iof, j)%U1, j = 1, cea%Nsk)
+             call OUT2(cea, cea%Nsk, IOOUT)
           end if
-          cea%Eql = .false.
-          call OUT1(cea, IOOUT)
-          write(IOOUT, '(/" INITIAL GAS (1)")')
-          cea%fmt(4) = '13'
-          cea%fmt(5) = ' '
-          cea%fmt(7) = '4,'
-          write(IOOUT, cea%fmt) 'MACH NUMBER1   ', (cea%points(iof, j)%Mach1, j = 1, cea%Nsk)
-          cea%fmt(7) = '2,'
-          write(IOOUT, cea%fmt) 'U1, M/SEC      ', (cea%points(iof, j)%U1, j = 1, cea%Nsk)
-          call OUT2(cea, cea%Nsk, IOOUT)
 
           ! BEGIN CALCULATIONS FOR 2ND CONDITION
           if (cea%Incdeq) cea%Eql = .true.
@@ -3233,7 +3266,8 @@ contains
 
              ax = 1
              do itr = 1, 60
-                if (cea%Shkdbg) write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
+                if (cea%legacy_mode .and. cea%Shkdbg) &
+                     write(IOOUT, '(/" ITR NO.=", I3, 3X, "P", I1, "/P", I1, " =", F9.4, 3X, "T", I1, &
                      & "/T", I1, " =", F9.4, "   RHO2/RHO1 =", F9.6)') itr, it2, it1, p21, it2, it1, T21, rho52
                 cea%Tt = T21 * T1
                 cea%Pp = p21 * p1
@@ -3277,7 +3311,7 @@ contains
                 cea%X(3) = cea%G(1, 1) * cea%G(2, 2) - cea%G(1, 2) * cea%G(2, 1)
                 cea%X(1) = (cea%G(1, 3) * cea%G(2, 2) - cea%G(2, 3) * cea%G(1, 2)) / cea%X(3)
                 cea%X(2) = (cea%G(1, 1) * cea%G(2, 3) - cea%G(2, 1) * cea%G(1, 3)) / cea%X(3)
-                if (cea%Shkdbg) then
+                if (cea%legacy_mode .and. cea%Shkdbg) then
                    write(IOOUT, '(/" G(I,J)  ", 3E15.8)') cea%G(1, 1), cea%G(1, 2), cea%G(1, 3)
                    write(IOOUT, '(/" G(I,J)  ", 3E15.8)') cea%G(2, 1), cea%G(2, 2), cea%G(2, 3)
                    write(IOOUT, '(/" X       ", 2E15.8)') cea%X(1), cea%X(2)
@@ -3303,7 +3337,8 @@ contains
                 p21 = exp(p21l)
                 T21 = exp(t21l)
 
-                if (cea%Shkdbg) write(IOOUT, '(/" MAX.COR.=", e13.6, " X(1)=", e13.6, " X(2)=", e13.6)') cormax, cea%X(1), cea%X(2)
+                if (cea%legacy_mode .and. cea%Shkdbg) &
+                     write(IOOUT, '(/" MAX.COR.=", e13.6, " X(1)=", e13.6, " X(2)=", e13.6)') cormax, cea%X(1), cea%X(2)
 
                 if (itr == 1 .and. T21 >= ttmax) then
                    cea%Tt = 0
@@ -3314,7 +3349,7 @@ contains
              p => cea%points(iof, cea%ipt)
 
              if (.not. cea%Eql .or. cea%Tt /= 0) then
-                if (itr > 60) then
+                if (cea%legacy_mode .and. itr > 60) then
                    write(IOOUT, '(/6x, " WARNING!!  NO CONVERGENCE FOR u1=", F8.1, &
                         & /"  ANSWERS NOT RELIABLE, SOLUTION MAY NOT EXIST (SHCK)")') p%U1
                 end if
@@ -3347,7 +3382,8 @@ contains
                    end if
                 end if
 
-                write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
+                if (cea%legacy_mode) &
+                     write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", &
                      & "FOR POINT", I5, " (SHCK)")') cea%Tt, cea%ipt
                 cea%Tt = 0
              end if
@@ -3371,55 +3407,65 @@ contains
 
              if (cea%ipt <= cea%Nsk) cycle
              cea%ipt = cea%Nsk
-             if (refl) then
-                if (.not. cea%Eql) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--FROZEN")')
-                if (cea%Eql) write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM")')
-                cr12 = '2'
-                cr52 = '5'
-             else
-                if (.not. cea%Eql) write(IOOUT, '(/" SHOCKED GAS (2)--INCIDENT--FROZEN")')
-                if (cea%Eql) write(IOOUT, '(/" SHOCKED GAS (2)--INCIDENT--EQUILIBRIUM")')
-                cr12 = '1'
-                cr52 = '2'
-             end if
-             cea%fmt(7) = '2,'
-             write(IOOUT, cea%fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, cea%ipt)
 
-             call OUT2(cea, cea%ipt, IOOUT)
-
-             if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
-             write(IOOUT, *)
-             cea%fmt(7) = '3,'
-             write(IOOUT, cea%fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, cea%ipt)
-             write(IOOUT, cea%fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, cea%ipt)
-             cea%fmt(7) = '4,'
-             write(IOOUT, cea%fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, cea%ipt)
-             write(IOOUT, cea%fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, cea%ipt)
-             cea%fmt(7) = '2,'
-             if (.not. refl) write(IOOUT, cea%fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, cea%ipt)
-             if (refl) write(IOOUT, cea%fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, cea%ipt)
-             if (.not. cea%Eql) then
-                ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
-                cea%fmt(7) = '5,'
-                if (.not. cea%Incdeq) then
-                   if (cea%Massf) then
-                      write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MASS'
+             if (cea%legacy_mode) then
+                if (refl) then
+                   if (cea%Eql) then
+                      write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--EQUILIBRIUM")')
                    else
-                      write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MOLE'
-                      ww = wmx
+                      write(IOOUT, '(/" SHOCKED GAS (5)--REFLECTED--FROZEN")')
                    end if
-                   do n = 1, cea%Nreac
-                      j = cea%Jray(n)
-                      if (cea%Massf) ww = cea%Mw(j)
-                      write(IOOUT, '(" ", A16, F8.5, 12F9.5)') cea%Prod(j), (cea%points(cea%iOF, i)%En(j) * ww, i = 1, cea%ipt)
-                   end do
+                   cr12 = '2'
+                   cr52 = '5'
                 else
-                   cea%Eql = .true.
-                   call OUT3(cea, cea%ipt, IOOUT)
-                   cea%Eql = .false.
+                   if (cea%Eql) then
+                      write(IOOUT, '(/" SHOCKED GAS (2)--INCIDENT--EQUILIBRIUM")')
+                   else
+                      write(IOOUT, '(/" SHOCKED GAS (2)--INCIDENT--FROZEN")')
+                   end if
+                   cr12 = '1'
+                   cr52 = '2'
                 end if
-             else
-                call OUT3(cea, cea%ipt, IOOUT)
+                cea%fmt(7) = '2,'
+                write(IOOUT, cea%fmt) 'U' // cr52 // ', M/SEC      ', (utwo(j), j = 1, cea%ipt)
+
+                call OUT2(cea, cea%ipt, IOOUT)
+
+                if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
+                write(IOOUT, *)
+                cea%fmt(7) = '3,'
+                write(IOOUT, cea%fmt) 'P' // cr52 // '/P' // cr12 // '           ', (p2p1(j), j = 1, cea%ipt)
+                write(IOOUT, cea%fmt) 'T' // cr52 // '/T' // cr12 // '           ', (t2t1(j), j = 1, cea%ipt)
+                cea%fmt(7) = '4,'
+                write(IOOUT, cea%fmt) 'M' // cr52 // '/M' // cr12 // '           ', (m2m1(j), j = 1, cea%ipt)
+                write(IOOUT, cea%fmt) 'RHO' // cr52 // '/RHO' // cr12 // '       ', (rrho(j), j = 1, cea%ipt)
+                cea%fmt(7) = '2,'
+                if (.not. refl) write(IOOUT, cea%fmt) 'V2, M/SEC      ', (u1u2(j), j = 1, cea%ipt)
+                if (refl) write(IOOUT, cea%fmt) 'U5+V2,M/SEC    ', (u1u2(j), j = 1, cea%ipt)
+
+                if (.not. cea%Eql) then
+                   ! WRITE FROZEN MOLE (OR MASS) FRACTIONS
+                   cea%fmt(7) = '5,'
+                   if (.not. cea%Incdeq) then
+                      if (cea%Massf) then
+                         write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MASS'
+                      else
+                         write(IOOUT, '(/1x, A4, " FRACTIONS"/)') 'MOLE'
+                         ww = wmx
+                      end if
+                      do n = 1, cea%Nreac
+                         j = cea%Jray(n)
+                         if (cea%Massf) ww = cea%Mw(j)
+                         write(IOOUT, '(" ", A16, F8.5, 12F9.5)') cea%Prod(j), (cea%points(cea%iOF, i)%En(j) * ww, i = 1, cea%ipt)
+                      end do
+                   else
+                      cea%Eql = .true.
+                      call OUT3(cea, cea%ipt, IOOUT)
+                      cea%Eql = .false.
+                   end if
+                else
+                   call OUT3(cea, cea%ipt, IOOUT)
+                end if
              end if
 
              cea%Iplt = min(cea%Iplt + cea%ipt, 500)
@@ -3540,28 +3586,31 @@ contains
              if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
                 if (mod(cea%ipt, Ncol) /= 0) cycle
              end if
-             if (.not. cea%Hp) write(IOOUT, '(////15X, "THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED")')
-             if (cea%Hp) write(IOOUT, '(////9X, "THERMODYNAMIC EQUILIBRIUM COMBUSTION PROPERTIES AT ASSIGNED")')
-             if (.not. cea%Vol) then
-                if (cea%Hp) write(IOOUT, '(/34X, " PRESSURES"/)')
-                if (cea%Tp) write(IOOUT, '(/27X, "TEMPERATURE AND PRESSURE"/)')
-                if (cea%Sp) write(IOOUT, '(/29X, "ENTROPY AND PRESSURE"/)')
-             else
-                if (cea%Hp) write(IOOUT, '(/36X, " VOLUME"/)')
-                if (cea%Tp) write(IOOUT, '(/28X, "TEMPERATURE AND VOLUME"/)')
-                if (cea%Sp) write(IOOUT, '(/30X, "ENTROPY AND VOLUME"/)')
+
+             if (cea%legacy_mode) then
+                if (.not. cea%Hp) write(IOOUT, '(////15X, "THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED")')
+                if (cea%Hp) write(IOOUT, '(////9X, "THERMODYNAMIC EQUILIBRIUM COMBUSTION PROPERTIES AT ASSIGNED")')
+                if (.not. cea%Vol) then
+                   if (cea%Hp) write(IOOUT, '(/34X, " PRESSURES"/)')
+                   if (cea%Tp) write(IOOUT, '(/27X, "TEMPERATURE AND PRESSURE"/)')
+                   if (cea%Sp) write(IOOUT, '(/29X, "ENTROPY AND PRESSURE"/)')
+                else
+                   if (cea%Hp) write(IOOUT, '(/36X, " VOLUME"/)')
+                   if (cea%Tp) write(IOOUT, '(/28X, "TEMPERATURE AND VOLUME"/)')
+                   if (cea%Sp) write(IOOUT, '(/30X, "ENTROPY AND VOLUME"/)')
+                end if
+                call OUT1(cea, IOOUT)
+                write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
+                call OUT2(cea, cea%ipt, IOOUT)
+                if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
+                call OUT3(cea, cea%ipt, IOOUT)
              end if
-             call OUT1(cea, IOOUT)
-             write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
-             call OUT2(cea, cea%ipt, IOOUT)
-             if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
-             call OUT3(cea, cea%ipt, IOOUT)
 
              cea%Iplt = min((iof - 1) * cea%Nt * cea%Np + (ip - 1) * cea%Nt + it, 500)
 
              if ((ip == cea%Np .and. it == cea%Nt .or. cea%Tt == 0) .and. iof == cea%Nof) return
 
-             write(IOOUT, '(////)')
+             if (cea%legacy_mode) write(IOOUT, '(////)')
           end do
        end do
     end do iofLoop
@@ -3644,7 +3693,8 @@ contains
           do j = 1, cea%Ng
              if (p%En(j) >= testen) then
                 if (cea%Nm >= maxTr) then
-                   write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
+                   if (cea%legacy_mode) &
+                        write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
                         & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') cea%Nm, cea%ipt
                    exit outerLoop1
                 else

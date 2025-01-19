@@ -48,6 +48,7 @@ module mod_types
      integer:: io_log = 0
 
      logical:: invalid_case = .false.
+     logical:: legacy_mode = .false.
 
      character(MAX_FILENAME):: filename_trans_lib = 'trans.lib'
      character(MAX_FILENAME):: filename_thermo_lib = 'thermo.lib'
