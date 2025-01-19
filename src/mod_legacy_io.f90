@@ -1145,7 +1145,7 @@ contains
     integer, intent(in):: io_out
 
     character(15):: fgi, fh, fp, frh, fs, fu
-    integer:: i, j
+    integer:: i
     integer, save:: mcp, mdvp, mdvt, meq, mfa, mg, mgam, mh, mie, mm, mmw, mof, mp, mpf, mph, mrho, ms, mson, mt
     real(8):: pfactor, vnum
 
@@ -1542,7 +1542,7 @@ contains
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
-    integer:: i, j
+    integer:: i
 
     type(CEA_Point), pointer:: p !< current point
 
@@ -2766,7 +2766,7 @@ contains
     type(CEA_Problem), intent(in):: cea
     integer, intent(in):: io_out
 
-    integer:: i, j, iof, it, ip, ipt, num_outputs
+    integer:: i, iof, ipt, num_outputs
     logical:: incd, refl
 
     write(io_out, '(" CASE = ", a15)') cea%Case

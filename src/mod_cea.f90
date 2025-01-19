@@ -162,7 +162,7 @@ contains
     character(15):: frr1 = 'RHO/RHO1'
     character(15):: fdv  = 'DET VEL,M/SEC'
     character(3):: unit
-    integer:: i, ii, iof, itr, j, mdv, mgam, mh, mmach, mp, mson, mt
+    integer:: i, ii, iof, itr, mdv, mgam, mh, mmach, mp, mson, mt
     integer:: ip, it
     real(8):: a11, a12, a21, a22, alam, alpha, amm, b1, b2, d, gam, &
          p1, pp1, rk, rr1, T1, tem, tt1, ud, x1, x2
@@ -2046,7 +2046,7 @@ contains
 
     ! LOCAL VARIABLES
     integer:: i, i01, i12, iof, iplt1, iplte, ipp, isub, isup1, isupsv, itnum, &
-         itrot, nar, nipp, niter, nn, npr1, nptth
+         itrot, nipp, niter, nn, npr1, nptth
     logical:: done, seql, thi
     real(8):: a1l = -1.26505, b1 = 1.0257, c1 = -1.2318, pa = 1e5
     real(8):: acatsv, aeatl, appl, aratio, asq, check, cprf, dd, dh, &
