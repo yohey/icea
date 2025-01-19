@@ -3641,6 +3641,10 @@ contains
 
     p1 => cea%points(cea%iOF, 1)
 
+    inds(:) = 0
+    nms = 0
+    setx = .false.
+
     if (.not. cea%Eql) then
        if (.not. cea%Shock) then
           if (.not. setx) then
