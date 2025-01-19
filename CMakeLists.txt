@@ -4,14 +4,19 @@ enable_language(Fortran)
 project(CEA Fortran)
 
 
+set(CEA_LIBRARY libcea)
 set(CEA_EXECUTABLE cea)
 
 
-add_executable(${CEA_EXECUTABLE})
+add_library(${CEA_LIBRARY})
 
-target_sources(${CEA_EXECUTABLE}
+set_target_properties(${CEA_LIBRARY}
+  PROPERTIES
+  OUTPUT_NAME cea
+)
+
+target_sources(${CEA_LIBRARY}
   PRIVATE
-  src/main.f90
   src/mod_cea.f90
   src/mod_types.f90
   src/mod_constants.f90
@@ -20,11 +25,27 @@ target_sources(${CEA_EXECUTABLE}
   src/mod_legacy_io.f90
 )
 
+target_compile_options(${CEA_LIBRARY}
+  PRIVATE
+  "-cpp"
+  "-std=f2023"
+)
+
+
+add_executable(${CEA_EXECUTABLE})
+
+target_sources(${CEA_EXECUTABLE}
+  PRIVATE
+  src/main.f90
+)
+
 target_compile_options(${CEA_EXECUTABLE}
   PRIVATE
   "-cpp"
   "-std=f2023"
 )
+
+target_link_libraries(${CEA_EXECUTABLE} PRIVATE ${CEA_LIBRARY})
 
 
 foreach(LIB IN ITEMS "thermo" "trans")
