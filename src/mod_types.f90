@@ -57,7 +57,6 @@ module mod_types
 
      integer:: iOF !< index of O/F
      integer:: ipt !< index of point (new)
-     integer:: Npt !< index of point (= mod(ipt - 1, Ncol) + 1)
      integer:: max_points
 
      character(15):: ensert(20)
@@ -153,7 +152,6 @@ contains
     cea%ensert(:) = ""
 
     cea%iOF = 0
-    cea%Npt = 0
 
     return
   end subroutine init_case

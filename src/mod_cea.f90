@@ -50,10 +50,6 @@ contains
        else if (cea(icase)%Shock) then
           call SHCK(cea(icase))
        end if
-
-#ifndef NDEBUG
-       write(stderr, *)
-#endif
     end do
 
     close(IOOUT)
@@ -190,7 +186,6 @@ contains
           ! BEGIN P LOOP.
           do ip = 1, cea%Np
              cea%ipt = (it - 1) * cea%Np + ip
-             cea%Npt = mod(cea%ipt - 1, Ncol) + 1
 
              i_col_start = int((cea%ipt - 1) / Ncol) * Ncol + 1
 
@@ -484,9 +479,19 @@ contains
          sum0, sum1, szgj, tem, tmelt, tsize, ween, xi, xln, xsize, xx(maxMat)
     real(8):: smalno = 1e-6, smnol = -13.815511
     logical:: mask(cea%Ng)
+    integer:: Npt
 
     type(CEA_Point), pointer:: p !< current point
     p => cea%points(cea%iOF, cea%ipt)
+
+    Npt = mod(cea%ipt - 1, Ncol) + 1
+    if (cea%Rkt) then
+       if (cea%Fac) then
+          Npt = Npt + 3 * ((cea%ipt - 1) / Ncol)
+       else
+          Npt = Npt + 2 * ((cea%ipt - 1) / Ncol)
+       end if
+    end if
 
     ixsing = 0
     lsing = 0
@@ -598,7 +603,7 @@ contains
 
     if (cea%Ions) lz = ls - 1
 
-    if (cea%Npt == 1 .and. .not. cea%Shock .and. .not. cea%Short) then
+    if (Npt == 1 .and. .not. cea%Shock .and. .not. cea%Short) then
        write(IOOUT, '(/" POINT ITN", 6X, "T", 10X, 4(A4, 8X)/(18X, 5(A4, 8X)))') (cea%Elmt(i), i = 1, cea%Nlm)
     end if
 
@@ -814,13 +819,13 @@ contains
           ! TEST FOR CONVERGENCE
           if (numb > maxitn) then
              write(IOOUT, '(/, I4, " ITERATIONS DID NOT SATISFY CONVERGENCE", /, 15x, &
-                  & " REQUIREMENTS FOR THE POINT", I5, " (EQLBRM)")') maxitn, cea%Npt
+                  & " REQUIREMENTS FOR THE POINT", I5, " (EQLBRM)")') maxitn, Npt
 
              if (cea%Nc == 0 .or. i2many) go to 1500
 
              i2many = .true.
 
-             if (.not. cea%Hp .or. cea%Npt /= 1 .or. cea%Tt > 100.) then
+             if (.not. cea%Hp .or. Npt /= 1 .or. cea%Tt > 100.) then
                 if (cea%Npr /= 1 .or. cea%Enn > 1.E-4) go to 1500
                 ! HIGH TEMPERATURE, INCLUDED CONDENSED CONDITION
                 write(IOOUT, '(/" TRY REMOVING CONDENSED SPECIES (EQLBRM)")')
@@ -1014,7 +1019,7 @@ contains
                    go to 1000
                 end if
 
-             else if (.not. cea%Hp .or. cea%Npt /= 1 .or. cea%Nc == 0 .or. cea%Tt > 100) then
+             else if (.not. cea%Hp .or. Npt /= 1 .or. cea%Nc == 0 .or. cea%Tt > 100) then
                 if (ixsing >= 3) then
                    if (cea%Msing < cea%Iq1) then
                       if (reduce .and. cea%Msing <= cea%Nlm) then
@@ -1024,7 +1029,7 @@ contains
                               & " SPECIES CONTAINING THE ELIMINATED COMPONENT ARE OMITTED.", &
                               & / &
                               & " IT MAY BE NECESSARY TO RERUN WITH INSERTED CONDENSED SPECIES", &
-                              & /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') cea%Npt, cea%Elmt(cea%Nlm)
+                              & /" CONTAINING COMPONENT ", A8, "(EQLBRM)")') Npt, cea%Elmt(cea%Nlm)
                          cea%Nlm = cea%Nlm - 1
                          go to 500
 
@@ -1103,7 +1108,7 @@ contains
 
           if (.not. cea%Short) then
              if (newcom) write(IOOUT, '(/" POINT ITN", 6x, "T", 10x, 4a12/(18x, 5a12))') (cmp(k), k = 1, le)
-             write(IOOUT, '(i4, i5, 5f12.3, /(12x, 5f12.3))') cea%Npt, numb, cea%Tt, (xx(il), il = 1, le)
+             write(IOOUT, '(i4, i5, 5f12.3, /(12x, 5f12.3))') Npt, numb, cea%Tt, (xx(il), il = 1, le)
           end if
 
           if (.not. cea%Tp .and. cea%Npr == 0 .and. cea%Tt <= cea%Tg(1) * 0.2d0) then
@@ -1477,7 +1482,7 @@ contains
     gasfrc = cea%Enn/p%Totn
 
     if (gasfrc < 0.0001) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", i3, " DUE TO", &
-         & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') cea%Npt, gasfrc
+         & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') Npt, gasfrc
 
     if (cea%Trace /= 0) then
        if (lelim == 0) then
@@ -1494,21 +1499,21 @@ contains
     if (p%Debug) write(IOOUT, '(/" POINT=", i3, 3x, "P=", e13.6, 3x, "T=", e13.6, /3x, "H/R=", &
          & e13.6, 3x, "S/R=", e13.6, /3x, "M=", e13.6, 3x, "CP/R=", e13.6, 3x, &
          & "DLVPT=", e13.6, /3x, "DLVTP=", e13.6, 3x, "GAMMA(S)=", e13.6, 3x, "V=", e13.6)') &
-         cea%Npt, cea%Pp, cea%Tt, p%Hsum, p%Ssum, p%Wm, p%Cpr, p%Dlvpt, p%Dlvtp, p%Gammas, p%Vlm
+         Npt, cea%Pp, cea%Tt, p%Hsum, p%Ssum, p%Wm, p%Cpr, p%Dlvpt, p%Dlvtp, p%Gammas, p%Vlm
 
     if (cea%Tt >= cea%Tg(1) .and. cea%Tt <= cea%Tg(4)) go to 1600
 
     if (cea%Shock) go to 1600
 
-    write(IOOUT, '(" THE TEMPERATURE=", e12.4, " IS OUT OF RANGE FOR POINT", i5, "(EQLBRM)")') cea%Tt, cea%Npt
+    write(IOOUT, '(" THE TEMPERATURE=", e12.4, " IS OUT OF RANGE FOR POINT", i5, "(EQLBRM)")') cea%Tt, Npt
 
     if (cea%Tt >= cea%Tg(1) * 0.8d0 .and. cea%Tt <= cea%Tg(4) * 1.1d0) go to 1600
 
-    cea%Npt = cea%Npt + 1
+    cea%ipt = cea%ipt + 1
 
 1500 cea%Tt = 0
-    cea%Npt = cea%Npt - 1
-    write(IOOUT, '(/" CALCULATIONS STOPPED AFTER POINT", I3, "(EQLBRM)")') cea%Npt
+    cea%ipt = cea%ipt - 1
+    write(IOOUT, '(/" CALCULATIONS STOPPED AFTER POINT", I3, "(EQLBRM)")') Npt
 
 1600 cea%Lsave = cea%Nlm
     cea%Nlm = ls
@@ -1579,7 +1584,7 @@ contains
           end if
 
           cea%Tt = 0
-          cea%Npt = cea%Npt - 1
+          cea%ipt = cea%ipt - 1
           return
 
        else
@@ -1593,7 +1598,7 @@ contains
     write(IOOUT, '(/" FROZEN DID NOT CONVERGE IN 8 ITERATIONS (FROZEN)")')
 
     cea%Tt = 0
-    cea%Npt = cea%Nfz - 1
+    cea%ipt = cea%Nfz - 1
 
     return
   end subroutine FROZEN
@@ -1946,7 +1951,6 @@ contains
 
     cea%iOF = cea%iOF + 1
     cea%ipt = 1
-    cea%Npt = 1
 
     p => cea%points(cea%iOF, cea%ipt)
 
@@ -2135,8 +2139,7 @@ contains
              done = .false.
 
              ! LOOP FOR OUTPUT COLUMNS
-250          nar = cea%Npt
-             iar = cea%ipt
+250          iar = cea%ipt
              p => cea%points(cea%iOF, cea%ipt)
              if (cea%Eql) then
                 call EQLBRM(cea)
@@ -2183,7 +2186,6 @@ contains
              else
                 if (cea%ipt < 1) exit iofLoop
                 if (.not. cea%Area) go to 600
-                cea%Npt = nar - 1
                 cea%ipt = iar - 1
                 cea%Isup = cea%Nsup + 2
                 cea%Isv = 0
@@ -2291,7 +2293,6 @@ contains
                    cea%Area = .true.
                    go to 750
                 else if (cea%ipt == 2 .and. done) then
-                   cea%Npt = 3
                    cea%ipt = 3
                    !  The following statement was corrected 1/30/2004.  Only fac parameters 
                    !    after combustion were affected--generally extra or missing points.
@@ -2369,7 +2370,6 @@ contains
              else
                 write(IOOUT, '(/" WARNING!!  AREA RATIO CALCULATION CANNOT BE DONE ", &
                      & "BECAUSE GAMMAs", /, " CALCULATION IMPOSSIBLE. (ROCKET)")')
-                cea%Npt = cea%Npt - 1
                 cea%ipt = cea%ipt - 1
                 if (cea%Nsub <= 0) isup1 = 100
                 if (cea%Nsub < 0.) cea%Nsup = cea%Isup - 1
@@ -2432,7 +2432,6 @@ contains
                    cea%Area = .false.
                    if (cea%Nsub > 1) isub = 2
                    cea%Isv = 4
-                   cea%Npt = 2
                    cea%ipt = 2
                    ipp = min(4, cea%Npp)
                    call SETEN(cea)
@@ -2477,7 +2476,6 @@ contains
                 cea%Sp = .false.
                 niter = niter + 1
                 cea%Isv = 0
-                cea%Npt = 2
                 cea%ipt = 2
                 ipp = 2
                 call SETEN(cea)
@@ -2518,7 +2516,7 @@ contains
 
              call RKTOUT(cea, it)
 
-             cea%Iplt = cea%Iplt + cea%Npt
+             cea%Iplt = cea%ipt + nptth * ((cea%ipt - 1) / Ncol)
              if (.not. cea%Page1) then
                 cea%Iplt = cea%Iplt - 2
                 if (cea%Iopt /= 0) cea%Iplt = cea%Iplt - 1
@@ -2544,7 +2542,6 @@ contains
                 cea%Tt = pfz%Ttt
                 ipp = cea%Nfz
                 if (cea%Nfz == cea%ipt) go to 1150
-                cea%Npt = cea%Nfz
                 cea%ipt = cea%Nfz
                 cea%Enn = 1 / pfz%Wm
                 if (cea%Nfz == 1) go to 450
@@ -2565,12 +2562,10 @@ contains
                 end if
              else
                 if (cea%Eql) write(IOOUT, '(////)')
-                cea%Npt = nptth
              end if
 
              ! SET INDICES AND ESTIMATES FOR NEXT POINT.
-1200         cea%Npt = cea%Npt + 1
-             cea%ipt = cea%ipt + 1
+1200         cea%ipt = cea%ipt + 1
              if (cea%Eql .or. (cea%Isv == -i12 .and. .not. seql)) then
                 ! THE FOLLOWING STATEMENT WAS ADDED TO TAKE CARE OF A SITUATION
                 ! WHERE EQLBRM WENT SINGULAR WHEN STARTING FROM ESTIMATES WHERE
@@ -2604,7 +2599,6 @@ contains
                             write(IOOUT, '(/" WARNING!!  ASSIGNED subae/at =", f10.5, " IS NOT ", &
                                  & "PERMITTED TO BE GREATER"/" THAN ac/at =", f9.5, &
                                  & ".  POINT OMITTED (ROCKET)")') aratio, cea%points(cea%iOF, 2)%AeAt
-                            cea%Npt = cea%Npt - 1
                             cea%ipt = cea%ipt - 1
                             go to 1000
                          end if
@@ -2612,7 +2606,6 @@ contains
                          write(IOOUT, '(/" WARNING!!  ASSIGNED pip =", F10.5, &
                               & " IS NOT PERMITTED"/" TO BE LESS THAN  Pinj/Pc =", f9.5, &
                               & ". POINT OMITTED", " (ROCKET)")') cea%Pcp(ipp-3), p1%Ppp / p2%Ppp
-                         cea%Npt = cea%Npt - 1
                          cea%ipt = cea%ipt - 1
                          go to 650
                       end if
@@ -2623,8 +2616,7 @@ contains
 
              go to 250
 
-1300         cea%Npt = 1
-             cea%ipt = 1
+1300         cea%ipt = 1
 
              ! CHECK FOR COMPLETED SCHEDULES -
              ! 1) CHAMBER PRESSURES(IP = NP)
@@ -3158,7 +3150,6 @@ contains
                 cea%Pp = p%Ppp
                 cea%Tt = p%Ttt
                 if (cea%Tt >= cea%Tg(1) * 0.8d0) then
-                   cea%Npt = i
                    cea%ipt = i
                    call HCALC(cea)
                    p%Hsum = cea%Hsub0
@@ -3250,7 +3241,6 @@ contains
                    ! FROZEN
                    cea%Tln = log(cea%Tt)
                    if (.not. cea%Incdeq) then
-                      cea%Npt = cea%ipt
                       call HCALC(cea)
                       if (cea%Tt == 0) exit
                       p%Hsum = cea%Hsub0
@@ -3367,7 +3357,6 @@ contains
              cea%Nsk = cea%ipt
 
 900          if (cea%Trnspt) then
-                cea%Npt = cea%ipt
                 call TRANP(cea)
              end if
 
@@ -3377,8 +3366,6 @@ contains
              cea%ipt = cea%ipt + 1
 
              if (cea%Eql) then
-                cea%Npt = cea%ipt
-                write(stderr, *) '[DEBUG] SHCK: call SETEN(', cea%Isv, cea%Npt, ')'
                 call SETEN(cea)
              end if
 
@@ -3492,10 +3479,6 @@ contains
           cea%points(iof, i)%U1 = uis(i)
           cea%points(iof, i)%Mach1 = mis(i)
        end do
-
-!!$#ifndef NDEBUG
-!!$       call print_debug(cea, iof)
-!!$#endif
     end do
 
     cea%Tp = .false.
@@ -3522,10 +3505,6 @@ contains
     integer:: iof
     integer:: ip, it
 
-#ifndef NDEBUG
-    write(stderr, *) '[DEBUG] ', trim(cea%Case)
-#endif
-
     cea%Eql = .true.
     iofLoop: do iof = 1, cea%Nof
        cea%Oxfl = cea%Oxf(iof)
@@ -3536,7 +3515,6 @@ contains
           ! SET ASSIGNED T
           do it = 1, cea%Nt
              cea%ipt = (ip - 1) * cea%Nt + it
-             cea%Npt = mod(cea%ipt - 1, Ncol) + 1
 
              if (iof > 1 .or. cea%ipt > 1) then
                 if (.not. cea%Tp .and. cea%Tt /= 0) cea%T(1) = cea%Tt
@@ -3555,17 +3533,12 @@ contains
              cea%Tt = cea%T(it)
              call EQLBRM(cea)
 
-             if (cea%Npt == 0) then
-!!$#ifndef NDEBUG
-!!$                call print_debug(cea, iof)
-!!$#endif
-                return
-             end if
+             if (cea%ipt == 0) return
 
              if (cea%Trnspt .and. cea%Tt /= 0) call TRANP(cea)
 
              if (ip /= cea%Np .or. it /= cea%Nt .and. cea%Tt /= 0) then
-                if (cea%Npt /= Ncol) cycle
+                if (mod(cea%ipt, Ncol) /= 0) cycle
              end if
              if (.not. cea%Hp) write(IOOUT, '(////15X, "THERMODYNAMIC EQUILIBRIUM PROPERTIES AT ASSIGNED")')
              if (cea%Hp) write(IOOUT, '(////9X, "THERMODYNAMIC EQUILIBRIUM COMBUSTION PROPERTIES AT ASSIGNED")')
@@ -3583,14 +3556,10 @@ contains
              call OUT2(cea, cea%ipt, IOOUT)
              if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
              call OUT3(cea, cea%ipt, IOOUT)
-             cea%Iplt = min(cea%Iplt + cea%Npt, 500)
 
-             if ((ip == cea%Np .and. it == cea%Nt .or. cea%Tt == 0) .and. iof == cea%Nof) then
-!!$#ifndef NDEBUG
-!!$                call print_debug(cea, iof)
-!!$#endif
-                return
-             end if
+             cea%Iplt = min((iof - 1) * cea%Nt * cea%Np + (ip - 1) * cea%Nt + it, 500)
+
+             if ((ip == cea%Np .and. it == cea%Nt .or. cea%Tt == 0) .and. iof == cea%Nof) return
 
              write(IOOUT, '(////)')
           end do
@@ -3636,7 +3605,7 @@ contains
           end if
           go to 300
        else if (.not. cea%Incdeq) then
-          if (cea%Npt <= 1) then
+          if (cea%ipt <= 1) then
              cea%Nm = cea%Nreac
              do i = 1, cea%Nm
                 j = cea%Jray(i)
@@ -3676,7 +3645,7 @@ contains
              if (p%En(j) >= testen) then
                 if (cea%Nm >= maxTr) then
                    write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
-                        & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') cea%Nm, cea%Npt
+                        & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') cea%Nm, cea%ipt
                    exit outerLoop1
                 else
                    total = total + p%En(j)
@@ -3700,7 +3669,7 @@ contains
        cea%Wmol(i) = cea%Mw(j)
        cea%Xs(i) = p%En(j) / total
     end do
-    if (cea%Npt == cea%Nfz) then
+    if (cea%ipt == cea%Nfz) then
        nms = cea%Nm
        do i = 1, cea%Nm
           xss(i) = cea%Xs(i)
