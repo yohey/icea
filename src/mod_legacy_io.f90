@@ -5,7 +5,7 @@ module mod_legacy_io
 
   character(15), private:: fc
   integer, private:: ione, mcond, mcondf, mpn, mpnf, mvis
-  real(8), private:: pfuel, phi, tem
+  real(8), private:: pfuel, phi
 
   private:: INPUT, INFREE, REACT, UTHERM, UTRAN, EFMT, VARFMT
 
@@ -1083,7 +1083,7 @@ contains
     integer, intent(in):: io_out
 
     integer:: n
-    real(8):: rho
+    real(8):: rho, tem
 
     write(io_out, '(" CASE = ", a15)') cea%Case
 
@@ -1311,7 +1311,7 @@ contains
     cea%fmt(4) = cea%fmt(6)
 
     ! PRESSURE
-    call VARFMT(cea, out_Ppp, n_cols_print)
+    cea%fmt = VARFMT(cea%fmt, out_Ppp, n_cols_print)
 
     do i = 1, n_cols_print
        if (cea%Nplt /= 0 .and. i > ione) then
@@ -1343,7 +1343,7 @@ contains
        if (cea%Nplt /= 0 .and. i > ione .and. mh > 0) cea%Pltout(i+cea%Iplt-ione, mh) = X(i)
     end do
     cea%fmt(4) = cea%fmt(6)
-    call VARFMT(cea, X, n_cols_print)
+    cea%fmt = VARFMT(cea%fmt, X, n_cols_print)
     write(io_out, cea%fmt) fh, X(1:n_cols_print)
 
     ! INTERNAL ENERGY
@@ -1352,7 +1352,7 @@ contains
        X(i) = (p%Hsum - p%Ppp * p%Vlm / R0) * cea%R
        if (cea%Nplt /= 0 .and. i > ione .and. mie > 0) cea%Pltout(i+cea%Iplt-ione, mie) = X(i)
     end do
-    call VARFMT(cea, X, n_cols_print)
+    cea%fmt = VARFMT(cea%fmt, X, n_cols_print)
     write(io_out, cea%fmt) fu, X(1:n_cols_print)
 
     ! GIBBS ENERGY
@@ -1370,7 +1370,7 @@ contains
           if (mdvp > 0) cea%Pltout(i+cea%Iplt-ione, mdvp) = p%Dlvpt
        end if
     end do
-    call VARFMT(cea, X, n_cols_print)
+    cea%fmt = VARFMT(cea%fmt, X, n_cols_print)
     write(io_out, cea%fmt) fgi, X(1:n_cols_print)
 
     ! ENTROPY
@@ -1439,7 +1439,7 @@ contains
     logical:: kOK
     integer:: i, k, m, im, kin
     integer, save:: notuse
-    real(8):: tra
+    real(8):: tra, tem
 
     type(CEA_Point), pointer:: p
 
@@ -1496,7 +1496,6 @@ contains
                 if (cea%Prod(k) /= cea%Prod(k-1)) X(i) = 0
                 if (p%En(k) > 0) X(i) = p%En(k) * tem
              end if
-             if (cea%Nplt /= 0 .and. i > ione .and. im > 0) cea%Pltout(i+cea%Iplt-ione, im) = X(i)
              if (kOK .and. X(i) >= tra) kin = 1
           end do
 
@@ -1512,6 +1511,9 @@ contains
              cea%Omit(notuse) = cea%Prod(k)
           end if
        end do
+
+!!$       write(0, '(a, i5)') '[DEBUG] OUT3: notuse   = ', notuse
+!!$       write(0, '(a, *(a, ", "))') '[DEBUG] OUT3: cea%Omit = ', (trim(cea%Omit(i)), i = 1, notuse)
     end if
 
     write(io_out, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') cea%Tg(4)
@@ -1538,11 +1540,12 @@ contains
     use mod_types, only: CEA_Problem, CEA_Point, Ncol
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
     integer:: i
+    character(4), dimension(30):: fmt
 
     type(CEA_Point), pointer:: p !< current point
 
@@ -1550,6 +1553,8 @@ contains
     integer, allocatable:: i_cols_print(:)
 
     real(8), allocatable:: out_Coneql(:), out_Confro(:), out_Cpeql(:), out_Cpfro(:), out_Preql(:), out_Prfro(:), out_Vis(:)
+
+    fmt = cea%fmt
 
     call get_print_cols(cea, i_col_end, i_cols_print)
     n_cols_print = size(i_cols_print)
@@ -1582,45 +1587,33 @@ contains
     end if
 
     ! TRANSPORT PROPERTIES
-    cea%fmt(4) = cea%fmt(6)
-    if (cea%Nplt > 0) then
-       do i = 1, n_cols_print
-          p => cea%points(cea%iOF, i_cols_print(i))
-          if (i > ione) then
-             if (mvis > 0) cea%Pltout(i+cea%Iplt-ione, mvis) = p%Vis
-             if (mcond > 0) cea%Pltout(i+cea%Iplt-ione, mcond) = p%Coneql
-             if (mpn > 0) cea%Pltout(i+cea%Iplt-ione, mpn) = p%Preql
-             if (mcondf > 0) cea%Pltout(i+cea%Iplt-ione, mcondf) = p%Confro
-             if (mpnf > 0) cea%Pltout(i+cea%Iplt-ione, mpnf) = p%Prfro
-          end if
-       end do
-    end if
+    fmt(4) = fmt(6)
 
-    call VARFMT(cea, out_Vis, n_cols_print)
+    fmt = VARFMT(fmt, out_Vis, n_cols_print)
 
-    write(io_out, cea%fmt) 'VISC,MILLIPOISE', out_Vis(:)
+    write(io_out, fmt) 'VISC,MILLIPOISE', out_Vis(:)
 
-    cea%fmt(4) = '13'
-    cea%fmt(5) = ' '
-    cea%fmt(7) = '4,'
+    fmt(4) = '13'
+    fmt(5) = ' '
+    fmt(7) = '4,'
 
     if (cea%Eql) then
        write(io_out, '(/"  WITH EQUILIBRIUM REACTIONS"/)')
        ! SPECIFIC HEAT
-       write(io_out, cea%fmt) fc, out_Cpeql(:)
+       write(io_out, fmt) fc, out_Cpeql(:)
        ! CONDUCTIVITY
-       write(io_out, cea%fmt) 'CONDUCTIVITY    ', out_Coneql(:)
+       write(io_out, fmt) 'CONDUCTIVITY    ', out_Coneql(:)
        ! PRANDTL NUMBER
-       write(io_out, cea%fmt) 'PRANDTL NUMBER  ', out_Preql(:)
+       write(io_out, fmt) 'PRANDTL NUMBER  ', out_Preql(:)
     end if
 
     write(io_out, '(/"  WITH FROZEN REACTIONS"/)')
     ! SPECIFIC HEAT
-    write(io_out, cea%fmt) fc, out_Cpfro(:)
+    write(io_out, fmt) fc, out_Cpfro(:)
     ! CONDUCTIVITY
-    write(io_out, cea%fmt) 'CONDUCTIVITY    ', out_Confro(:)
+    write(io_out, fmt) 'CONDUCTIVITY    ', out_Confro(:)
     ! PRANDTL NUMBER
-    write(io_out, cea%fmt) 'PRANDTL NUMBER  ', out_Prfro(:)
+    write(io_out, fmt) 'PRANDTL NUMBER  ', out_Prfro(:)
 
     deallocate(out_Coneql)
     deallocate(out_Confro)
@@ -2050,7 +2043,7 @@ contains
     ! PRESSURE RATIOS
     if (cea%Iopt == 0) then
        write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
-       call VARFMT(cea, out_App, n_cols_print)
+       cea%fmt = VARFMT(cea%fmt, out_App, n_cols_print)
        write(IOOUT, cea%fmt) 'Pinf/P         ', out_App(:)
     else
        nex = nex - 1
@@ -2060,7 +2053,7 @@ contains
           p => cea%points(cea%iOF, i_cols_print(i))
           X(i) = p1%Ppp / p%Ppp
        end do
-       call VARFMT(cea, X, n_cols_print)
+       cea%fmt = VARFMT(cea%fmt, X, n_cols_print)
        write(IOOUT, cea%fmt) 'Pinj/P         ', X(:)
     end if
 
@@ -2140,7 +2133,7 @@ contains
     ! AREA RATIO
     cea%fmt(4) = '9x,'
     cea%fmt(i46) = '9x,'
-    call VARFMT(cea, out_AeAt, n_cols_print)
+    cea%fmt = VARFMT(cea%fmt, out_AeAt, n_cols_print)
     cea%fmt(5) = ' '
     cea%fmt(i57) = ' '
     write(IOOUT, cea%fmt) 'Ae/At          ', out_AeAt(2:)
@@ -2664,35 +2657,41 @@ contains
   end subroutine EFMT
 
 
-  subroutine VARFMT(cea, Vx, Npt)
+  function VARFMT(fmt_old, Vx, Npt)
     !***********************************************************************
     ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-FORMAT IN
     ! VARIABLE FORMAT FMT.
     !***********************************************************************
-    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
-    integer, intent(in):: Npt
+    character(4), dimension(30):: VARFMT
 
     ! DUMMY ARGUMENTS
-    real(8), intent(in):: Vx(Ncol)
+    character(4), dimension(30), intent(in):: fmt_old
+    real(8), intent(in):: Vx(*)
+    integer, intent(in):: Npt
+
     ! LOCAL VARIABLES
     integer:: i, k
     real(8):: vi
 
+    VARFMT = fmt_old
+
     do i = 1, Npt
        vi = abs(Vx(i))
        k = 2*i + 3
-       cea%fmt(k) = '5,'
-       if (vi >= 0.99995d0)  cea%fmt(k) = '4,'
-       if (vi >= 9.99950d0)  cea%fmt(k) = '3,'
-       if (vi >= 99.9950d0)  cea%fmt(k) = '2,'
-       if (vi >= 9999.95d0)  cea%fmt(k) = '1,'
-       if (vi >= 999999.5d0) cea%fmt(k) = '0,'
+       VARFMT(k) = '5,'
+       if (vi >= 0.99995d0)  VARFMT(k) = '4,'
+       if (vi >= 9.99950d0)  VARFMT(k) = '3,'
+       if (vi >= 99.9950d0)  VARFMT(k) = '2,'
+       if (vi >= 9999.95d0)  VARFMT(k) = '1,'
+       if (vi >= 999999.5d0) VARFMT(k) = '0,'
     end do
-    cea%fmt(29)(2:) = ' '
-  end subroutine VARFMT
+
+    VARFMT(29)(2:) = ' '
+
+    return
+  end function VARFMT
 
 
   subroutine write_plt_file(cea, filename)
@@ -2703,9 +2702,158 @@ contains
     character(*), intent(in):: filename
 
     integer:: num_cases, IOPLT
-    integer:: i, j, icase
+    integer:: i, j, k, icase, iof, ipt, iplt, max_points
+    integer:: mcond, mcondf, mpn, mpnf, mvis
+    integer:: mp, mt, mrho, mh, mie, mg, ms, mm, mcp, mgam, mson, mpf, mof, mph, meq, mfa, mmw, mdvt, mdvp
+
+    integer, allocatable:: im(:)
+    real(8), allocatable:: Pltout(:, :, :)
+    type(CEA_Point), pointer:: p
 
     num_cases = size(cea)
+
+    allocate(Pltout(num_cases, 500, 20))
+    Pltout(:, :, :) = 0
+
+    do icase = 1, num_cases
+       if (cea(icase)%Shock) then
+          max_points = cea(icase)%Nsk
+       else
+          max_points = cea(icase)%Nt * cea(icase)%Np
+          if (cea(icase)%Rkt) then
+             max_points = max_points * (cea(icase)%Npp + cea(icase)%Nsub + cea(icase)%Nsup)
+          end if
+       end if
+
+       Pltout(icase, :, :) = cea(icase)%Pltout(:, :)
+
+       ! SET MXX ARRAY FOR PLOTTING PARAMETERS
+       mp     = 0
+       mt     = 0
+       mrho   = 0
+       mh     = 0
+       mie    = 0
+       mg     = 0
+       ms     = 0
+       mm     = 0
+       mcp    = 0
+       mgam   = 0
+       mson   = 0
+       mcond  = 0
+       mvis   = 0
+       mpn    = 0
+       mpf    = 0
+       mof    = 0
+       mph    = 0
+       meq    = 0
+       mfa    = 0
+       mmw    = 0
+       mdvt   = 0
+       mdvp   = 0
+       mcondf = 0
+       mpnf   = 0
+
+       do i = 1, cea(icase)%Nplt
+          if (index(cea(icase)%Pltvar(i)(2:), '1') == 0) then
+             if (index(cea(icase)%Pltvar(i)(1:), 'dlnt') /= 0) then
+                mdvt = i
+             else if (index(cea(icase)%Pltvar(i)(1:), 'dlnp') /= 0) then
+                mdvp = i
+             else if (cea(icase)%Pltvar(i)(:4) == 'pran') then
+                if (index(cea(icase)%Pltvar(i)(3:), 'fz') /= 0 .or. index(cea(icase)%Pltvar(i)(3:), 'fr') /= 0) then
+                   mpnf = i
+                else
+                   mpn = i
+                end if
+             else if (cea(icase)%Pltvar(i)(:4) == 'cond') then
+                if (index(cea(icase)%Pltvar(i)(3:), 'fz') /= 0 .or. index(cea(icase)%Pltvar(i)(3:), 'fr') /= 0) then
+                   mcondf = i
+                else
+                   mcond = i
+                end if
+             else if (cea(icase)%Pltvar(i)(:3) == 'phi') then
+                mph = i
+             else if (cea(icase)%Pltvar(i)(:2) == 'p ') then
+                mp = i
+             else if (cea(icase)%Pltvar(i)(:1) == 't') then
+                mt = i
+             else if (cea(icase)%Pltvar(i)(:3) == 'rho') then
+                mrho = i
+             else if (cea(icase)%Pltvar(i)(:1) == 'h') then
+                mh = i
+             else if (cea(icase)%Pltvar(i)(:1) == 'u') then
+                mie = i
+             else if (cea(icase)%Pltvar(i)(:3) == 'gam') then
+                mgam = i
+             else if (cea(icase)%Pltvar(i)(:3) == 'son') then
+                mson = i
+             else if (cea(icase)%Pltvar(i)(:2) == 'g ') then
+                mg = i
+             else if (cea(icase)%Pltvar(i)(:2) == 's ') then
+                ms = i
+             else if (cea(icase)%Pltvar(i)(:1) == 'm' .and. cea(icase)%Pltvar(i)(:2) /= 'ma') then
+                if (.not. cea(icase)%Gonly .and. cea(icase)%Pltvar(i)(:2) == 'mw') then
+                   mmw = i
+                else
+                   mm = i
+                end if
+             else if (cea(icase)%Pltvar(i)(:2) == 'cp') then
+                mcp = i
+             else if (cea(icase)%Pltvar(i)(:3) == 'vis') then
+                mvis = i
+             else if (cea(icase)%Pltvar(i)(:3) == 'o/f') then
+                mof = i
+             else if (cea(icase)%Pltvar(i)(:2) == '%f') then
+                mpf = i
+             else if (cea(icase)%Pltvar(i)(:3) == 'f/a') then
+                mfa = i
+             else if (cea(icase)%Pltvar(i)(:1) == 'r') then
+                meq = i
+             end if
+          end if
+       end do
+
+       allocate(im(cea(icase)%Ngc))
+       im(:) = 0
+
+       do k = 1, cea(icase)%Ngc
+          do i = 1, cea(icase)%Nplt
+             if (cea(icase)%Pltvar(i) == cea(icase)%Prod(k) .or. '*' // cea(icase)%Pltvar(i) == cea(icase)%Prod(k)) then
+                im(k) = i
+                exit
+             end if
+          end do
+       end do
+
+       do iof = 1, cea(icase)%Nof
+          do ipt = 1, max_points
+             p => cea(icase)%points(iof, ipt)
+             iplt = ipt + (iof - 1) * max_points
+
+             do k = 1, cea(icase)%Ngc
+                if (k <= cea(icase)%Ng .or. p%En(k) > 0) then
+                   if (cea(icase)%Massf) then
+                      if (im(k) > 0) Pltout(icase, iplt, im(k)) = p%En(k) * cea(icase)%Mw(k)
+                   else
+                      if (im(k) > 0) Pltout(icase, iplt, im(k)) = p%En(k) / p%Totn
+                   end if
+                end if
+             end do
+
+             ! TRANSPORT PROPERTIES
+             if (cea(icase)%Trnspt .and. cea(icase)%Nplt > 0) then
+                if (mvis > 0) Pltout(icase, iplt, mvis) = p%Vis
+                if (mcond > 0) Pltout(icase, iplt, mcond) = p%Coneql
+                if (mpn > 0) Pltout(icase, iplt, mpn) = p%Preql
+                if (mcondf > 0) Pltout(icase, iplt, mcondf) = p%Confro
+                if (mpnf > 0) Pltout(icase, iplt, mpnf) = p%Prfro
+             end if
+          end do
+       end do
+
+       deallocate(im)
+    end do
+
 
     open(newunit = IOPLT, file = filename, form = 'formatted')
 
@@ -2713,13 +2861,15 @@ contains
        if (cea(icase)%Nplt > 0) then
           write(IOPLT, '("#", 2x, 20A12)') (cea(icase)%Pltvar(j), j = 1, cea(icase)%Nplt)
           do i = 1, cea(icase)%Iplt
-             write(IOPLT, '(1x, 1p, 20E12.4)') (cea(icase)%Pltout(i, j), j = 1, cea(icase)%Nplt)
+             write(IOPLT, '(1x, 1p, 20E12.4)') (Pltout(icase, i, j), j = 1, cea(icase)%Nplt)
           end do
           write(IOPLT, '("#", 2x, 20A12)') (cea(icase)%Pltvar(j), j = 1, cea(icase)%Nplt)
        end if
     end do
 
     close(IOPLT)
+
+    deallocate(Pltout)
 
     return
   end subroutine write_plt_file
