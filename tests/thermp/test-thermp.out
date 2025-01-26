@@ -24,6 +24,7 @@
  only    Ar C CO CO2 H H2 H2O HNO HO2 HNO2 HNO3 N NH NO N2 N2O3 O O2 OH O3
   
  output  calories
+         plot p t *Ar *CO *CO2 *H HO2 *H2 H2O *N *NO *N2 *O *OH *O2
   
  end
 
@@ -1310,6 +1311,7 @@
          name O2(L) moles = 60   O 2
   
  output  siunits
+         plot p t H2O *O2 H2O(L)
   
  end
 
