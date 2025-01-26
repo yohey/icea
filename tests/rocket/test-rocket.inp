@@ -14,6 +14,7 @@ reac    fuel = H2(L)  wt% = 100.  t(k) = 20.27
         oxid = O2(L)  wt% = 100.  t(k) = 90.17 
 
 output  siunits
+        plot p t rho h u g s m mw cp gam son
 
 end
 
@@ -32,7 +33,8 @@ problem case = Example-9-mod
 reac    fuel = H2(L)  wt% = 100.  t,k = 20.27 
         oxid = O2(L)  wt% = 100.  t,k = 90.17
 
-output  siunits  
+output  siunits
+        plot pip mach aeat cf ivac isp
 
 end
 
@@ -71,6 +73,7 @@ reac    fuel = Li(cr)  moles = 1.     t(k) = 298.15
         oxid = F2(L)   moles = .5556  t(k) = 85.02   
 
 output  siunits  transport
+        plot viscos conduct prandtl conduct_fz prandtl_fz
 
 end
 

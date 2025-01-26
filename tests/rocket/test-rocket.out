@@ -25,6 +25,7 @@
          oxid = O2(L)  wt% = 100.  t(k) = 90.17
   
  output  siunits
+         plot p t rho h u g s m mw cp gam son
   
  end
 
@@ -243,6 +244,7 @@
          oxid = O2(L)  wt% = 100.  t,k = 90.17
   
  output  siunits
+         plot pip mach aeat cf ivac isp
   
  end
 
@@ -629,6 +631,7 @@
          oxid = F2(L)   moles = .5556  t(k) = 85.02
   
  output  siunits  transport
+         plot viscos conduct prandtl conduct_fz prandtl_fz
   
  end
 

@@ -16,7 +16,7 @@ add_test(
 
 set_tests_properties(${JOB_NAME} PROPERTIES FIXTURES_SETUP ${JOB_NAME}_fixtures)
 
-foreach(EXT IN ITEMS "out")
+foreach(EXT IN ITEMS "out" "plt")
   add_test(
     NAME ${JOB_NAME}.${EXT}
     COMMAND diff -Bb ${CMAKE_CURRENT_SOURCE_DIR}/${JOB_NAME}.${EXT} ${CMAKE_CURRENT_BINARY_DIR}/${JOB_NAME}.${EXT}

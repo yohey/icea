@@ -1,7 +1,13 @@
-reac oxid O2 wt%=100 t(k)=298.15
-     fuel H2 wt%=100 t(k)=298.15
+problem case = Example-6-mod
+        detonation
+        t,k = 300, 350, 400, 450, 500
+        r,eq.ratio = 1
+        p,bar = 1, 5, 10, 15, 20
 
-prob detonation case=Test-DETON t=300,350,400,450,500, r,e=1, pbar=1,5,10,15,20
+reac    oxid = O2 wt% = 100 t(k) = 298.15
+        fuel = H2 wt% = 100 t(k) = 298.15
 
-output calories transport
+output  calories transport
+        plot sonic_1 gamma_1 h_1 t_1 p_1 detvel mach
+
 end
