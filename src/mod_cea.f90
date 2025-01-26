@@ -430,6 +430,8 @@ contains
                 end do
 
                 if (cea%legacy_mode) then
+                   cea%fmt(4) = '13'
+                   cea%fmt(7) = '3,'
                    write(IOOUT, cea%fmt) fpp1, V(i_col_start:cea%ipt)
                    write(IOOUT, cea%fmt) ftt1, Pcp(i_col_start:cea%ipt)
                 end if
