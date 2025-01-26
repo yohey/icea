@@ -14,8 +14,8 @@ contains
     implicit none
 
     type(CEA_Problem), intent(inout):: cea(:)
-    character(MAX_FILENAME), intent(in), optional:: out_filename
-    character(MAX_FILENAME), intent(in), optional:: plt_filename
+    character(*), intent(in), optional:: out_filename
+    character(*), intent(in), optional:: plt_filename
     integer:: icase, num_cases
     logical:: any_legacy_mode, is_opened
 
@@ -65,10 +65,6 @@ contains
     if (present(plt_filename)) then
        call write_plt_file(cea(1:num_cases), plt_filename)
     end if
-
-#ifndef NDEBUG
-    call write_legacy_output_for_debug(cea, out_filename(:len_trim(out_filename)-4) // '.debug.out')
-#endif
 
     return
   end subroutine run_all_cases
@@ -4072,7 +4068,7 @@ contains
     end do
     p%Cpfro = p%Cpfro * cea%R / wtmol
     p%Confro = p%Confro / 1000
-    if (.not. cea%SIunit) p%Confro = p%Confro / 4.184d0
+    if (.not. cea%SIunit) p%Confro = p%Confro / cal_to_J
     p%Vis = p%Vis / 1000
     p%Prfro = p%Vis * p%Cpfro / p%Confro
     if (cea%Eql) then
@@ -4083,37 +4079,5 @@ contains
        p%Preql = p%Vis * p%Cpeql / p%Coneql
     end if
   end subroutine TRANP
-
-
-#ifndef NDEBUG
-  subroutine print_debug(cea, iof)
-    use mod_constants, only: stderr
-    use mod_types, only: CEA_Problem
-    implicit none
-
-    type(CEA_Problem), intent(in):: cea
-    integer, intent(in):: iof
-
-    integer:: i
-
-    write(stderr, *) "[DEBUG] Case: ", trim(cea%Case)
-    write(stderr, *) "[DEBUG] iof = ", iof, ", Nof = ", cea%Nof
-    write(stderr, *) "[DEBUG] ", (trim(cea%ensert(i)), i = 1, 20)
-    write(stderr, *) "[DEBUG] ", cea%Enn, cea%Ennl, cea%Enlsav, cea%Ensave, cea%Sumn
-!!$    write(stderr, *) "[DEBUG] ", cea%Deln(), cea%Enln(), cea%Sln()
-!!$    write(stderr, *) "[DEBUG] ", cea%En()
-    write(stderr, *) "[DEBUG] ", cea%Iplt, cea%Nc, cea%Ng, cea%Ngp1, cea%Nlm, cea%Nplt, cea%Nof
-    write(stderr, *) "[DEBUG] ", cea%Nomit, cea%Nonly, cea%Np, cea%Npr, cea%Ngc, cea%Nsert, cea%Nspr, cea%Nspx, cea%Nt
-    write(stderr, *) "[DEBUG] ", cea%Cpmix, cea%Wmix, cea%Bcheck
-    write(stderr, *) "[DEBUG] ", cea%Imat, cea%Iq1, cea%Isv, cea%Jliq, cea%Jsol, cea%Lsave, cea%Msing
-    write(stderr, *) "[DEBUG] ", cea%Convg, cea%Detdbg, cea%Detn, cea%Eql, cea%Gonly, cea%Hp, cea%Ions, cea%Massf, cea%Moles
-    write(stderr, *) "[DEBUG] ", cea%Pderiv, cea%Shock, cea%Short, cea%SIunit, cea%Sp, cea%Tp, cea%Trnspt, cea%Vol
-    write(stderr, *) "[DEBUG] ", cea%Eqrat, cea%Hsub0, cea%Oxfl, cea%Pp, cea%R, cea%Size, cea%S0
-    write(stderr, *) "[DEBUG] ", cea%Tln, cea%Tm, cea%Trace, cea%Tt, cea%Viscns, cea%Vv
-!!$    write(stderr, *) "[DEBUG] ", 
-
-    return
-  end subroutine print_debug
-#endif
 
 end module mod_cea

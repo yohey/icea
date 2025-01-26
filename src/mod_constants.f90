@@ -5,6 +5,8 @@ module mod_constants
 
   integer, parameter:: stderr = 0
 
+  real(8), parameter:: g0 = 9.80665d0
+  real(8), parameter:: cal_to_J = 4.184d0 !< CEA is based on thermochemical calorie (= 4.184 J), not IT calorie (= 4.1868 J).
 
   !***********************************************************************
   ! Fundamental constants from:  Cohen, E. Richard & Taylor, Barry N.,

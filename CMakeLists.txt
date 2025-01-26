@@ -22,6 +22,7 @@ target_sources(${CEA_LIBRARY}
   src/mod_constants.f90
   src/mod_general.f90
   src/mod_functions.f90
+  src/mod_io.f90
   src/mod_legacy_io.f90
 )
 
@@ -70,3 +71,4 @@ add_subdirectory(tests/deton)
 add_subdirectory(tests/thermp)
 add_subdirectory(tests/shock)
 add_subdirectory(tests/rocket)
+add_subdirectory(tests/newio)
