@@ -48,15 +48,15 @@ contains
 
 
   subroutine read_legacy_input(cea, filename)
-    use mod_types
+    use mod_types, only: CEA_Problem, IOINP, init_case
     implicit none
 
     type(CEA_Problem), allocatable, intent(out):: cea(:)
     character(*), intent(in):: filename
 
     integer:: num_cases
-    integer:: icase, iof, i
-    logical:: file_exists, caseOK, readOK
+    integer:: icase
+    logical:: file_exists
 
     inquire(file = filename, exist = file_exists)
     if (.not. file_exists) then
@@ -70,8 +70,6 @@ contains
 
     open(newunit = IOINP, file = filename, status = 'old', form = 'formatted', action = 'read')
 
-    readOK = .true.
-
     do icase = 1, num_cases
        call init_case(cea(icase))
 
@@ -81,30 +79,48 @@ contains
        end if
        !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
 
-       cea(icase)%Iplt = 0
-       cea(icase)%Nplt = 0
-
-       call INPUT(cea(icase), readOK, caseOK)
-
-       do iof = 1, cea(icase)%Nof
-          if (cea(icase)%Oxf(iof) == 0. .and. cea(icase)%points(1, 1)%B0p(1, 1) /= 0.) then
-             do i = 1, cea(icase)%Nlm
-                if (cea(icase)%points(1, 1)%B0p(i, 1) == 0. .or. cea(icase)%points(1, 1)%B0p(i, 2) == 0.) then
-                   write(cea(icase)%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
-                   caseOK = .false.
-                end if
-             end do
-          end if
-       end do
-
-       cea(icase)%invalid_case = (.not. caseOK) .or. (.not. readOK)
-       cea(icase)%legacy_mode = .true.
+       call read_legacy_case(cea(icase))
     end do
 
     close(IOINP)
 
     return
   end subroutine read_legacy_input
+
+
+  subroutine read_legacy_case(cea)
+    use mod_types, only: CEA_Problem
+    implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+
+    integer:: iof, i
+    logical:: caseOK, readOK
+
+    caseOK = .true.
+    readOK = .true.
+
+    cea%Iplt = 0
+    cea%Nplt = 0
+
+    call INPUT(cea, readOK, caseOK)
+
+    do iof = 1, cea%Nof
+       if (cea%Oxf(iof) == 0. .and. cea%points(1, 1)%B0p(1, 1) /= 0.) then
+          do i = 1, cea%Nlm
+             if (cea%points(1, 1)%B0p(i, 1) == 0. .or. cea%points(1, 1)%B0p(i, 2) == 0.) then
+                write(cea%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
+                caseOK = .false.
+             end if
+          end do
+       end if
+    end do
+
+    cea%invalid_case = (.not. caseOK) .or. (.not. readOK)
+    cea%legacy_mode = .true.
+
+    return
+  end subroutine read_legacy_case
 
 
   subroutine INPUT(cea, readOK, caseOK)

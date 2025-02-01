@@ -4,18 +4,14 @@ enable_language(Fortran)
 project(CEA Fortran)
 
 
-set(CEA_LIBRARY libcea)
+set(CEA_CORE cea-core)
 set(CEA_EXECUTABLE cea)
+set(CEA_CXX_LIBRARY libcea)
 
 
-add_library(${CEA_LIBRARY})
+add_library(${CEA_CORE})
 
-set_target_properties(${CEA_LIBRARY}
-  PROPERTIES
-  OUTPUT_NAME cea
-)
-
-target_sources(${CEA_LIBRARY}
+target_sources(${CEA_CORE}
   PRIVATE
   src/mod_cea.f90
   src/mod_types.f90
@@ -26,7 +22,7 @@ target_sources(${CEA_LIBRARY}
   src/mod_legacy_io.f90
 )
 
-target_compile_options(${CEA_LIBRARY}
+target_compile_options(${CEA_CORE}
   PRIVATE
   "-cpp"
   "-std=f2023"
@@ -46,7 +42,7 @@ target_compile_options(${CEA_EXECUTABLE}
   "-std=f2023"
 )
 
-target_link_libraries(${CEA_EXECUTABLE} PRIVATE ${CEA_LIBRARY})
+target_link_libraries(${CEA_EXECUTABLE} PRIVATE ${CEA_CORE})
 
 
 foreach(LIB IN ITEMS "thermo" "trans")
@@ -65,6 +61,9 @@ endforeach()
 install(TARGETS ${CEA_EXECUTABLE} RUNTIME DESTINATION bin)
 
 
+add_subdirectory(ffi/c++)
+
+
 enable_testing()
 add_subdirectory(tests/orig)
 add_subdirectory(tests/deton)
@@ -72,3 +71,4 @@ add_subdirectory(tests/thermp)
 add_subdirectory(tests/shock)
 add_subdirectory(tests/rocket)
 add_subdirectory(tests/newio)
+add_subdirectory(tests/c++)

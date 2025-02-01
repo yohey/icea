@@ -1,25 +1,29 @@
 
-set(JOB_NAME test-newio)
+set(JOB_NAME test-c++)
 
-set(TEST_EXECUTABLE ${JOB_NAME}_exe)
+enable_language(CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
+set(TEST_EXECUTABLE ${JOB_NAME})
 
 
 add_executable(${TEST_EXECUTABLE} EXCLUDE_FROM_ALL)
 
 target_sources(${TEST_EXECUTABLE}
   PRIVATE
-  test_newio.f90
+  src/main.cpp
 )
 
-target_compile_options(${TEST_EXECUTABLE}
-  PRIVATE
-  "-cpp"
-  "-std=f2023"
-)
+# target_compile_options(${TEST_EXECUTABLE}
+#   PRIVATE
+# )
 
-target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_BINARY_DIR})
+target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_SOURCE_DIR}/ffi/c++/src)
 
-target_link_libraries(${TEST_EXECUTABLE} PRIVATE ${CEA_CORE})
+target_link_libraries(${TEST_EXECUTABLE} PRIVATE ${CEA_CXX_LIBRARY})
 
 
 add_custom_target(run-${JOB_NAME}
