@@ -24,17 +24,18 @@ contains
     any_legacy_mode = any([(cea(icase)%legacy_mode, icase = 1, num_cases)])
 
     do icase = 1, num_cases
+       if (cea(icase)%legacy_mode) then
+          inquire(cea(icase)%io_log, opened = is_opened)
+          if (cea(icase)%io_log == 0 .or. .not. is_opened) open(newunit = cea(icase)%io_log, status = 'scratch', form = 'formatted')
+       end if
+
        if (cea(icase)%Nlm == 0) call REACT(cea(icase))
 
        call read_libraries(cea(icase))
     end do
 
     if (any_legacy_mode) then
-       if (present(out_filename)) then
-          call open_legacy_output(IOOUT, out_filename)
-       else
-          call open_legacy_output(IOOUT)
-       end if
+       call open_legacy_output(IOOUT, out_filename)
     end if
 
     do icase = 1, num_cases
@@ -62,7 +63,10 @@ contains
     end do
 
     inquire(IOOUT, opened = is_opened)
-    if (is_opened) close(IOOUT)
+    if (is_opened) then
+       close(IOOUT)
+       IOOUT = 0
+    end if
 
     if (present(plt_filename)) then
        call write_plt_file(cea(1:num_cases), plt_filename)
