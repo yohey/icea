@@ -19,6 +19,9 @@ namespace CEA {
     void ffi_cea_print_case(const FFI_CEA_Problem_Ptr&);
 
     FFI_CEA_Problem_Array ffi_cea_read_legacy_input(const char*);
+    void ffi_cea_run_all_cases(FFI_CEA_Problem_Array&, const char* = nullptr, const char* = nullptr);
+
+    size_t ffi_cea_sizeof(const FFI_CEA_Problem_Ptr&);
   }
 
 }

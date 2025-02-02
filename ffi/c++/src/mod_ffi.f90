@@ -90,7 +90,7 @@ contains
        call init_case(cea)
 
        !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
-       if (associated(cea_prev)) then
+       if (icase > 1 .and. associated(cea_prev)) then
           cea%Dens(:) = cea_prev%Dens(:)
        end if
        !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
@@ -112,6 +112,49 @@ contains
 
     return
   end function ffi_read_legacy_input
+
+
+  subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
+    use mod_types, only: CEA_Problem
+    use mod_cea, only: run_all_cases
+
+    type(CEA_Problem_Array):: array
+    character(len = 1, kind = c_char), intent(in), optional:: out_filename(*)
+    character(len = 1, kind = c_char), intent(in), optional:: plt_filename(*)
+
+    type(CEA_Problem), pointer:: cea(:)
+
+    call c_f_pointer(array%addr, cea, [array%size])
+
+    if (present(out_filename) .and. present(plt_filename)) then
+       call run_all_cases(cea, get_string(out_filename), get_string(plt_filename))
+    else if (present(out_filename)) then
+       call run_all_cases(cea, get_string(out_filename))
+    else if (present(plt_filename)) then
+       call run_all_cases(cea, plt_filename = get_string(plt_filename))
+    else
+       call run_all_cases(cea)
+    end if
+
+    return
+  end subroutine ffi_run_all_cases
+
+
+  function ffi_sizeof(ptr) result(size) bind(C, name = "ffi_cea_sizeof")
+    use mod_types, only: CEA_Problem
+
+    integer(c_size_t):: size
+    type(c_ptr), intent(in):: ptr
+
+    type(CEA_Problem), pointer:: cea
+    call c_f_pointer(ptr, cea)
+
+    if (associated(cea)) then
+       size = storage_size(cea) / 8  ! bit -> byte
+    end if
+
+    return
+  end function ffi_sizeof
 
 
   function get_string(cstring) result(fstring)

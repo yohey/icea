@@ -3,7 +3,7 @@ module mod_legacy_io
 
   integer, parameter:: MAX_CHARS = 132 !< Maximum number of characters in a line (record).
 
-  private:: INPUT, INFREE, REACT, UTHERM, UTRAN, EFMT, VARFMT
+  private:: INPUT, INFREE, UTHERM, UTRAN, EFMT, VARFMT
 
 contains
 
@@ -103,6 +103,8 @@ contains
     cea%Iplt = 0
     cea%Nplt = 0
 
+    cea%legacy_mode = .true.
+
     call INPUT(cea, readOK, caseOK)
 
     do iof = 1, cea%Nof
@@ -117,7 +119,6 @@ contains
     end do
 
     cea%invalid_case = (.not. caseOK) .or. (.not. readOK)
-    cea%legacy_mode = .true.
 
     return
   end subroutine read_legacy_case
@@ -1635,7 +1636,7 @@ contains
                       dift = abs(cea%Tt - T1)
                       if (dift > 1) then
                          if (dift > 10) then
-                            write(cea%io_log, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
+                            if (cea%legacy_mode) write(cea%io_log, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
                                  & f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", f8.2, &
                                  & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
                             cea%Nlm = 0
@@ -1643,7 +1644,7 @@ contains
                             close(io_thermo)
                             return
                          else
-                            write(cea%io_log, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
+                            if (cea%legacy_mode) write(cea%io_log, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
                                  & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
                                  & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
                             cea%Tt = T1
@@ -1671,7 +1672,7 @@ contains
 
                 if (cea%Tt == 0) then
                    if (.not. cea%Hp) go to 50
-                   write(cea%io_log, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
+                   if (cea%legacy_mode) write(cea%io_log, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
                    cea%Nlm = 0
                    close(io_thermo)
                    return
@@ -1698,7 +1699,7 @@ contains
           close(io_thermo)
 
           if (.not. hOK) then
-             write(cea%io_log, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
+             if (cea%legacy_mode) write(cea%io_log, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
                   & "IS OUTSIDE ITS TEMPERATURE RANGE", f8.2, " TO", f9.2, "K (REACT)")') cea%Tt, cea%Rname(n), T1save, T2save
              cea%Energy(n) = ' '
              cea%Nlm = 0
@@ -1751,7 +1752,7 @@ contains
              end if
           end do
 
-          write(cea%io_log, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') cea%Ratom(n, jj)
+          if (cea%legacy_mode) write(cea%io_log, '(/1x, a2, " NOT FOUND IN BLOCKDATA (REACT)")') cea%Ratom(n, jj)
           cea%Nlm = 0
           return
 100    end do
@@ -1761,10 +1762,10 @@ contains
           if (.not. cea%Moles .and. .not. wdone(kr)) then
              wdone(kr) = .true.
              cea%Pecwt(n) = 100.
-             write(cea%io_log, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", i3, ".", &
+             if (cea%legacy_mode) write(cea%io_log, '(/" WARNING!!  AMOUNT MISSING FOR REACTANT", i3, ".", &
                   & /" PROGRAM SETS WEIGHT PERCENT = 100. (REACT)")') n
           else
-             write(cea%io_log, '(/" AMOUNT MISSING FOR REACTANT NO.", i2, "(REACT)")') n
+             if (cea%legacy_mode) write(cea%io_log, '(/" AMOUNT MISSING FOR REACTANT NO.", i2, "(REACT)")') n
              cea%Nlm = 0
              return
           end if
@@ -1834,7 +1835,7 @@ contains
           end do
        end if
 
-       if (.not. cea%Short) then
+       if (cea%legacy_mode .and. .not. cea%Short) then
           if (cea%Moles) then
              write(cea%io_log, '(/4x, "REACTANT", 10x, a7, 3x, "(ENERGY/R),K", 3x, &
                   & "TEMP,K  DENSITY"/, 8x, "EXPLODED FORMULA")') ' MOLES '

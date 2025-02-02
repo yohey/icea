@@ -24,6 +24,8 @@ contains
     any_legacy_mode = any([(cea(icase)%legacy_mode, icase = 1, num_cases)])
 
     do icase = 1, num_cases
+       if (cea(icase)%Nlm == 0) call REACT(cea(icase))
+
        call read_libraries(cea(icase))
     end do
 
