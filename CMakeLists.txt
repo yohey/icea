@@ -13,13 +13,13 @@ add_library(${CEA_CORE})
 
 target_sources(${CEA_CORE}
   PRIVATE
-  src/mod_cea.f90
-  src/mod_types.f90
-  src/mod_constants.f90
-  src/mod_general.f90
-  src/mod_functions.f90
-  src/mod_io.f90
-  src/mod_legacy_io.f90
+  src/core/mod_cea.f90
+  src/core/mod_types.f90
+  src/core/mod_constants.f90
+  src/core/mod_general.f90
+  src/core/mod_functions.f90
+  src/core/mod_io.f90
+  src/core/mod_legacy_io.f90
 )
 
 target_compile_options(${CEA_CORE}
@@ -53,7 +53,7 @@ foreach(LIB IN ITEMS "thermo" "trans")
 
   add_custom_command(
     OUTPUT ${LIB}.inp
-    COMMAND cp -a ${CMAKE_SOURCE_DIR}/src/${LIB}.inp ${CMAKE_BINARY_DIR}/
+    COMMAND cp -a ${CMAKE_SOURCE_DIR}/src/core/${LIB}.inp ${CMAKE_BINARY_DIR}/
   )
 endforeach()
 
@@ -61,7 +61,7 @@ endforeach()
 install(TARGETS ${CEA_EXECUTABLE} RUNTIME DESTINATION bin)
 
 
-add_subdirectory(ffi/c++)
+add_subdirectory(src/interfaces/c++)
 
 
 enable_testing()

@@ -14,8 +14,8 @@ set_target_properties(${CEA_CXX_LIBRARY}
 
 target_sources(${CEA_CXX_LIBRARY}
   PRIVATE
-  src/cea.cpp
-  src/mod_ffi.f90
+  cea.cpp
+  mod_ffi.f90
 )
 
 target_include_directories(${CEA_CXX_LIBRARY} PRIVATE ${CMAKE_BINARY_DIR})

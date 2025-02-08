@@ -17,7 +17,7 @@ target_sources(${TEST_EXECUTABLE}
   src/main.cpp
 )
 
-target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_SOURCE_DIR}/ffi/c++/src)
+target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_SOURCE_DIR}/src/interfaces/c++)
 
 target_link_libraries(${TEST_EXECUTABLE} PRIVATE ${CEA_CXX_LIBRARY})
 
