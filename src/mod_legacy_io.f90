@@ -151,7 +151,7 @@ contains
     write(cea%io_log, '(/, /)')
 
     caseOK = .true.
-    cea%Nonly = 0
+    cea%Nonly_in = 0
     cea%Nomit = 0
     cea%Nsert = 0
     reacts = .false.
@@ -177,9 +177,9 @@ contains
 
           ! STORE PRODUCT NAMES FROM 'ONLY' DATASET
           if (code == 'only') then
-             cea%Nonly = min(maxNgc, ncin-1)
-             do concurrent (i = 1:cea%Nonly)
-                cea%Prod(i) = cin(i+1)
+             cea%Nonly_in = min(maxNgc, ncin-1)
+             do concurrent (i = 1:cea%Nonly_in)
+                cea%Prod_in(i) = cin(i+1)
              end do
 
              ! STORE CONDENSED PRODUCT NAMES FROM 'INSERT' DATASET
@@ -406,16 +406,16 @@ contains
              cea%Detn = .false.
              cea%Vol = .false.
              cea%Ions = .false.
-             cea%Eql = .false.
+             cea%Eql_in = .false.
              cea%Froz = .false.
              cea%Fac = .false.
              cea%Debugf = .false.
-             cea%Acat = 0
-             cea%Ma = 0
+             cea%AcAt_in = 0
+             cea%mdotByAc_in = 0
              cea%Nfz = 1
-             cea%Nsub = 0
-             cea%Nsup = 0
-             cea%Npp = 0
+             cea%Nsub_in = 0
+             cea%Nsup_in = 0
+             cea%Npp_in = 0
              cea%Tcest = 3800
              do concurrent (i = 1:Ncol)
                 cea%Pcp(i) = 0
@@ -483,12 +483,12 @@ contains
 
                    else if (cx3 == 'fac') then
                       cea%Rkt = .true.
-                      cea%Eql = .true.
+                      cea%Eql_in = .true.
                       cea%Fac = .true.
                       cea%Froz = .false.
 
                    else if (cx2 == 'eq') then
-                      cea%Eql = .true.
+                      cea%Eql_in = .true.
 
                    else if (cx2 == 'fr' .or. cx2 == 'fz') then
                       cea%Froz = .true.
@@ -499,14 +499,14 @@ contains
                    else if (cx3 == 'inc') then
                       cea%Shock = .true.
                       incd = .true.
-                      if (index(cx15, 'eq') > 0) cea%Eql = .true.
+                      if (index(cx15, 'eq') > 0) cea%Eql_in = .true.
                       if (index(cx15, 'fr') > 0) cea%Froz = .true.
                       if (index(cx15, 'fz') > 0) cea%Froz = .true.
 
                    else if (cx3 == 'ref') then
                       cea%Shock = .true.
                       refl = .true.
-                      if (index(cx15, 'eq') > 0) cea%Eql = .true.
+                      if (index(cx15, 'eq') > 0) cea%Eql_in = .true.
                       if (index(cx15, 'fr') > 0) cea%Froz = .true.
                       if (index(cx15, 'fz') > 0) cea%Froz = .true.
 
@@ -531,9 +531,9 @@ contains
           else if (code(1:3) == 'end') then
              if (cea%Shock) then
                 if (incd .and. cea%Froz) cea%Incdfz = .true.
-                if (incd .and. cea%Eql) cea%Incdeq = .true.
+                if (incd .and. cea%Eql_in) cea%Incdeq = .true.
                 if (refl .and. cea%Froz) cea%Reflfz = .true.
-                if (refl .and. cea%Eql) cea%Refleq = .true.
+                if (refl .and. cea%Eql_in) cea%Refleq = .true.
              end if
 
              cea%Hsub0 = min(hr, ur)
@@ -551,7 +551,7 @@ contains
                      & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
                      & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
                      cea%Tp, (cea%Hp .and. .not. cea%Vol), cea%Sp, (cea%Tp .and. cea%Vol), (cea%Hp .and. cea%Vol), &
-                     (cea%Sp .and. cea%Vol), cea%Detn, cea%Shock, refl, incd, cea%Rkt, cea%Froz, cea%Eql, cea%Ions, &
+                     (cea%Sp .and. cea%Vol), cea%Detn, cea%Shock, refl, incd, cea%Rkt, cea%Froz, cea%Eql_in, cea%Ions, &
                      cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
 
                 if (cea%T(1) > 0) then
@@ -569,10 +569,11 @@ contains
                 if (cea%Nt == 0) cea%Hp = .true.
                 if (.not. cea%Short) then
                    write(cea%io_log, '(/" Pc,BAR =", 7f13.6)') cea%P(1:cea%Np)
-                   write(cea%io_log, '(/" Pc/P =", 9f11.4)') cea%Pcp(1:cea%Npp)
-                   write(cea%io_log, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub)
-                   write(cea%io_log, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup)
-                   write(cea%io_log, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') cea%Nfz, cea%Ma, cea%Acat
+                   write(cea%io_log, '(/" Pc/P =", 9f11.4)') cea%Pcp(1:cea%Npp_in)
+                   write(cea%io_log, '(/" SUBSONIC AREA RATIOS =", (5f11.4))') (cea%Subar(i), i = 1, cea%Nsub_in)
+                   write(cea%io_log, '(/" SUPERSONIC AREA RATIOS =", (5f11.4))') (cea%Supar(i), i = 1, cea%Nsup_in)
+                   write(cea%io_log, '(/" NFZ=", i3, 1p, "  Mdot/Ac=", e13.6, "  Ac/At=", e13.6)') &
+                        cea%Nfz, cea%mdotByAc_in, cea%AcAt_in
                 end if
              else
                 if (.not. cea%Vol .and. .not. cea%Short) write(cea%io_log, '(/" P,BAR =", 7f13.6)') (cea%P(jj), jj = 1, cea%Np)
@@ -691,12 +692,12 @@ contains
              end do
 
           else if ((cx2 == 'pc' .or. cx2 == 'pi') .and. index(cx15(3:15), 'p') > 0 .and. index(cx15, 'psi') == 0) then
-             cea%Npp = nmix
+             cea%Npp_in = nmix
              if (nmix > 2*Ncol) then
-                cea%Npp = 2 * Ncol
-                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', cea%Npp
+                cea%Npp_in = 2 * Ncol
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", I3, " (INPUT)", /)') 'pcp', cea%Npp_in
              end if
-             cea%Pcp(1:cea%Npp) = mix(1:cea%Npp)
+             cea%Pcp(1:cea%Npp_in) = mix(1:cea%Npp_in)
 
           else if (cx1 == 'p' .and. cx3 /= 'phi') then
              cea%Np = nmix
@@ -780,26 +781,28 @@ contains
              end do
 
           else if (cx3 == 'sub') then
-             cea%Nsub = nmix
+             cea%Nsub_in = nmix
              if (nmix > 13) then
-                cea%Nsub = 13
-                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'subar', cea%Nsub
+                cea%Nsub_in = 13
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') &
+                     'subar', cea%Nsub_in
              end if
-             cea%Subar(1:cea%Nsub) = mix(1:cea%Nsub)
+             cea%Subar(1:cea%Nsub_in) = mix(1:cea%Nsub_in)
 
           else if (cx3 == 'sup') then
-             cea%Nsup = nmix
+             cea%Nsup_in = nmix
              if (nmix > 13) then
-                cea%Nsup = 13
-                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'supar', cea%Nsup
+                cea%Nsup_in = 13
+                write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') &
+                     'supar', cea%Nsup_in
              end if
-             cea%Supar(1:cea%Nsup) = mix(1:cea%Nsup)
+             cea%Supar(1:cea%Nsup_in) = mix(1:cea%Nsup_in)
 
           else if (cx2 == 'ac') then
-             cea%Acat = mix(1)
+             cea%AcAt_in = mix(1)
 
           else if (cx4 == 'mdot' .or. cx2 == 'ma') then
-             cea%Ma = mix(1)
+             cea%mdotByAc_in = mix(1)
 
           else if (cx4 == 'case') then
              cea%Case = cin(in+1)
@@ -1333,7 +1336,6 @@ contains
     character(4):: mamo
     logical:: kOK
     integer:: i, k, m, im, kin
-    integer, save:: notuse
     real(8):: tra, tem
 
     type(CEA_Point), pointer:: p
@@ -1358,7 +1360,7 @@ contains
 
     if (cea%Eql) then
        write(io_out, '(/1x, A4, " FRACTIONS"/)') mamo
-       notuse = 0
+       cea%num_omitted = 0
 
        do k = 1, cea%Ngc
           kOK = .true.
@@ -1400,15 +1402,12 @@ contains
              else
                 call EFMT(cea%fmt(4), cea%Prod(k), X, n_cols_print)
              end if
-             if (cea%Prod(k) == cea%Omit(notuse)) notuse = notuse - 1
+             if (cea%Prod(k) == cea%Omit(cea%num_omitted)) cea%num_omitted = cea%num_omitted - 1
           else if (cea%Prod(k) /= cea%Prod(k-1)) then
-             notuse = notuse + 1
-             cea%Omit(notuse) = cea%Prod(k)
+             cea%num_omitted = cea%num_omitted + 1
+             cea%Omit(cea%num_omitted) = cea%Prod(k)
           end if
        end do
-
-!!$       write(0, '(a, i5)') '[DEBUG] OUT3: notuse   = ', notuse
-!!$       write(0, '(a, *(a, ", "))') '[DEBUG] OUT3: cea%Omit = ', (trim(cea%Omit(i)), i = 1, notuse)
     end if
 
     write(io_out, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') cea%Tg(4)
@@ -1416,7 +1415,7 @@ contains
        write(io_out, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", a4, &
             & " FRACTIONS", /"    WERE LESS THAN", 1pe13.6, &
             & " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
-       write(io_out, '(5(1x, a15))') (cea%Omit(i), i = 1, notuse)
+       write(io_out, '(5(1x, a15))') (cea%Omit(i), i = 1, cea%num_omitted)
     end if
 
     if (.not. cea%Moles) write(io_out, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
@@ -1924,7 +1923,7 @@ contains
     i23 = 2
     if (cea%Iopt > 0) then
        if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), p2%App
-       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%Ma, p2%App
+       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%mdotByAc, p2%App
        i23 = 3
     end if
 
@@ -2102,7 +2101,11 @@ contains
        end if
 
        ! MOLE (OR MASS) FRACTIONS - FROZEN
-       tra = 5.E-6
+       if (cea%legacy_mode) then
+          tra = 5e-6
+       else
+          tra = 5d-6
+       end if
        if (cea%Trace /= 0) tra = cea%Trace
        line = 0
 

@@ -9,7 +9,7 @@ contains
 
   subroutine run_all_cases(cea, out_filename, plt_filename)
     use mod_constants, only: stderr
-    use mod_types, only: CEA_Problem, MAX_FILENAME, IOOUT
+    use mod_types, only: CEA_Problem, MAX_FILENAME, IOOUT, reset_case
     use mod_legacy_io
     implicit none
 
@@ -39,6 +39,8 @@ contains
     end if
 
     do icase = 1, num_cases
+       call reset_case(cea(icase))
+
        if (cea(icase)%legacy_mode) then
           !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
           if (icase >= 2) then
@@ -2081,9 +2083,9 @@ contains
     if (cea%Fac) then
        cea%Eql = .true.
        cea%Npp = cea%Npp + 1
-       if (cea%Acat /= 0) then
+       if (cea%AcAt /= 0) then
           cea%Iopt = 1
-       else if (cea%Ma /= 0) then
+       else if (cea%mdotByAc /= 0) then
           cea%Iopt = 2
        else
           if (cea%legacy_mode) write(IOOUT, '(/" FATAL ERROR!! EITHER mdot OR ac/at MISSING FOR fac PROBLEM (ROCKET)")')
@@ -2100,9 +2102,9 @@ contains
        end do
        cea%Nsub = cea%Nsub + 1
        if (cea%Iopt /= 1) then
-          if (cea%Acat == 0) cea%Acat = 2
+          if (cea%AcAt == 0) cea%AcAt = 2
        end if
-       cea%Subar(1) = cea%Acat
+       cea%Subar(1) = cea%AcAt
     else if (.not. cea%Eql .and. cea%Nfz > 1 .and. cea%Nsub > 0) then
        cea%Nsub = 0
        if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  FOR FROZEN PERFORMANCE, SUBSONIC AREA ", /, &
@@ -2188,25 +2190,25 @@ contains
 
                 ! INITIAL ESTIMATE FOR PC (AND ACAT IF NOT ASSIGNED)
                 do i = 1, 4
-                   prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
+                   prat = (b1 + c1 * cea%AcAt) / (1 + a1l * cea%AcAt)
                    ppa = pinj * prat
                    if (cea%Iopt == 1) exit
-                   cea%Acat = ppa / (cea%Ma * 2350)
-                   if (cea%Acat >= 1) then
+                   cea%AcAt = ppa / (cea%mdotByAc * 2350)
+                   if (cea%AcAt >= 1) then
                       pratsv = prat
                       if (cea%legacy_mode .and. cea%Debugf) then
                          if (i <= 1) write(IOOUT, '(/"  ITERATION", 9x, "PC", 7x, "CONTRACTION RATIO")')
-                         write(IOOUT, '(5x, i2, 7x, f12.2, 3x, f12.6)') i, ppa, cea%Acat
+                         write(IOOUT, '(5x, i2, 7x, f12.2, 3x, f12.6)') i, ppa, cea%AcAt
                       end if
                    else
                       if (cea%legacy_mode) write(IOOUT, '(/" INPUT VALUE OF mdot/a =", f12.3, " IS TOO LARGE."/ &
-                           & " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') cea%Ma
+                           & " GIVES CONTRACTION RATIO ESTIMATE LESS THAN 1 (ROCKET)")') cea%mdotByAc
                       cea%Tt = 0
                       exit iofLoop
                    end if
                 end do
 
-                if (i > 4) cea%Subar(1) = cea%Acat
+                if (i > 4) cea%Subar(1) = cea%AcAt
 
                 cea%Pp = ppa / pa
                 p1%App = cea%Pp / p1%Ppp
@@ -2431,27 +2433,27 @@ contains
                    if (cea%legacy_mode .and. cea%Debugf) then
                       write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
                            & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
-                      write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
+                      write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%AcAt
                    end if
                 else if (cea%Iopt == 2) then
                    ! OPTION 2 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
                    ! PRESSURE AND MASS FLOW PER UNIT AREA. IMPROVED ESTIMATE FOR PC
                    ! AND ACAT
-                   acatsv = cea%Acat
+                   acatsv = cea%AcAt
                    pratsv = prat
                    cea%Area = .false.
                    itnum = 0
                    ppa = p4%Ppp * pa
                    pinj = ppa + 1.d05 * usq / p4%Vlm
                    mat = pa / (cea%Awt * R0)
-                   cea%Acat = mat / cea%Ma
-                   prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
+                   cea%AcAt = mat / cea%mdotByAc
+                   prat = (b1 + c1 * cea%AcAt) / (1 + a1l * cea%AcAt)
                    test = (pinj - pinjas) / pinjas
                    pcpa = pinf * pa
                    if (cea%legacy_mode .and. cea%Debugf) then
                       write(IOOUT, '(" ITER", 3x, "TEST", 3x, "ASSIGNED PINJ", 1x, "CALC PINJ", 5x, &
                            & "PC", 7x, "P AT ACAT", 3x, "PREV ACAT", 2x, "ACAT")')
-                      write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%Acat
+                      write(IOOUT, '(i3, f10.6, 1x, 4f12.2, 2f9.5)') niter, test, pinjas, pinj, pcpa, ppa, acatsv, cea%AcAt
                    end if
                 end if
 
@@ -2491,14 +2493,14 @@ contains
                       pr = pjrat * pracat
                       cea%Pp = cea%Pp / pr
                       pcpa = cea%Pp * pa
-                      cea%Acat = cea%Acat / pr
-                      cea%Subar(1) = cea%Acat
+                      cea%AcAt = cea%AcAt / pr
+                      cea%Subar(1) = cea%AcAt
                       pratsv = prat
                       pjrat = 1
-                      prat = (b1 + c1 * cea%Acat) / (1 + a1l * cea%Acat)
+                      prat = (b1 + c1 * cea%AcAt) / (1 + a1l * cea%AcAt)
                       if (cea%legacy_mode .and. cea%Debugf) &
                            write(IOOUT, '(" NEW PC = ", f10.2, 2x, "NEW ACAT = ", f9.6, 2x, "PJRAT =", &
-                           & f10.7, " PRACAT =", f10.7)') pcpa, cea%Acat, pjrat, pracat
+                           & f10.7, " PRACAT =", f10.7)') pcpa, cea%AcAt, pjrat, pracat
                    end do
                 end if
 
@@ -2679,6 +2681,9 @@ contains
     real(8):: xi, xln
 
     if (cea%invalid_case) return
+
+    cea%Nonly = cea%Nonly_in
+    cea%Prod(:) = cea%Prod_in(:)
 
     if (cea%Ions) then
        if (cea%Elmt(cea%Nlm) /= 'E') then
@@ -2942,6 +2947,8 @@ contains
     real(8):: trdata(36)
     integer:: io_transport
 
+    if (allocated(cea%transport_properties)) return ! Already done.
+
     open(newunit = io_transport, file = trim(cea%filename_trans_lib), status = 'old', form = 'unformatted', action = 'read')
 
     cea%Ntape = 0
@@ -3119,7 +3126,14 @@ contains
 
     type(CEA_Point), pointer:: p, p_prev
 
-    if (cea%Trace == 0) cea%Trace = 5.E-9
+    if (cea%Trace == 0) then
+       if (cea%legacy_mode) then
+          cea%Trace = 5e-9
+       else
+          cea%Trace = 5d-9
+       end if
+    end if
+
     cea%Tp = .true.
     cea%Cpmix = 0
     srefl = .false.

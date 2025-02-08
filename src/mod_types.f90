@@ -60,6 +60,12 @@ module mod_types
      integer:: ipt !< index of point (new)
      integer:: max_points
 
+     integer:: Nonly_in
+     logical:: Eql_in
+     character(15):: Prod_in(0:maxNgc)
+     integer:: Npp_in, Nsub_in, Nsup_in
+     real(8):: AcAt_in, mdotByAc_in
+
      character(15):: ensert(20)
 
      ! for subroutine SETEN
@@ -101,7 +107,7 @@ module mod_types
 
      integer:: Iopt, Isup, Nfz, Npp, Nsub, Nsup
      logical:: Area, Debugf, Fac, Froz, Page1, Rkt
-     real(8):: Acat, Awt, Cstr, Tcest, Ma
+     real(8):: AcAt, Awt, Cstr, Tcest, mdotByAc
      real(8):: Pcp(2*Ncol), Subar(13), Supar(13)
 
      integer:: Nsk
@@ -112,6 +118,9 @@ module mod_types
      integer:: Ind(maxTr), Jcm(maxEl)
      real(8):: Cprr(maxTr), Con(maxTr), Wmol(maxTr), Xs(maxTr)
      real(8):: Eta(maxTr, maxTr), Stc(maxTr, maxTr)
+
+     ! for subroutine OUT3
+     integer:: num_omitted
 
      ! Information used in variable output format
      character(4):: fmt(30) = [character(4):: '(1X', ',A15', ',', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
@@ -127,6 +136,28 @@ contains
     type(CEA_Problem), intent(inout):: cea
 
     integer:: i, j
+
+    cea%Case = 'New Case'
+    cea%Detn = .false.
+    cea%Rkt = .false.
+    cea%Shock = .false.
+    cea%Hp = .false.
+    cea%Sp = .false.
+    cea%Tp = .false.
+    cea%Vol = .false.
+    cea%Eql = .false.
+    cea%Froz = .false.
+    cea%Moles = .false.
+    cea%SIunit = .true.
+    cea%Fac = .false.
+
+    cea%Eql_in = .false.
+    cea%Nsub_in = 0
+    cea%Nsup_in = 0
+    cea%AcAt_in = 0
+    cea%mdotByAc_in = 0
+
+    cea%Hsub0 = 1d30
 
     ! temporary
     cea%max_points = maxT * maxPv
@@ -152,9 +183,46 @@ contains
 
     cea%ensert(:) = ""
 
-    cea%iOF = 0
-
     return
   end subroutine init_case
+
+
+  subroutine reset_case(cea)
+    implicit none
+
+    type(CEA_Problem), intent(inout):: cea
+
+    cea%Eql = cea%Eql_in
+    cea%Npp = cea%Npp_in
+    cea%Nsub = cea%Nsub_in
+    cea%Nsup = cea%Nsup_in
+    cea%AcAt = cea%AcAt_in
+    cea%mdotByAc = cea%mdotByAc_in
+
+
+    !! subroutine INPUT
+    !! if (code(1:3) == 'end')
+    if (cea%Nof == 0) then
+       cea%Nof = 1
+       if (cea%Wp(2) > 0) then
+          cea%Oxf(1) = cea%Wp(1) / cea%Wp(2)
+       else
+          cea%Oxf(1) = 0
+       end if
+    end if
+
+    if (cea%Trnspt) cea%Viscns = 0.3125d0 * sqrt(1d5 * Boltz / (pi * Avgdr))
+
+    if (cea%SIunit) then
+       cea%R = R0 / 1d3
+    else
+       cea%R = R0 / (cal_to_J * 1d3)
+    end if
+
+    cea%iOF = 0
+    cea%num_omitted = 0
+
+    return
+  end subroutine reset_case
 
 end module mod_types
