@@ -1,4 +1,4 @@
-module mod_types
+module mod_cea_types
   use mod_constants
   implicit none
 
@@ -225,4 +225,4 @@ contains
     return
   end subroutine reset_case
 
-end module mod_types
+end module mod_cea_types

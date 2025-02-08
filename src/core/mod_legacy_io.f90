@@ -48,7 +48,7 @@ contains
 
 
   subroutine read_legacy_input(cea, filename)
-    use mod_types, only: CEA_Problem, IOINP, init_case
+    use mod_cea_types, only: CEA_Problem, IOINP, init_case
     implicit none
 
     type(CEA_Problem), allocatable, intent(out):: cea(:)
@@ -89,7 +89,7 @@ contains
 
 
   subroutine read_legacy_case(cea)
-    use mod_types, only: CEA_Problem
+    use mod_cea_types, only: CEA_Problem
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -128,7 +128,7 @@ contains
     !***********************************************************************
     ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1028,7 +1028,7 @@ contains
 
 
   subroutine open_legacy_output(io_out, filename)
-    use mod_types, only: MAX_FILENAME
+    use mod_cea_types, only: MAX_FILENAME
     implicit none
 
     integer, intent(inout):: io_out
@@ -1092,7 +1092,7 @@ contains
     !
     ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
     !***********************************************************************
-    use mod_types, only: CEA_Problem
+    use mod_cea_types, only: CEA_Problem
     implicit none
 
     type(CEA_Problem), intent(in):: cea
@@ -1153,7 +1153,7 @@ contains
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
     use mod_constants, only: R0
-    use mod_types, only: CEA_Problem, CEA_Point, Ncol
+    use mod_cea_types, only: CEA_Problem, CEA_Point, Ncol
     implicit none
 
     type(CEA_Problem), intent(in):: cea
@@ -1326,7 +1326,7 @@ contains
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
-    use mod_types, only: CEA_Problem, CEA_Point, Ncol
+    use mod_cea_types, only: CEA_Problem, CEA_Point, Ncol
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1431,7 +1431,7 @@ contains
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
-    use mod_types, only: CEA_Problem, CEA_Point, Ncol
+    use mod_cea_types, only: CEA_Problem, CEA_Point, Ncol
     implicit none
 
     type(CEA_Problem), intent(in):: cea
@@ -1529,7 +1529,7 @@ contains
 
 
   subroutine get_print_cols(cea, i_col_end, i_cols_print)
-    use mod_types, only: CEA_Problem, Ncol
+    use mod_cea_types, only: CEA_Problem, Ncol
     implicit none
 
     type(CEA_Problem), intent(in):: cea
@@ -1568,7 +1568,7 @@ contains
     !***********************************************************************
     ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1863,7 +1863,7 @@ contains
     !***********************************************************************
     ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -2187,7 +2187,7 @@ contains
     !           CONTIGUOUS PHASE, ETC.
     ! NTL     - NUMBER OF T INTERVALS FOR A SPECIES SET.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     ! DUMMY ARGUMENTS
@@ -2513,7 +2513,7 @@ contains
     !***********************************************************************
     ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     ! DUMMY ARGUMENTS
@@ -2602,7 +2602,7 @@ contains
 
 
   subroutine write_plt_file(cea, filename)
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(in):: cea(:)

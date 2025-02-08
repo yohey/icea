@@ -19,7 +19,7 @@ target_sources(${TEST_EXECUTABLE}
 
 target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_SOURCE_DIR}/src/interfaces/c++)
 
-target_link_libraries(${TEST_EXECUTABLE} PRIVATE ${CEA_CXX_LIBRARY})
+target_link_libraries(${TEST_EXECUTABLE} PRIVATE ${CEA_STATIC_LIBRARY})
 
 
 add_custom_target(run-${JOB_NAME}

@@ -12,7 +12,7 @@ module mod_ffi
 contains
 
   function new_problem() result(ptr) bind(C, name = "ffi_cea_new_problem")
-    use mod_types, only: CEA_Problem
+    use mod_cea_types, only: CEA_Problem
 
     type(c_ptr):: ptr
     type(CEA_Problem), pointer:: cea
@@ -25,7 +25,7 @@ contains
 
 
   subroutine del_problem(ptr) bind(C, name = "ffi_cea_del_problem")
-    use mod_types, only: CEA_Problem
+    use mod_cea_types, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
 
@@ -42,7 +42,7 @@ contains
 
 
   subroutine print_case(ptr) bind(C, name = "ffi_cea_print_case")
-    use mod_types, only: CEA_Problem
+    use mod_cea_types, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
 
@@ -58,7 +58,7 @@ contains
 
 
   function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
-    use mod_types, only: CEA_Problem, init_case, IOINP
+    use mod_cea_types, only: CEA_Problem, init_case, IOINP
     use mod_legacy_io, only: count_cases, read_legacy_case
 
     type(CEA_Problem_Array):: array
@@ -115,8 +115,8 @@ contains
 
 
   subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
-    use mod_types, only: CEA_Problem
-    use mod_cea, only: run_all_cases
+    use mod_cea_types, only: CEA_Problem
+    use mod_cea_core, only: run_all_cases
 
     type(CEA_Problem_Array):: array
     character(len = 1, kind = c_char), intent(in), optional:: out_filename(*)
@@ -141,7 +141,7 @@ contains
 
 
   function ffi_sizeof(ptr) result(size) bind(C, name = "ffi_cea_sizeof")
-    use mod_types, only: CEA_Problem
+    use mod_cea_types, only: CEA_Problem
 
     integer(c_size_t):: size
     type(c_ptr), intent(in):: ptr

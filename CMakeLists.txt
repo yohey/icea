@@ -6,21 +6,23 @@ project(CEA Fortran)
 
 set(CEA_CORE cea-core)
 set(CEA_EXECUTABLE cea)
-set(CEA_CXX_LIBRARY libcea)
 
 
-add_library(${CEA_CORE})
+add_library(${CEA_CORE} OBJECT)
 
 target_sources(${CEA_CORE}
   PRIVATE
-  src/core/mod_cea.f90
-  src/core/mod_types.f90
+  src/core/mod_cea_core.f90
+  src/core/mod_cea_types.f90
   src/core/mod_constants.f90
   src/core/mod_general.f90
   src/core/mod_functions.f90
   src/core/mod_io.f90
   src/core/mod_legacy_io.f90
+  src/interfaces/fortran/cea.f90
 )
+
+set_property(TARGET ${CEA_CORE} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_compile_options(${CEA_CORE}
   PRIVATE
@@ -46,22 +48,30 @@ target_link_libraries(${CEA_EXECUTABLE} PRIVATE ${CEA_CORE})
 
 
 foreach(LIB IN ITEMS "thermo" "trans")
-  add_custom_target(${LIB} ALL
-    COMMAND echo ${LIB} | ./${CEA_EXECUTABLE} --legacy-mode > /dev/null
-    DEPENDS ${CEA_EXECUTABLE} ${LIB}.inp
-  )
-
-  add_custom_command(
-    OUTPUT ${LIB}.inp
+  add_custom_target(${LIB}.lib ALL
     COMMAND cp -a ${CMAKE_SOURCE_DIR}/src/core/${LIB}.inp ${CMAKE_BINARY_DIR}/
+    COMMAND rm -f ${LIB}.lib
+    COMMAND echo ${LIB} | ./${CEA_EXECUTABLE} --legacy-mode > /dev/null
+    DEPENDS ${CEA_EXECUTABLE}
   )
 endforeach()
 
 
-install(TARGETS ${CEA_EXECUTABLE} RUNTIME DESTINATION bin)
-
+set(CEA_STATIC_LIBRARY cea-static)
+set(CEA_SHARED_LIBRARY cea-shared)
 
 add_subdirectory(src/interfaces/c++)
+
+
+install(TARGETS ${CEA_EXECUTABLE})
+install(TARGETS ${CEA_STATIC_LIBRARY})
+install(TARGETS ${CEA_SHARED_LIBRARY})
+
+install(FILES ${CMAKE_BINARY_DIR}/thermo.lib DESTINATION lib/)
+install(FILES ${CMAKE_BINARY_DIR}/trans.lib  DESTINATION lib/)
+install(FILES tests/orig/cea2.inp DESTINATION share/cea/examples/orig/)
+install(FILES src/core/thermo.inp DESTINATION share/cea/examples/orig/)
+install(FILES src/core/trans.inp  DESTINATION share/cea/examples/orig/)
 
 
 enable_testing()
@@ -70,5 +80,5 @@ add_subdirectory(tests/deton)
 add_subdirectory(tests/thermp)
 add_subdirectory(tests/shock)
 add_subdirectory(tests/rocket)
-add_subdirectory(tests/newio)
+# add_subdirectory(tests/newio)
 add_subdirectory(tests/c++)

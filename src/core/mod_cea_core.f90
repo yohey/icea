@@ -2,14 +2,14 @@
 !> @mainpage CEA: Chemical Equlibrium with Applications
 !!
 !-------------------------------------------------------------------------------
-module mod_cea
+module mod_cea_core
   implicit none
 
 contains
 
   subroutine run_all_cases(cea, out_filename, plt_filename)
     use mod_constants, only: stderr
-    use mod_types, only: CEA_Problem, MAX_FILENAME, IOOUT, reset_case
+    use mod_cea_types, only: CEA_Problem, MAX_FILENAME, IOOUT, reset_case
     use mod_legacy_io
     implicit none
 
@@ -82,7 +82,7 @@ contains
     !***********************************************************************
     ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_functions
     implicit none
 
@@ -124,7 +124,7 @@ contains
     !***********************************************************************
     ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_functions
     implicit none
 
@@ -148,7 +148,7 @@ contains
     !***********************************************************************
     ! CHAPMAN-JOUGUET DETONATIONS.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_legacy_io
     implicit none
 
@@ -487,7 +487,7 @@ contains
     !***********************************************************************
     ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_general
     implicit none
 
@@ -1559,7 +1559,7 @@ contains
     ! CALCULATE PROPERTIES WITH FROZEN COMPOSITION AT ASSIGNED ENTROPY
     ! AND PRESSURE.  CALLED FROM ROCKET.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1638,7 +1638,7 @@ contains
     ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
     ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_functions
     implicit none
 
@@ -1805,7 +1805,7 @@ contains
     !***********************************************************************
     ! SET UP ITERATION OR DERIVATIVE MATRIX.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -1969,7 +1969,7 @@ contains
     !***********************************************************************
     ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -2044,7 +2044,7 @@ contains
     !***********************************************************************
     ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_legacy_io, only: RKTOUT
     implicit none
 
@@ -2673,7 +2673,7 @@ contains
 
 
   subroutine read_libraries(cea)
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -2751,7 +2751,7 @@ contains
     !***********************************************************************
     ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -2937,7 +2937,7 @@ contains
 
   subroutine READTR(cea)
     ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -3028,7 +3028,7 @@ contains
     !         ALSO USE COMPOSITIONS FROM POINT -ISV FOR NPT.
     !  ISV=0  USE COMPOSITIONS SAVED WHEN ISV<0.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -3110,7 +3110,7 @@ contains
     !***********************************************************************
     ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_legacy_io
     implicit none
 
@@ -3559,7 +3559,7 @@ contains
     !***********************************************************************
     ! ASSIGNED THERMODYNAMIC STATES.  HP, SP, TP, UV, SV, AND TV PROBLEMS.
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_legacy_io
     implicit none
 
@@ -3642,7 +3642,7 @@ contains
     !***********************************************************************
     ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
@@ -3945,7 +3945,7 @@ contains
     !   NUMBER OF CHEMICAL REACTIONS = NR (NM - NLM)
     !   ARRAY OF STOICHIOMETRIC COEFFICIENTS = STC
     !***********************************************************************
-    use mod_types
+    use mod_cea_types
     use mod_general
     implicit none
 
@@ -4102,4 +4102,4 @@ contains
     end if
   end subroutine TRANP
 
-end module mod_cea
+end module mod_cea_core
