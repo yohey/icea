@@ -94,12 +94,12 @@ contains
 
 
   subroutine read_legacy_case(cea)
-    use mod_cea_types, only: CEA_Problem
+    use mod_cea_types, only: CEA_Problem, maxEl
     implicit none
 
     type(CEA_Problem), intent(inout):: cea
 
-    integer:: iof, i
+    integer:: i, iof, ipt
     logical:: caseOK, readOK
 
     caseOK = .true.
@@ -112,16 +112,52 @@ contains
 
     call INPUT(cea, readOK, caseOK)
 
-    do iof = 1, cea%Nof
-       if (cea%Oxf(iof) == 0. .and. cea%points(1, 1)%B0p(1, 1) /= 0.) then
-          do i = 1, cea%Nlm
-             if (cea%points(1, 1)%B0p(i, 1) == 0. .or. cea%points(1, 1)%B0p(i, 2) == 0.) then
-                write(cea%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
-                caseOK = .false.
-             end if
+    if (cea%Shock) then
+       cea%max_points = cea%Nsk
+    else
+       cea%max_points = cea%Nt * cea%Np
+       if (cea%Rkt) then
+          cea%max_points = cea%max_points * (cea%Npp_in + cea%Nsub_in + cea%Nsup_in) + 4
+       end if
+    end if
+
+    if (cea%max_points > 0) then
+       allocate(cea%points(cea%Nof, cea%max_points))
+
+       do concurrent (iof = 1:cea%Nof, ipt = 1:cea%max_points)
+          cea%points(iof, ipt)%Debug = .false.
+          cea%points(iof, ipt)%En(:) = 0
+       end do
+
+       if (allocated(cea%U1_in)) then
+          do concurrent (iof = 1:cea%Nof, ipt = 1:cea%Nsk)
+             cea%points(iof, ipt)%U1 = cea%U1_in(ipt)
+             cea%points(iof, ipt)%Mach1 = 0
+          end do
+       else if (allocated(cea%Ma1_in)) then
+          do concurrent (iof = 1:cea%Nof, ipt = 1:cea%Nsk)
+             cea%points(iof, ipt)%U1 = 0
+             cea%points(iof, ipt)%Mach1 = cea%Ma1_in(ipt)
           end do
        end if
-    end do
+
+       if (allocated(cea%Debug_in)) then
+          do concurrent (iof = 1:cea%Nof, i = 1:size(cea%Debug_in))
+             cea%points(iof, cea%Debug_in(i))%Debug = .true.
+          end do
+       end if
+
+       do iof = 1, cea%Nof
+          if (cea%Oxf(iof) == 0. .and. cea%B0p(1, 1) /= 0.) then
+             do i = 1, cea%Nlm
+                if (cea%B0p(i, 1) == 0. .or. cea%B0p(i, 2) == 0.) then
+                   write(cea%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
+                   caseOK = .false.
+                end if
+             end do
+          end if
+       end do
+    end if
 
     cea%invalid_case = (.not. caseOK) .or. (.not. readOK)
 
@@ -244,9 +280,9 @@ contains
                       cea%Massf = .true.
 
                    else if (cx3 == 'deb' .or. cx3 == 'dbg') then
-                      do concurrent (iof = 1:maxMix, j = i+1:ncin, lcin(j) == i .and. int(dpin(j)) <= Ncol)
-                         cea%points(iof, int(dpin(j)))%Debug = .true.
-                      end do
+                      allocate(cea%Debug_in(ncin - i))
+                      cea%Debug_in(:) = int(dpin(i+1:ncin))
+
                       do concurrent (j = i+1:ncin, lcin(j) == i)
                          lcin(j) = 0
                       end do
@@ -771,9 +807,8 @@ contains
                 cea%Nsk = Ncol
                 write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'u1', cea%Nsk
              end if
-             do concurrent (i = 1:maxMix, j = 1:cea%Nsk)
-                cea%points(1, j)%U1 = mix(j)
-             end do
+             allocate(cea%U1_in(cea%Nsk))
+             cea%U1_in(1:cea%Nsk) = mix(1:cea%Nsk)
 
           else if (cx4 == 'mach') then
              cea%Nsk = nmix
@@ -781,9 +816,8 @@ contains
                 cea%Nsk = Ncol
                 write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'mach1', cea%Nsk
              end if
-             do concurrent (i = 1:maxMix, j = 1:cea%Nsk)
-                cea%points(1, j)%Mach1 = mix(j)
-             end do
+             allocate(cea%Ma1_in(cea%Nsk))
+             cea%Ma1_in(1:cea%Nsk) = mix(1:cea%Nsk)
 
           else if (cx3 == 'sub') then
              cea%Nsub_in = nmix
@@ -1590,8 +1624,6 @@ contains
     integer:: io_thermo
     logical:: is_opened
 
-    real(8):: B0p(maxEl, 2)
-
     wdone = .false.
     cea%Wp = 0
     cea%Hpp = 0
@@ -1602,7 +1634,7 @@ contains
     cea%Elmt = ' '
     dat = 0
 
-    B0p = 0
+    cea%B0p = 0
 
     ! IF OXIDANT, KR = 1
     ! IF FUEL, KR = 2
@@ -1794,7 +1826,7 @@ contains
           end if
 
           do concurrent (j = 1:cea%Nlm)
-             B0p(j, kr) = dat(j) * pcwt / rm + B0p(j, kr)
+             cea%B0p(j, kr) = dat(j) * pcwt / rm + cea%B0p(j, kr)
           end do
 
           cea%Rmw(n) = rm
@@ -1810,7 +1842,7 @@ contains
        cea%Hpp(2) = cea%Hpp(1)
        cea%Am(2) = cea%Am(1)
        cea%Am(1) = 0
-       B0p(:, 2) = B0p(:, 1)
+       cea%B0p(:, 2) = cea%B0p(:, 1)
     end if
 
     if (cea%Nlm /= 0) then
@@ -1822,9 +1854,9 @@ contains
              cea%Am(kr) = cea%Wp(kr) / cea%Am(kr)
              if (cea%Rh(kr) /= 0) cea%Rh(kr) = cea%Wp(kr) / cea%Rh(kr)
              do j = 1, cea%Nlm
-                B0p(j, kr) = B0p(j, kr) / cea%Wp(kr)
-                if (cea%X(j) < 0) cea%Vmin(kr) = cea%Vmin(kr) + B0p(j, kr) * cea%X(j)
-                if (cea%X(j) > 0) cea%Vpls(kr) = cea%Vpls(kr) + B0p(j, kr) * cea%X(j)
+                cea%B0p(j, kr) = cea%B0p(j, kr) / cea%Wp(kr)
+                if (cea%X(j) < 0) cea%Vmin(kr) = cea%Vmin(kr) + cea%B0p(j, kr) * cea%X(j)
+                if (cea%X(j) > 0) cea%Vpls(kr) = cea%Vpls(kr) + cea%B0p(j, kr) * cea%X(j)
              end do
           end if
        end do
@@ -1855,10 +1887,6 @@ contains
        end if
 
     end if
-
-    do concurrent (i = 1:maxMix, j = 1:Ncol)
-       cea%points(i, j)%B0p(:, :) = B0p(:, :)
-    end do
 
     return
   end subroutine REACT

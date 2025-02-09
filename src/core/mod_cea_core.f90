@@ -895,8 +895,8 @@ contains
 
              le = cea%Nlm
 
-             if (any(abs(p%B0(1:cea%Nlm)) >= 1.d-06 .and. &
-                  abs(p%B0(1:cea%Nlm) - sum(spread(p%En(1:cea%Ngc), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
+             if (any(abs(cea%B0(1:cea%Nlm)) >= 1.d-06 .and. &
+                  abs(cea%B0(1:cea%Nlm) - sum(spread(p%En(1:cea%Ngc), 1, cea%Nlm) * cea%A(1:cea%Nlm, 1:cea%Ngc), DIM=2)) &
                   > cea%Bcheck)) go to 500
 
              if (cea%Trace /= 0.) then
@@ -1418,9 +1418,9 @@ contains
 
              ! CALCULATE NEW COEFFICIENTS
              if (tem /= 1) then
-                p%B0(lc) = p%B0(lc) / tem
-                p%B0p(lc, 1) = p%B0p(lc, 1) / tem
-                p%B0p(lc, 2) = p%B0p(lc, 2) / tem
+                cea%B0(lc) = cea%B0(lc) / tem
+                cea%B0p(lc, 1) = cea%B0p(lc, 1) / tem
+                cea%B0p(lc, 2) = cea%B0p(lc, 2) / tem
 
                 do concurrent (j = 1:cea%Nspx)
                    cea%A(lc, j) = cea%A(lc, j) / tem
@@ -1439,9 +1439,9 @@ contains
                       cea%A(i, j) = 0
                    end do
 
-                   p%B0(i) = p%B0(i) - p%B0(lc) * tem
-                   p%B0p(i, 1) = p%B0p(i, 1) - p%B0p(lc, 1) * tem
-                   p%B0p(i, 2) = p%B0p(i, 2) - p%B0p(lc, 2) * tem
+                   cea%B0(i) = cea%B0(i) - cea%B0(lc) * tem
+                   cea%B0p(i, 1) = cea%B0p(i, 1) - cea%B0p(lc, 1) * tem
+                   cea%B0p(i, 2) = cea%B0p(i, 2) - cea%B0p(lc, 2) * tem
                 end if
              end do
           end if
@@ -1482,17 +1482,17 @@ contains
           aa = cea%Atwt(cea%Msing)
           cea%Atwt(cea%Msing) = cea%Atwt(cea%Nlm)
           cea%Atwt(cea%Nlm) = aa
-          aa = p%B0(cea%Msing)
-          p%B0(cea%Msing) = p%B0(cea%Nlm)
-          p%B0(cea%Nlm) = aa
+          aa = cea%B0(cea%Msing)
+          cea%B0(cea%Msing) = cea%B0(cea%Nlm)
+          cea%B0(cea%Nlm) = aa
           aa = pisave(cea%Msing)
           pisave(cea%Msing) = pisave(cea%Nlm)
           pisave(cea%Nlm) = aa
 
           do i = 1, 2
-             aa = p%B0p(cea%Msing, i)
-             p%B0p(cea%Msing, i) = p%B0p(cea%Nlm, i)
-             p%B0p(cea%Nlm, i) = aa
+             aa = cea%B0p(cea%Msing, i)
+             cea%B0p(cea%Msing, i) = cea%B0p(cea%Nlm, i)
+             cea%B0p(cea%Nlm, i) = aa
           end do
        end if
     else if (.not. newcom .and. cea%Trace == 0.) then
@@ -1913,7 +1913,7 @@ contains
     ! COMPLETE THE RIGHT HAND SIDE
     if (.not. cea%Convg) then
        do concurrent (i = 1:cea%Nlm)
-          cea%G(i, kmat) = cea%G(i, kmat) + p%B0(i) - cea%G(i, cea%Iq1)
+          cea%G(i, kmat) = cea%G(i, kmat) + cea%B0(i) - cea%G(i, cea%Iq1)
        end do
        cea%G(cea%Iq1, kmat) = cea%G(cea%Iq1, kmat) + cea%Enn - cea%Sumn
 
@@ -1992,8 +1992,8 @@ contains
     v1 = (cea%Oxfl * cea%Vpls(1) + cea%Vpls(2)) / tem
     if (v2 /= 0.) cea%Eqrat = abs(v1/v2)
     do i = 1, cea%Nlm
-       p%B0(i) = (cea%Oxfl * p%B0p(i, 1) + p%B0p(i, 2)) / tem
-       dbi = abs(p%B0(i))
+       cea%B0(i) = (cea%Oxfl * cea%B0p(i, 1) + cea%B0p(i, 2)) / tem
+       dbi = abs(cea%B0(i))
        if (i == 1) then
           bigb = dbi
           smalb = dbi
@@ -2033,7 +2033,8 @@ contains
 
     do i = 1, cea%Nlm
        j = cea%Jcm(i)
-       if (cea%legacy_mode .and. .not. cea%Short) write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), p%B0p(i, 2), p%B0p(i, 1), p%B0(i)
+       if (cea%legacy_mode .and. .not. cea%Short) &
+            write(IOOUT, '(1x, a16, 3e20.8)') cea%Prod(j), cea%B0p(i, 2), cea%B0p(i, 1), cea%B0(i)
     end do
 
     return
@@ -2690,10 +2691,8 @@ contains
           cea%Nlm = cea%Nlm + 1
           cea%Elmt(cea%Nlm) = 'E'
 
-          do concurrent (i = 1:maxMix, j = 1:cea%max_points)
-             cea%points(i, j)%B0p(cea%Nlm, 1) = 0
-             cea%points(i, j)%B0p(cea%Nlm, 2) = 0
-          end do
+          cea%B0p(cea%Nlm, 1) = 0
+          cea%B0p(cea%Nlm, 2) = 0
        end if
     else if (cea%Elmt(cea%Nlm) == 'E') then
        cea%Nlm = cea%Nlm - 1
@@ -2721,7 +2720,7 @@ contains
     xi = cea%Enn/xi
     xln = log(xi)
 
-    do concurrent (i = 1:maxMix)
+    do concurrent (i = 1:cea%Nof)
        cea%points(i, 1)%En(cea%Ng+1:cea%Ng+cea%Nc) = 0
        cea%points(i, 1)%En(1:cea%Ng) = xi
     end do
@@ -3419,7 +3418,7 @@ contains
              if (cea%ipt == 1) cea%Isv = -1
              cea%ipt = cea%ipt + 1
 
-             if (cea%Eql) then
+             if (cea%Eql .and. cea%ipt <= cea%Nsk) then
                 call SETEN(cea)
              end if
 

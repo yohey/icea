@@ -30,8 +30,6 @@ module mod_cea_types
   type:: CEA_Point
      logical:: Debug
      real(8):: En(maxNgc)
-     real(8), pointer:: B0(:)
-     real(8), pointer:: B0p(:, :)
      real(8):: Cpr, Dlvpt, Dlvtp, Gammas, Hsum
      real(8):: Ppp, Ssum, Totn, Ttt, Vlm, Wm
      real(8):: Sonvel, Spim, Vmoc
@@ -65,6 +63,8 @@ module mod_cea_types
      character(15):: Prod_in(0:maxNgc)
      integer:: Npp_in, Nsub_in, Nsup_in
      real(8):: AcAt_in, mdotByAc_in
+     integer, allocatable:: Debug_in(:)
+     real(8), allocatable:: U1_in(:), Ma1_in(:)
 
      character(15):: ensert(20)
 
@@ -80,6 +80,7 @@ module mod_cea_types
 
      real(8):: Cpmix, Wmix, Bcheck
      real(8):: Am(2), Hpp(2), Vmin(2), Vpls(2), Wp(2), Oxf(maxMix), P(maxPv), Rh(2), T(maxT), V(maxPv)
+     real(8):: B0p(maxEl, 2)
 
      integer:: Imat, Iq1, Jliq, Jsol, Msing
 
@@ -87,7 +88,7 @@ module mod_cea_types
      logical:: Pderiv, Shock, Short, SIunit, Sp, Tp, Trnspt, Vol
 
      real(8):: Eqrat, Hsub0, Oxfl, Pp, R, Size, S0, Tln, Tm, Trace, Tt, Viscns, Vv
-     real(8):: Atwt(maxEl), X(maxMat)
+     real(8):: Atwt(maxEl), B0(maxEl), X(maxMat)
      real(8):: A(maxEl, maxNgc), G(maxMat, maxMat+1)
 
      character(2):: Elmt(maxEl), Ratom(maxR, 12)
@@ -158,28 +159,6 @@ contains
     cea%mdotByAc_in = 0
 
     cea%Hsub0 = 1d30
-
-    ! temporary
-    cea%max_points = maxT * maxPv
-
-    allocate(cea%points(maxMix, cea%max_points))
-
-    do concurrent (i = 1:maxMix, j = 1:cea%max_points)
-       cea%points(i, j)%Debug = .false.
-       cea%points(i, j)%En(:) = 0
-       cea%points(i, j)%U1 = 0
-       cea%points(i, j)%Mach1 = 0
-    end do
-
-    do concurrent (i = 1:maxMix)
-       allocate(cea%points(i, 1)%B0(maxEl))
-       allocate(cea%points(i, 1)%B0p(maxEl, 2))
-
-       do concurrent (j = 2:cea%max_points)
-          cea%points(i, j)%B0 => cea%points(i, 1)%B0
-          cea%points(i, j)%B0p => cea%points(i, 1)%B0p
-       end do
-    end do
 
     cea%ensert(:) = ""
 
