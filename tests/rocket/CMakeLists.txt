@@ -3,9 +3,7 @@ set(JOB_NAME test-rocket)
 
 add_custom_target(run-${JOB_NAME}
   COMMAND cp -a ${CMAKE_CURRENT_SOURCE_DIR}/${JOB_NAME}.inp .
-  COMMAND ln -fs ${CMAKE_BINARY_DIR}/thermo.lib .
-  COMMAND ln -fs ${CMAKE_BINARY_DIR}/trans.lib .
-  COMMAND echo ${JOB_NAME} | ${CMAKE_BINARY_DIR}/${CEA_EXECUTABLE} --legacy-mode
+  COMMAND echo ${JOB_NAME} | ${CMAKE_BINARY_DIR}/${CEA_EXECUTABLE} --legacy-mode --thermo-lib ${CMAKE_BINARY_DIR}/thermo.lib --trans-lib ${CMAKE_BINARY_DIR}/trans.lib
   DEPENDS ${CEA_EXECUTABLE}
 )
 

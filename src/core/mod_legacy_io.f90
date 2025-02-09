@@ -47,12 +47,15 @@ contains
   end subroutine count_cases
 
 
-  subroutine read_legacy_input(cea, filename)
+  subroutine read_legacy_input(cea, filename, filename_thermo_lib, filename_trans_lib)
     use mod_cea_types, only: CEA_Problem, IOINP, init_case
+    use mod_io, only: set_library_paths
     implicit none
 
     type(CEA_Problem), allocatable, intent(out):: cea(:)
     character(*), intent(in):: filename
+    character(*), intent(in), optional:: filename_thermo_lib
+    character(*), intent(in), optional:: filename_trans_lib
 
     integer:: num_cases
     integer:: icase
@@ -67,6 +70,8 @@ contains
     call count_cases(filename, num_cases)
 
     allocate(cea(num_cases))
+
+    call set_library_paths(cea, filename_thermo_lib, filename_trans_lib)
 
     open(newunit = IOINP, file = filename, status = 'old', form = 'formatted', action = 'read')
 
@@ -209,7 +214,7 @@ contains
              ! KEYWORD 'TRAN' READ
              ! CALL UTRAN TO CONVERT FORMATTED TRANSPORT PROPERTIES
           else if (code == 'tran') then
-             call UTRAN(cea%filename_trans_lib, IOINP, cea%io_log, readOK)
+             call UTRAN('trans.lib', IOINP, cea%io_log, readOK)
              if (.not. readOK) then
                 write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                 return
@@ -2377,7 +2382,7 @@ contains
     if (iostat <= 0) then
        rewind io_scratch
 
-       open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'new', form = 'unformatted', action = 'write')
+       open(newunit = io_thermo, file = 'thermo.lib', status = 'new', form = 'unformatted', action = 'write')
 
        if (ns == 0) ns = nall
        write(io_thermo) tgl, ngl, ns, nall, cea%Thdate

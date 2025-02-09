@@ -2,19 +2,25 @@ program main
   use mod_cea_core
   use mod_cea_types
   use mod_legacy_io
+  use mod_io
   implicit none
 
   type(CEA_Problem), allocatable:: cea(:)
 
-  character(MAX_FILENAME):: inp_filename
-  character(MAX_FILENAME):: out_filename
-  character(MAX_FILENAME):: plt_filename
-  logical:: legacy_mode
+  character(MAX_FILENAME):: inp_filename = ''
+  character(MAX_FILENAME):: out_filename = ''
+  character(MAX_FILENAME):: plt_filename = ''
+  character(MAX_FILENAME):: filename_thermo_lib = ''
+  character(MAX_FILENAME):: filename_trans_lib = ''
+  logical:: legacy_mode = .false.
 
-  call parse_arguments(inp_filename, out_filename, plt_filename, legacy_mode)
+  call parse_arguments()
+
+  if (len_trim(filename_thermo_lib) == 0) filename_thermo_lib = find_library_path('thermo.lib')
+  if (len_trim(filename_trans_lib)  == 0) filename_trans_lib  = find_library_path('trans.lib')
 
   if (legacy_mode) then
-     call read_legacy_input(cea, inp_filename)
+     call read_legacy_input(cea, inp_filename, filename_thermo_lib, filename_trans_lib)
 
   else
      write(stderr, *) '[ERROR] Not implemented yet.'
@@ -27,82 +33,98 @@ program main
   deallocate(cea)
 
   stop
-end program main
 
+contains
 
-subroutine parse_arguments(inp_filename, out_filename, plt_filename, legacy_mode)
-  use mod_constants, only: MAX_FILENAME, stderr
-  implicit none
+  subroutine parse_arguments()
+    use mod_constants, only: MAX_FILENAME, stderr
+    implicit none
 
-  character(MAX_FILENAME), intent(out):: inp_filename
-  character(MAX_FILENAME), intent(out):: out_filename
-  character(MAX_FILENAME), intent(out):: plt_filename
-  logical, intent(out):: legacy_mode
+    character(MAX_FILENAME-4):: basename
+    character(MAX_FILENAME), allocatable:: args(:)
+    integer:: i, nargs
+    logical:: exists
 
-  character(MAX_FILENAME-4):: basename
-  character(MAX_FILENAME), allocatable:: args(:)
-  integer:: i, nargs
-  logical:: exists
+    nargs = command_argument_count()
+    allocate(args(0:nargs))
 
-  inp_filename = ''
-  out_filename = ''
-  plt_filename = ''
-  legacy_mode = .false.
+    do i = 0, nargs
+       call get_command_argument(i, args(i))
 
-  nargs = command_argument_count()
-  allocate(args(0:nargs))
+       if (trim(args(i)) == '-l' .or. trim(args(i)) == '--legacy-mode') legacy_mode = .true.
+    end do
 
-  do i = 0, nargs
-     call get_command_argument(i, args(i))
+    i = 1
+    do while (i < nargs)
+       select case (args(i))
+       case ('-o', '--output')
+          if (legacy_mode) then
+             write(stderr, *) '[WARNING] Ignoring option in legacy mode:', trim(args(i))
+          else
+             out_filename = trim(adjustl(args(i+1)))
+          end if
+          i = i + 1
 
-     if (trim(args(i)) == '-l' .or. trim(args(i)) == '--legacy-mode') legacy_mode = .true.
-  end do
+       case ('-p', '--plt-file')
+          if (legacy_mode) then
+             write(stderr, *) '[WARNING] Ignoring option in legacy mode:', trim(args(i))
+          else
+             plt_filename = trim(adjustl(args(i+1)))
+          end if
+          i = i + 1
 
+       case ('--thermo-lib')
+          filename_thermo_lib = trim(adjustl(args(i+1)))
+          inquire(file = filename_thermo_lib, exist = exists)
+          if (.not. exists) then
+             write(stderr, *) '[ERROR] Not exist: ', trim(filename_thermo_lib)
+             error stop
+          end if
+          i = i + 1
 
-  if (legacy_mode) then
-     if (nargs > 2) then
-        write(stderr, *) '[WARNING] Command line arguments are ignored in legacy mode.'
-     end if
+       case ('--trans-lib')
+          filename_trans_lib = trim(adjustl(args(i+1)))
+          inquire(file = filename_trans_lib, exist = exists)
+          if (.not. exists) then
+             write(stderr, *) '[ERROR] Not exist: ', trim(filename_trans_lib)
+             error stop
+          end if
+          i = i + 1
 
-     write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
-          & "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
-          & " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
-          & //)')
+       case default
+          if (legacy_mode) then
+             write(stderr, *) '[WARNING] Ignoring argument in legacy mode:', trim(args(i))
+          else if (len_trim(inp_filename) == 0) then
+             inp_filename = trim(adjustl(args(i)))
 
-     read(*, '(a)') basename
+             inquire(file = inp_filename, exist = exists)
+             if (.not. exists) then
+                write(stderr, *) '[ERROR] Input file does not exist: ', trim(inp_filename)
+                error stop
+             end if
+          else
+             write(stderr, *) '[WARNING] Multiple input file names. Using only first one.'
+          end if
 
-     inp_filename = trim(basename) // '.inp'
-     out_filename = trim(basename) // '.out'
-     plt_filename = trim(basename) // '.plt'
+       end select
 
-     return
-  end if
+       i = i + 1
+    end do
 
+    if (legacy_mode) then
+       write(*, '(//" ENTER INPUT FILE NAME WITHOUT .inp EXTENSION."/  &
+            & "   THE OUTPUT FILES FOR LISTING AND PLOTTING WILL HAVE", / &
+            & " THE SAME NAME WITH EXTENSIONS .out AND .plt RESPECTIVELY" &
+            & //)')
 
-  i = 0
-  do while (i < nargs)
-     select case (args(i))
-     case ('-o', '--output')
-        out_filename = trim(adjustl(args(i+1)))
+       read(*, '(a)') basename
 
-     case ('-p', '--plt-file')
-        plt_filename = trim(adjustl(args(i+1)))
+       inp_filename = trim(basename) // '.inp'
+       out_filename = trim(basename) // '.out'
+       plt_filename = trim(basename) // '.plt'
+    end if
 
-     case default
-        if (len_trim(inp_filename) == 0) then
-           inp_filename = trim(adjustl(args(i)))
+    return
+  end subroutine parse_arguments
 
-           inquire(file = inp_filename, exist = exists)
-           if (.not. exists) then
-              write(stderr, *) '[ERROR] Input file does not exist: ', trim(inp_filename)
-              error stop
-           end if
-        else
-           write(stderr, *) '[WARNING] Multiple input file names. Using only first one.'
-        end if
-
-     end select
-  end do
-
-  return
-end subroutine parse_arguments
+end program

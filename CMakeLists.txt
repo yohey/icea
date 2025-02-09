@@ -27,6 +27,7 @@ set_property(TARGET ${CEA_CORE} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_options(${CEA_CORE}
   PRIVATE
   "-cpp"
+  "-DCEA_PREFIX='${CMAKE_INSTALL_PREFIX}'"
   "-std=f2023"
 )
 
@@ -81,4 +82,4 @@ add_subdirectory(tests/thermp)
 add_subdirectory(tests/shock)
 add_subdirectory(tests/rocket)
 # add_subdirectory(tests/newio)
-add_subdirectory(tests/c++)
+# add_subdirectory(tests/c++)

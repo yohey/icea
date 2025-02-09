@@ -50,8 +50,8 @@ module mod_cea_types
      logical:: invalid_case = .false.
      logical:: legacy_mode = .false.
 
-     character(MAX_FILENAME):: filename_trans_lib = 'trans.lib'
-     character(MAX_FILENAME):: filename_thermo_lib = 'thermo.lib'
+     character(MAX_FILENAME):: filename_thermo_lib
+     character(MAX_FILENAME):: filename_trans_lib
 
      type(TransportProperty), allocatable:: transport_properties(:)
      type(CEA_Point), pointer:: points(:, :)

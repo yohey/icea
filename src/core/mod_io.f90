@@ -3,6 +3,96 @@ module mod_io
 
 contains
 
+  subroutine set_library_paths(cea, filename_thermo_lib, filename_trans_lib)
+    use mod_constants, only: MAX_FILENAME
+    use mod_cea_types, only: CEA_Problem
+
+    type(CEA_Problem), dimension(:), intent(inout):: cea
+    character(*), intent(in), optional:: filename_thermo_lib
+    character(*), intent(in), optional:: filename_trans_lib
+
+    character(MAX_FILENAME):: thermo_lib_found = ''
+    character(MAX_FILENAME):: trans_lib_found = ''
+    logical:: exists
+
+    integer:: icase
+
+    if (present(filename_thermo_lib)) then
+       inquire(file = filename_thermo_lib, exist = exists)
+       if (exists) thermo_lib_found = filename_thermo_lib
+    end if
+
+    if (present(filename_trans_lib)) then
+       inquire(file = filename_trans_lib, exist = exists)
+       if (exists) trans_lib_found = filename_trans_lib
+    end if
+
+    if (len_trim(thermo_lib_found) == 0) thermo_lib_found = find_library_path('thermo.lib')
+    if (len_trim(trans_lib_found)  == 0) trans_lib_found  = find_library_path('trans.lib')
+
+    if (len_trim(thermo_lib_found) == 0) then
+       write(0, *) '[ERROR] thermo.lib is not found.'
+    end if
+
+    if (len_trim(trans_lib_found)  == 0) then
+       write(0, *) '[ERROR] trans.lib is not found.'
+    end if
+
+    do icase = 1, size(cea)
+       cea(icase)%filename_thermo_lib = trim(thermo_lib_found)
+       cea(icase)%filename_trans_lib = trim(trans_lib_found)
+    end do
+
+    return
+  end subroutine set_library_paths
+
+
+  function find_library_path(basename) result(filepath)
+    use mod_constants, only: MAX_FILENAME
+
+    character(MAX_FILENAME):: filepath
+    character(*), intent(in):: basename
+
+    character(MAX_FILENAME):: ENV_CEA_PREFIX, tmp_path
+    logical:: found
+
+
+    tmp_path = './' // trim(basename)
+    inquire(file = tmp_path, exist = found)
+
+    if (found) then
+       filepath = trim(tmp_path)
+       return
+    end if
+
+    call get_environment_variable('CEA_PREFIX', ENV_CEA_PREFIX)
+
+    if (len_trim(ENV_CEA_PREFIX) > 0) then
+       tmp_path = trim(ENV_CEA_PREFIX) // '/lib/' // basename
+       inquire(file = tmp_path, exist = found)
+
+       if (found) then
+          filepath = trim(tmp_path)
+          return
+       end if
+    end if
+
+#ifdef CEA_PREFIX
+    tmp_path = trim(CEA_PREFIX) // '/lib/' // basename
+    inquire(file = tmp_path, exist = found)
+
+    if (found) then
+       filepath = trim(tmp_path)
+       return
+    end if
+#endif
+
+    filepath = ''
+
+    return
+  end function find_library_path
+
+
   subroutine write_debug_output(cea, filename)
     use mod_constants
     use mod_cea_types, only: CEA_Problem, CEA_Point
