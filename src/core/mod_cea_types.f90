@@ -136,8 +136,6 @@ contains
 
     type(CEA_Problem), intent(inout):: cea
 
-    integer:: i, j
-
     cea%Case = 'New Case'
     cea%Detn = .false.
     cea%Rkt = .false.

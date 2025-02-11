@@ -31,11 +31,11 @@ contains
     if (len_trim(trans_lib_found)  == 0) trans_lib_found  = find_library_path('trans.lib')
 
     if (len_trim(thermo_lib_found) == 0) then
-       write(0, *) '[ERROR] thermo.lib is not found.'
+       write(0, *) '[WARNING] thermo.lib is not found.'
     end if
 
     if (len_trim(trans_lib_found)  == 0) then
-       write(0, *) '[ERROR] trans.lib is not found.'
+       write(0, *) '[WARNING] trans.lib is not found.'
     end if
 
     do icase = 1, size(cea)

@@ -183,7 +183,7 @@ contains
     character(2):: cx2
     character(3):: cx3
     logical:: eqrats, incd, phi, pltdat, reacts, refl
-    integer:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix, iof
+    integer:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
     real(8):: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
 
 
