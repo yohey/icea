@@ -1,42 +1,45 @@
 module mod_io
   implicit none
 
+  interface set_library_paths
+     procedure:: set_library_paths_scalar
+     procedure:: set_library_paths_array
+  end interface set_library_paths
+
 contains
 
-  subroutine set_library_paths(cea, filename_thermo_lib, filename_trans_lib)
+  subroutine set_library_paths_scalar(cea, thermo_lib_candidate, trans_lib_candidate)
     use mod_constants, only: MAX_FILENAME
     use mod_cea_types, only: CEA_Problem
 
-    type(CEA_Problem), dimension(:), intent(inout):: cea
-    character(*), intent(in), optional:: filename_thermo_lib
-    character(*), intent(in), optional:: filename_trans_lib
+    class(CEA_Problem), intent(inout):: cea
+    character(*), intent(in), optional:: thermo_lib_candidate
+    character(*), intent(in), optional:: trans_lib_candidate
 
-    character(MAX_FILENAME):: thermo_lib_found = ''
-    character(MAX_FILENAME):: trans_lib_found = ''
-    logical:: exists
+    character(MAX_FILENAME):: thermo_lib_found
+    character(MAX_FILENAME):: trans_lib_found
 
+    call find_library_paths(thermo_lib_found, trans_lib_found, thermo_lib_candidate, trans_lib_candidate)
+
+    cea%filename_thermo_lib = trim(thermo_lib_found)
+    cea%filename_trans_lib = trim(trans_lib_found)
+
+    return
+  end subroutine set_library_paths_scalar
+
+  subroutine set_library_paths_array(cea, thermo_lib_candidate, trans_lib_candidate)
+    use mod_constants, only: MAX_FILENAME
+    use mod_cea_types, only: CEA_Problem
+
+    class(CEA_Problem), dimension(:), intent(inout):: cea
+    character(*), intent(in), optional:: thermo_lib_candidate
+    character(*), intent(in), optional:: trans_lib_candidate
+
+    character(MAX_FILENAME):: thermo_lib_found
+    character(MAX_FILENAME):: trans_lib_found
     integer:: icase
 
-    if (present(filename_thermo_lib)) then
-       inquire(file = filename_thermo_lib, exist = exists)
-       if (exists) thermo_lib_found = filename_thermo_lib
-    end if
-
-    if (present(filename_trans_lib)) then
-       inquire(file = filename_trans_lib, exist = exists)
-       if (exists) trans_lib_found = filename_trans_lib
-    end if
-
-    if (len_trim(thermo_lib_found) == 0) thermo_lib_found = find_library_path('thermo.lib')
-    if (len_trim(trans_lib_found)  == 0) trans_lib_found  = find_library_path('trans.lib')
-
-    if (len_trim(thermo_lib_found) == 0) then
-       write(0, *) '[WARNING] thermo.lib is not found.'
-    end if
-
-    if (len_trim(trans_lib_found)  == 0) then
-       write(0, *) '[WARNING] trans.lib is not found.'
-    end if
+    call find_library_paths(thermo_lib_found, trans_lib_found, thermo_lib_candidate, trans_lib_candidate)
 
     do icase = 1, size(cea)
        cea(icase)%filename_thermo_lib = trim(thermo_lib_found)
@@ -44,60 +47,99 @@ contains
     end do
 
     return
-  end subroutine set_library_paths
+  end subroutine set_library_paths_array
 
 
-  function find_library_path(basename) result(filepath)
+  subroutine find_library_paths(thermo_lib_found, trans_lib_found, thermo_lib_candidate, trans_lib_candidate)
     use mod_constants, only: MAX_FILENAME
 
-    character(MAX_FILENAME):: filepath
-    character(*), intent(in):: basename
+    character(MAX_FILENAME), intent(out):: thermo_lib_found
+    character(MAX_FILENAME), intent(out):: trans_lib_found
+    character(*), intent(in), optional:: thermo_lib_candidate
+    character(*), intent(in), optional:: trans_lib_candidate
+    character(MAX_FILENAME):: ENV_CEA_ROOT, tmp_path
+    logical:: thermo_lib_exists, trans_lib_exists
 
-    character(MAX_FILENAME):: ENV_CEA_PREFIX, tmp_path
-    logical:: found
+    thermo_lib_exists = .false.
+    trans_lib_exists = .false.
 
-
-    tmp_path = './' // trim(basename)
-    inquire(file = tmp_path, exist = found)
-
-    if (found) then
-       filepath = trim(tmp_path)
-       return
+    if (present(thermo_lib_candidate)) then
+       inquire(file = thermo_lib_candidate, exist = thermo_lib_exists)
+       if (thermo_lib_exists) thermo_lib_found = trim(thermo_lib_candidate)
     end if
 
-    call get_environment_variable('CEA_PREFIX', ENV_CEA_PREFIX)
+    if (present(trans_lib_candidate)) then
+       inquire(file = trans_lib_candidate, exist = trans_lib_exists)
+       if (trans_lib_exists) trans_lib_found = trim(trans_lib_candidate)
+    end if
 
-    if (len_trim(ENV_CEA_PREFIX) > 0) then
-       tmp_path = trim(ENV_CEA_PREFIX) // '/lib/' // basename
-       inquire(file = tmp_path, exist = found)
+    if (thermo_lib_exists .and. trans_lib_exists) return
 
-       if (found) then
-          filepath = trim(tmp_path)
-          return
+    if (.not. thermo_lib_exists) then
+       tmp_path = './thermo.lib'
+       inquire(file = tmp_path, exist = thermo_lib_exists)
+       if (thermo_lib_exists) thermo_lib_found = tmp_path
+    end if
+
+    if (.not. trans_lib_exists) then
+       tmp_path = './trans.lib'
+       inquire(file = tmp_path, exist = trans_lib_exists)
+       if (trans_lib_exists) trans_lib_found = tmp_path
+    end if
+
+    if (thermo_lib_exists .and. trans_lib_exists) return
+
+    call get_environment_variable('CEA_ROOT', ENV_CEA_ROOT)
+
+    if (len_trim(ENV_CEA_ROOT) > 0) then
+       if (.not. thermo_lib_exists) then
+          tmp_path = trim(ENV_CEA_ROOT) // '/lib/thermo.lib'
+          inquire(file = tmp_path, exist = thermo_lib_exists)
+          if (thermo_lib_exists) thermo_lib_found = tmp_path
+       end if
+
+       if (.not. trans_lib_exists) then
+          tmp_path = trim(ENV_CEA_ROOT) // '/lib/trans.lib'
+          inquire(file = tmp_path, exist = trans_lib_exists)
+          if (trans_lib_exists) trans_lib_found = tmp_path
        end if
     end if
 
-#ifdef CEA_PREFIX
-    tmp_path = trim(CEA_PREFIX) // '/lib/' // basename
-    inquire(file = tmp_path, exist = found)
+    if (thermo_lib_exists .and. trans_lib_exists) return
 
-    if (found) then
-       filepath = trim(tmp_path)
-       return
+#ifdef CEA_ROOT
+    if (.not. thermo_lib_exists) then
+       tmp_path = trim(CEA_ROOT) // '/lib/thermo.lib'
+       inquire(file = tmp_path, exist = thermo_lib_exists)
+       if (thermo_lib_exists) thermo_lib_found = tmp_path
+    end if
+
+    if (.not. trans_lib_exists) then
+       tmp_path = trim(CEA_ROOT) // '/lib/trans.lib'
+       inquire(file = tmp_path, exist = trans_lib_exists)
+       if (trans_lib_exists) trans_lib_found = tmp_path
     end if
 #endif
 
-    filepath = ''
+    if (.not. thermo_lib_exists) then
+       thermo_lib_found = ''
+       write(0, *) '[WARNING] thermo.lib is not found.'
+    end if
+
+    if (.not. trans_lib_exists) then
+       trans_lib_found = ''
+       write(0, *) '[WARNING] trans.lib is not found.'
+    end if
 
     return
-  end function find_library_path
+  end subroutine find_library_paths
 
 
   subroutine write_debug_output(cea, filename)
     use mod_constants
     use mod_cea_types, only: CEA_Problem, CEA_Point
 
-    type(CEA_Problem), intent(in):: cea
+    class(CEA_Problem), intent(in):: cea
     character(*), intent(in):: filename
 
     integer:: io_out, iof, ipt, j, max_points

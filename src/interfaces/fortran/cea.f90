@@ -1,14 +1,35 @@
 module cea
+  use mod_cea_types, only: CEA_Core_Problem => CEA_Problem
   implicit none
+  private
+
+  type, extends(CEA_Core_Problem), public:: CEA_Problem
+   contains
+     procedure, public, pass:: set_problem
+     procedure, public, pass:: set_output_options
+     procedure, public, pass:: set_chamber_pressures
+     procedure, public, pass:: set_mixture_ratios
+     procedure, public, pass:: set_pressure_ratios
+     procedure, public, pass:: set_subsonic_area_ratios
+     procedure, public, pass:: set_supersonic_area_ratios
+     procedure, public, pass:: set_finite_area_combustor
+     procedure, public, pass:: add_reactant
+     procedure, public, pass:: insert_species
+     procedure, public, pass:: set_omit_species
+     procedure, public, pass:: set_only_species
+     procedure, public, pass:: run
+     procedure, public, pass:: write_debug_output
+  end type CEA_Problem
 
 contains
 
-  subroutine set_problem(cea, mode, name, mole_ratios, equilibrium, ions, &
-       frozen, frozen_at_throat)
+  subroutine set_problem(this, mode, name, mole_ratios, equilibrium, ions, &
+       frozen, frozen_at_throat, thermo_lib, trans_lib)
     use mod_constants, only: stderr
-    use mod_cea_types, only: CEA_Problem
+    use mod_cea_types, only: init_case
+    use mod_io, only: set_library_paths
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: mode
     character(*), intent(in), optional:: name
     logical, intent(in), optional:: mole_ratios
@@ -16,27 +37,31 @@ contains
     logical, intent(in), optional:: ions
     logical, intent(in), optional:: frozen
     logical, intent(in), optional:: frozen_at_throat
+    character(*), intent(in), optional:: thermo_lib
+    character(*), intent(in), optional:: trans_lib
+
+    call init_case(this)
 
     if (mode == 'rocket') then
-       cea%Rkt = .true.
-       cea%Sp = .true.
-       cea%Tp = .false.
-       cea%Hp = .false.
-       cea%Detn = .false.
-       cea%Shock = .false.
+       this%Rkt = .true.
+       this%Sp = .true.
+       this%Tp = .false.
+       this%Hp = .false.
+       this%Detn = .false.
+       this%Shock = .false.
 
-       cea%Nt = 1
+       this%Nt = 1
 
-       cea%Nfz = 1
+       this%Nfz = 1
 
        if (present(frozen)) then
-          cea%Froz = frozen
+          this%Froz = frozen
 
           if (present(frozen_at_throat) .and. frozen_at_throat) then
-             if (cea%Fac) then
-                cea%Nfz = 3
+             if (this%Fac) then
+                this%Nfz = 3
              else
-                cea%Nfz = 2
+                this%Nfz = 2
              end if
           end if
        end if
@@ -56,28 +81,30 @@ contains
     end if
 
     if (present(name)) then
-       cea%Case = trim(name)
+       this%Case = trim(name)
     end if
 
     if (present(equilibrium)) then
-       cea%Eql_in = equilibrium
+       this%Eql_in = equilibrium
     end if
 
     if (present(ions)) then
-       cea%Ions = ions
+       this%Ions = ions
     end if
 
     if (present(mole_ratios)) then
-       cea%Moles = mole_ratios
+       this%Moles = mole_ratios
     end if
+
+    call set_library_paths(this, thermo_lib, trans_lib)
 
     return
   end subroutine set_problem
 
-  subroutine set_output_options(cea, SI, debug_points, mass_fractions, short, trace_tol, transport)
-    use mod_cea_types, only: CEA_Problem, maxMix
+  subroutine set_output_options(this, SI, debug_points, mass_fractions, short, trace_tol, transport)
+    use mod_cea_types, only: maxMix
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     logical, intent(in), optional:: SI
     integer, intent(in), optional:: debug_points(:)
     logical, intent(in), optional:: mass_fractions
@@ -87,39 +114,38 @@ contains
     integer:: i, j
 
     if (present(SI)) then
-       cea%SIunit = SI
+       this%SIunit = SI
     end if
 
     if (present(debug_points)) then
-       do concurrent (i = 1:maxMix, j = 1:size(debug_points), debug_points(j) <= cea%max_points)
-          cea%points(i, debug_points(j))%Debug = .true.
+       do concurrent (i = 1:maxMix, j = 1:size(debug_points), debug_points(j) <= this%max_points)
+          this%points(i, debug_points(j))%Debug = .true.
        end do
     end if
 
     if (present(mass_fractions)) then
-       cea%Massf = mass_fractions
+       this%Massf = mass_fractions
     end if
 
     if (present(short)) then
-       cea%Short = short
+       this%Short = short
     end if
 
     if (present(trace_tol)) then
-       cea%Trace = trace_tol
+       this%Trace = trace_tol
     end if
 
     if (present(transport)) then
-       cea%Trnspt = transport
+       this%Trnspt = transport
     end if
 
     return
   end subroutine set_output_options
 
-  subroutine set_chamber_pressures(cea, pressure_list, unit)
+  subroutine set_chamber_pressures(this, pressure_list, unit)
     use mod_constants, only: stderr, g0, lb_to_kg, in_to_m
-    use mod_cea_types, only: CEA_Problem
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: pressure_list(:)
     character(*), intent(in), optional:: unit
     real(8), parameter:: legacy_psi_factor = 1.01325d0 / 14.696006d0
@@ -136,28 +162,27 @@ contains
        end if
     end if
 
-    cea%Np = size(pressure_list)
-    cea%P(1:cea%Np) = pressure_list * factor
+    this%Np = size(pressure_list)
+    this%P(1:this%Np) = pressure_list * factor
 
     return
   end subroutine set_chamber_pressures
 
-  subroutine set_mixture_ratios(cea, ratio_list, type)
+  subroutine set_mixture_ratios(this, ratio_list, type)
     use mod_constants, only: stderr
-    use mod_cea_types, only: CEA_Problem
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
     character(*), intent(in), optional:: type
     integer:: iof
 
-    cea%Nof = size(ratio_list)
-    cea%Oxf(1:cea%Nof) = ratio_list
+    this%Nof = size(ratio_list)
+    this%Oxf(1:this%Nof) = ratio_list
 
     if (present(type)) then
        if (trim(type) == '%fuel') then
-          do concurrent (iof = 1:cea%Nof, cea%Oxf(iof) > 0)
-             cea%Oxf(iof) = (100 - cea%Oxf(iof)) / cea%Oxf(iof)
+          do concurrent (iof = 1:this%Nof, this%Oxf(iof) > 0)
+             this%Oxf(iof) = (100 - this%Oxf(iof)) / this%Oxf(iof)
           end do
        else
           write(stderr, *) '[ERROR] Unsupported type: ', trim(type)
@@ -168,74 +193,66 @@ contains
     return
   end subroutine set_mixture_ratios
 
-  subroutine set_pressure_ratios(cea, ratio_list)
-    use mod_cea_types, only: CEA_Problem
-
-    type(CEA_Problem), intent(inout):: cea
+  subroutine set_pressure_ratios(this, ratio_list)
+    class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    cea%Npp_in = size(ratio_list)
-    cea%Pcp(1:cea%Npp_in) = ratio_list
+    this%Npp_in = size(ratio_list)
+    this%Pcp(1:this%Npp_in) = ratio_list
 
     return
   end subroutine set_pressure_ratios
 
-  subroutine set_subsonic_area_ratios(cea, ratio_list)
-    use mod_cea_types, only: CEA_Problem
-
-    type(CEA_Problem), intent(inout):: cea
+  subroutine set_subsonic_area_ratios(this, ratio_list)
+    class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    cea%Nsub_in = size(ratio_list)
-    cea%Subar(1:cea%Nsub_in) = ratio_list
+    this%Nsub_in = size(ratio_list)
+    this%Subar(1:this%Nsub_in) = ratio_list
 
     return
   end subroutine set_subsonic_area_ratios
 
-  subroutine set_supersonic_area_ratios(cea, ratio_list)
-    use mod_cea_types, only: CEA_Problem
-
-    type(CEA_Problem), intent(inout):: cea
+  subroutine set_supersonic_area_ratios(this, ratio_list)
+    class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    cea%Nsup_in = size(ratio_list)
-    cea%Supar(1:cea%Nsup_in) = ratio_list
+    this%Nsup_in = size(ratio_list)
+    this%Supar(1:this%Nsup_in) = ratio_list
 
     return
   end subroutine set_supersonic_area_ratios
 
-  subroutine set_finite_area_combustor(cea, contraction_ratio, mass_flow_ratio)
+  subroutine set_finite_area_combustor(this, contraction_ratio, mass_flow_ratio)
     use mod_constants, only: stderr
-    use mod_cea_types, only: CEA_Problem
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     real(8), intent(in), optional:: contraction_ratio
     real(8), intent(in), optional:: mass_flow_ratio
 
     if (present(contraction_ratio)) then
-       cea%AcAt_in = contraction_ratio
+       this%AcAt_in = contraction_ratio
     else if (present(mass_flow_ratio)) then
-       cea%mdotByAc_in = mass_flow_ratio
+       this%mdotByAc_in = mass_flow_ratio
     else
        write(stderr, *) '[ERROR] Either contraction_ratio or mass_flow_ratio must be given.'
        return
     end if
 
-    cea%Fac = .true.
+    this%Fac = .true.
 
-    if (cea%Froz .and. cea%Nfz == 2) then
-       cea%Nfz = 3
+    if (this%Froz .and. this%Nfz == 2) then
+       this%Nfz = 3
     end if
 
     return
   end subroutine set_finite_area_combustor
 
 
-  subroutine add_reactant(cea, type, name, ratio, T, rho, T_unit, rho_unit)
+  subroutine add_reactant(this, type, name, ratio, T, rho, T_unit, rho_unit)
     use mod_constants, only: stderr
-    use mod_cea_types, only: CEA_Problem
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: type
     character(*), intent(in):: name
     real(8), intent(in), optional:: ratio
@@ -252,63 +269,83 @@ contains
        return
     end if
 
-    cea%Nreac = cea%Nreac + 1
+    this%Nreac = this%Nreac + 1
 
-    cea%Fox(cea%Nreac) = trim(type)
-    cea%Rname(cea%Nreac) = trim(name)
+    this%Fox(this%Nreac) = trim(type)
+    this%Rname(this%Nreac) = trim(name)
 
     if (present(ratio)) then
-       cea%Pecwt(cea%Nreac) = ratio
+       this%Pecwt(this%Nreac) = ratio
     else
-       cea%Pecwt(cea%Nreac) = 1
+       this%Pecwt(this%Nreac) = 1
     end if
 
-    if (present(T)) cea%Rtemp(cea%Nreac) = T * T_factor
+    if (present(T)) this%Rtemp(this%Nreac) = T * T_factor
 
-    if (present(rho)) cea%Dens(cea%Nreac) = rho * rho_factor
+    if (present(rho)) this%Dens(this%Nreac) = rho * rho_factor
 
-    cea%Energy(cea%Nreac) = 'lib'
+    this%Energy(this%Nreac) = 'lib'
 
     return
   end subroutine add_reactant
 
-  subroutine insert_species(cea, species)
-    use mod_cea_types, only: CEA_Problem
-
-    type(CEA_Problem), intent(inout):: cea
+  subroutine insert_species(this, species)
+    class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    cea%Nsert = min(20, size(species))
-    cea%ensert(1:cea%Nsert) = species(1:cea%Nsert)
+    this%Nsert = min(20, size(species))
+    this%ensert(1:this%Nsert) = species(1:this%Nsert)
 
     return
   end subroutine insert_species
 
-  subroutine set_omit_species(cea, species)
-    use mod_cea_types, only: CEA_Problem, maxNgc
+  subroutine set_omit_species(this, species)
+    use mod_cea_types, only: maxNgc
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    cea%Nomit = min(maxNgc, size(species))
-    cea%Omit(1:cea%Nomit) = species(1:cea%Nomit)
+    this%Nomit = min(maxNgc, size(species))
+    this%Omit(1:this%Nomit) = species(1:this%Nomit)
 
     return
   end subroutine set_omit_species
 
-  subroutine set_only_species(cea, species)
-    use mod_cea_types, only: CEA_Problem, maxNgc
+  subroutine set_only_species(this, species)
+    use mod_cea_types, only: maxNgc
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    cea%Nonly_in = min(maxNgc, size(species))
-    cea%Prod_in(:) = ''
-    cea%Prod_in(1:cea%Nonly_in) = species(1:cea%Nonly_in)
-    cea%Nonly = cea%Nonly_in
-    cea%Prod(:) = cea%Prod_in(:)
+    this%Nonly_in = min(maxNgc, size(species))
+    this%Prod_in(:) = ''
+    this%Prod_in(1:this%Nonly_in) = species(1:this%Nonly_in)
+    this%Nonly = this%Nonly_in
+    this%Prod(:) = this%Prod_in(:)
 
     return
   end subroutine set_only_species
+
+  subroutine run(this, out_filename)
+    use mod_cea_core, only: run_case
+
+    class(CEA_Problem), intent(inout):: this
+    character(*), intent(in), optional:: out_filename
+
+    call run_case(this, out_filename)
+
+    return
+  end subroutine run
+
+  subroutine write_debug_output(this, filename)
+    use mod_io, only: mod_io_write_debug_output => write_debug_output
+
+    class(CEA_Problem), intent(in):: this
+    character(*), intent(in):: filename
+
+    call mod_io_write_debug_output(this, filename)
+
+    return
+  end subroutine write_debug_output
 
 end module cea

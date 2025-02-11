@@ -134,7 +134,7 @@ contains
   subroutine init_case(cea)
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: cea
 
     cea%Case = 'New Case'
     cea%Detn = .false.
@@ -164,10 +164,54 @@ contains
   end subroutine init_case
 
 
+  subroutine allocate_points(cea)
+    class(CEA_Problem), intent(inout):: cea
+    integer:: i, iof, ipt
+
+    if (cea%Shock) then
+       cea%max_points = cea%Nsk
+    else
+       cea%max_points = cea%Nt * cea%Np
+       if (cea%Rkt) then
+          cea%max_points = cea%max_points * (cea%Npp_in + cea%Nsub_in + cea%Nsup_in) + 4
+       end if
+    end if
+
+    if (cea%max_points > 0) then
+       allocate(cea%points(max(1, cea%Nof), cea%max_points))
+
+       do concurrent (iof = 1:cea%Nof, ipt = 1:cea%max_points)
+          cea%points(iof, ipt)%Debug = .false.
+          cea%points(iof, ipt)%En(:) = 0
+       end do
+
+       if (allocated(cea%U1_in)) then
+          do concurrent (iof = 1:cea%Nof, ipt = 1:cea%Nsk)
+             cea%points(iof, ipt)%U1 = cea%U1_in(ipt)
+             cea%points(iof, ipt)%Mach1 = 0
+          end do
+       else if (allocated(cea%Ma1_in)) then
+          do concurrent (iof = 1:cea%Nof, ipt = 1:cea%Nsk)
+             cea%points(iof, ipt)%U1 = 0
+             cea%points(iof, ipt)%Mach1 = cea%Ma1_in(ipt)
+          end do
+       end if
+
+       if (allocated(cea%Debug_in)) then
+          do concurrent (iof = 1:cea%Nof, i = 1:size(cea%Debug_in))
+             cea%points(iof, cea%Debug_in(i))%Debug = .true.
+          end do
+       end if
+    end if
+
+    return
+  end subroutine allocate_points
+
+
   subroutine reset_case(cea)
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: cea
 
     cea%Eql = cea%Eql_in
     cea%Npp = cea%Npp_in

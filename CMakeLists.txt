@@ -1,6 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
-enable_language(Fortran)
 project(CEA Fortran)
 
 
@@ -27,7 +26,7 @@ set_property(TARGET ${CEA_CORE} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_options(${CEA_CORE}
   PRIVATE
   "-cpp"
-  "-DCEA_PREFIX='${CMAKE_INSTALL_PREFIX}'"
+  "-DCEA_ROOT='${CMAKE_INSTALL_PREFIX}'"
   "-std=f2023"
 )
 
@@ -65,14 +64,28 @@ add_subdirectory(src/interfaces/c++)
 
 
 install(TARGETS ${CEA_EXECUTABLE})
-install(TARGETS ${CEA_STATIC_LIBRARY})
-install(TARGETS ${CEA_SHARED_LIBRARY})
+
+install(TARGETS ${CEA_STATIC_LIBRARY}
+  EXPORT               cea-config
+  LIBRARY DESTINATION  lib
+  INCLUDES DESTINATION include
+)
+
+install(TARGETS ${CEA_SHARED_LIBRARY}
+  EXPORT               cea-config
+  LIBRARY DESTINATION  lib
+  INCLUDES DESTINATION include
+)
 
 install(FILES ${CMAKE_BINARY_DIR}/thermo.lib DESTINATION lib/)
 install(FILES ${CMAKE_BINARY_DIR}/trans.lib  DESTINATION lib/)
-install(FILES tests/orig/cea2.inp DESTINATION share/cea/examples/orig/)
-install(FILES src/core/thermo.inp DESTINATION share/cea/examples/orig/)
-install(FILES src/core/trans.inp  DESTINATION share/cea/examples/orig/)
+install(FILES tests/orig/cea2.inp DESTINATION share/examples/cea/orig/)
+install(FILES src/core/thermo.inp DESTINATION share/examples/cea/orig/)
+install(FILES src/core/trans.inp  DESTINATION share/examples/cea/orig/)
+
+install(FILES ${CMAKE_BINARY_DIR}/cea.mod DESTINATION include/)
+
+install(EXPORT cea-config DESTINATION share/cmake/cea/ EXPORT_LINK_INTERFACE_LIBRARIES)
 
 
 enable_testing()
@@ -81,5 +94,5 @@ add_subdirectory(tests/deton)
 add_subdirectory(tests/thermp)
 add_subdirectory(tests/shock)
 add_subdirectory(tests/rocket)
-# add_subdirectory(tests/newio)
+add_subdirectory(tests/interfaces/fortran)
 # add_subdirectory(tests/c++)

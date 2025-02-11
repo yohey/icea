@@ -16,9 +16,6 @@ program main
 
   call parse_arguments()
 
-  if (len_trim(filename_thermo_lib) == 0) filename_thermo_lib = find_library_path('thermo.lib')
-  if (len_trim(filename_trans_lib)  == 0) filename_trans_lib  = find_library_path('trans.lib')
-
   if (legacy_mode) then
      call read_legacy_input(cea, inp_filename, filename_thermo_lib, filename_trans_lib)
 

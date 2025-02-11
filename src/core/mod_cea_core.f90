@@ -9,11 +9,11 @@ contains
 
   subroutine run_all_cases(cea, out_filename, plt_filename)
     use mod_constants, only: stderr
-    use mod_cea_types, only: CEA_Problem, MAX_FILENAME, IOOUT, reset_case
+    use mod_cea_types, only: CEA_Problem, MAX_FILENAME, IOOUT, allocate_points, reset_case
     use mod_legacy_io
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea(:)
+    class(CEA_Problem), intent(inout):: cea(:)
     character(*), intent(in), optional:: out_filename
     character(*), intent(in), optional:: plt_filename
     integer:: icase, num_cases
@@ -30,6 +30,8 @@ contains
        end if
 
        if (cea(icase)%Nlm == 0) call REACT(cea(icase))
+
+       if (.not. associated(cea(icase)%points)) call allocate_points(cea(icase))
 
        call read_libraries(cea(icase))
     end do
@@ -76,6 +78,55 @@ contains
 
     return
   end subroutine run_all_cases
+
+
+  subroutine run_case(cea, out_filename)
+    use mod_cea_types
+    use mod_legacy_io, only: REACT, open_legacy_output, write_input_log, write_plt_file
+
+    class(CEA_Problem), intent(inout):: cea
+    character(*), intent(in), optional:: out_filename
+    logical:: is_opened
+
+    if (cea%legacy_mode) then
+       inquire(cea%io_log, opened = is_opened)
+       if (cea%io_log == 0 .or. .not. is_opened) open(newunit = cea%io_log, status = 'scratch', form = 'formatted')
+    end if
+
+    if (cea%Nlm == 0) call REACT(cea)
+
+    if (.not. associated(cea%points)) call allocate_points(cea)
+
+    call read_libraries(cea)
+
+    if (cea%legacy_mode) then
+       call open_legacy_output(IOOUT, out_filename)
+    end if
+
+    call reset_case(cea)
+
+    if (cea%legacy_mode) call write_input_log(cea%io_log, IOOUT)
+
+    if (cea%invalid_case) return
+
+    if (cea%Rkt) then
+       call ROCKET(cea)
+    else if (cea%Tp .or. cea%Hp .or. cea%Sp) then
+       call THERMP(cea)
+    else if (cea%Detn) then
+       call DETON(cea)
+    else if (cea%Shock) then
+       call SHCK(cea)
+    end if
+
+    inquire(IOOUT, opened = is_opened)
+    if (is_opened) then
+       close(IOOUT)
+       IOOUT = 0
+    end if
+
+    return
+  end subroutine run_case
 
 
   subroutine CPHS(cea)
@@ -2677,7 +2728,7 @@ contains
     use mod_cea_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Problem), intent(inout):: cea
     integer:: i, j
     real(8):: xi, xln
 
