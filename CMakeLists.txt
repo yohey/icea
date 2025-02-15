@@ -65,25 +65,23 @@ add_subdirectory(src/interfaces/c++)
 
 install(TARGETS ${CEA_EXECUTABLE})
 
-install(TARGETS ${CEA_STATIC_LIBRARY}
-  EXPORT               cea-config
-  LIBRARY DESTINATION  lib
-  INCLUDES DESTINATION include
+install(TARGETS ${CEA_STATIC_LIBRARY} ${CEA_SHARED_LIBRARY}
+  EXPORT                    cea-config
+  LIBRARY DESTINATION       lib
+  INCLUDES DESTINATION      include include/cea
+  PUBLIC_HEADER DESTINATION include/cea
 )
 
-install(TARGETS ${CEA_SHARED_LIBRARY}
-  EXPORT               cea-config
-  LIBRARY DESTINATION  lib
-  INCLUDES DESTINATION include
-)
+install(FILES ${CMAKE_BINARY_DIR}/thermo.lib DESTINATION lib/cea/)
+install(FILES ${CMAKE_BINARY_DIR}/trans.lib  DESTINATION lib/cea/)
+install(FILES ${CMAKE_BINARY_DIR}/cea.mod    DESTINATION include/cea/)
 
-install(FILES ${CMAKE_BINARY_DIR}/thermo.lib DESTINATION lib/)
-install(FILES ${CMAKE_BINARY_DIR}/trans.lib  DESTINATION lib/)
-install(FILES tests/orig/cea2.inp DESTINATION share/examples/cea/orig/)
-install(FILES src/core/thermo.inp DESTINATION share/examples/cea/orig/)
-install(FILES src/core/trans.inp  DESTINATION share/examples/cea/orig/)
+install(FILES tests/orig/cea2.inp  DESTINATION share/doc/cea/examples/orig/)
+install(FILES src/core/thermo.inp  DESTINATION share/doc/cea/examples/orig/)
+install(FILES src/core/trans.inp   DESTINATION share/doc/cea/examples/orig/)
 
-install(FILES ${CMAKE_BINARY_DIR}/cea.mod DESTINATION include/)
+install(FILES     examples/fortran/CMakeLists.txt DESTINATION share/doc/cea/examples/fortran/)
+install(DIRECTORY examples/fortran/src            DESTINATION share/doc/cea/examples/fortran/)
 
 install(EXPORT cea-config DESTINATION share/cmake/cea/ EXPORT_LINK_INTERFACE_LIBRARIES)
 

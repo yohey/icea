@@ -93,13 +93,13 @@ contains
 
     if (len_trim(ENV_CEA_ROOT) > 0) then
        if (.not. thermo_lib_exists) then
-          tmp_path = trim(ENV_CEA_ROOT) // '/lib/thermo.lib'
+          tmp_path = trim(ENV_CEA_ROOT) // '/lib/cea/thermo.lib'
           inquire(file = tmp_path, exist = thermo_lib_exists)
           if (thermo_lib_exists) thermo_lib_found = tmp_path
        end if
 
        if (.not. trans_lib_exists) then
-          tmp_path = trim(ENV_CEA_ROOT) // '/lib/trans.lib'
+          tmp_path = trim(ENV_CEA_ROOT) // '/lib/cea/trans.lib'
           inquire(file = tmp_path, exist = trans_lib_exists)
           if (trans_lib_exists) trans_lib_found = tmp_path
        end if
@@ -109,13 +109,13 @@ contains
 
 #ifdef CEA_ROOT
     if (.not. thermo_lib_exists) then
-       tmp_path = trim(CEA_ROOT) // '/lib/thermo.lib'
+       tmp_path = trim(CEA_ROOT) // '/lib/cea/thermo.lib'
        inquire(file = tmp_path, exist = thermo_lib_exists)
        if (thermo_lib_exists) thermo_lib_found = tmp_path
     end if
 
     if (.not. trans_lib_exists) then
-       tmp_path = trim(CEA_ROOT) // '/lib/trans.lib'
+       tmp_path = trim(CEA_ROOT) // '/lib/cea/trans.lib'
        inquire(file = tmp_path, exist = trans_lib_exists)
        if (trans_lib_exists) trans_lib_found = tmp_path
     end if
