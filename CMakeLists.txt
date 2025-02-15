@@ -27,7 +27,7 @@ target_compile_options(${CEA_CORE}
   PRIVATE
   "-cpp"
   "-DCEA_ROOT='${CMAKE_INSTALL_PREFIX}'"
-  "-std=f2023"
+  "-std=f2018"
 )
 
 
@@ -41,7 +41,7 @@ target_sources(${CEA_EXECUTABLE}
 target_compile_options(${CEA_EXECUTABLE}
   PRIVATE
   "-cpp"
-  "-std=f2023"
+  "-std=f2018"
 )
 
 target_link_libraries(${CEA_EXECUTABLE} PRIVATE ${CEA_CORE})

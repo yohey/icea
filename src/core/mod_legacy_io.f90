@@ -565,7 +565,8 @@ contains
                    write(cea%io_log, '(/" T,K =", 7f11.4)') (cea%T(jj), jj = 1, cea%Nt)
                 end if
 
-                write(cea%io_log, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') cea%Trace, cea%S0, hr, ur
+                write(cea%io_log, '(/1p, " TRACE=", e9.2, "  S/R=", e13.6, "  H/R=", e13.6, "  U/R=",  e13.6)') &
+                     cea%Trace, cea%S0, hr, ur
 
                 if (cea%Np > 0 .and. cea%Vol) then
                    write(cea%io_log, '(/" SPECIFIC VOLUME,M**3/KG =", 1p, (4e14.7))') (cea%V(jj)*1.d-05, jj = 1, cea%Np)

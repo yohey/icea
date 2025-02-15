@@ -26,7 +26,7 @@ target_include_directories(${CEA_OBJECTS} PRIVATE ${CMAKE_BINARY_DIR})
 
 target_compile_options(${CEA_OBJECTS}
   PRIVATE
-  $<$<COMPILE_LANGUAGE:Fortran>:-std=f2023>
+  $<$<COMPILE_LANGUAGE:Fortran>:-std=f2018>
 )
 
 

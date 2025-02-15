@@ -2290,7 +2290,8 @@ contains
                       go to 550
                    else
                       msq = usq / pvg
-                      if (cea%legacy_mode .and. p1%Debug .or. p2%Debug) write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
+                      if (cea%legacy_mode .and. p1%Debug .or. p2%Debug) &
+                           write(IOOUT, '(/" USQ=", e15.8, 5x, "PVG=", e15.8)') usq, pvg
                       dh = abs(msq - 1)
                       if (dh <= 0.4d-4) go to 550
                       if (itrot > 0) then
@@ -2433,7 +2434,8 @@ contains
              else if (p%Gammas > 0) then
                 check = 0.00004
                 p => cea%points(cea%iOF, cea%ipt)
-                if (cea%legacy_mode .and. p%Debug) write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
+                if (cea%legacy_mode .and. p%Debug) &
+                     write(IOOUT, '(/" ITER=", i2, 2x, "ASSIGNED AE/AT=", f14.7, 3x, "AE/AT=", f14.7, &
                      & /, 2x, "PC/P=", f14.7, 2x, "DELTA LN PCP=", f14.7)') &
                      itnum, aratio, p%AeAt, p%App, dlnp
                 if (abs(p%AeAt - Aratio) / Aratio <= check) go to 900
@@ -2441,7 +2443,8 @@ contains
                 aeatl = log(p%AeAt)
                 itnum = itnum + 1
                 if (itnum > 10) then
-                   if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
+                   if (cea%legacy_mode) &
+                        write(IOOUT, '(/" WARNING!!  DID NOT CONVERGE FOR AREA RATIO =", F10.5, " (ROCKET)")') aratio
                    go to 900
                 else
                    p => cea%points(cea%iOF, cea%ipt)
@@ -3253,7 +3256,8 @@ contains
                    p%Hsum = cea%Hsub0
                 else
                    if (cea%legacy_mode) &
-                        write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') cea%Tt, i
+                        write(IOOUT, '(/" TEMPERATURE=", E12.4, " IS OUT OF EXTENDED RANGE ", "FOR POINT", I5, " (SHCK)")') &
+                        cea%Tt, i
                    return
                 end if
              end if
@@ -4085,7 +4089,8 @@ contains
              if (cea%Xs(k) >= 1.0d-10 .and. cea%Xs(m) >= 1.0d-10) then
                 do j = 1, cea%Nr
                    if ((cea%Stc(j, k) == 0) .and. (cea%Stc(j, m) == 0)) stx(j) = 0
-                   if ((cea%Stc(j, k) /= 0) .or. (cea%Stc(j, m) /= 0)) stx(j) = cea%Xs(m) * cea%Stc(j, k) - cea%Xs(k) * cea%Stc(j, m)
+                   if ((cea%Stc(j, k) /= 0) .or. (cea%Stc(j, m) /= 0)) &
+                        stx(j) = cea%Xs(m) * cea%Stc(j, k) - cea%Xs(k) * cea%Stc(j, m)
                 end do
                 do i = 1, cea%Nr
                    do j = i, cea%Nr

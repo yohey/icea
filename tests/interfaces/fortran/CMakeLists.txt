@@ -26,7 +26,7 @@ target_sources(${TEST_EXECUTABLE}
 target_compile_options(${TEST_EXECUTABLE}
   PRIVATE
   "-cpp"
-  "-std=f2023"
+  "-std=f2018"
 )
 
 target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_BINARY_DIR})
