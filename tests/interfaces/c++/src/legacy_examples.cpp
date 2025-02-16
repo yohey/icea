@@ -2,8 +2,7 @@
 #include "cea.h"
 
 
-int main() {
-
+void run_legacy_examples() {
   std::vector<CEA::Problem> cea;
 
   cea = CEA::read_legacy_input("cea2.inp");
@@ -25,6 +24,4 @@ int main() {
   cea = CEA::read_legacy_input("test-rocket.inp");
   CEA::run_all_cases(cea, "test-rocket.out", "test-rocket.plt");
   cea.clear();
-
-  return 0;
 }

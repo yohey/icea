@@ -19,9 +19,18 @@ module cea
      procedure, public, pass:: set_only_species
      procedure, public, pass:: run
      procedure, public, pass:: write_debug_output
+     final:: del_problem
   end type CEA_Problem
 
 contains
+
+  subroutine del_problem(this)
+    type(CEA_Problem), intent(inout):: this
+
+    write(0, *) '[DEBUG] CEA_Problem (cea.f90) destructor is called: ', trim(this%Case)
+
+    return
+  end subroutine del_problem
 
   subroutine set_problem(this, mode, name, mole_ratios, equilibrium, ions, &
        frozen, frozen_at_throat, thermo_lib, trans_lib)
@@ -42,7 +51,8 @@ contains
 
     call init_case(this)
 
-    if (mode == 'rocket') then
+    select case (mode)
+    case ('rocket')
        this%Rkt = .true.
        this%Sp = .true.
        this%Tp = .false.
@@ -66,19 +76,23 @@ contains
           end if
        end if
 
-    else if (mode == 'thermp') then
+    case ('thermp')
        write(stderr, *) '[ERROR] Not implemented yet.'
        return
-    else if (mode == 'deton') then
+
+    case ('deton')
        write(stderr, *) '[ERROR] Not implemented yet.'
        return
-    else if (mode == 'shock') then
+
+    case ('shock')
        write(stderr, *) '[ERROR] Not implemented yet.'
        return
-    else
-       write(stderr, *) '[ERROR] Invalid mode: ', mode
+
+    case default
+       write(stderr, *) '[ERROR] Invalid mode: ', trim(mode)
        return
-    end if
+
+    end select
 
     if (present(name)) then
        this%Case = trim(name)
@@ -280,7 +294,17 @@ contains
        this%Pecwt(this%Nreac) = 1
     end if
 
+    if (present(T_unit)) then
+       write(stderr, *) '[ERROR] Not implemented yet: T_unit = ', trim(T_unit)
+       return
+    end if
+
     if (present(T)) this%Rtemp(this%Nreac) = T * T_factor
+
+    if (present(rho_unit)) then
+       write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
+       return
+    end if
 
     if (present(rho)) this%Dens(this%Nreac) = rho * rho_factor
 

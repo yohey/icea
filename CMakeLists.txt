@@ -6,6 +6,8 @@ project(CEA Fortran)
 set(CEA_CORE cea-core)
 set(CEA_EXECUTABLE cea)
 
+set(CEA_Fortran_FLAGS -cpp -std=f2018)
+
 
 add_library(${CEA_CORE} OBJECT)
 
@@ -25,9 +27,8 @@ set_property(TARGET ${CEA_CORE} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_compile_options(${CEA_CORE}
   PRIVATE
-  "-cpp"
   "-DCEA_ROOT='${CMAKE_INSTALL_PREFIX}'"
-  "-std=f2018"
+  ${CEA_Fortran_FLAGS}
 )
 
 
@@ -40,8 +41,7 @@ target_sources(${CEA_EXECUTABLE}
 
 target_compile_options(${CEA_EXECUTABLE}
   PRIVATE
-  "-cpp"
-  "-std=f2018"
+  ${CEA_Fortran_FLAGS}
 )
 
 target_link_libraries(${CEA_EXECUTABLE} PRIVATE ${CEA_CORE})
@@ -93,4 +93,4 @@ add_subdirectory(tests/thermp)
 add_subdirectory(tests/shock)
 add_subdirectory(tests/rocket)
 add_subdirectory(tests/interfaces/fortran)
-# add_subdirectory(tests/c++)
+add_subdirectory(tests/interfaces/c++)

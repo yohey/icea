@@ -25,8 +25,7 @@ target_sources(${TEST_EXECUTABLE}
 
 target_compile_options(${TEST_EXECUTABLE}
   PRIVATE
-  "-cpp"
-  "-std=f2018"
+  ${CEA_Fortran_FLAGS}
 )
 
 target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_BINARY_DIR})
@@ -48,11 +47,11 @@ add_test(
 )
 
 set(ORIG_OUT "${CMAKE_SOURCE_DIR}/tests/orig/cea2.out")
-add_test(NAME diff-fortran-example-08 COMMAND bash -c "[ $(awk 'NR == 1621, NR == 1800' ${ORIG_OUT} | diff -Bb - example-08.out | wc -l) -le 18 ]")
-add_test(NAME diff-fortran-example-09 COMMAND bash -c "[ $(awk 'NR == 1834, NR == 2026' ${ORIG_OUT} | diff -Bb - example-09.out | wc -l) -le 18 ]")
-add_test(NAME diff-fortran-example-10 COMMAND bash -c "[ $(awk 'NR == 2057, NR == 2178' ${ORIG_OUT} | diff -Bb - example-10.out | wc -l) -le 22 ]")
-add_test(NAME diff-fortran-example-11 COMMAND bash -c "[ $(awk 'NR == 2219, NR == 2363' ${ORIG_OUT} | diff -Bb - example-11.out | wc -l) -le 20 ]")
-add_test(NAME diff-fortran-example-12 COMMAND bash -c "[ $(awk 'NR == 2415, NR == 2774' ${ORIG_OUT} | diff -Bb - example-12.out | wc -l) -le 26 ]")
-add_test(NAME diff-fortran-example-13 COMMAND bash -c "[ $(awk 'NR == 2819, NR == 3003' ${ORIG_OUT} | diff -Bb - example-13.out | wc -l) -le 22 ]")
+add_test(NAME diff-fortran-example-08 COMMAND bash -c "[ $(cat example-08.out | wc -l) -ge 180 ] && [ $(awk 'NR == 1621, NR == 1800' ${ORIG_OUT} | diff -Bb - example-08.out | wc -l) -le 18 ]")
+add_test(NAME diff-fortran-example-09 COMMAND bash -c "[ $(cat example-09.out | wc -l) -ge 193 ] && [ $(awk 'NR == 1834, NR == 2026' ${ORIG_OUT} | diff -Bb - example-09.out | wc -l) -le 18 ]")
+add_test(NAME diff-fortran-example-10 COMMAND bash -c "[ $(cat example-10.out | wc -l) -ge 122 ] && [ $(awk 'NR == 2057, NR == 2178' ${ORIG_OUT} | diff -Bb - example-10.out | wc -l) -le 22 ]")
+add_test(NAME diff-fortran-example-11 COMMAND bash -c "[ $(cat example-11.out | wc -l) -ge 145 ] && [ $(awk 'NR == 2219, NR == 2363' ${ORIG_OUT} | diff -Bb - example-11.out | wc -l) -le 20 ]")
+add_test(NAME diff-fortran-example-12 COMMAND bash -c "[ $(cat example-12.out | wc -l) -ge 360 ] && [ $(awk 'NR == 2415, NR == 2774' ${ORIG_OUT} | diff -Bb - example-12.out | wc -l) -le 26 ]")
+add_test(NAME diff-fortran-example-13 COMMAND bash -c "[ $(cat example-13.out | wc -l) -ge 185 ] && [ $(awk 'NR == 2819, NR == 3003' ${ORIG_OUT} | diff -Bb - example-13.out | wc -l) -le 22 ]")
 
 set_tests_properties(${JOB_NAME} PROPERTIES FIXTURES_SETUP ${JOB_NAME}_fixtures)

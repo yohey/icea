@@ -127,6 +127,10 @@ module mod_cea_types
      character(4):: fmt(30) = [character(4):: '(1X', ',A15', ',', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', &
                                'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0,', 'F9.', '0', ')']
+
+   contains
+     final:: del_problem
+
   end type CEA_Problem
 
 contains
@@ -162,6 +166,21 @@ contains
 
     return
   end subroutine init_case
+
+
+  subroutine del_problem(cea)
+    type(CEA_Problem), intent(inout):: cea
+
+    write(0, *) '[DEBUG] CEA_Problem (mod_cea_types.f90) destructor is called: ', trim(cea%Case)
+
+    if (associated(cea%points)) deallocate(cea%points)
+    if (allocated(cea%transport_properties)) deallocate(cea%transport_properties)
+    if (allocated(cea%Debug_in)) deallocate(cea%Debug_in)
+    if (allocated(cea%U1_in)) deallocate(cea%U1_in)
+    if (allocated(cea%Ma1_in)) deallocate(cea%Ma1_in)
+
+    return
+  end subroutine del_problem
 
 
   subroutine allocate_points(cea)

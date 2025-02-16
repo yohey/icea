@@ -26,7 +26,7 @@ target_include_directories(${CEA_OBJECTS} PRIVATE ${CMAKE_BINARY_DIR})
 
 target_compile_options(${CEA_OBJECTS}
   PRIVATE
-  $<$<COMPILE_LANGUAGE:Fortran>:-std=f2018>
+  $<$<COMPILE_LANGUAGE:Fortran>:${CEA_Fortran_FLAGS}>
 )
 
 
@@ -39,5 +39,10 @@ set_target_properties(${CEA_SHARED_LIBRARY} PROPERTIES OUTPUT_NAME cea)
 target_link_libraries(${CEA_STATIC_LIBRARY})
 target_link_libraries(${CEA_SHARED_LIBRARY} PRIVATE ${CEA_CORE})
 
-set_target_properties(${CEA_STATIC_LIBRARY} PROPERTIES PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/cea.h)
-set_target_properties(${CEA_SHARED_LIBRARY} PROPERTIES PUBLIC_HEADER ${CMAKE_CURRENT_SOURCE_DIR}/cea.h)
+set(CEA_HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/cea.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mod_ffi.h
+)
+
+set_target_properties(${CEA_STATIC_LIBRARY} PROPERTIES PUBLIC_HEADER "${CEA_HEADERS}")
+set_target_properties(${CEA_SHARED_LIBRARY} PROPERTIES PUBLIC_HEADER "${CEA_HEADERS}")
