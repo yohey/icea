@@ -1872,7 +1872,8 @@ contains
     ! LOCAL VARIABLES
     character(4):: exit(11) = 'EXIT'
     character(15):: fi, fiv, fr, z(4)
-    integer, save:: i, i23, i46, i57, i68, i79, ione, ixfr, ixfz, j, k, line, ln, mae, mcf, misp, mivac, mmach, mppf, mppj, nex
+    integer:: i, i23, ione, ixfr, ixfz, j, k, line, ln
+    integer:: mae, mcf, misp, mivac, mmach, mppf, mppj, nex
     real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
 
     type(CEA_Point), pointer:: p !< current point
@@ -1933,10 +1934,6 @@ contains
     nex = n_cols_print - 2
     if (cea%Page1) then
        ione = 0
-       i46 = 4
-       i57 = 5
-       i68 = 6
-       i79 = 7
     else
        ione = i23
     end if
@@ -2035,20 +2032,18 @@ contains
 
     ! AREA RATIO
     cea%fmt(4) = '9x,'
-    cea%fmt(i46) = '9x,'
     cea%fmt = VARFMT(cea%fmt, out_AeAt, n_cols_print)
     cea%fmt(5) = ' '
-    cea%fmt(i57) = ' '
     write(IOOUT, cea%fmt) 'Ae/At          ', out_AeAt(2:)
 
     ! C*
-    cea%fmt(i57) = '13'
-    cea%fmt(i68) = cea%fmt(i68 + 2)
-    cea%fmt(i79) = '1,'
+    cea%fmt(5) = '13'
+    cea%fmt(6) = cea%fmt(8)
+    cea%fmt(7) = '1,'
     write(IOOUT, cea%fmt) fr, (cea%Cstr, j = 2, n_cols_print)
 
     ! CF - THRUST COEFICIENT
-    cea%fmt(i79) = '4,'
+    cea%fmt(7) = '4,'
     do i = 2, n_cols_print
        p => cea%points(cea%iOF, i_cols_print(i))
        X(i) = gc * p%Spim / cea%Cstr
@@ -2056,8 +2051,8 @@ contains
     write(IOOUT, cea%fmt) 'CF             ', X(2:n_cols_print)
 
     ! VACUUM IMPULSE
-    cea%fmt(i57) = '13'
-    cea%fmt(i79) = '1,'
+    cea%fmt(5) = '13'
+    cea%fmt(7) = '1,'
     write(IOOUT, cea%fmt) fiv, vaci(2:n_cols_print)
 
     ! SPECIFIC IMPULSE
@@ -2088,8 +2083,8 @@ contains
     cea%fmt(7) = '5,'
 
     if (cea%Iopt /= 0) then
-       cea%fmt(i46) = cea%fmt(8)
-       cea%fmt(i57) = cea%fmt(9)
+       cea%fmt(4) = cea%fmt(8)
+       cea%fmt(5) = cea%fmt(9)
     end if
 
     if (.not. cea%Eql) then

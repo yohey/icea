@@ -547,14 +547,14 @@ contains
     ! LOCAL VARIABLES
     character(12):: ae, cmp(maxEl)
     character(16):: amb
-    logical, save:: cpcalc, i2many, newcom, reduce
+    logical:: cpcalc, i2many, reduce
     integer:: i, il, ilamb, ilamb1, inc, ipr, iq2, iter, ixsing, iz, j, ja, jb, &
          jbx, jc, jcondi, jcons, jdelg, jkg, jneg, jsw, k, kc, kg, kk, &
          kmat, kneg, l, lc, lcs(maxEl), le, lelim, lk, ll, lncvg, ls, lsing, &
          lz, maxitn, ncvg, njc, nn, numb
-    real(8), save:: aa, ambda, ambda1, bigen, bigneg, delg, dlnt, dpie, ensol, esize, &
-         gap, gasfrc, pie, pisave(maxMat-2), siz9, sizeg, &
-         sum0, sum1, szgj, tem, tmelt, tsize, ween, xi, xln, xsize, xx(maxMat)
+    real(8):: aa, ambda, ambda1, bigen, bigneg, delg, dlnt, dpie, esize
+    real(8):: gap, gasfrc, pie, siz9, sizeg
+    real(8):: sum0, sum1, szgj, tem, tsize, ween, xi, xln, xsize
     real(8):: smalno = 1e-6, smnol = -13.815511
     logical:: mask(cea%Ng)
     integer:: Npt
@@ -911,8 +911,7 @@ contains
                 cea%Enn = 0.1
                 cea%Ennl = -2.3025851
                 cea%Sumn = cea%Enn
-                xi = cea%Ng
-                xi = cea%Enn/xi
+                xi = cea%Enn / cea%Ng
                 xln = log(xi)
 
                 do concurrent (j = 1:cea%Ng)
@@ -961,7 +960,7 @@ contains
                       if (i /= lsing) then
                          tem = 0
                          if (cea%X(i) /= 0) then
-                            tem = abs((pisave(i) - cea%X(i)) / cea%X(i))
+                            tem = abs((cea%pisave(i) - cea%X(i)) / cea%X(i))
                             if (tem > 0.001) exit
                          end if
                       end if
@@ -969,7 +968,7 @@ contains
                 end if
 
                 do concurrent (i = 1:cea%Nlm)
-                   pisave(i) = cea%X(i)
+                   cea%pisave(i) = cea%X(i)
                 end do
 
                 if (tem > 0.001) go to 500
@@ -1024,7 +1023,7 @@ contains
 
                       else if (cea%Elmt(cea%Nlm) == 'E' .and. pie /= 0) then
                          cea%Nlm = cea%Nlm - 1
-                         newcom = .true.
+                         cea%newcom = .true.
                       end if
                    end if
                 end if
@@ -1047,7 +1046,7 @@ contains
           if (cea%Jliq == 0) then
              p%Gammas = -1 / (p%Dlvpt + (p%Dlvtp**2) * cea%Enn / p%Cpr)
           else
-             p%En(cea%Jsol) = ensol
+             p%En(cea%Jsol) = cea%ensol
              p%Hsum = p%Hsum + p%En(cea%Jliq) * (cea%H0(cea%Jliq) - cea%H0(cea%Jsol))
              p%Gammas = -1. / p%Dlvpt
              cea%Npr = cea%Npr + 1
@@ -1181,13 +1180,9 @@ contains
        go to 1500
     else
        if (.not. cea%Shock) then
-          do concurrent (il = 1:le)
-             xx(il) = cea%X(il)
-          end do
-
           if (cea%legacy_mode .and. .not. cea%Short) then
-             if (newcom) write(IOOUT, '(/" POINT ITN", 6x, "T", 10x, 4a12/(18x, 5a12))') (cmp(k), k = 1, le)
-             write(IOOUT, '(i4, i5, 5f12.3, /(12x, 5f12.3))') Npt, numb, cea%Tt, (xx(il), il = 1, le)
+             if (cea%newcom) write(IOOUT, '(/" POINT ITN", 6x, "T", 10x, 4a12/(18x, 5a12))') (cmp(k), k = 1, le)
+             write(IOOUT, '(i4, i5, 5f12.3, /(12x, 5f12.3))') Npt, numb, cea%Tt, (cea%X(il), il = 1, le)
           end if
 
           if (.not. cea%Tp .and. cea%Npr == 0 .and. cea%Tt <= cea%Tg(1) * 0.2d0) then
@@ -1196,7 +1191,7 @@ contains
              go to 1500
           end if
 
-          newcom = .false.
+          cea%newcom = .false.
        end if
 
        if (cea%Npr /= 0) then
@@ -1311,8 +1306,7 @@ contains
           end if
 
 720       kk = max(0, kg)
-          tmelt = cea%Temp(kk+1, inc)
-          cea%Tt = tmelt
+          cea%Tt = cea%Temp(kk+1, inc)
           cea%Tln = log(cea%Tt)
           cea%Jsol = min(j, jkg)
           cea%Jliq = cea%Jsol + 1
@@ -1338,7 +1332,7 @@ contains
        ! TEMPORARILY REMOVE LIQ TO PREVENT SINGULAR DERIVATIVE MATRIX.
 750    cea%Sumn = cea%Enn
        if (cea%Jsol /= 0) then
-          ensol = p%En(cea%Jsol)
+          cea%ensol = p%En(cea%Jsol)
           p%En(cea%Jsol) = p%En(cea%Jsol) + p%En(cea%Jliq)
           p%Dlvtp = 0
           p%Cpr = 0
@@ -1392,7 +1386,7 @@ contains
 
     go to 900
 
-1100 newcom = .false.
+1100 cea%newcom = .false.
     nn = cea%Nlm
 
     if (cea%Elmt(cea%Nlm) == 'E') nn = cea%Nlm - 1
@@ -1434,7 +1428,7 @@ contains
              end do
 
              njc = njc + 1
-             if (jbx /= cea%Jcm(lc)) newcom = .true.
+             if (jbx /= cea%Jcm(lc)) cea%newcom = .true.
              cea%Jcm(lc) = jbx
              lcs(njc) = lc
              exit
@@ -1449,7 +1443,7 @@ contains
        p%En(j) = abs(p%En(j))
     end do
 
-    if (newcom) then
+    if (cea%newcom) then
        ! SWITCH COMPONENTS
        do lc = 1, nn
           jb = cea%Jcm(lc)
@@ -1462,9 +1456,9 @@ contains
           tem = cea%A(lc, jb)
 
           if (tem /= 0) then
-             pisave(lc) = cea%H0(jb) - cea%S(jb)
+             cea%pisave(lc) = cea%H0(jb) - cea%S(jb)
 
-             if (jb <= cea%Ng) pisave(lc) = pisave(lc) + cea%Enln(jb) + cea%Tm
+             if (jb <= cea%Ng) cea%pisave(lc) = cea%pisave(lc) + cea%Enln(jb) + cea%Tm
              cmp(lc) = trim(cea%Prod(jb))
 
              ! CALCULATE NEW COEFFICIENTS
@@ -1536,9 +1530,9 @@ contains
           aa = cea%B0(cea%Msing)
           cea%B0(cea%Msing) = cea%B0(cea%Nlm)
           cea%B0(cea%Nlm) = aa
-          aa = pisave(cea%Msing)
-          pisave(cea%Msing) = pisave(cea%Nlm)
-          pisave(cea%Nlm) = aa
+          aa = cea%pisave(cea%Msing)
+          cea%pisave(cea%Msing) = cea%pisave(cea%Nlm)
+          cea%pisave(cea%Nlm) = aa
 
           do i = 1, 2
              aa = cea%B0p(cea%Msing, i)
@@ -1546,7 +1540,7 @@ contains
              cea%B0p(cea%Nlm, i) = aa
           end do
        end if
-    else if (.not. newcom .and. cea%Trace == 0.) then
+    else if (.not. cea%newcom .and. cea%Trace == 0.) then
        go to 600
     end if
 
@@ -1559,7 +1553,7 @@ contains
     p%Vlm = R0 * cea%Enn * cea%Tt / cea%Pp
     p%Hsum = p%Hsum * cea%Tt
     p%Wm = 1. / cea%Enn
-    gasfrc = cea%Enn/p%Totn
+    gasfrc = cea%Enn / p%Totn
 
     if (cea%legacy_mode .and. gasfrc < 0.0001) write(IOOUT, '(/" WARNING!  RESULTS MAY BE WRONG FOR POINT", i3, " DUE TO", &
          & /" LOW MOLE FRACTION OF GASES (", e15.8, ") (EQLBRM)")') Npt, gasfrc
@@ -1699,7 +1693,7 @@ contains
     character(6):: date(maxNgc)
     character(2):: el(5)
     character(15):: sub
-    integer, save:: i, icf, ifaz, itot, j, k, l, m, n, nall, nint, ntgas, ntot
+    integer:: i, icf, ifaz, itot, j, k, l, m, n, nall, nint, ntgas, ntot
     real(8):: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), Tsave
     integer:: io_thermo
 
@@ -3704,7 +3698,7 @@ contains
     ! LOCAL VARIABLES
     integer:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
     logical:: change, elc1, elc2, ion1, ion2, setx
-    real(8), save:: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
+    real(8):: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
          stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
          trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
 
@@ -3713,6 +3707,8 @@ contains
 
     p1 => cea%points(cea%iOF, 1)
 
+    xss(:) = 0
+    wmols(:) = 0
     inds(:) = 0
     nms = 0
     setx = .false.
@@ -4007,7 +4003,7 @@ contains
 
     ! LOCAL VARIABLES
     integer:: i, i1, j, jj, k, m, mm, nlmm, nmm
-    real(8), save:: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
+    real(8):: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
          psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
          stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
 
