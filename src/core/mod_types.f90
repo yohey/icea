@@ -1,4 +1,4 @@
-module mod_cea_types
+module mod_types
   use mod_constants
   implicit none
 
@@ -42,7 +42,7 @@ module mod_cea_types
   end type CEA_Point
 
 
-  type:: CEA_Problem
+  type:: CEA_Core_Problem
      integer:: io_log = 0
 
      logical:: invalid_case = .false.
@@ -135,14 +135,14 @@ module mod_cea_types
    contains
      final:: del_problem
 
-  end type CEA_Problem
+  end type CEA_Core_Problem
 
 contains
 
   subroutine init_case(cea)
     implicit none
 
-    class(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
 
     cea%Case = 'New Case'
     cea%Detn = .false.
@@ -175,9 +175,9 @@ contains
 
 
   subroutine del_problem(cea)
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
-    write(0, *) '[DEBUG] CEA_Problem (mod_cea_types.f90) destructor is called: ', trim(cea%Case)
+    write(0, *) '[DEBUG] CEA_Core_Problem (mod_cea_types.f90) destructor is called: ', trim(cea%Case)
 
     if (associated(cea%points)) deallocate(cea%points)
     if (allocated(cea%transport_properties)) deallocate(cea%transport_properties)
@@ -190,7 +190,7 @@ contains
 
 
   subroutine allocate_points(cea)
-    class(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
     integer:: i, iof, ipt, Nof_tmp
 
     if (cea%Shock) then
@@ -238,7 +238,7 @@ contains
   subroutine reset_case(cea)
     implicit none
 
-    class(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
 
     cea%Eql = cea%Eql_in
     cea%Npp = cea%Npp_in
@@ -273,4 +273,4 @@ contains
     return
   end subroutine reset_case
 
-end module mod_cea_types
+end module mod_types

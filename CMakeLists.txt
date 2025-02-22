@@ -13,8 +13,8 @@ add_library(${CEA_CORE} OBJECT)
 
 target_sources(${CEA_CORE}
   PRIVATE
-  src/core/mod_cea_core.f90
-  src/core/mod_cea_types.f90
+  src/core/mod_cea.f90
+  src/core/mod_types.f90
   src/core/mod_constants.f90
   src/core/mod_general.f90
   src/core/mod_functions.f90

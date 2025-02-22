@@ -1,11 +1,11 @@
 program main
-  use mod_cea_core
-  use mod_cea_types
+  use mod_cea
+  use mod_types
   use mod_legacy_io
   use mod_io
   implicit none
 
-  type(CEA_Problem), allocatable:: cea(:)
+  type(CEA_Core_Problem), allocatable:: cea(:)
 
   character(MAX_FILENAME):: inp_filename = ''
   character(MAX_FILENAME):: out_filename = ''

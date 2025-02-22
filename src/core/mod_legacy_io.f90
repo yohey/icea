@@ -48,11 +48,11 @@ contains
 
 
   subroutine read_legacy_input(cea, filename, filename_thermo_lib, filename_trans_lib)
-    use mod_cea_types, only: CEA_Problem, IOINP, init_case
+    use mod_types, only: CEA_Core_Problem, IOINP, init_case
     use mod_io, only: set_library_paths
     implicit none
 
-    type(CEA_Problem), allocatable, intent(out):: cea(:)
+    type(CEA_Core_Problem), allocatable, intent(out):: cea(:)
     character(*), intent(in):: filename
     character(*), intent(in), optional:: filename_thermo_lib
     character(*), intent(in), optional:: filename_trans_lib
@@ -94,10 +94,10 @@ contains
 
 
   subroutine read_legacy_case(cea)
-    use mod_cea_types, only: CEA_Problem, maxEl, allocate_points
+    use mod_types, only: CEA_Core_Problem, maxEl, allocate_points
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
 
     integer:: iof, i
     logical:: caseOK, readOK
@@ -135,10 +135,10 @@ contains
     !***********************************************************************
     ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
     logical, intent(out):: caseOK, readOK
 
     ! LOCAL VARIABLES
@@ -1034,7 +1034,7 @@ contains
 
 
   subroutine open_legacy_output(io_out, filename)
-    use mod_cea_types, only: MAX_FILENAME
+    use mod_types, only: MAX_FILENAME
     implicit none
 
     integer, intent(inout):: io_out
@@ -1098,10 +1098,10 @@ contains
     !
     ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
     !***********************************************************************
-    use mod_cea_types, only: CEA_Problem
+    use mod_types, only: CEA_Core_Problem
     implicit none
 
-    type(CEA_Problem), intent(in):: cea
+    type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: io_out
 
     integer:: n
@@ -1159,10 +1159,10 @@ contains
     ! OUT2 WRITES THERMODYNAMIC PROPERTIES.
     !***********************************************************************
     use mod_constants, only: R0
-    use mod_cea_types, only: CEA_Problem, CEA_Point, Ncol
+    use mod_types, only: CEA_Core_Problem, CEA_Point, Ncol
     implicit none
 
-    type(CEA_Problem), intent(in):: cea
+    type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
@@ -1332,10 +1332,10 @@ contains
     !***********************************************************************
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
-    use mod_cea_types, only: CEA_Problem, CEA_Point, Ncol
+    use mod_types, only: CEA_Core_Problem, CEA_Point, Ncol
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
@@ -1437,10 +1437,10 @@ contains
     !***********************************************************************
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
-    use mod_cea_types, only: CEA_Problem, CEA_Point, Ncol
+    use mod_types, only: CEA_Core_Problem, CEA_Point, Ncol
     implicit none
 
-    type(CEA_Problem), intent(in):: cea
+    type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
@@ -1535,10 +1535,10 @@ contains
 
 
   subroutine get_print_cols(cea, i_col_end, i_cols_print)
-    use mod_cea_types, only: CEA_Problem, Ncol
+    use mod_types, only: CEA_Core_Problem, Ncol
     implicit none
 
-    type(CEA_Problem), intent(in):: cea
+    type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
     integer, allocatable, intent(out):: i_cols_print(:)
     integer:: i, i_col_start, n_cols_print, n_cols_fixed
@@ -1574,10 +1574,10 @@ contains
     !***********************************************************************
     ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    class(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     character(6):: date
@@ -1863,10 +1863,10 @@ contains
     !***********************************************************************
     ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
     integer, intent(in):: it
 
     ! LOCAL VARIABLES
@@ -2182,11 +2182,11 @@ contains
     !           CONTIGUOUS PHASE, ETC.
     ! NTL     - NUMBER OF T INTERVALS FOR A SPECIES SET.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
     ! DUMMY ARGUMENTS
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
     logical:: readOK
 
     ! LOCAL VARIABLES
@@ -2508,7 +2508,7 @@ contains
     !***********************************************************************
     ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
     ! DUMMY ARGUMENTS
@@ -2597,10 +2597,10 @@ contains
 
 
   subroutine write_plt_file(cea, filename)
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    class(CEA_Problem), intent(in):: cea(:)
+    class(CEA_Core_Problem), intent(in):: cea(:)
     character(*), intent(in):: filename
 
     integer:: num_cases, IOPLT

@@ -10,9 +10,9 @@ contains
 
   subroutine set_library_paths_scalar(cea, thermo_lib_candidate, trans_lib_candidate)
     use mod_constants, only: MAX_FILENAME
-    use mod_cea_types, only: CEA_Problem
+    use mod_types, only: CEA_Core_Problem
 
-    class(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
     character(*), intent(in), optional:: thermo_lib_candidate
     character(*), intent(in), optional:: trans_lib_candidate
 
@@ -29,9 +29,9 @@ contains
 
   subroutine set_library_paths_array(cea, thermo_lib_candidate, trans_lib_candidate)
     use mod_constants, only: MAX_FILENAME
-    use mod_cea_types, only: CEA_Problem
+    use mod_types, only: CEA_Core_Problem
 
-    class(CEA_Problem), dimension(:), intent(inout):: cea
+    class(CEA_Core_Problem), dimension(:), intent(inout):: cea
     character(*), intent(in), optional:: thermo_lib_candidate
     character(*), intent(in), optional:: trans_lib_candidate
 
@@ -137,9 +137,9 @@ contains
 
   subroutine write_debug_output(cea, filename)
     use mod_constants
-    use mod_cea_types, only: CEA_Problem, CEA_Point
+    use mod_types, only: CEA_Core_Problem, CEA_Point
 
-    class(CEA_Problem), intent(in):: cea
+    class(CEA_Core_Problem), intent(in):: cea
     character(*), intent(in):: filename
 
     integer:: io_out, iof, ipt, j, max_points

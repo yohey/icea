@@ -2,18 +2,18 @@
 !> @mainpage CEA: Chemical Equlibrium with Applications
 !!
 !-------------------------------------------------------------------------------
-module mod_cea_core
+module mod_cea
   implicit none
 
 contains
 
   subroutine run_all_cases(cea, out_filename, plt_filename)
     use mod_constants, only: stderr
-    use mod_cea_types, only: CEA_Problem, MAX_FILENAME, IOOUT, allocate_points, reset_case
+    use mod_types, only: CEA_Core_Problem, MAX_FILENAME, IOOUT, allocate_points, reset_case
     use mod_legacy_io
     implicit none
 
-    class(CEA_Problem), intent(inout):: cea(:)
+    class(CEA_Core_Problem), intent(inout):: cea(:)
     character(*), intent(in), optional:: out_filename
     character(*), intent(in), optional:: plt_filename
     integer:: icase, num_cases
@@ -81,10 +81,10 @@ contains
 
 
   subroutine run_case(cea, out_filename)
-    use mod_cea_types
+    use mod_types
     use mod_legacy_io, only: REACT, open_legacy_output, write_input_log, write_plt_file
 
-    class(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
     character(*), intent(in), optional:: out_filename
     logical:: is_opened
 
@@ -133,11 +133,11 @@ contains
     !***********************************************************************
     ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_functions
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     integer:: ij, j, jj, k
 
@@ -175,11 +175,11 @@ contains
     !***********************************************************************
     ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_functions
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     integer:: j, jj
 
@@ -199,11 +199,11 @@ contains
     !***********************************************************************
     ! CHAPMAN-JOUGUET DETONATIONS.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_legacy_io
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     character(15):: ft1  = 'T1, K'
@@ -538,11 +538,11 @@ contains
     !***********************************************************************
     ! CALCULATE EQUILIBRIUM COMPOSITION AND PROPERTIES.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_general
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     character(12):: ae, cmp(maxEl)
@@ -1604,10 +1604,10 @@ contains
     ! CALCULATE PROPERTIES WITH FROZEN COMPOSITION AT ASSIGNED ENTROPY
     ! AND PRESSURE.  CALLED FROM ROCKET.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: iter, j
@@ -1683,11 +1683,11 @@ contains
     ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
     ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_functions
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     character(6):: date(maxNgc)
@@ -1850,10 +1850,10 @@ contains
     !***********************************************************************
     ! SET UP ITERATION OR DERIVATIVE MATRIX.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: i, iq, iq2, iq3, isym, j, k, kk, kmat
@@ -2014,10 +2014,10 @@ contains
     !***********************************************************************
     ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: i, j
@@ -2090,11 +2090,11 @@ contains
     !***********************************************************************
     ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_legacy_io, only: RKTOUT
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: i, i01, i12, iof, iplt1, iplte, ipp, isub, isup1, isupsv, itnum, &
@@ -2722,10 +2722,10 @@ contains
 
 
   subroutine read_libraries(cea)
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    class(CEA_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
     integer:: i, j
     real(8):: xi, xln
 
@@ -2798,10 +2798,10 @@ contains
     !***********************************************************************
     ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     character(6):: date(maxNgc)
@@ -2984,10 +2984,10 @@ contains
 
   subroutine READTR(cea)
     ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     character(16):: bin(2, 40), pure(6), spece(2)
     integer:: i, j, k, jj(2), jk, ir, lineb, npure, nrec
@@ -3075,10 +3075,10 @@ contains
     !         ALSO USE COMPOSITIONS FROM POINT -ISV FOR NPT.
     !  ISV=0  USE COMPOSITIONS SAVED WHEN ISV<0.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: j
@@ -3157,11 +3157,11 @@ contains
     !***********************************************************************
     ! PRIMARY ROUTINE FOR SHOCK PROBLEMS.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_legacy_io
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     character(1):: cr12, cr52
@@ -3607,11 +3607,11 @@ contains
     !***********************************************************************
     ! ASSIGNED THERMODYNAMIC STATES.  HP, SP, TP, UV, SV, AND TV PROBLEMS.
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_legacy_io
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: iof
@@ -3690,10 +3690,10 @@ contains
     !***********************************************************************
     ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
@@ -3995,11 +3995,11 @@ contains
     !   NUMBER OF CHEMICAL REACTIONS = NR (NM - NLM)
     !   ARRAY OF STOICHIOMETRIC COEFFICIENTS = STC
     !***********************************************************************
-    use mod_cea_types
+    use mod_types
     use mod_general
     implicit none
 
-    type(CEA_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     integer:: i, i1, j, jj, k, m, mm, nlmm, nmm
@@ -4153,4 +4153,4 @@ contains
     end if
   end subroutine TRANP
 
-end module mod_cea_core
+end module mod_cea

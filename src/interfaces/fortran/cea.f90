@@ -1,5 +1,5 @@
 module cea
-  use mod_cea_types, only: CEA_Core_Problem => CEA_Problem
+  use mod_types, only: CEA_Core_Problem
   implicit none
   private
 
@@ -35,7 +35,7 @@ contains
   subroutine set_problem(this, mode, name, mole_ratios, equilibrium, ions, &
        frozen, frozen_at_throat, thermo_lib, trans_lib)
     use mod_constants, only: stderr
-    use mod_cea_types, only: init_case
+    use mod_types, only: init_case
     use mod_io, only: set_library_paths
 
     class(CEA_Problem), intent(inout):: this
@@ -116,7 +116,7 @@ contains
   end subroutine set_problem
 
   subroutine set_output_options(this, SI, debug_points, mass_fractions, short, trace_tol, transport)
-    use mod_cea_types, only: maxMix
+    use mod_types, only: maxMix
 
     class(CEA_Problem), intent(inout):: this
     logical, intent(in), optional:: SI
@@ -324,7 +324,7 @@ contains
   end subroutine insert_species
 
   subroutine set_omit_species(this, species)
-    use mod_cea_types, only: maxNgc
+    use mod_types, only: maxNgc
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
@@ -336,7 +336,7 @@ contains
   end subroutine set_omit_species
 
   subroutine set_only_species(this, species)
-    use mod_cea_types, only: maxNgc
+    use mod_types, only: maxNgc
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
@@ -351,7 +351,7 @@ contains
   end subroutine set_only_species
 
   subroutine run(this, out_filename)
-    use mod_cea_core, only: run_case
+    use mod_cea, only: run_case
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in), optional:: out_filename

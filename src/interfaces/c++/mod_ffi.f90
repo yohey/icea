@@ -410,7 +410,8 @@ contains
 
 
   function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
-    use mod_cea_types, only: CEA_Problem, init_case, IOINP
+    use cea, only: CEA_Problem
+    use mod_types, only: init_case, IOINP
     use mod_legacy_io, only: count_cases, read_legacy_case
     use mod_io, only: set_library_paths
 
@@ -470,8 +471,8 @@ contains
 
 
   subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
-    use mod_cea_types, only: CEA_Problem
-    use mod_cea_core, only: run_all_cases
+    use cea, only: CEA_Problem
+    use mod_cea, only: run_all_cases
 
     type(FFI_C_Ptr_Array):: array
     type(FFI_C_String), intent(in), optional:: out_filename
