@@ -3,7 +3,9 @@ module cea
   implicit none
   private
 
-  type, extends(CEA_Core_Problem), public:: CEA_Problem
+  type, public:: CEA_Problem
+     private
+     type(CEA_Core_Problem):: core
    contains
      procedure, public, pass:: set_problem
      procedure, public, pass:: set_output_options
@@ -17,6 +19,7 @@ module cea
      procedure, public, pass:: insert_species
      procedure, public, pass:: set_omit_species
      procedure, public, pass:: set_only_species
+     procedure, public, pass:: set_legacy_mode
      procedure, public, pass:: run
      procedure, public, pass:: write_debug_output
      final:: del_problem
@@ -27,10 +30,13 @@ contains
   subroutine del_problem(this)
     type(CEA_Problem), intent(inout):: this
 
-    write(0, *) '[DEBUG] CEA_Problem (cea.f90) destructor is called: ', trim(this%Case)
+#ifndef NDEBUG
+    write(0, *) '[DEBUG] CEA_Problem (cea.f90) destructor is called: ', trim(this%core%Case)
+#endif
 
     return
   end subroutine del_problem
+
 
   subroutine set_problem(this, mode, name, mole_ratios, equilibrium, ions, &
        frozen, frozen_at_throat, thermo_lib, trans_lib)
@@ -49,29 +55,29 @@ contains
     character(*), intent(in), optional:: thermo_lib
     character(*), intent(in), optional:: trans_lib
 
-    call init_case(this)
+    call init_case(this%core)
 
     select case (mode)
     case ('rocket')
-       this%Rkt = .true.
-       this%Sp = .true.
-       this%Tp = .false.
-       this%Hp = .false.
-       this%Detn = .false.
-       this%Shock = .false.
+       this%core%Rkt = .true.
+       this%core%Sp = .true.
+       this%core%Tp = .false.
+       this%core%Hp = .false.
+       this%core%Detn = .false.
+       this%core%Shock = .false.
 
-       this%Nt = 1
+       this%core%Nt = 1
 
-       this%Nfz = 1
+       this%core%Nfz = 1
 
        if (present(frozen)) then
-          this%Froz = frozen
+          this%core%Froz = frozen
 
           if (present(frozen_at_throat) .and. frozen_at_throat) then
-             if (this%Fac) then
-                this%Nfz = 3
+             if (this%core%Fac) then
+                this%core%Nfz = 3
              else
-                this%Nfz = 2
+                this%core%Nfz = 2
              end if
           end if
        end if
@@ -95,25 +101,26 @@ contains
     end select
 
     if (present(name)) then
-       this%Case = trim(name)
+       this%core%Case = trim(name)
     end if
 
     if (present(equilibrium)) then
-       this%Eql_in = equilibrium
+       this%core%Eql_in = equilibrium
     end if
 
     if (present(ions)) then
-       this%Ions = ions
+       this%core%Ions = ions
     end if
 
     if (present(mole_ratios)) then
-       this%Moles = mole_ratios
+       this%core%Moles = mole_ratios
     end if
 
-    call set_library_paths(this, thermo_lib, trans_lib)
+    call set_library_paths(this%core, thermo_lib, trans_lib)
 
     return
   end subroutine set_problem
+
 
   subroutine set_output_options(this, SI, debug_points, mass_fractions, short, trace_tol, transport)
     use mod_types, only: maxMix
@@ -128,33 +135,34 @@ contains
     integer:: i, j
 
     if (present(SI)) then
-       this%SIunit = SI
+       this%core%SIunit = SI
     end if
 
     if (present(debug_points)) then
-       do concurrent (i = 1:maxMix, j = 1:size(debug_points), debug_points(j) <= this%max_points)
-          this%points(i, debug_points(j))%Debug = .true.
+       do concurrent (i = 1:maxMix, j = 1:size(debug_points), debug_points(j) <= this%core%max_points)
+          this%core%points(i, debug_points(j))%Debug = .true.
        end do
     end if
 
     if (present(mass_fractions)) then
-       this%Massf = mass_fractions
+       this%core%Massf = mass_fractions
     end if
 
     if (present(short)) then
-       this%Short = short
+       this%core%Short = short
     end if
 
     if (present(trace_tol)) then
-       this%Trace = trace_tol
+       this%core%Trace = trace_tol
     end if
 
     if (present(transport)) then
-       this%Trnspt = transport
+       this%core%Trnspt = transport
     end if
 
     return
   end subroutine set_output_options
+
 
   subroutine set_chamber_pressures(this, pressure_list, unit)
     use mod_constants, only: stderr, g0, lb_to_kg, in_to_m
@@ -176,11 +184,12 @@ contains
        end if
     end if
 
-    this%Np = size(pressure_list)
-    this%P(1:this%Np) = pressure_list * factor
+    this%core%Np = size(pressure_list)
+    this%core%P(1:this%core%Np) = pressure_list * factor
 
     return
   end subroutine set_chamber_pressures
+
 
   subroutine set_mixture_ratios(this, ratio_list, type)
     use mod_constants, only: stderr
@@ -190,13 +199,13 @@ contains
     character(*), intent(in), optional:: type
     integer:: iof
 
-    this%Nof = size(ratio_list)
-    this%Oxf(1:this%Nof) = ratio_list
+    this%core%Nof = size(ratio_list)
+    this%core%Oxf(1:this%core%Nof) = ratio_list
 
     if (present(type)) then
        if (trim(type) == '%fuel') then
-          do concurrent (iof = 1:this%Nof, this%Oxf(iof) > 0)
-             this%Oxf(iof) = (100 - this%Oxf(iof)) / this%Oxf(iof)
+          do concurrent (iof = 1:this%core%Nof, this%core%Oxf(iof) > 0)
+             this%core%Oxf(iof) = (100 - this%core%Oxf(iof)) / this%core%Oxf(iof)
           end do
        else
           write(stderr, *) '[ERROR] Unsupported type: ', trim(type)
@@ -207,35 +216,39 @@ contains
     return
   end subroutine set_mixture_ratios
 
+
   subroutine set_pressure_ratios(this, ratio_list)
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    this%Npp_in = size(ratio_list)
-    this%Pcp(1:this%Npp_in) = ratio_list
+    this%core%Npp_in = size(ratio_list)
+    this%core%Pcp(1:this%core%Npp_in) = ratio_list
 
     return
   end subroutine set_pressure_ratios
+
 
   subroutine set_subsonic_area_ratios(this, ratio_list)
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    this%Nsub_in = size(ratio_list)
-    this%Subar(1:this%Nsub_in) = ratio_list
+    this%core%Nsub_in = size(ratio_list)
+    this%core%Subar(1:this%core%Nsub_in) = ratio_list
 
     return
   end subroutine set_subsonic_area_ratios
+
 
   subroutine set_supersonic_area_ratios(this, ratio_list)
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    this%Nsup_in = size(ratio_list)
-    this%Supar(1:this%Nsup_in) = ratio_list
+    this%core%Nsup_in = size(ratio_list)
+    this%core%Supar(1:this%core%Nsup_in) = ratio_list
 
     return
   end subroutine set_supersonic_area_ratios
+
 
   subroutine set_finite_area_combustor(this, contraction_ratio, mass_flow_ratio)
     use mod_constants, only: stderr
@@ -245,18 +258,18 @@ contains
     real(8), intent(in), optional:: mass_flow_ratio
 
     if (present(contraction_ratio)) then
-       this%AcAt_in = contraction_ratio
+       this%core%AcAt_in = contraction_ratio
     else if (present(mass_flow_ratio)) then
-       this%mdotByAc_in = mass_flow_ratio
+       this%core%mdotByAc_in = mass_flow_ratio
     else
        write(stderr, *) '[ERROR] Either contraction_ratio or mass_flow_ratio must be given.'
        return
     end if
 
-    this%Fac = .true.
+    this%core%Fac = .true.
 
-    if (this%Froz .and. this%Nfz == 2) then
-       this%Nfz = 3
+    if (this%core%Froz .and. this%core%Nfz == 2) then
+       this%core%Nfz = 3
     end if
 
     return
@@ -283,15 +296,15 @@ contains
        return
     end if
 
-    this%Nreac = this%Nreac + 1
+    this%core%Nreac = this%core%Nreac + 1
 
-    this%Fox(this%Nreac) = trim(type)
-    this%Rname(this%Nreac) = trim(name)
+    this%core%Fox(this%core%Nreac) = trim(type)
+    this%core%Rname(this%core%Nreac) = trim(name)
 
     if (present(ratio)) then
-       this%Pecwt(this%Nreac) = ratio
+       this%core%Pecwt(this%core%Nreac) = ratio
     else
-       this%Pecwt(this%Nreac) = 1
+       this%core%Pecwt(this%core%Nreac) = 1
     end if
 
     if (present(T_unit)) then
@@ -299,29 +312,31 @@ contains
        return
     end if
 
-    if (present(T)) this%Rtemp(this%Nreac) = T * T_factor
+    if (present(T)) this%core%Rtemp(this%core%Nreac) = T * T_factor
 
     if (present(rho_unit)) then
        write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
        return
     end if
 
-    if (present(rho)) this%Dens(this%Nreac) = rho * rho_factor
+    if (present(rho)) this%core%Dens(this%core%Nreac) = rho * rho_factor
 
-    this%Energy(this%Nreac) = 'lib'
+    this%core%Energy(this%core%Nreac) = 'lib'
 
     return
   end subroutine add_reactant
+
 
   subroutine insert_species(this, species)
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    this%Nsert = min(20, size(species))
-    this%ensert(1:this%Nsert) = species(1:this%Nsert)
+    this%core%Nsert = min(20, size(species))
+    this%core%ensert(1:this%core%Nsert) = species(1:this%core%Nsert)
 
     return
   end subroutine insert_species
+
 
   subroutine set_omit_species(this, species)
     use mod_types, only: maxNgc
@@ -329,11 +344,12 @@ contains
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    this%Nomit = min(maxNgc, size(species))
-    this%Omit(1:this%Nomit) = species(1:this%Nomit)
+    this%core%Nomit = min(maxNgc, size(species))
+    this%core%Omit(1:this%core%Nomit) = species(1:this%core%Nomit)
 
     return
   end subroutine set_omit_species
+
 
   subroutine set_only_species(this, species)
     use mod_types, only: maxNgc
@@ -341,14 +357,29 @@ contains
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    this%Nonly_in = min(maxNgc, size(species))
-    this%Prod_in(:) = ''
-    this%Prod_in(1:this%Nonly_in) = species(1:this%Nonly_in)
-    this%Nonly = this%Nonly_in
-    this%Prod(:) = this%Prod_in(:)
+    this%core%Nonly_in = min(maxNgc, size(species))
+    this%core%Prod_in(:) = ''
+    this%core%Prod_in(1:this%core%Nonly_in) = species(1:this%core%Nonly_in)
+    this%core%Nonly = this%core%Nonly_in
+    this%core%Prod(:) = this%core%Prod_in(:)
 
     return
   end subroutine set_only_species
+
+
+  subroutine set_legacy_mode(this, legacy_mode)
+    class(CEA_Problem), intent(inout):: this
+    logical, intent(in), optional:: legacy_mode
+
+    if (present(legacy_mode)) then
+       this%core%legacy_mode = legacy_mode
+    else
+       this%core%legacy_mode = .true.
+    end if
+
+    return
+  end subroutine set_legacy_mode
+
 
   subroutine run(this, out_filename)
     use mod_cea, only: run_case
@@ -356,10 +387,11 @@ contains
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in), optional:: out_filename
 
-    call run_case(this, out_filename)
+    call run_case(this%core, out_filename)
 
     return
   end subroutine run
+
 
   subroutine write_debug_output(this, filename)
     use mod_io, only: mod_io_write_debug_output => write_debug_output
@@ -367,7 +399,7 @@ contains
     class(CEA_Problem), intent(in):: this
     character(*), intent(in):: filename
 
-    call mod_io_write_debug_output(this, filename)
+    call mod_io_write_debug_output(this%core, filename)
 
     return
   end subroutine write_debug_output

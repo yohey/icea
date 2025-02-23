@@ -38,9 +38,6 @@ contains
     call c_f_pointer(ptr, cea)
 
     if (associated(cea)) then
-#ifndef NDEBUG
-       write(0, *) '[DEBUG] CEA_Problem (mod_ffi.f90) destructor is called: ', trim(cea%Case)
-#endif
        deallocate(cea)
     end if
 
@@ -80,6 +77,11 @@ contains
        call this%set_problem(mode_fstr, name_fstr, logical(mole_ratios), logical(equilibrium), logical(ions), &
             logical(frozen), logical(frozen_at_throat), thermo_lib_fstr, trans_lib_fstr)
     end if
+
+    if (allocated(mode_fstr)) deallocate(mode_fstr)
+    if (allocated(name_fstr)) deallocate(name_fstr)
+    if (allocated(thermo_lib_fstr)) deallocate(thermo_lib_fstr)
+    if (allocated(trans_lib_fstr)) deallocate(trans_lib_fstr)
 
     return
   end subroutine set_problem
@@ -131,7 +133,6 @@ contains
     if (associated(this)) then
        call this%set_chamber_pressures(pressure_list, unit_fstr)
 #ifndef NDEBUG
-       write(0, *) '[DEBUG] this%P = ', this%P(1:this%Np)
     else
        write(0, *) '[DEBUG] pointer is not associated. (set_chamber_pressure)'
 #endif
@@ -160,7 +161,6 @@ contains
     if (associated(this)) then
        call this%set_mixture_ratios(ratio_list, type_fstr)
 #ifndef NDEBUG
-       write(0, *) '[DEBUG] this%Oxf = ', this%Oxf(1:this%Nof)
     else
        write(0, *) '[DEBUG] pointer is not associated. (set_mixture_ratio)'
 #endif
@@ -185,7 +185,6 @@ contains
     if (associated(this)) then
        call this%set_pressure_ratios(ratio_list)
 #ifndef NDEBUG
-       write(0, *) '[DEBUG] this%Pcp = ', this%Pcp(1:this%Npp_in)
     else
        write(0, *) '[DEBUG] pointer is not associated. (set_pressure_ratios)'
 #endif
@@ -210,7 +209,6 @@ contains
     if (associated(this)) then
        call this%set_subsonic_area_ratios(ratio_list)
 #ifndef NDEBUG
-       write(0, *) '[DEBUG] this%Subar = ', this%Subar(1:this%Nsub_in)
     else
        write(0, *) '[DEBUG] pointer is not associated. (set_subsonic_area_ratios)'
 #endif
@@ -235,7 +233,6 @@ contains
     if (associated(this)) then
        call this%set_supersonic_area_ratios(ratio_list)
 #ifndef NDEBUG
-       write(0, *) '[DEBUG] this%Supar = ', this%Supar(1:this%Nsup_in)
     else
        write(0, *) '[DEBUG] pointer is not associated. (set_supersonic_area_ratios)'
 #endif
@@ -321,6 +318,8 @@ contains
 
     call this%insert_species(species)
 
+    deallocate(species)
+
     return
   end subroutine insert_species
 
@@ -341,6 +340,8 @@ contains
     call get_string_array(species_ptr, char_length_array, array_size, species)
 
     call this%set_omit_species(species)
+
+    deallocate(species)
 
     return
   end subroutine set_omit_species
@@ -363,6 +364,8 @@ contains
 
     call this%set_only_species(species)
 
+    deallocate(species)
+
     return
   end subroutine set_only_species
 
@@ -378,9 +381,9 @@ contains
 
     if (associated(this)) then
        if (present(legacy_mode)) then
-          this%legacy_mode = legacy_mode
+          call this%set_legacy_mode(logical(legacy_mode))
        else
-          this%legacy_mode = .true.
+          call this%set_legacy_mode()
        end if
     end if
 
@@ -409,89 +412,87 @@ contains
   end subroutine run
 
 
-  function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
-    use cea, only: CEA_Problem
-    use mod_types, only: init_case, IOINP
-    use mod_legacy_io, only: count_cases, read_legacy_case
-    use mod_io, only: set_library_paths
-
-    type(FFI_C_Ptr_Array):: array
-    type(FFI_C_String), intent(in):: filename
-    character(len = :, kind = c_char), allocatable:: filename_fstr
-
-    integer:: icase, num_cases
-    type(CEA_Problem), pointer:: cea, cea_prev
-    type(c_ptr), pointer:: ptr(:)
-    logical:: file_exists
-
-    filename_fstr = get_string(filename)
-
-    inquire(file = filename_fstr, exist = file_exists)
-    if (.not. file_exists) then
-       print *, filename_fstr, ' DOES NOT EXIST'
-       error stop
-    end if
-
-    call count_cases(filename_fstr, num_cases)
-
-    allocate(ptr(num_cases))
-
-    open(newunit = IOINP, file = filename_fstr, status = 'old', form = 'formatted', action = 'read')
-
-    do icase = 1, num_cases
-       allocate(cea)
-
-       call set_library_paths(cea)
-
-       call init_case(cea)
-
-       !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
-       if (icase > 1 .and. associated(cea_prev)) then
-          cea%Dens(:) = cea_prev%Dens(:)
-       end if
-       !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
-
-       call read_legacy_case(cea)
-
-       ptr(icase) = c_loc(cea)
-
-       cea_prev => cea
-       nullify(cea)
-    end do
-
-    nullify(cea_prev)
-
-    close(IOINP)
-
-    array%addr = c_loc(ptr(1))
-    array%size = num_cases
-
-    return
-  end function ffi_read_legacy_input
-
-
-  subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
-    use cea, only: CEA_Problem
-    use mod_cea, only: run_all_cases
-
-    type(FFI_C_Ptr_Array):: array
-    type(FFI_C_String), intent(in), optional:: out_filename
-    type(FFI_C_String), intent(in), optional:: plt_filename
-
-    character(len = :, kind = c_char), allocatable:: out_filename_fstr
-    character(len = :, kind = c_char), allocatable:: plt_filename_fstr
-
-    type(CEA_Problem), pointer:: cea(:)
-
-    call c_f_pointer(array%addr, cea, [array%size])
-
-    if (present(out_filename)) out_filename_fstr = get_string(out_filename)
-    if (present(plt_filename)) plt_filename_fstr = get_string(plt_filename)
-
-    call run_all_cases(cea, out_filename_fstr, plt_filename_fstr)
-
-    return
-  end subroutine ffi_run_all_cases
+!!$  function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
+!!$    use cea, only: CEA_Problem
+!!$    use mod_types, only: init_case, IOINP
+!!$    use mod_legacy_io, only: count_cases, read_legacy_case
+!!$    use mod_io, only: set_library_paths
+!!$
+!!$    type(FFI_C_Ptr_Array):: array
+!!$    type(FFI_C_String), intent(in):: filename
+!!$    character(len = :, kind = c_char), allocatable:: filename_fstr
+!!$
+!!$    integer:: icase, num_cases
+!!$    type(CEA_Problem), pointer:: cea, cea_prev
+!!$    type(c_ptr), pointer:: ptr(:)
+!!$    logical:: file_exists
+!!$
+!!$    filename_fstr = get_string(filename)
+!!$
+!!$    inquire(file = filename_fstr, exist = file_exists)
+!!$    if (.not. file_exists) then
+!!$       print *, filename_fstr, ' DOES NOT EXIST'
+!!$       error stop
+!!$    end if
+!!$
+!!$    call count_cases(filename_fstr, num_cases)
+!!$
+!!$    allocate(ptr(num_cases))
+!!$
+!!$    open(newunit = IOINP, file = filename_fstr, status = 'old', form = 'formatted', action = 'read')
+!!$
+!!$    do icase = 1, num_cases
+!!$       allocate(cea)
+!!$
+!!$       call set_library_paths(cea)
+!!$
+!!$       call init_case(cea)
+!!$
+!!$       if (icase > 1 .and. associated(cea_prev)) then
+!!$          call read_legacy_case(cea, cea_prev)
+!!$       else
+!!$          call read_legacy_case(cea)
+!!$       end if
+!!$
+!!$       ptr(icase) = c_loc(cea)
+!!$
+!!$       cea_prev => cea
+!!$       nullify(cea)
+!!$    end do
+!!$
+!!$    nullify(cea_prev)
+!!$
+!!$    close(IOINP)
+!!$
+!!$    array%addr = c_loc(ptr(1))
+!!$    array%size = num_cases
+!!$
+!!$    return
+!!$  end function ffi_read_legacy_input
+!!$
+!!$
+!!$  subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
+!!$    use cea, only: CEA_Problem
+!!$    use mod_cea, only: run_all_cases
+!!$
+!!$    type(FFI_C_Ptr_Array):: array
+!!$    type(FFI_C_String), intent(in), optional:: out_filename
+!!$    type(FFI_C_String), intent(in), optional:: plt_filename
+!!$
+!!$    character(len = :, kind = c_char), allocatable:: out_filename_fstr
+!!$    character(len = :, kind = c_char), allocatable:: plt_filename_fstr
+!!$
+!!$    type(CEA_Problem), pointer:: cea(:)
+!!$
+!!$    call c_f_pointer(array%addr, cea, [array%size])
+!!$
+!!$    if (present(out_filename)) out_filename_fstr = get_string(out_filename)
+!!$    if (present(plt_filename)) plt_filename_fstr = get_string(plt_filename)
+!!$
+!!$    call run_all_cases(cea, out_filename_fstr, plt_filename_fstr)
+!!$
+!!$    return
+!!$  end subroutine ffi_run_all_cases
 
 
   subroutine write_debug_output(ptr, filename) bind(C, name = "ffi_cea_write_debug_output")
@@ -531,13 +532,13 @@ contains
   function get_string(cstring) result(fstring)
     type(FFI_C_String), intent(in):: cstring
     character(len = :, kind = c_char), allocatable:: fstring
-    character(len = :, kind = c_char), pointer:: fptr
-
-    allocate(character(len = cstring%size, kind = c_char):: fptr)
+    character(len = cstring%size, kind = c_char), pointer:: fptr
 
     call c_f_pointer(cstring%addr, fptr)
 
     fstring = fptr
+
+    nullify(fptr)
 
     return
   end function get_string

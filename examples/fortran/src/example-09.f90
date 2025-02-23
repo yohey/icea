@@ -16,7 +16,7 @@ subroutine run_example_09()
   call prob%set_pressure_ratios([1d1, 1d2, 1d3])
   call prob%set_supersonic_area_ratios([25d0, 50d0, 75d0])
 
-  prob%legacy_mode = .true.
+  call prob%set_legacy_mode(.true.)
 
   call prob%run(out_filename = 'example-09.out')
 

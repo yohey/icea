@@ -177,7 +177,7 @@ contains
   subroutine del_problem(cea)
     type(CEA_Core_Problem), intent(inout):: cea
 
-    write(0, *) '[DEBUG] CEA_Core_Problem (mod_cea_types.f90) destructor is called: ', trim(cea%Case)
+    write(0, *) '[DEBUG] CEA_Core_Problem (mod_types.f90) destructor is called: ', trim(cea%Case)
 
     if (associated(cea%points)) deallocate(cea%points)
     if (allocated(cea%transport_properties)) deallocate(cea%transport_properties)

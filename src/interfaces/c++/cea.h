@@ -18,8 +18,8 @@ namespace CEA {
   private:
     FFI_CEA_Problem_Ptr _ffi;
 
-    friend void run_all_cases(std::vector<Problem>&, const std::optional<std::string>&, const std::optional<std::string>&);
-    friend bool ffi_need_aligned(const std::vector<Problem>&);
+    // friend void run_all_cases(std::vector<Problem>&, const std::optional<std::string>&, const std::optional<std::string>&);
+    // friend bool ffi_need_aligned(const std::vector<Problem>&);
 
   public:
     void set_problem(const std::string& mode, const std::optional<std::string>& name = std::nullopt, const bool& mole_ratios = false, const bool& equilibrium = false, const bool& ions = false,
@@ -43,8 +43,8 @@ namespace CEA {
   };
 
 
-  std::vector<Problem> read_legacy_input(const std::string&);
-  void run_all_cases(std::vector<Problem>&, const std::optional<std::string>& out_filename = std::nullopt, const std::optional<std::string>& plt_filename = std::nullopt);
+  // std::vector<Problem> read_legacy_input(const std::string&);
+  // void run_all_cases(std::vector<Problem>&, const std::optional<std::string>& out_filename = std::nullopt, const std::optional<std::string>& plt_filename = std::nullopt);
 
-  bool ffi_need_aligned(const std::vector<Problem>&);
+  // bool ffi_need_aligned(const std::vector<Problem>&);
 }

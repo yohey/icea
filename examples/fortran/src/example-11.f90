@@ -15,7 +15,7 @@ subroutine run_example_11()
   call prob%set_subsonic_area_ratios([10d0])
   call prob%set_supersonic_area_ratios([10d0, 20d0, 100d0])
 
-  prob%legacy_mode = .true.
+  call prob%set_legacy_mode(.true.)
 
   call prob%run(out_filename = 'example-11.out')
 

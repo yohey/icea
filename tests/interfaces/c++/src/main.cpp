@@ -1,6 +1,6 @@
 
 #include "examples.h"
-#include "legacy_examples.h"
+// #include "legacy_examples.h"
 
 
 int main() {
@@ -12,7 +12,7 @@ int main() {
   run_example_12();
   run_example_13();
 
-  run_legacy_examples();
+  // run_legacy_examples();
 
   return 0;
 }

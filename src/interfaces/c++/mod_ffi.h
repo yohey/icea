@@ -58,8 +58,8 @@ namespace CEA {
 
     void ffi_cea_write_debug_output(const FFI_CEA_Problem_Ptr&, const FFI_String&);
 
-    FFI_CEA_Problem_Array ffi_cea_read_legacy_input(const FFI_String&);
-    void ffi_cea_run_all_cases(FFI_CEA_Problem_Array&, const FFI_String* = nullptr, const FFI_String* = nullptr);
+    // FFI_CEA_Problem_Array ffi_cea_read_legacy_input(const FFI_String&);
+    // void ffi_cea_run_all_cases(FFI_CEA_Problem_Array&, const FFI_String* = nullptr, const FFI_String* = nullptr);
 
     size_t ffi_cea_sizeof(const FFI_CEA_Problem_Ptr&);
   }

@@ -45,9 +45,13 @@ void run_example_12() {
   prob.set_pressure_ratios({68.0457});
   prob.set_supersonic_area_ratios({5, 10, 25, 50, 75, 100, 150, 200});
 
-  // prob.set_only_species({"CO",     "CO2",    "H",      "HNO",    "HNO2",   "HO2",    "H2",     "H2O",    "H2O2",
-  //                        "N",      "NO",     "NO2",    "N2",     "N2O",    "O",      "OH",     "O2",     "HCO",
-  //                        "NH",     "CH4",    "NH2",    "NH3",    "H2O(L)", "C(gr)"});
+  std::vector<std::string> only_species{"CO", "CO2", "H",   "HNO", "HNO2",   "HO2", "H2", "H2O", "H2O2",
+                                        "N",  "NO",  "NO2", "N2",  "N2O",    "O",   "OH", "O2",  "HCO",
+                                        "NH", "CH4", "NH2", "NH3", "H2O(L)", "C(gr)"};
+
+  prob.set_only_species({"CO", "CO2", "H",   "HNO", "HNO2",   "HO2", "H2", "H2O", "H2O2",
+                         "N",  "NO",  "NO2", "N2",  "N2O",    "O",   "OH", "O2",  "HCO",
+                         "NH", "CH4", "NH2", "NH3", "H2O(L)", "C(gr)"});
 
   prob.set_legacy_mode(true);
 

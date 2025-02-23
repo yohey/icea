@@ -78,13 +78,11 @@ contains
     do icase = 1, num_cases
        call init_case(cea(icase))
 
-       !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
-       if (icase >= 2) then
-          cea(icase)%Dens(:) = cea(icase-1)%Dens(:)
+       if (icase == 1) then
+          call read_legacy_case(cea(icase))
+       else
+          call read_legacy_case(cea(icase), cea(icase-1))
        end if
-       !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
-
-       call read_legacy_case(cea(icase))
     end do
 
     close(IOINP)
@@ -93,14 +91,21 @@ contains
   end subroutine read_legacy_input
 
 
-  subroutine read_legacy_case(cea)
+  subroutine read_legacy_case(cea, cea_prev)
     use mod_types, only: CEA_Core_Problem, maxEl, allocate_points
     implicit none
 
-    class(CEA_Core_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(in), optional:: cea_prev
 
     integer:: iof, i
     logical:: caseOK, readOK
+
+    !! TEMPORARY WORK AROUND TO REPRODUCE KNOWN BUG !!
+    if (present(cea_prev)) then
+       cea%Dens(:) = cea_prev%Dens(:)
+    end if
+    !!!!!!!!!!!!!!!!! TO BE DELETED !!!!!!!!!!!!!!!!!!
 
     caseOK = .true.
     readOK = .true.
@@ -1577,7 +1582,7 @@ contains
     use mod_types
     implicit none
 
-    class(CEA_Core_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
     character(6):: date
@@ -2600,7 +2605,7 @@ contains
     use mod_types
     implicit none
 
-    class(CEA_Core_Problem), intent(in):: cea(:)
+    type(CEA_Core_Problem), intent(in):: cea(:)
     character(*), intent(in):: filename
 
     integer:: num_cases, IOPLT

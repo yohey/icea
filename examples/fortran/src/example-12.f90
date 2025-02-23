@@ -19,7 +19,7 @@ subroutine run_example_12()
                               'N     ', 'NO    ', 'NO2   ', 'N2    ', 'N2O   ', 'O     ', 'OH    ', 'O2    ', 'HCO   ', &
                               'NH    ', 'CH4   ', 'NH2   ', 'NH3   ', 'H2O(L)', 'C(gr) '])
 
-  prob%legacy_mode = .true.
+  call prob%set_legacy_mode(.true.)
 
   call prob%run(out_filename = 'example-12.out')
 
