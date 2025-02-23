@@ -52,7 +52,7 @@ module mod_types
      character(MAX_FILENAME):: filename_trans_lib
 
      type(TransportProperty), allocatable:: transport_properties(:)
-     type(CEA_Point), pointer:: points(:, :)
+     type(CEA_Point), pointer:: points(:, :) => null()
 
      integer:: iOF !< index of O/F
      integer:: ipt !< index of point (new)
