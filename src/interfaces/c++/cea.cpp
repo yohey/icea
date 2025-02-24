@@ -166,6 +166,8 @@ namespace CEA {
       problems.emplace_back(array.addr[i]);
     }
 
+    ffi_cea_deallocate_array_ptr(array);
+
     return problems;
   }
 

@@ -441,6 +441,8 @@ contains
 
     open(newunit = IOINP, file = filename_fstr, status = 'old', form = 'formatted', action = 'read')
 
+    deallocate(filename_fstr)
+
     do icase = 1, num_cases
        allocate(cea)
 
@@ -471,11 +473,26 @@ contains
   end function ffi_read_legacy_input
 
 
+  subroutine ffi_deallocate_array_ptr(array) bind(C, name = "ffi_cea_deallocate_array_ptr")
+    use cea, only: CEA_Problem
+
+    type(FFI_C_Ptr_Array), intent(in), target:: array
+
+    type(c_ptr), pointer:: ptr(:)
+
+    call c_f_pointer(array%addr, ptr, [array%size])
+
+    if (associated(ptr)) deallocate(ptr)
+
+    return
+  end subroutine ffi_deallocate_array_ptr
+
+
   subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
     use cea, only: CEA_Problem
     use mod_cea, only: run_all_cases
 
-    type(FFI_C_Ptr_Array):: array
+    type(FFI_C_Ptr_Array), intent(in):: array
     type(FFI_C_String), intent(in), optional:: out_filename
     type(FFI_C_String), intent(in), optional:: plt_filename
 
@@ -490,6 +507,9 @@ contains
     if (present(plt_filename)) plt_filename_fstr = get_string(plt_filename)
 
     call run_all_cases(cea, out_filename_fstr, plt_filename_fstr)
+
+    if (allocated(out_filename_fstr)) deallocate(out_filename_fstr)
+    if (allocated(plt_filename_fstr)) deallocate(plt_filename_fstr)
 
     return
   end subroutine ffi_run_all_cases
