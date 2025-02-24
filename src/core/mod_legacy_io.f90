@@ -95,8 +95,8 @@ contains
     use mod_types, only: CEA_Core_Problem, maxEl, allocate_points
     implicit none
 
-    type(CEA_Core_Problem), intent(inout):: cea
-    type(CEA_Core_Problem), intent(in), optional:: cea_prev
+    class(CEA_Core_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(in), optional:: cea_prev
 
     integer:: iof, i
     logical:: caseOK, readOK

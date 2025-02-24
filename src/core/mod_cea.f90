@@ -13,7 +13,7 @@ contains
     use mod_legacy_io
     implicit none
 
-    type(CEA_Core_Problem), intent(inout):: cea(:)
+    class(CEA_Core_Problem), intent(inout):: cea(:)
     character(*), intent(in), optional:: out_filename
     character(*), intent(in), optional:: plt_filename
     integer:: icase, num_cases
@@ -84,7 +84,7 @@ contains
     use mod_types
     use mod_legacy_io, only: REACT, open_legacy_output, write_input_log, write_plt_file
 
-    type(CEA_Core_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(inout):: cea
     character(*), intent(in), optional:: out_filename
     logical:: is_opened
 

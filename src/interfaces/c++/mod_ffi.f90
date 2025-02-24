@@ -412,87 +412,87 @@ contains
   end subroutine run
 
 
-!!$  function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
-!!$    use cea, only: CEA_Problem
-!!$    use mod_types, only: init_case, IOINP
-!!$    use mod_legacy_io, only: count_cases, read_legacy_case
-!!$    use mod_io, only: set_library_paths
-!!$
-!!$    type(FFI_C_Ptr_Array):: array
-!!$    type(FFI_C_String), intent(in):: filename
-!!$    character(len = :, kind = c_char), allocatable:: filename_fstr
-!!$
-!!$    integer:: icase, num_cases
-!!$    type(CEA_Problem), pointer:: cea, cea_prev
-!!$    type(c_ptr), pointer:: ptr(:)
-!!$    logical:: file_exists
-!!$
-!!$    filename_fstr = get_string(filename)
-!!$
-!!$    inquire(file = filename_fstr, exist = file_exists)
-!!$    if (.not. file_exists) then
-!!$       print *, filename_fstr, ' DOES NOT EXIST'
-!!$       error stop
-!!$    end if
-!!$
-!!$    call count_cases(filename_fstr, num_cases)
-!!$
-!!$    allocate(ptr(num_cases))
-!!$
-!!$    open(newunit = IOINP, file = filename_fstr, status = 'old', form = 'formatted', action = 'read')
-!!$
-!!$    do icase = 1, num_cases
-!!$       allocate(cea)
-!!$
-!!$       call set_library_paths(cea)
-!!$
-!!$       call init_case(cea)
-!!$
-!!$       if (icase > 1 .and. associated(cea_prev)) then
-!!$          call read_legacy_case(cea, cea_prev)
-!!$       else
-!!$          call read_legacy_case(cea)
-!!$       end if
-!!$
-!!$       ptr(icase) = c_loc(cea)
-!!$
-!!$       cea_prev => cea
-!!$       nullify(cea)
-!!$    end do
-!!$
-!!$    nullify(cea_prev)
-!!$
-!!$    close(IOINP)
-!!$
-!!$    array%addr = c_loc(ptr(1))
-!!$    array%size = num_cases
-!!$
-!!$    return
-!!$  end function ffi_read_legacy_input
-!!$
-!!$
-!!$  subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
-!!$    use cea, only: CEA_Problem
-!!$    use mod_cea, only: run_all_cases
-!!$
-!!$    type(FFI_C_Ptr_Array):: array
-!!$    type(FFI_C_String), intent(in), optional:: out_filename
-!!$    type(FFI_C_String), intent(in), optional:: plt_filename
-!!$
-!!$    character(len = :, kind = c_char), allocatable:: out_filename_fstr
-!!$    character(len = :, kind = c_char), allocatable:: plt_filename_fstr
-!!$
-!!$    type(CEA_Problem), pointer:: cea(:)
-!!$
-!!$    call c_f_pointer(array%addr, cea, [array%size])
-!!$
-!!$    if (present(out_filename)) out_filename_fstr = get_string(out_filename)
-!!$    if (present(plt_filename)) plt_filename_fstr = get_string(plt_filename)
-!!$
-!!$    call run_all_cases(cea, out_filename_fstr, plt_filename_fstr)
-!!$
-!!$    return
-!!$  end subroutine ffi_run_all_cases
+  function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
+    use cea, only: CEA_Problem
+    use mod_types, only: init_case, IOINP
+    use mod_legacy_io, only: count_cases, read_legacy_case
+    use mod_io, only: set_library_paths
+
+    type(FFI_C_Ptr_Array):: array
+    type(FFI_C_String), intent(in):: filename
+    character(len = :, kind = c_char), allocatable:: filename_fstr
+
+    integer:: icase, num_cases
+    type(CEA_Problem), pointer:: cea, cea_prev
+    type(c_ptr), pointer:: ptr(:)
+    logical:: file_exists
+
+    filename_fstr = get_string(filename)
+
+    inquire(file = filename_fstr, exist = file_exists)
+    if (.not. file_exists) then
+       print *, filename_fstr, ' DOES NOT EXIST'
+       error stop
+    end if
+
+    call count_cases(filename_fstr, num_cases)
+
+    allocate(ptr(num_cases))
+
+    open(newunit = IOINP, file = filename_fstr, status = 'old', form = 'formatted', action = 'read')
+
+    do icase = 1, num_cases
+       allocate(cea)
+
+       call set_library_paths(cea)
+
+       call init_case(cea)
+
+       if (icase > 1 .and. associated(cea_prev)) then
+          call read_legacy_case(cea, cea_prev)
+       else
+          call read_legacy_case(cea)
+       end if
+
+       ptr(icase) = c_loc(cea)
+
+       cea_prev => cea
+       nullify(cea)
+    end do
+
+    nullify(cea_prev)
+
+    close(IOINP)
+
+    array%addr = c_loc(ptr(1))
+    array%size = num_cases
+
+    return
+  end function ffi_read_legacy_input
+
+
+  subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
+    use cea, only: CEA_Problem
+    use mod_cea, only: run_all_cases
+
+    type(FFI_C_Ptr_Array):: array
+    type(FFI_C_String), intent(in), optional:: out_filename
+    type(FFI_C_String), intent(in), optional:: plt_filename
+
+    character(len = :, kind = c_char), allocatable:: out_filename_fstr
+    character(len = :, kind = c_char), allocatable:: plt_filename_fstr
+
+    type(CEA_Problem), pointer:: cea(:)
+
+    call c_f_pointer(array%addr, cea, [array%size])
+
+    if (present(out_filename)) out_filename_fstr = get_string(out_filename)
+    if (present(plt_filename)) plt_filename_fstr = get_string(plt_filename)
+
+    call run_all_cases(cea, out_filename_fstr, plt_filename_fstr)
+
+    return
+  end subroutine ffi_run_all_cases
 
 
   subroutine write_debug_output(ptr, filename) bind(C, name = "ffi_cea_write_debug_output")

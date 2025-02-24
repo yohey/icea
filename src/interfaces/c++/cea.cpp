@@ -155,75 +155,75 @@ namespace CEA {
   }
 
 
-  // std::vector<Problem> read_legacy_input(const std::string& filename) {
-  //   const FFI_String filename_ffi{filename.c_str(), filename.length()};
-  //   FFI_CEA_Problem_Array array = ffi_cea_read_legacy_input(filename_ffi);
+  std::vector<Problem> read_legacy_input(const std::string& filename) {
+    const FFI_String filename_ffi{filename.c_str(), filename.length()};
+    FFI_CEA_Problem_Array array = ffi_cea_read_legacy_input(filename_ffi);
 
-  //   std::vector<Problem> problems;
-  //   problems.reserve(array.size);
+    std::vector<Problem> problems;
+    problems.reserve(array.size);
 
-  //   for (size_t i = 0; i < array.size; ++i) {
-  //     problems.emplace_back(array.addr[i]);
-  //   }
+    for (size_t i = 0; i < array.size; ++i) {
+      problems.emplace_back(array.addr[i]);
+    }
 
-  //   return problems;
-  // }
-
-
-  // void run_all_cases(std::vector<Problem>& problems, const std::optional<std::string>& out_filename, const std::optional<std::string>& plt_filename) {
-  //   FFI_CEA_Problem_Array array;
-  //   array.size = problems.size();
-
-  //   bool _need_aligned_buffer = ffi_need_aligned(problems);
-  //   size_t obj_size = ffi_cea_sizeof(problems[0]._ffi);
-
-  //   if (_need_aligned_buffer) {
-  //     array.addr = static_cast<FFI_CEA_Problem_Ptr*>(malloc(problems.size() * obj_size));
-
-  //     for (size_t i = 0; i < problems.size(); ++i) {
-  //       FFI_CEA_Problem_Ptr ptr = reinterpret_cast<FFI_CEA_Problem_Ptr>((reinterpret_cast<uintptr_t>(array.addr) + i * obj_size));
-  //       std::memcpy(ptr, problems[i]._ffi, obj_size);
-  //     }
-
-  //   } else {
-  //     array.addr = static_cast<FFI_CEA_Problem_Ptr*>(problems[0]._ffi);
-  //   }
-
-  //   const FFI_String* out_filename_ffi = (out_filename) ? new FFI_String{out_filename.value().c_str(), out_filename.value().length()} : nullptr;
-  //   const FFI_String* plt_filename_ffi = (plt_filename) ? new FFI_String{plt_filename.value().c_str(), plt_filename.value().length()} : nullptr;
-
-  //   ffi_cea_run_all_cases(array, out_filename_ffi, plt_filename_ffi);
-
-  //   if (out_filename_ffi) delete out_filename_ffi;
-  //   if (plt_filename_ffi) delete plt_filename_ffi;
-
-  //   if (_need_aligned_buffer) {
-  //     for (size_t i = 0; i < problems.size(); ++i) {
-  //       FFI_CEA_Problem_Ptr ptr = reinterpret_cast<FFI_CEA_Problem_Ptr>((reinterpret_cast<uintptr_t>(array.addr) + i * obj_size));
-  //       std::memcpy(problems[i]._ffi, ptr, obj_size);
-  //     }
-
-  //     free(array.addr);
-  //   }
-  // }
+    return problems;
+  }
 
 
-  // bool ffi_need_aligned(const std::vector<Problem>& problems) {
-  //   if (problems.size() < 2) return false;
+  void run_all_cases(std::vector<Problem>& problems, const std::optional<std::string>& out_filename, const std::optional<std::string>& plt_filename) {
+    FFI_CEA_Problem_Array array;
+    array.size = problems.size();
 
-  //   size_t obj_size = ffi_cea_sizeof(problems[0]._ffi);
-  //   uintptr_t head_addr = reinterpret_cast<uintptr_t>(problems[0]._ffi);
-  //   uintptr_t prev_tail_addr = head_addr + obj_size;
+    bool _need_aligned_buffer = ffi_need_aligned(problems);
+    size_t obj_size = ffi_cea_sizeof(problems[0]._ffi);
 
-  //   for (size_t i = 1; i < problems.size(); ++i) {
-  //     head_addr = reinterpret_cast<uintptr_t>(problems[i]._ffi);
-  //     if (head_addr != prev_tail_addr) {
-  //       return true;
-  //     } else {
-  //       prev_tail_addr = head_addr + obj_size;
-  //     }
-  //   }
+    if (_need_aligned_buffer) {
+      array.addr = static_cast<FFI_CEA_Problem_Ptr*>(malloc(problems.size() * obj_size));
 
-  //   return false;
-  // }
+      for (size_t i = 0; i < problems.size(); ++i) {
+        FFI_CEA_Problem_Ptr ptr = reinterpret_cast<FFI_CEA_Problem_Ptr>((reinterpret_cast<uintptr_t>(array.addr) + i * obj_size));
+        std::memcpy(ptr, problems[i]._ffi, obj_size);
+      }
+
+    } else {
+      array.addr = static_cast<FFI_CEA_Problem_Ptr*>(problems[0]._ffi);
+    }
+
+    const FFI_String* out_filename_ffi = (out_filename) ? new FFI_String{out_filename.value().c_str(), out_filename.value().length()} : nullptr;
+    const FFI_String* plt_filename_ffi = (plt_filename) ? new FFI_String{plt_filename.value().c_str(), plt_filename.value().length()} : nullptr;
+
+    ffi_cea_run_all_cases(array, out_filename_ffi, plt_filename_ffi);
+
+    if (out_filename_ffi) delete out_filename_ffi;
+    if (plt_filename_ffi) delete plt_filename_ffi;
+
+    if (_need_aligned_buffer) {
+      for (size_t i = 0; i < problems.size(); ++i) {
+        FFI_CEA_Problem_Ptr ptr = reinterpret_cast<FFI_CEA_Problem_Ptr>((reinterpret_cast<uintptr_t>(array.addr) + i * obj_size));
+        std::memcpy(problems[i]._ffi, ptr, obj_size);
+      }
+
+      free(array.addr);
+    }
+  }
+
+
+  bool ffi_need_aligned(const std::vector<Problem>& problems) {
+    if (problems.size() < 2) return false;
+
+    size_t obj_size = ffi_cea_sizeof(problems[0]._ffi);
+    uintptr_t head_addr = reinterpret_cast<uintptr_t>(problems[0]._ffi);
+    uintptr_t prev_tail_addr = head_addr + obj_size;
+
+    for (size_t i = 1; i < problems.size(); ++i) {
+      head_addr = reinterpret_cast<uintptr_t>(problems[i]._ffi);
+      if (head_addr != prev_tail_addr) {
+        return true;
+      } else {
+        prev_tail_addr = head_addr + obj_size;
+      }
+    }
+
+    return false;
+  }
 }

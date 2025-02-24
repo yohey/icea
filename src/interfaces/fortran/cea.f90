@@ -3,9 +3,8 @@ module cea
   implicit none
   private
 
-  type, public:: CEA_Problem
+  type, extends(CEA_Core_Problem), public:: CEA_Problem
      private
-     type(CEA_Core_Problem):: core
    contains
      procedure, public, pass:: set_problem
      procedure, public, pass:: set_output_options
@@ -31,7 +30,7 @@ contains
     type(CEA_Problem), intent(inout):: this
 
 #ifndef NDEBUG
-    write(0, *) '[DEBUG] CEA_Problem (cea.f90) destructor is called: ', trim(this%core%Case)
+    write(0, *) '[DEBUG] CEA_Problem (cea.f90) destructor is called: ', trim(this%Case)
 #endif
 
     return
@@ -55,29 +54,29 @@ contains
     character(*), intent(in), optional:: thermo_lib
     character(*), intent(in), optional:: trans_lib
 
-    call init_case(this%core)
+    call init_case(this)
 
     select case (mode)
     case ('rocket')
-       this%core%Rkt = .true.
-       this%core%Sp = .true.
-       this%core%Tp = .false.
-       this%core%Hp = .false.
-       this%core%Detn = .false.
-       this%core%Shock = .false.
+       this%Rkt = .true.
+       this%Sp = .true.
+       this%Tp = .false.
+       this%Hp = .false.
+       this%Detn = .false.
+       this%Shock = .false.
 
-       this%core%Nt = 1
+       this%Nt = 1
 
-       this%core%Nfz = 1
+       this%Nfz = 1
 
        if (present(frozen)) then
-          this%core%Froz = frozen
+          this%Froz = frozen
 
           if (present(frozen_at_throat) .and. frozen_at_throat) then
-             if (this%core%Fac) then
-                this%core%Nfz = 3
+             if (this%Fac) then
+                this%Nfz = 3
              else
-                this%core%Nfz = 2
+                this%Nfz = 2
              end if
           end if
        end if
@@ -101,22 +100,22 @@ contains
     end select
 
     if (present(name)) then
-       this%core%Case = trim(name)
+       this%Case = trim(name)
     end if
 
     if (present(equilibrium)) then
-       this%core%Eql_in = equilibrium
+       this%Eql_in = equilibrium
     end if
 
     if (present(ions)) then
-       this%core%Ions = ions
+       this%Ions = ions
     end if
 
     if (present(mole_ratios)) then
-       this%core%Moles = mole_ratios
+       this%Moles = mole_ratios
     end if
 
-    call set_library_paths(this%core, thermo_lib, trans_lib)
+    call set_library_paths(this, thermo_lib, trans_lib)
 
     return
   end subroutine set_problem
@@ -135,29 +134,29 @@ contains
     integer:: i, j
 
     if (present(SI)) then
-       this%core%SIunit = SI
+       this%SIunit = SI
     end if
 
     if (present(debug_points)) then
-       do concurrent (i = 1:maxMix, j = 1:size(debug_points), debug_points(j) <= this%core%max_points)
-          this%core%points(i, debug_points(j))%Debug = .true.
+       do concurrent (i = 1:maxMix, j = 1:size(debug_points), debug_points(j) <= this%max_points)
+          this%points(i, debug_points(j))%Debug = .true.
        end do
     end if
 
     if (present(mass_fractions)) then
-       this%core%Massf = mass_fractions
+       this%Massf = mass_fractions
     end if
 
     if (present(short)) then
-       this%core%Short = short
+       this%Short = short
     end if
 
     if (present(trace_tol)) then
-       this%core%Trace = trace_tol
+       this%Trace = trace_tol
     end if
 
     if (present(transport)) then
-       this%core%Trnspt = transport
+       this%Trnspt = transport
     end if
 
     return
@@ -184,8 +183,8 @@ contains
        end if
     end if
 
-    this%core%Np = size(pressure_list)
-    this%core%P(1:this%core%Np) = pressure_list * factor
+    this%Np = size(pressure_list)
+    this%P(1:this%Np) = pressure_list * factor
 
     return
   end subroutine set_chamber_pressures
@@ -199,13 +198,13 @@ contains
     character(*), intent(in), optional:: type
     integer:: iof
 
-    this%core%Nof = size(ratio_list)
-    this%core%Oxf(1:this%core%Nof) = ratio_list
+    this%Nof = size(ratio_list)
+    this%Oxf(1:this%Nof) = ratio_list
 
     if (present(type)) then
        if (trim(type) == '%fuel') then
-          do concurrent (iof = 1:this%core%Nof, this%core%Oxf(iof) > 0)
-             this%core%Oxf(iof) = (100 - this%core%Oxf(iof)) / this%core%Oxf(iof)
+          do concurrent (iof = 1:this%Nof, this%Oxf(iof) > 0)
+             this%Oxf(iof) = (100 - this%Oxf(iof)) / this%Oxf(iof)
           end do
        else
           write(stderr, *) '[ERROR] Unsupported type: ', trim(type)
@@ -221,8 +220,8 @@ contains
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    this%core%Npp_in = size(ratio_list)
-    this%core%Pcp(1:this%core%Npp_in) = ratio_list
+    this%Npp_in = size(ratio_list)
+    this%Pcp(1:this%Npp_in) = ratio_list
 
     return
   end subroutine set_pressure_ratios
@@ -232,8 +231,8 @@ contains
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    this%core%Nsub_in = size(ratio_list)
-    this%core%Subar(1:this%core%Nsub_in) = ratio_list
+    this%Nsub_in = size(ratio_list)
+    this%Subar(1:this%Nsub_in) = ratio_list
 
     return
   end subroutine set_subsonic_area_ratios
@@ -243,8 +242,8 @@ contains
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
 
-    this%core%Nsup_in = size(ratio_list)
-    this%core%Supar(1:this%core%Nsup_in) = ratio_list
+    this%Nsup_in = size(ratio_list)
+    this%Supar(1:this%Nsup_in) = ratio_list
 
     return
   end subroutine set_supersonic_area_ratios
@@ -258,18 +257,18 @@ contains
     real(8), intent(in), optional:: mass_flow_ratio
 
     if (present(contraction_ratio)) then
-       this%core%AcAt_in = contraction_ratio
+       this%AcAt_in = contraction_ratio
     else if (present(mass_flow_ratio)) then
-       this%core%mdotByAc_in = mass_flow_ratio
+       this%mdotByAc_in = mass_flow_ratio
     else
        write(stderr, *) '[ERROR] Either contraction_ratio or mass_flow_ratio must be given.'
        return
     end if
 
-    this%core%Fac = .true.
+    this%Fac = .true.
 
-    if (this%core%Froz .and. this%core%Nfz == 2) then
-       this%core%Nfz = 3
+    if (this%Froz .and. this%Nfz == 2) then
+       this%Nfz = 3
     end if
 
     return
@@ -296,15 +295,15 @@ contains
        return
     end if
 
-    this%core%Nreac = this%core%Nreac + 1
+    this%Nreac = this%Nreac + 1
 
-    this%core%Fox(this%core%Nreac) = trim(type)
-    this%core%Rname(this%core%Nreac) = trim(name)
+    this%Fox(this%Nreac) = trim(type)
+    this%Rname(this%Nreac) = trim(name)
 
     if (present(ratio)) then
-       this%core%Pecwt(this%core%Nreac) = ratio
+       this%Pecwt(this%Nreac) = ratio
     else
-       this%core%Pecwt(this%core%Nreac) = 1
+       this%Pecwt(this%Nreac) = 1
     end if
 
     if (present(T_unit)) then
@@ -312,16 +311,16 @@ contains
        return
     end if
 
-    if (present(T)) this%core%Rtemp(this%core%Nreac) = T * T_factor
+    if (present(T)) this%Rtemp(this%Nreac) = T * T_factor
 
     if (present(rho_unit)) then
        write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
        return
     end if
 
-    if (present(rho)) this%core%Dens(this%core%Nreac) = rho * rho_factor
+    if (present(rho)) this%Dens(this%Nreac) = rho * rho_factor
 
-    this%core%Energy(this%core%Nreac) = 'lib'
+    this%Energy(this%Nreac) = 'lib'
 
     return
   end subroutine add_reactant
@@ -331,8 +330,8 @@ contains
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    this%core%Nsert = min(20, size(species))
-    this%core%ensert(1:this%core%Nsert) = species(1:this%core%Nsert)
+    this%Nsert = min(20, size(species))
+    this%ensert(1:this%Nsert) = species(1:this%Nsert)
 
     return
   end subroutine insert_species
@@ -344,8 +343,8 @@ contains
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    this%core%Nomit = min(maxNgc, size(species))
-    this%core%Omit(1:this%core%Nomit) = species(1:this%core%Nomit)
+    this%Nomit = min(maxNgc, size(species))
+    this%Omit(1:this%Nomit) = species(1:this%Nomit)
 
     return
   end subroutine set_omit_species
@@ -357,11 +356,11 @@ contains
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
-    this%core%Nonly_in = min(maxNgc, size(species))
-    this%core%Prod_in(:) = ''
-    this%core%Prod_in(1:this%core%Nonly_in) = species(1:this%core%Nonly_in)
-    this%core%Nonly = this%core%Nonly_in
-    this%core%Prod(:) = this%core%Prod_in(:)
+    this%Nonly_in = min(maxNgc, size(species))
+    this%Prod_in(:) = ''
+    this%Prod_in(1:this%Nonly_in) = species(1:this%Nonly_in)
+    this%Nonly = this%Nonly_in
+    this%Prod(:) = this%Prod_in(:)
 
     return
   end subroutine set_only_species
@@ -372,9 +371,9 @@ contains
     logical, intent(in), optional:: legacy_mode
 
     if (present(legacy_mode)) then
-       this%core%legacy_mode = legacy_mode
+       this%legacy_mode = legacy_mode
     else
-       this%core%legacy_mode = .true.
+       this%legacy_mode = .true.
     end if
 
     return
@@ -387,7 +386,7 @@ contains
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in), optional:: out_filename
 
-    call run_case(this%core, out_filename)
+    call run_case(this, out_filename)
 
     return
   end subroutine run
@@ -399,7 +398,7 @@ contains
     class(CEA_Problem), intent(in):: this
     character(*), intent(in):: filename
 
-    call mod_io_write_debug_output(this%core, filename)
+    call mod_io_write_debug_output(this, filename)
 
     return
   end subroutine write_debug_output

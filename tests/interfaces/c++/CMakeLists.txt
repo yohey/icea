@@ -22,7 +22,7 @@ set(EXAMPLE_DIR "${CMAKE_SOURCE_DIR}/examples/c++")
 target_sources(${TEST_EXECUTABLE}
   PRIVATE
   src/main.cpp
-  # src/legacy_examples.cpp
+  src/legacy_examples.cpp
   ${EXAMPLE_DIR}/src/example-08.cpp
   ${EXAMPLE_DIR}/src/example-09.cpp
   ${EXAMPLE_DIR}/src/example-10.cpp
@@ -70,15 +70,15 @@ foreach(i IN ITEMS 08 09 10 11 12 13)
 endforeach()
 
 
-# foreach(TEST_PATH IN ITEMS "orig/cea2" "thermp/test-thermp" "deton/test-deton" "shock/test-shock" "rocket/test-rocket")
-#   get_filename_component(JOB_NAME ${TEST_PATH} NAME)
-#   foreach(EXT IN ITEMS "out" "plt")
-#     if(EXISTS ${CMAKE_SOURCE_DIR}/tests/${TEST_PATH}.${EXT})
-#       add_test(
-#         NAME c++/${JOB_NAME}.${EXT}
-#         COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/tests/${TEST_PATH}.${EXT} ${CMAKE_CURRENT_BINARY_DIR}/${JOB_NAME}.${EXT}
-#       )
-#       set_tests_properties(c++/${JOB_NAME}.${EXT} PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
-#     endif()
-#   endforeach()
-# endforeach()
+foreach(TEST_PATH IN ITEMS "orig/cea2" "thermp/test-thermp" "deton/test-deton" "shock/test-shock" "rocket/test-rocket")
+  get_filename_component(JOB_NAME ${TEST_PATH} NAME)
+  foreach(EXT IN ITEMS "out" "plt")
+    if(EXISTS ${CMAKE_SOURCE_DIR}/tests/${TEST_PATH}.${EXT})
+      add_test(
+        NAME c++/${JOB_NAME}.${EXT}
+        COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/tests/${TEST_PATH}.${EXT} ${CMAKE_CURRENT_BINARY_DIR}/${JOB_NAME}.${EXT}
+      )
+      set_tests_properties(c++/${JOB_NAME}.${EXT} PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
+    endif()
+  endforeach()
+endforeach()
