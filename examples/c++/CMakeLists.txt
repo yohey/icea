@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.12)
 
 project(CEA-CXX-Examples CXX)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
 set(EXECUTABLE run_examples)
 
 
@@ -22,5 +27,4 @@ target_sources(${EXECUTABLE}
 )
 
 
-# target_link_libraries(${EXECUTABLE} PRIVATE cea-static)
 target_link_libraries(${EXECUTABLE} PRIVATE cea-shared)

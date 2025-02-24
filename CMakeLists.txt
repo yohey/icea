@@ -83,6 +83,9 @@ install(FILES src/core/trans.inp   DESTINATION share/doc/cea/examples/orig/)
 install(FILES     examples/fortran/CMakeLists.txt DESTINATION share/doc/cea/examples/fortran/)
 install(DIRECTORY examples/fortran/src            DESTINATION share/doc/cea/examples/fortran/)
 
+install(FILES     examples/c++/CMakeLists.txt DESTINATION share/doc/cea/examples/c++/)
+install(DIRECTORY examples/c++/src            DESTINATION share/doc/cea/examples/c++/)
+
 install(EXPORT cea-config DESTINATION share/cmake/cea/ EXPORT_LINK_INTERFACE_LIBRARIES)
 
 

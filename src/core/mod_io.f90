@@ -257,7 +257,7 @@ contains
     end if
 
     write(io_out, *)
-    if (cea%Rkt) write(io_out, '(17x, *(a12))') adjustr(labels(:))
+    if (cea%Rkt .and. allocated(labels)) write(io_out, '(17x, *(a12))') adjustr(labels(:))
     write(io_out, '("O/F            = ", *(f12.5))') X(1, :)
     write(io_out, '("P [MPa]        = ", *(f12.7))') X(2, :)
     write(io_out, '("T [K]          = ", *(f12.2))') X(3, :)
@@ -282,7 +282,7 @@ contains
     write(io_out, '("Isp [s]        = ", 12x, *(f12.3))') X(20, 2:)
 
     deallocate(X)
-    if (cea%Rkt) deallocate(labels)
+    if (cea%Rkt .and. allocated(labels)) deallocate(labels)
 
     close(io_out)
 

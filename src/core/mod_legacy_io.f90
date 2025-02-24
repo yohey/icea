@@ -157,6 +157,9 @@ contains
     integer:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
     real(8):: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
 
+    ifrmla = 0
+    eqrats = .false.
+    phi = .false.
 
     open(newunit = cea%io_log, status = 'scratch', form = 'formatted')
 
@@ -177,7 +180,7 @@ contains
     do
        do
           ! CALL INFREE TO READ DATASET
-          call INFREE(readOK, cin, ncin, lcin, dpin, ioinp, cea%io_log)
+          call INFREE(readOK, cin, ncin, lcin, dpin, IOINP, cea%io_log)
 
           if (.not. readOK) return
 
@@ -895,6 +898,10 @@ contains
     character(3):: fmtl(3)
     character(4):: w1
     integer:: i, ich1, j, kcin, nb, nch1, nx, iostat
+
+    readOK = .true.
+
+    ich1 = 0
 
     fmtl = [character(3):: '(g', '16', '.0)']
 
@@ -1890,6 +1897,8 @@ contains
     integer, allocatable:: i_cols_print(:)
 
     real(8), allocatable:: out_AeAt(:), out_App(:), X(:)
+
+    ww = 0
 
     i_col_end = cea%ipt
     call get_print_cols(cea, i_col_end, i_cols_print)

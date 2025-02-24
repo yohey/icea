@@ -562,6 +562,8 @@ contains
     type(CEA_Point), pointer:: p !< current point
     p => cea%points(cea%iOF, cea%ipt)
 
+    k = 0
+
     Npt = mod(cea%ipt - 1, Ncol) + 1
     if (cea%Rkt) then
        if (cea%Fac) then
@@ -604,12 +606,12 @@ contains
 
     if (cea%Tt /= 0) then
        if (cea%Npr == 0 .or. (cea%Tt /= cea%T(1) .and. .not. cea%Tp)) go to 400
-       k = 1
     else
        cea%Tt = 3800
        if (cea%Npr == 0) go to 400
-       k = 1
     end if
+
+    k = 1
 
 100 j = cea%Jcond(k)
     jc = j - cea%Ng
@@ -1700,6 +1702,8 @@ contains
     type(CEA_Point), pointer:: p !< current point
     p => cea%points(cea%iOF, cea%ipt)
 
+    icf = 0
+
     Tsave = cea%Tt
 
     cea%Tm = 0
@@ -1860,8 +1864,9 @@ contains
     real(8):: energyl, f, h, ss, sss, term, term1
 
     type(CEA_Point), pointer:: p !< current point
-
     p => cea%points(cea%iOF, cea%ipt)
+
+    energyl = 0
 
     iq = cea%Nlm + cea%Npr
     cea%Iq1 = iq + 1
@@ -2025,6 +2030,10 @@ contains
 
     type(CEA_Point), pointer:: p !< current point
 
+    assval = 0
+    bigb = 0
+    smalb = 0
+
     cea%iOF = cea%iOF + 1
     cea%ipt = 1
 
@@ -2111,6 +2120,20 @@ contains
     type(CEA_Point), pointer:: p1, p2, p4, p12
     type(CEA_Point), pointer:: pfz
     type(CEA_Point), pointer:: pth
+
+    npr1 = 0
+    thi = .false.
+    aeatl = 0
+    appl = 0
+    cprf = 0
+    dlnpe = 0
+    dp = 0
+    eln = 0
+    Pp_old = 0
+    pcplt = 0
+    prat = 0
+    pratsv = 0
+    tmelt = 0
 
     iplte = cea%Iplt
     isup1 = 1
@@ -2813,6 +2836,8 @@ contains
     integer:: io_thermo
     logical:: is_opened
 
+    ii = 0
+
     cea%Nc = 0
     ne = 0
     do i = 1, cea%Nlm
@@ -3172,6 +3197,9 @@ contains
          t21l, t2t1(Ncol), ttmax, u1u2(Ncol), uis(13), utwo(Ncol), uu, wmx, ww
 
     type(CEA_Point), pointer:: p, p_prev
+
+    rho12 = 0
+    ww = 0
 
     if (cea%Trace == 0) then
        if (cea%legacy_mode) then
@@ -3707,6 +3735,11 @@ contains
 
     p1 => cea%points(cea%iOF, 1)
 
+    m = 0
+    enel = 0
+    lambda = 0
+    qc = 0
+    total = 0
     xss(:) = 0
     wmols(:) = 0
     inds(:) = 0

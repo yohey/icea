@@ -423,7 +423,8 @@ contains
     character(len = :, kind = c_char), allocatable:: filename_fstr
 
     integer:: icase, num_cases
-    type(CEA_Problem), pointer:: cea, cea_prev
+    type(CEA_Problem), pointer:: cea => null()
+    type(CEA_Problem), pointer:: cea_prev => null()
     type(c_ptr), pointer:: ptr(:)
     logical:: file_exists
 
