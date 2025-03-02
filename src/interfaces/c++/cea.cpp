@@ -79,20 +79,31 @@ namespace CEA {
     ffi_cea_set_finite_area_combustor(this->_ffi, contraction_ratio_ptr, mass_flow_ratio_ptr);
   }
 
-  void Problem::add_reactant(const std::string& type, const std::string& name, const std::optional<double>& ratio, const std::optional<double>& T,
-                             const std::optional<double>& rho, const std::optional<std::string>& T_unit, const std::optional<std::string>& rho_unit) {
+  void Problem::add_reactant(const std::string& type, const std::string& name, const std::optional<std::string>& formula, const std::optional<double>& ratio,
+                             const std::optional<double>& T, const std::optional<double>& rho,
+                             const std::optional<double>& h, const std::optional<double>& u,
+                             const std::optional<std::string>& T_unit, const std::optional<std::string>& rho_unit,
+                             const std::optional<std::string>& h_unit, const std::optional<std::string>& u_unit) {
     const FFI_String type_ffi{type.c_str(), type.length()};
     const FFI_String name_ffi{name.c_str(), name.length()};
+    const FFI_String* formula_ffi = (formula) ? new FFI_String{formula.value().c_str(), formula.value().length()} : nullptr;
     const double* ratio_ptr = (ratio) ? &(*ratio) : nullptr;
     const double* T_ptr = (T) ? &(*T) : nullptr;
     const double* rho_ptr = (rho) ? &(*rho) : nullptr;
+    const double* h_ptr = (h) ? &(*h) : nullptr;
+    const double* u_ptr = (u) ? &(*u) : nullptr;
     const FFI_String* T_unit_ffi = (T_unit) ? new FFI_String{T_unit.value().c_str(), T_unit.value().length()} : nullptr;
     const FFI_String* rho_unit_ffi = (rho_unit) ? new FFI_String{rho_unit.value().c_str(), rho_unit.value().length()} : nullptr;
+    const FFI_String* h_unit_ffi = (h_unit) ? new FFI_String{h_unit.value().c_str(), h_unit.value().length()} : nullptr;
+    const FFI_String* u_unit_ffi = (u_unit) ? new FFI_String{u_unit.value().c_str(), u_unit.value().length()} : nullptr;
 
-    ffi_cea_add_reactant(this->_ffi, type_ffi, name_ffi, ratio_ptr, T_ptr, rho_ptr, T_unit_ffi, rho_unit_ffi);
+    ffi_cea_add_reactant(this->_ffi, type_ffi, name_ffi, formula_ffi, ratio_ptr, T_ptr, rho_ptr, h_ptr, u_ptr, T_unit_ffi, rho_unit_ffi, h_unit_ffi, u_unit_ffi);
 
+    if (formula_ffi) delete formula_ffi;
     if (T_unit_ffi) delete T_unit_ffi;
     if (rho_unit_ffi) delete rho_unit_ffi;
+    if (h_unit_ffi) delete h_unit_ffi;
+    if (u_unit_ffi) delete u_unit_ffi;
   }
 
 

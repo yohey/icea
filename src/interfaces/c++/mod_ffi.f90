@@ -264,33 +264,46 @@ contains
   end subroutine set_finite_area_combustor
 
 
-  subroutine add_reactant(ptr, type, name, ratio, T, rho, T_unit, rho_unit) bind(C, name = "ffi_cea_add_reactant")
+  subroutine add_reactant(ptr, type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit) &
+       bind(C, name = "ffi_cea_add_reactant")
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
     type(FFI_C_String), intent(in):: type
     type(FFI_C_String), intent(in):: name
+    type(FFI_C_String), intent(in), optional:: formula
     real(c_double), intent(in), optional:: ratio
     real(c_double), intent(in), optional:: T
     real(c_double), intent(in), optional:: rho
+    real(c_double), intent(in), optional:: h
+    real(c_double), intent(in), optional:: u
     type(FFI_C_String), intent(in), optional:: T_unit
     type(FFI_C_String), intent(in), optional:: rho_unit
+    type(FFI_C_String), intent(in), optional:: h_unit
+    type(FFI_C_String), intent(in), optional:: u_unit
 
     character(len = :, kind = c_char), allocatable:: type_fstr
     character(len = :, kind = c_char), allocatable:: name_fstr
+    character(len = :, kind = c_char), allocatable:: formula_fstr
     character(len = :, kind = c_char), allocatable:: T_unit_fstr
     character(len = :, kind = c_char), allocatable:: rho_unit_fstr
+    character(len = :, kind = c_char), allocatable:: h_unit_fstr
+    character(len = :, kind = c_char), allocatable:: u_unit_fstr
 
     type(CEA_Problem), pointer:: this
     call c_f_pointer(ptr, this)
 
     type_fstr = get_string(type)
     name_fstr = get_string(name)
+    if (present(formula)) formula_fstr = get_string(formula)
     if (present(T_unit)) T_unit_fstr = get_string(T_unit)
     if (present(rho_unit)) rho_unit_fstr = get_string(rho_unit)
+    if (present(h_unit)) h_unit_fstr = get_string(h_unit)
+    if (present(u_unit)) u_unit_fstr = get_string(u_unit)
 
     if (associated(this)) then
-       call this%add_reactant(type_fstr, name_fstr, ratio, T, rho, T_unit_fstr, rho_unit_fstr)
+       call this%add_reactant(type_fstr, name_fstr, formula_fstr, ratio, T, rho, h, u, &
+                              T_unit_fstr, rho_unit_fstr, h_unit_fstr, u_unit_fstr)
 #ifndef NDEBUG
     else
        write(0, *) '[DEBUG] pointer is not associated. (add_reactant)'

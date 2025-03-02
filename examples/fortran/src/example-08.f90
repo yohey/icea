@@ -7,8 +7,8 @@ subroutine run_example_08()
   call prob%set_problem(mode = 'rocket', name = 'Example 8', equilibrium = .true.)
   call prob%set_output_options(SI = .true.)
 
-  call prob%add_reactant('fuel', 'H2(L)', 100d0, T = 20.27d0)
-  call prob%add_reactant('oxyd', 'O2(L)', 100d0, T = 90.17d0)
+  call prob%add_reactant('fuel', 'H2(L)', ratio = 100d0, T = 20.27d0)
+  call prob%add_reactant('oxyd', 'O2(L)', ratio = 100d0, T = 90.17d0)
 
   call prob%set_chamber_pressures([53.3172d0])
   call prob%set_mixture_ratios([5.55157d0])

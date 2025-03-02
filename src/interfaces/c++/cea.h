@@ -32,8 +32,11 @@ namespace CEA {
     void set_subsonic_area_ratios(const std::vector<double>& ratio_list);
     void set_supersonic_area_ratios(const std::vector<double>& ratio_list);
     void set_finite_area_combustor(const std::optional<double>& contraction_ratio = std::nullopt, const std::optional<double>& mass_flow_ratio = std::nullopt);
-    void add_reactant(const std::string& type, const std::string& name, const std::optional<double>& ratio = std::nullopt, const std::optional<double>& T = std::nullopt,
-                      const std::optional<double>& rho = std::nullopt, const std::optional<std::string>& T_unit = std::nullopt, const std::optional<std::string>& rho_unit = std::nullopt);
+    void add_reactant(const std::string& type, const std::string& name, const std::optional<std::string>& formula = std::nullopt, const std::optional<double>& ratio = std::nullopt,
+                      const std::optional<double>& T = std::nullopt, const std::optional<double>& rho = std::nullopt,
+                      const std::optional<double>& h = std::nullopt, const std::optional<double>& u = std::nullopt,
+                      const std::optional<std::string>& T_unit = std::nullopt, const std::optional<std::string>& rho_unit = std::nullopt,
+                      const std::optional<std::string>& h_unit = std::nullopt, const std::optional<std::string>& u_unit = std::nullopt);
     void insert_species(const std::vector<std::string>&);
     void set_omit_species(const std::vector<std::string>&);
     void set_only_species(const std::vector<std::string>&);

@@ -32,13 +32,18 @@ void run_example_11() {
   // void CEA::Problem::add_reactant
   //   - type:            std::string (required, must start with "fu", "ox" or "na")
   //   - name:            std::string (required)
+  //   - formula:         std::string (optional, required when h or u is given)
   //   - ratio:           double (optional)
   //   - T:               double (optional)
   //   - rho:             double (optional)
+  //   - h:               double (optional)
+  //   - u:               double (optional)
   //   - T_unit:          std::string (optional, default: K)
   //   - rho_unit:        std::string (optional, default: g/cc)
-  prob.add_reactant("fuel", "Li(cr)", 1.0000, 298.15);
-  prob.add_reactant("oxyd", "F2(L)",  0.5556,  85.02);
+  //   - h_unit:          std::string (optional, default: J/mol)
+  //   - u_unit:          std::string (optional, default: J/mol)
+  prob.add_reactant("fuel", "Li(cr)", std::nullopt, 1.0000, 298.15);
+  prob.add_reactant("oxyd", "F2(L)",  std::nullopt, 0.5556,  85.02);
 
   prob.set_chamber_pressures({1000}, "legacy-psi");
   prob.set_pressure_ratios({68.0457});

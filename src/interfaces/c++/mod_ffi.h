@@ -46,8 +46,9 @@ namespace CEA {
 
     void ffi_cea_set_finite_area_combustor(const FFI_CEA_Problem_Ptr&, const double* = nullptr, const double* = nullptr);
 
-    void ffi_cea_add_reactant(const FFI_CEA_Problem_Ptr&, const FFI_String&, const FFI_String&, const double* = nullptr,
-                              const double* = nullptr, const double* = nullptr, const FFI_String* = nullptr, const FFI_String* = nullptr);
+    void ffi_cea_add_reactant(const FFI_CEA_Problem_Ptr&, const FFI_String&, const FFI_String&, const FFI_String* = nullptr, const double* = nullptr,
+                              const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr,
+                              const FFI_String* = nullptr, const FFI_String* = nullptr, const FFI_String* = nullptr, const FFI_String* = nullptr);
 
     void ffi_cea_insert_species(const FFI_CEA_Problem_Ptr&, const char* const*, const size_t*, const size_t&);
     void ffi_cea_set_omit_species(const FFI_CEA_Problem_Ptr&, const char* const*, const size_t*, const size_t&);

@@ -275,20 +275,30 @@ contains
   end subroutine set_finite_area_combustor
 
 
-  subroutine add_reactant(this, type, name, ratio, T, rho, T_unit, rho_unit)
-    use mod_constants, only: stderr
+  subroutine add_reactant(this, type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit)
+    use mod_constants, only: stderr, R0
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: type
     character(*), intent(in):: name
+    character(*), intent(in), optional:: formula
     real(8), intent(in), optional:: ratio
     real(8), intent(in), optional:: T
     real(8), intent(in), optional:: rho
+    real(8), intent(in), optional:: h
+    real(8), intent(in), optional:: u
     character(*), intent(in), optional:: T_unit
     character(*), intent(in), optional:: rho_unit
+    character(*), intent(in), optional:: h_unit
+    character(*), intent(in), optional:: u_unit
+
+    integer:: istart, iend, iatom
+    logical:: atom_found
 
     real(8):: T_factor = 1
     real(8):: rho_factor = 1
+    real(8):: h_factor = 1000 / R0
+    real(8):: u_factor = 1000 / R0
 
     if (.not. (type(:2) == 'fu' .or. type(:2) == 'ox' .or. type(:2) == 'na')) then
        write(stderr, *) '[ERROR] Invalid reactant type: ', trim(type)
@@ -297,8 +307,36 @@ contains
 
     this%Nreac = this%Nreac + 1
 
+    this%Energy(this%Nreac) = 'lib'
+
     this%Fox(this%Nreac) = trim(type)
     this%Rname(this%Nreac) = trim(name)
+
+    if (present(formula)) then
+       this%Ratom(this%Nreac, :) = ''
+       this%Rnum(this%Nreac, :) = 0
+       istart = 1
+       iatom = 1
+       atom_found = .false.
+
+       do iend = 1, len_trim(formula)
+          if (formula(iend:iend) == ' ' .or. iend == len_trim(formula)) then
+
+             if (atom_found) then
+                read(formula(istart:iend), *) this%Rnum(this%Nreac, iatom)
+                iatom = iatom + 1
+                atom_found = .false.
+             else
+                this%Ratom(this%Nreac, iatom) = formula(istart:iend)
+                atom_found = .true.
+             end if
+
+             istart = iend + 1
+          end if
+       end do
+
+       this%Nfla(this%Nreac) = iatom - 1
+    end if
 
     if (present(ratio)) then
        this%Pecwt(this%Nreac) = ratio
@@ -306,21 +344,53 @@ contains
        this%Pecwt(this%Nreac) = 1
     end if
 
-    if (present(T_unit)) then
-       write(stderr, *) '[ERROR] Not implemented yet: T_unit = ', trim(T_unit)
-       return
+    if (present(T)) then
+       if (present(T_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: T_unit = ', trim(T_unit)
+          return
+       end if
+
+       this%Rtemp(this%Nreac) = T * T_factor
     end if
 
-    if (present(T)) this%Rtemp(this%Nreac) = T * T_factor
+    if (present(rho)) then
+       if (present(rho_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
+          return
+       end if
 
-    if (present(rho_unit)) then
-       write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
-       return
+       this%Dens(this%Nreac) = rho * rho_factor
     end if
 
-    if (present(rho)) this%Dens(this%Nreac) = rho * rho_factor
+    if (present(h)) then
+       if (.not. present(formula)) then
+          write(stderr, *) '[ERROR] Exploded formula is required when h is given.'
+          return
+       end if
 
-    this%Energy(this%Nreac) = 'lib'
+       if (present(h_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: h_unit = ', trim(h_unit)
+          return
+       end if
+
+       this%Energy(this%Nreac) = 'h,j'
+       this%Enth(this%Nreac) = h * h_factor
+    end if
+
+    if (present(u)) then
+       if (.not. present(formula)) then
+          write(stderr, *) '[ERROR] Exploded formula is required when u is given.'
+          return
+       end if
+
+       if (present(u_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: u_unit = ', trim(u_unit)
+          return
+       end if
+
+       this%Energy(this%Nreac) = 'u,j'
+       this%Enth(this%Nreac) = u * u_factor
+    end if
 
     return
   end subroutine add_reactant
