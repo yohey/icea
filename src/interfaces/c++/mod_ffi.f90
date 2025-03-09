@@ -2,17 +2,12 @@ module mod_ffi
   use, intrinsic:: iso_c_binding
   implicit none
 
-  private:: get_string
+  private:: get_string, get_string_array
 
   type, bind(C):: FFI_C_Ptr_Array
      type(c_ptr):: addr
      integer(c_size_t):: size
   end type FFI_C_Ptr_Array
-
-  type, bind(C):: FFI_C_String
-     type(c_ptr):: addr
-     integer(c_size_t):: size
-  end type FFI_C_String
 
 contains
 
@@ -50,15 +45,15 @@ contains
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
-    type(FFI_C_String), intent(in):: mode
-    type(FFI_C_String), intent(in), optional:: name
+    character(len = 1, kind = c_char), intent(in):: mode
+    character(len = 1, kind = c_char), intent(in), optional:: name
     logical(c_bool), intent(in), optional:: mole_ratios
     logical(c_bool), intent(in), optional:: equilibrium
     logical(c_bool), intent(in), optional:: ions
     logical(c_bool), intent(in), optional:: frozen
     logical(c_bool), intent(in), optional:: frozen_at_throat
-    type(FFI_C_String), intent(in), optional:: thermo_lib
-    type(FFI_C_String), intent(in), optional:: trans_lib
+    character(len = 1, kind = c_char), intent(in), optional:: thermo_lib
+    character(len = 1, kind = c_char), intent(in), optional:: trans_lib
 
     character(len = :, kind = c_char), allocatable:: mode_fstr
     character(len = :, kind = c_char), allocatable:: name_fstr
@@ -119,7 +114,7 @@ contains
 
     type(c_ptr), intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: pressures_ptr
-    type(FFI_C_String), intent(in), optional:: unit
+    character(len = 1, kind = c_char), intent(in), optional:: unit
 
     type(CEA_Problem), pointer:: this
     real(c_double), pointer:: pressure_list(:)
@@ -147,7 +142,7 @@ contains
 
     type(c_ptr), intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
-    type(FFI_C_String), intent(in), optional:: type
+    character(len = 1, kind = c_char), intent(in), optional:: type
 
     type(CEA_Problem), pointer:: this
     real(c_double), pointer:: ratio_list(:)
@@ -269,18 +264,18 @@ contains
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
-    type(FFI_C_String), intent(in):: type
-    type(FFI_C_String), intent(in):: name
-    type(FFI_C_String), intent(in), optional:: formula
+    character(len = 1, kind = c_char), intent(in):: type
+    character(len = 1, kind = c_char), intent(in):: name
+    character(len = 1, kind = c_char), intent(in), optional:: formula
     real(c_double), intent(in), optional:: ratio
     real(c_double), intent(in), optional:: T
     real(c_double), intent(in), optional:: rho
     real(c_double), intent(in), optional:: h
     real(c_double), intent(in), optional:: u
-    type(FFI_C_String), intent(in), optional:: T_unit
-    type(FFI_C_String), intent(in), optional:: rho_unit
-    type(FFI_C_String), intent(in), optional:: h_unit
-    type(FFI_C_String), intent(in), optional:: u_unit
+    character(len = 1, kind = c_char), intent(in), optional:: T_unit
+    character(len = 1, kind = c_char), intent(in), optional:: rho_unit
+    character(len = 1, kind = c_char), intent(in), optional:: h_unit
+    character(len = 1, kind = c_char), intent(in), optional:: u_unit
 
     character(len = :, kind = c_char), allocatable:: type_fstr
     character(len = :, kind = c_char), allocatable:: name_fstr
@@ -295,6 +290,9 @@ contains
 
     type_fstr = get_string(type)
     name_fstr = get_string(name)
+
+    write(0, *) '[DEBUG] ', len(name_fstr), len_trim(name_fstr), '"' // name_fstr // '"'
+
     if (present(formula)) formula_fstr = get_string(formula)
     if (present(T_unit)) T_unit_fstr = get_string(T_unit)
     if (present(rho_unit)) rho_unit_fstr = get_string(rho_unit)
@@ -408,7 +406,7 @@ contains
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
-    type(FFI_C_String), intent(in), optional:: out_filename
+    character(len = 1, kind = c_char), intent(in), optional:: out_filename
 
     character(len = :, kind = c_char), allocatable:: out_filename_fstr
 
@@ -432,7 +430,7 @@ contains
     use mod_io, only: set_library_paths
 
     type(FFI_C_Ptr_Array):: array
-    type(FFI_C_String), intent(in):: filename
+    character(len = 1, kind = c_char), intent(in):: filename
     character(len = :, kind = c_char), allocatable:: filename_fstr
 
     integer:: icase, num_cases
@@ -507,8 +505,8 @@ contains
     use mod_cea, only: run_all_cases
 
     type(FFI_C_Ptr_Array), intent(in):: array
-    type(FFI_C_String), intent(in), optional:: out_filename
-    type(FFI_C_String), intent(in), optional:: plt_filename
+    character(len = 1, kind = c_char), intent(in), optional:: out_filename
+    character(len = 1, kind = c_char), intent(in), optional:: plt_filename
 
     character(len = :, kind = c_char), allocatable:: out_filename_fstr
     character(len = :, kind = c_char), allocatable:: plt_filename_fstr
@@ -533,7 +531,7 @@ contains
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
-    type(FFI_C_String), intent(in):: filename
+    character(len = 1, kind = c_char), intent(in):: filename
 
     type(CEA_Problem), pointer:: this
     call c_f_pointer(ptr, this)
@@ -564,15 +562,22 @@ contains
 
 
   function get_string(cstring) result(fstring)
-    type(FFI_C_String), intent(in):: cstring
+    character(len = 1, kind = c_char), intent(in):: cstring(*)
     character(len = :, kind = c_char), allocatable:: fstring
-    character(len = cstring%size, kind = c_char), pointer:: fptr
 
-    call c_f_pointer(cstring%addr, fptr)
+    integer:: i, length
 
-    fstring = fptr
+    length = 1
+    do while (cstring(length) /= c_null_char)
+       length = length + 1
+    end do
+    length = length - 1
 
-    nullify(fptr)
+    allocate(character(len = length, kind = c_char):: fstring)
+
+    do concurrent (i = 1:length)
+       fstring(i:i) = cstring(i)
+    end do
 
     return
   end function get_string
