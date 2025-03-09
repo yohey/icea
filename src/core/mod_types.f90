@@ -124,6 +124,10 @@ module mod_types
      logical:: newcom
      real(8):: ensol, pisave(maxMat-2)
 
+     ! for subroutine TRANIN
+     integer:: Nms, inds(maxTr)
+     real(8):: xss(maxTr), wmols(maxTr)
+
      ! for subroutine OUT3
      integer:: num_omitted
 

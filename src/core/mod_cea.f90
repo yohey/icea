@@ -3724,11 +3724,11 @@ contains
     type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
-    integer:: i, ii, inds(maxTr), ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m, nms
+    integer:: i, ii, ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m
     logical:: change, elc1, elc2, ion1, ion2, setx
     real(8):: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
          stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
-         trc(6, 3, 2), wmols(maxTr), wmred, xsel, xss(maxTr)
+         trc(6, 3, 2), wmred, xsel
 
     type(CEA_Point), pointer:: p !< current point
     type(CEA_Point), pointer:: p1
@@ -3740,21 +3740,17 @@ contains
     lambda = 0
     qc = 0
     total = 0
-    xss(:) = 0
-    wmols(:) = 0
-    inds(:) = 0
-    nms = 0
     setx = .false.
 
     if (.not. cea%Eql) then
        if (.not. cea%Shock) then
           if (.not. setx) then
              setx = .true.
-             cea%Nm = nms
+             cea%Nm = cea%Nms
              do i = 1, cea%Nm
-                cea%Xs(i) = xss(i)
-                cea%Wmol(i) = wmols(i)
-                cea%Ind(i) = inds(i)
+                cea%Xs(i) = cea%xss(i)
+                cea%Wmol(i) = cea%wmols(i)
+                cea%Ind(i) = cea%inds(i)
              end do
           end if
           go to 300
@@ -3825,11 +3821,11 @@ contains
        cea%Xs(i) = p%En(j) / total
     end do
     if (cea%ipt == cea%Nfz) then
-       nms = cea%Nm
+       cea%Nms = cea%Nm
        do i = 1, cea%Nm
-          xss(i) = cea%Xs(i)
-          wmols(i) = cea%Wmol(i)
-          inds(i) = cea%Ind(i)
+          cea%xss(i) = cea%Xs(i)
+          cea%wmols(i) = cea%Wmol(i)
+          cea%inds(i) = cea%Ind(i)
        end do
        setx = .false.
     end if
@@ -4044,6 +4040,7 @@ contains
     p => cea%points(cea%iOF, cea%ipt)
 
     call TRANIN(cea)
+
     ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
     nmm = cea%Nm - 1
     do i = 1, cea%Nm
