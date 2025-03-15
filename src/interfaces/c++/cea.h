@@ -37,7 +37,7 @@ namespace CEA {
                       const std::optional<double>& h = std::nullopt, const std::optional<double>& u = std::nullopt,
                       const std::optional<const char*>& T_unit = std::nullopt, const std::optional<const char*>& rho_unit = std::nullopt,
                       const std::optional<const char*>& h_unit = std::nullopt, const std::optional<const char*> & u_unit = std::nullopt);
-    void insert_species(const std::vector<std::string>&);
+    void set_insert_species(const std::vector<std::string>&);
     void set_omit_species(const std::vector<std::string>&);
     void set_only_species(const std::vector<std::string>&);
     void set_legacy_mode(const bool& legacy_mode = true);

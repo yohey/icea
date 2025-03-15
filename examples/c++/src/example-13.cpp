@@ -50,7 +50,7 @@ void run_example_13() {
   prob.set_mixture_ratios({67}, "%fuel");
   prob.set_pressure_ratios({3, 10, 30, 300});
 
-  prob.insert_species({"BeO(L)"});
+  prob.set_insert_species({"BeO(L)"});
 
   prob.set_legacy_mode(true);
 

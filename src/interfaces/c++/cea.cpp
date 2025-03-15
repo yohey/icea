@@ -85,7 +85,7 @@ namespace CEA {
   }
 
 
-  void Problem::insert_species(const std::vector<std::string>& species) {
+  void Problem::set_insert_species(const std::vector<std::string>& species) {
     std::vector<size_t> char_length_array(species.size());
     std::vector<const char*> char_ptr_array(species.size());
 
@@ -94,7 +94,7 @@ namespace CEA {
       char_ptr_array[i] = species[i].c_str();
     }
 
-    ffi_cea_insert_species(this->_ffi, char_ptr_array.data(), char_length_array.data(), species.size());
+    ffi_cea_set_insert_species(this->_ffi, char_ptr_array.data(), char_length_array.data(), species.size());
   }
 
 

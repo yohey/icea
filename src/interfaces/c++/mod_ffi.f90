@@ -312,7 +312,7 @@ contains
   end subroutine add_reactant
 
 
-  subroutine insert_species(ptr, species_ptr, char_length_array, array_size) bind(C, name = "ffi_cea_insert_species")
+  subroutine set_insert_species(ptr, species_ptr, char_length_array, array_size) bind(C, name = "ffi_cea_set_insert_species")
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
@@ -327,12 +327,12 @@ contains
 
     call get_string_array(species_ptr, char_length_array, array_size, species)
 
-    call this%insert_species(species)
+    call this%set_insert_species(species)
 
     deallocate(species)
 
     return
-  end subroutine insert_species
+  end subroutine set_insert_species
 
 
   subroutine set_omit_species(ptr, species_ptr, char_length_array, array_size) bind(C, name = "ffi_cea_set_omit_species")

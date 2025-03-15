@@ -15,7 +15,7 @@ module cea
      procedure, public, pass:: set_supersonic_area_ratios
      procedure, public, pass:: set_finite_area_combustor
      procedure, public, pass:: add_reactant
-     procedure, public, pass:: insert_species
+     procedure, public, pass:: set_insert_species
      procedure, public, pass:: set_omit_species
      procedure, public, pass:: set_only_species
      procedure, public, pass:: set_legacy_mode
@@ -396,7 +396,7 @@ contains
   end subroutine add_reactant
 
 
-  subroutine insert_species(this, species)
+  subroutine set_insert_species(this, species)
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: species(:)
 
@@ -404,7 +404,7 @@ contains
     this%ensert(1:this%Nsert) = species(1:this%Nsert)
 
     return
-  end subroutine insert_species
+  end subroutine set_insert_species
 
 
   subroutine set_omit_species(this, species)

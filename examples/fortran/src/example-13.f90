@@ -15,7 +15,7 @@ subroutine run_example_13()
   call prob%set_mixture_ratios([67d0], type = '%fuel')
   call prob%set_pressure_ratios([3d0, 10d0, 30d0, 300d0])
 
-  call prob%insert_species(['BeO(L)'])
+  call prob%set_insert_species(['BeO(L)'])
 
   call prob%set_legacy_mode(.true.)
 
