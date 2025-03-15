@@ -1,0 +1,129 @@
+# -*- coding: utf-8 -*-
+
+from ctypes import POINTER, Structure, byref, cast, c_bool, c_char_p, c_double, c_size_t, c_void_p
+from typing import Iterable
+
+from ._findlib import _libcea
+
+
+class FFI_C_Ptr_Array(Structure):
+    _fields_ = [('addr', c_void_p),
+                ('size', c_size_t)]
+
+
+class CEA_Problem:
+
+    def __init__(self):
+        _libcea.ffi_cea_new_problem.restype = c_void_p
+        self._ffi = c_void_p(_libcea.ffi_cea_new_problem())
+
+    def __del__(self):
+        _libcea.ffi_cea_del_problem.argtypes = [c_void_p]
+        _libcea.ffi_cea_del_problem(byref(self._ffi))
+
+    def set_problem(self, mode, name = None, mole_ratios = None, equilibrium = None, ions = None,
+                    frozen = None, frozen_at_throat = None, thermo_lib = None, trans_lib = None):
+        _libcea.ffi_cea_set_problem.argtypes = [c_void_p, c_char_p, c_char_p, POINTER(c_bool), POINTER(c_bool), POINTER(c_bool),
+                                                POINTER(c_bool), POINTER(c_bool), c_char_p, c_char_p]
+        _libcea.ffi_cea_set_problem(byref(self._ffi), mode.encode(), _c_char_or_None(name), _c_bool_or_None(mole_ratios), _c_bool_or_None(equilibrium), _c_bool_or_None(ions),
+                                    _c_bool_or_None(frozen), _c_bool_or_None(frozen_at_throat), _c_char_or_None(thermo_lib), _c_char_or_None(trans_lib))
+
+    def set_output_options(self, SI = None, debug_points = None, mass_fractions = None, short = None, trace_tol = None, transport = None):
+        _libcea.ffi_cea_set_output_options.argtypes = [c_void_p, POINTER(c_bool), POINTER(FFI_C_Ptr_Array), POINTER(c_bool), POINTER(c_bool), POINTER(c_double), POINTER(c_bool)]
+        _libcea.ffi_cea_set_output_options(byref(self._ffi), _c_bool_or_None(SI), _c_size_t_array_or_None(debug_points), _c_bool_or_None(mass_fractions),
+                                           _c_bool_or_None(short), _c_double_or_None(trace_tol), _c_bool_or_None(transport))
+
+    def set_chamber_pressures(self, pressures, unit = None):
+        _libcea.ffi_cea_set_chamber_pressures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
+        _libcea.ffi_cea_set_chamber_pressures(byref(self._ffi), _c_double_array(pressures), _c_char_or_None(unit))
+
+    def set_mixture_ratios(self, ratios, type_ = None):
+        _libcea.ffi_cea_set_mixture_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
+        _libcea.ffi_cea_set_mixture_ratios(byref(self._ffi), _c_double_array(ratios), _c_char_or_None(type_))
+
+    def set_pressure_ratios(self, ratios):
+        _libcea.ffi_cea_set_pressure_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea.ffi_cea_set_pressure_ratios(byref(self._ffi), _c_double_array(ratios))
+
+    def set_subsonic_area_ratios(self, ratios):
+        _libcea.ffi_cea_set_subsonic_area_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea.ffi_cea_set_subsonic_area_ratios(byref(self._ffi), _c_double_array(ratios))
+
+    def set_supersonic_area_ratios(self, ratios):
+        _libcea.ffi_cea_set_supersonic_area_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea.ffi_cea_set_supersonic_area_ratios(byref(self._ffi), _c_double_array(ratios))
+
+    def set_finite_area_combustor(self, contraction_ratio = None, mass_flow_ratio = None):
+        _libcea.ffi_cea_set_finite_area_combustor.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double)]
+        _libcea.ffi_cea_set_finite_area_combustor(byref(self._ffi), _c_double_or_None(contraction_ratio), _c_double_or_None(mass_flow_ratio))
+
+    def add_reactant(self, type_, name, formula = None, ratio = None, T = None, rho = None, h = None, u = None,
+                     T_unit = None, rho_unit = None, h_unit = None, u_unit = None):
+        _libcea.ffi_cea_add_reactant.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, POINTER(c_double),
+                                                 POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double),
+                                                 c_char_p, c_char_p, c_char_p, c_char_p]
+        _libcea.ffi_cea_add_reactant(byref(self._ffi), type_.encode(), name.encode(), _c_char_or_None(formula), _c_double_or_None(ratio),
+                                     _c_double_or_None(T), _c_double_or_None(rho), _c_double_or_None(h), _c_double_or_None(u),
+                                     _c_char_or_None(T_unit), _c_char_or_None(rho_unit), _c_char_or_None(h_unit), _c_char_or_None(u_unit))
+
+    def set_insert_species(self, species):
+        _libcea.ffi_cea_set_insert_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea.ffi_cea_set_insert_species(byref(self._ffi), *_c_char_array(species))
+
+    def set_omit_species(self, species):
+        _libcea.ffi_cea_set_omit_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea.ffi_cea_set_omit_species(byref(self._ffi), *_c_char_array(species))
+
+    def set_only_species(self, species):
+        _libcea.ffi_cea_set_only_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea.ffi_cea_set_only_species(byref(self._ffi), *_c_char_array(species))
+
+    def set_legacy_mode(self, legacy_mode = None):
+        _libcea.ffi_cea_set_legacy_mode.argtypes = [c_void_p, POINTER(c_bool)]
+        _libcea.ffi_cea_set_legacy_mode(byref(self._ffi), _c_bool_or_None(legacy_mode))
+
+    def run(self, out_filename = None):
+        _libcea.ffi_cea_run.argtypes = [c_void_p, c_char_p]
+        _libcea.ffi_cea_run(byref(self._ffi), _c_char_or_None(out_filename))
+
+    def write_debug_output(self, filename: str):
+        _libcea.ffi_cea_write_debug_output.argtypes = [c_void_p, c_char_p]
+        _libcea.ffi_cea_write_debug_output(byref(self._ffi), filename.encode())
+
+
+def _c_bool_or_None(b: bool | None):
+    if b is None:
+        return None
+    else:
+        return byref(c_bool(b))
+
+def _c_double_or_None(b: float | None):
+    if b is None:
+        return None
+    else:
+        return byref(c_double(b))
+
+def _c_char_or_None(s: str | None):
+    if s is None:
+        return None
+    else:
+        return s.encode()
+
+def _c_double_array(a: Iterable[float]):
+    _a = (c_double * len(a))(*a)
+    ptr = FFI_C_Ptr_Array(addr = cast(_a, c_void_p), size = len(a))
+    return byref(ptr)
+
+def _c_size_t_array_or_None(a: Iterable[int] | None):
+    if a is None:
+        return None
+    else:
+        _a = (c_size_t * len(a))(*a)
+        ptr = FFI_C_Ptr_Array(addr = cast(_a, c_void_p), size = len(a))
+        return byref(ptr)
+
+def _c_char_array(a: Iterable[str]):
+    char_array_ptr = (c_char_p * len(a))(*[s.encode() for s in a])
+    char_length_array = (c_size_t * len(a))(*[len(s) for s in a])
+    char_length_array_ptr = FFI_C_Ptr_Array(addr = cast(char_length_array, c_void_p), size = len(a))
+    return byref(char_array_ptr), byref(char_length_array_ptr)

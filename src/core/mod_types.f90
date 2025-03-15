@@ -149,6 +149,7 @@ contains
     class(CEA_Core_Problem), intent(inout):: cea
 
     cea%Case = 'New Case'
+
     cea%Detn = .false.
     cea%Rkt = .false.
     cea%Shock = .false.
@@ -156,13 +157,24 @@ contains
     cea%Sp = .false.
     cea%Tp = .false.
     cea%Vol = .false.
-    cea%Eql = .false.
-    cea%Froz = .false.
+
     cea%Moles = .false.
-    cea%SIunit = .true.
+    cea%Eql_in = .false.
+    cea%Eql = .false.
+    cea%Ions = .false.
+    cea%Froz = .false.
+
     cea%Fac = .false.
 
-    cea%Eql_in = .false.
+    cea%SIunit = .true.
+    cea%Trnspt = .false.
+    cea%Debugf = .false.
+    cea%Shkdbg = .false.
+    cea%Incdeq = .false.
+    cea%Incdfz = .false.
+    cea%Refleq = .false.
+    cea%Reflfz = .false.
+
     cea%Nsub_in = 0
     cea%Nsup_in = 0
     cea%AcAt_in = 0

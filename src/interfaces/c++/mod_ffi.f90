@@ -15,7 +15,7 @@ contains
     use cea, only: CEA_Problem
 
     type(c_ptr):: ptr
-    type(CEA_Problem), pointer:: cea
+    type(CEA_Problem), pointer:: cea => null()
     allocate(cea)
 
     ptr = c_loc(cea)
@@ -29,7 +29,7 @@ contains
 
     type(c_ptr), intent(in):: ptr
 
-    type(CEA_Problem), pointer:: cea
+    type(CEA_Problem), pointer:: cea => null()
     call c_f_pointer(ptr, cea)
 
     if (associated(cea)) then
@@ -59,24 +59,77 @@ contains
     character(len = :, kind = c_char), allocatable:: name_fstr
     character(len = :, kind = c_char), allocatable:: thermo_lib_fstr
     character(len = :, kind = c_char), allocatable:: trans_lib_fstr
+    logical, pointer:: mole_ratios_ptr
+    logical, pointer:: equilibrium_ptr
+    logical, pointer:: ions_ptr
+    logical, pointer:: frozen_ptr
+    logical, pointer:: frozen_at_throat_ptr
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
 
     mode_fstr = get_string(mode)
     if (present(name)) name_fstr = get_string(name)
-    if (present(thermo_lib)) thermo_lib_fstr = get_string(thermo_lib)
-    if (present(trans_lib)) trans_lib_fstr = get_string(trans_lib)
+
+    if (present(mole_ratios)) then
+       allocate(mole_ratios_ptr)
+       mole_ratios_ptr = logical(mole_ratios)
+    else
+       nullify(mole_ratios_ptr)
+    end if
+
+    if (present(equilibrium)) then
+       allocate(equilibrium_ptr)
+       equilibrium_ptr = logical(equilibrium)
+    else
+       nullify(equilibrium_ptr)
+    end if
+
+    if (present(ions)) then
+       allocate(ions_ptr)
+       ions_ptr = logical(ions)
+    else
+       nullify(ions_ptr)
+    end if
+
+    if (present(frozen)) then
+       allocate(frozen_ptr)
+       frozen_ptr = logical(frozen)
+    else
+       nullify(frozen_ptr)
+    end if
+
+    if (present(frozen_at_throat)) then
+       allocate(frozen_at_throat_ptr)
+       frozen_at_throat_ptr = logical(frozen_at_throat)
+    else
+       nullify(frozen_at_throat_ptr)
+    end if
+
+    if (present(thermo_lib)) then
+       thermo_lib_fstr = get_string(thermo_lib)
+       if (len_trim(thermo_lib_fstr) == 0) deallocate(thermo_lib_fstr)
+    end if
+
+    if (present(trans_lib)) then
+       trans_lib_fstr = get_string(trans_lib)
+       if (len_trim(trans_lib_fstr) == 0) deallocate(trans_lib_fstr)
+    end if
 
     if (associated(this)) then
-       call this%set_problem(mode_fstr, name_fstr, logical(mole_ratios), logical(equilibrium), logical(ions), &
-            logical(frozen), logical(frozen_at_throat), thermo_lib_fstr, trans_lib_fstr)
+       call this%set_problem(mode_fstr, name_fstr, mole_ratios_ptr, equilibrium_ptr, ions_ptr, &
+            frozen_ptr, frozen_at_throat_ptr, thermo_lib_fstr, trans_lib_fstr)
     end if
 
     if (allocated(mode_fstr)) deallocate(mode_fstr)
     if (allocated(name_fstr)) deallocate(name_fstr)
     if (allocated(thermo_lib_fstr)) deallocate(thermo_lib_fstr)
     if (allocated(trans_lib_fstr)) deallocate(trans_lib_fstr)
+    if (associated(mole_ratios_ptr)) deallocate(mole_ratios_ptr)
+    if (associated(equilibrium_ptr)) deallocate(equilibrium_ptr)
+    if (associated(ions_ptr)) deallocate(ions_ptr)
+    if (associated(frozen_ptr)) deallocate(frozen_ptr)
+    if (associated(frozen_at_throat_ptr)) deallocate(frozen_at_throat_ptr)
 
     return
   end subroutine set_problem
@@ -94,16 +147,56 @@ contains
     real(c_double), intent(in), optional:: trace_tol
     logical(c_bool), intent(in), optional:: transport
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     integer(c_size_t), pointer:: debug_points_array(:)
+    integer, allocatable:: debug_points_array_fint(:)
+    logical, pointer:: SI_ptr
+    logical, pointer:: mass_fractions_ptr
+    logical, pointer:: short_ptr
+    logical, pointer:: transport_ptr
 
     call c_f_pointer(ptr, this)
-    call c_f_pointer(debug_points%addr, debug_points_array, [debug_points%size])
+
+    if (present(debug_points)) then
+       call c_f_pointer(debug_points%addr, debug_points_array, [debug_points%size])
+       allocate(debug_points_array_fint(debug_points%size))
+       debug_points_array_fint(:) = debug_points_array(:)
+    end if
+
+    if (present(SI)) then
+       allocate(SI_ptr)
+       SI_ptr = logical(SI)
+    else
+       nullify(SI_ptr)
+    end if
+
+    if (present(mass_fractions)) then
+       allocate(mass_fractions_ptr)
+       mass_fractions_ptr = logical(mass_fractions)
+    else
+       nullify(mass_fractions_ptr)
+    end if
+
+    if (present(short)) then
+       allocate(short_ptr)
+       short_ptr = logical(short)
+    else
+       nullify(short_ptr)
+    end if
+
+    if (present(transport)) then
+       allocate(transport_ptr)
+       transport_ptr = logical(transport)
+    else
+       nullify(transport_ptr)
+    end if
 
     if (associated(this)) then
-       call this%set_output_options(logical(SI), int(debug_points_array), logical(mass_fractions), logical(short), &
-            trace_tol, logical(transport))
+       call this%set_output_options(SI_ptr, debug_points_array_fint, mass_fractions_ptr, short_ptr, &
+            trace_tol, transport_ptr)
     end if
+
+    if (present(debug_points)) deallocate(debug_points_array_fint)
 
     return
   end subroutine set_output_options
@@ -116,7 +209,7 @@ contains
     type(FFI_C_Ptr_Array), intent(in):: pressures_ptr
     character(len = 1, kind = c_char), intent(in), optional:: unit
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     real(c_double), pointer:: pressure_list(:)
     character(len = :, kind = c_char), allocatable:: unit_fstr
 
@@ -144,7 +237,7 @@ contains
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
     character(len = 1, kind = c_char), intent(in), optional:: type
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     real(c_double), pointer:: ratio_list(:)
     character(len = :, kind = c_char), allocatable:: type_fstr
 
@@ -171,7 +264,7 @@ contains
     type(c_ptr), intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     real(c_double), pointer:: ratio_list(:)
 
     call c_f_pointer(ptr, this)
@@ -195,7 +288,7 @@ contains
     type(c_ptr), intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     real(c_double), pointer:: ratio_list(:)
 
     call c_f_pointer(ptr, this)
@@ -219,7 +312,7 @@ contains
     type(c_ptr), intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     real(c_double), pointer:: ratio_list(:)
 
     call c_f_pointer(ptr, this)
@@ -244,7 +337,7 @@ contains
     real(c_double), intent(in), optional:: contraction_ratio
     real(c_double), intent(in), optional:: mass_flow_ratio
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
 
     if (associated(this)) then
@@ -285,13 +378,11 @@ contains
     character(len = :, kind = c_char), allocatable:: h_unit_fstr
     character(len = :, kind = c_char), allocatable:: u_unit_fstr
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
 
     type_fstr = get_string(type)
     name_fstr = get_string(name)
-
-    write(0, *) '[DEBUG] ', len(name_fstr), len_trim(name_fstr), '"' // name_fstr // '"'
 
     if (present(formula)) formula_fstr = get_string(formula)
     if (present(T_unit)) T_unit_fstr = get_string(T_unit)
@@ -312,20 +403,21 @@ contains
   end subroutine add_reactant
 
 
-  subroutine set_insert_species(ptr, species_ptr, char_length_array, array_size) bind(C, name = "ffi_cea_set_insert_species")
+  subroutine set_insert_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_insert_species")
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
-    integer(c_size_t), intent(in):: array_size
-    integer(c_size_t), dimension(array_size), intent(in):: char_length_array
-    type(c_ptr), dimension(array_size), intent(in):: species_ptr
+    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
+    type(c_ptr), intent(in):: species_ptr
 
+    type(CEA_Problem), pointer:: this => null()
+    integer(c_size_t), dimension(:), pointer:: char_length_array
     character(len = :, kind = c_char), dimension(:), allocatable:: species
 
-    type(CEA_Problem), pointer:: this
     call c_f_pointer(ptr, this)
+    call c_f_pointer(char_length_array_ptr%addr, char_length_array, [char_length_array_ptr%size])
 
-    call get_string_array(species_ptr, char_length_array, array_size, species)
+    species = get_string_array(species_ptr, char_length_array, char_length_array_ptr%size)
 
     call this%set_insert_species(species)
 
@@ -335,20 +427,21 @@ contains
   end subroutine set_insert_species
 
 
-  subroutine set_omit_species(ptr, species_ptr, char_length_array, array_size) bind(C, name = "ffi_cea_set_omit_species")
+  subroutine set_omit_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_omit_species")
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
-    integer(c_size_t), intent(in):: array_size
-    integer(c_size_t), dimension(array_size), intent(in):: char_length_array
-    type(c_ptr), dimension(array_size), intent(in):: species_ptr
+    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
+    type(c_ptr), intent(in):: species_ptr
 
+    type(CEA_Problem), pointer:: this => null()
+    integer(c_size_t), dimension(:), pointer:: char_length_array
     character(len = :, kind = c_char), dimension(:), allocatable:: species
 
-    type(CEA_Problem), pointer:: this
     call c_f_pointer(ptr, this)
+    call c_f_pointer(char_length_array_ptr%addr, char_length_array, [char_length_array_ptr%size])
 
-    call get_string_array(species_ptr, char_length_array, array_size, species)
+    species = get_string_array(species_ptr, char_length_array, char_length_array_ptr%size)
 
     call this%set_omit_species(species)
 
@@ -358,20 +451,21 @@ contains
   end subroutine set_omit_species
 
 
-  subroutine set_only_species(ptr, species_ptr, char_length_array, array_size) bind(C, name = "ffi_cea_set_only_species")
+  subroutine set_only_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_only_species")
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
-    integer(c_size_t), intent(in):: array_size
-    integer(c_size_t), dimension(array_size), intent(in):: char_length_array
-    type(c_ptr), dimension(array_size), intent(in):: species_ptr
+    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
+    type(c_ptr), intent(in):: species_ptr
 
+    type(CEA_Problem), pointer:: this => null()
+    integer(c_size_t), dimension(:), pointer:: char_length_array
     character(len = :, kind = c_char), dimension(:), allocatable:: species
 
-    type(CEA_Problem), pointer:: this
     call c_f_pointer(ptr, this)
+    call c_f_pointer(char_length_array_ptr%addr, char_length_array, [char_length_array_ptr%size])
 
-    call get_string_array(species_ptr, char_length_array, array_size, species)
+    species = get_string_array(species_ptr, char_length_array, char_length_array_ptr%size)
 
     call this%set_only_species(species)
 
@@ -387,7 +481,7 @@ contains
     type(c_ptr), intent(in):: ptr
     logical(c_bool), intent(in), optional:: legacy_mode
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
 
     if (associated(this)) then
@@ -410,7 +504,7 @@ contains
 
     character(len = :, kind = c_char), allocatable:: out_filename_fstr
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
 
     if (present(out_filename)) out_filename_fstr = get_string(out_filename)
@@ -533,7 +627,7 @@ contains
     type(c_ptr), intent(in):: ptr
     character(len = 1, kind = c_char), intent(in):: filename
 
-    type(CEA_Problem), pointer:: this
+    type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
 
     if (associated(this)) then
@@ -550,7 +644,7 @@ contains
     integer(c_size_t):: size
     type(c_ptr), intent(in):: ptr
 
-    type(CEA_Problem), pointer:: cea
+    type(CEA_Problem), pointer:: cea => null()
     call c_f_pointer(ptr, cea)
 
     if (associated(cea)) then
@@ -583,11 +677,12 @@ contains
   end function get_string
 
 
-  subroutine get_string_array(cstr_ptr, char_length_array, array_size, fstr_array)
+  function get_string_array(cstr_ptr, char_length_array, array_size) result(fstr_array)
+    character(len = :, kind = c_char), dimension(:), allocatable:: fstr_array
+
     integer(c_size_t), intent(in):: array_size
     integer(c_size_t), dimension(array_size), intent(in):: char_length_array
     type(c_ptr), dimension(array_size), intent(in):: cstr_ptr
-    character(len = :, kind = c_char), dimension(:), allocatable, intent(out):: fstr_array
 
     integer(c_size_t):: i, j, max_length
     character(len = 1, kind = c_char), dimension(:), pointer:: cstr
@@ -606,6 +701,6 @@ contains
     end do
 
     return
-  end subroutine get_string_array
+  end function get_string_array
 
 end module mod_ffi

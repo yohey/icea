@@ -62,6 +62,8 @@ set(CEA_SHARED_LIBRARY cea-shared)
 
 add_subdirectory(src/interfaces/c++)
 
+add_subdirectory(src/interfaces/python)
+
 
 install(TARGETS ${CEA_EXECUTABLE})
 
@@ -80,11 +82,16 @@ install(FILES tests/orig/cea2.inp  DESTINATION share/doc/cea/examples/orig/)
 install(FILES src/core/thermo.inp  DESTINATION share/doc/cea/examples/orig/)
 install(FILES src/core/trans.inp   DESTINATION share/doc/cea/examples/orig/)
 
-install(FILES     examples/fortran/CMakeLists.txt DESTINATION share/doc/cea/examples/fortran/)
-install(DIRECTORY examples/fortran/src            DESTINATION share/doc/cea/examples/fortran/)
 
+file(GLOB EXAMPLES_FORTRAN examples/fortran/src/*.f90)
+file(GLOB EXAMPLES_CXX     examples/c++/src/*.cpp)
+file(GLOB EXAMPLES_PYTHON  examples/python/*.py)
+
+install(FILES     examples/fortran/CMakeLists.txt DESTINATION share/doc/cea/examples/fortran/)
 install(FILES     examples/c++/CMakeLists.txt DESTINATION share/doc/cea/examples/c++/)
-install(DIRECTORY examples/c++/src            DESTINATION share/doc/cea/examples/c++/)
+install(FILES     ${EXAMPLES_FORTRAN} DESTINATION share/doc/cea/examples/fortran/src/)
+install(FILES     ${EXAMPLES_CXX}     DESTINATION share/doc/cea/examples/c++/src/)
+install(FILES     ${EXAMPLES_PYTHON}  DESTINATION share/doc/cea/examples/python/)
 
 install(EXPORT cea-config DESTINATION share/cmake/cea/ EXPORT_LINK_INTERFACE_LIBRARIES)
 

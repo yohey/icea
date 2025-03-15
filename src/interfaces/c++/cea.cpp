@@ -94,7 +94,9 @@ namespace CEA {
       char_ptr_array[i] = species[i].c_str();
     }
 
-    ffi_cea_set_insert_species(this->_ffi, char_ptr_array.data(), char_length_array.data(), species.size());
+    FFI_SizeT_Array char_length_array_ptr{char_length_array.data(), char_length_array.size()};
+
+    ffi_cea_set_insert_species(this->_ffi, char_ptr_array.data(), char_length_array_ptr);
   }
 
 
@@ -107,7 +109,9 @@ namespace CEA {
       char_ptr_array[i] = species[i].c_str();
     }
 
-    ffi_cea_set_omit_species(this->_ffi, char_ptr_array.data(), char_length_array.data(), species.size());
+    FFI_SizeT_Array char_length_array_ptr{char_length_array.data(), char_length_array.size()};
+
+    ffi_cea_set_omit_species(this->_ffi, char_ptr_array.data(), char_length_array_ptr);
   }
 
 
@@ -120,7 +124,9 @@ namespace CEA {
       char_ptr_array[i] = species[i].c_str();
     }
 
-    ffi_cea_set_only_species(this->_ffi, char_ptr_array.data(), char_length_array.data(), species.size());
+    FFI_SizeT_Array char_length_array_ptr{char_length_array.data(), char_length_array.size()};
+
+    ffi_cea_set_only_species(this->_ffi, char_ptr_array.data(), char_length_array_ptr);
   }
 
 
