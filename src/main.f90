@@ -35,7 +35,6 @@ contains
 
   subroutine parse_arguments()
     use mod_constants, only: MAX_FILENAME, stderr
-    implicit none
 
     character(MAX_FILENAME-4):: basename
     character(MAX_FILENAME), allocatable:: args(:)

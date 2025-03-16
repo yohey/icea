@@ -50,7 +50,6 @@ contains
   subroutine read_legacy_input(cea, filename, filename_thermo_lib, filename_trans_lib)
     use mod_types, only: CEA_Core_Problem, IOINP, init_case
     use mod_io, only: set_library_paths
-    implicit none
 
     type(CEA_Core_Problem), allocatable, intent(out):: cea(:)
     character(*), intent(in):: filename
@@ -93,7 +92,6 @@ contains
 
   subroutine read_legacy_case(cea, cea_prev)
     use mod_types, only: CEA_Core_Problem, maxEl, allocate_points
-    implicit none
 
     class(CEA_Core_Problem), intent(inout):: cea
     class(CEA_Core_Problem), intent(in), optional:: cea_prev
@@ -141,7 +139,6 @@ contains
     ! DECIPHER KEYWORDS, LITERAL VARIABLES, & NUMERICAL VARIABLES IN INPUT.
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
     logical, intent(out):: caseOK, readOK
@@ -877,7 +874,6 @@ contains
     !   Cnum - CHARACTER STRING REPRESENTING DATASET NUMBERS. MAXIMUM 24
     !          CHARACTERS.
     !***********************************************************************
-    implicit none
 
     ! DUMMY ARGUMENTS
     character(15), intent(out):: Cin(:)
@@ -1047,7 +1043,6 @@ contains
 
   subroutine open_legacy_output(io_out, filename)
     use mod_types, only: MAX_FILENAME
-    implicit none
 
     integer, intent(inout):: io_out
     character(*), intent(in), optional:: filename
@@ -1083,7 +1078,6 @@ contains
 
 
   subroutine write_input_log(io_log, io_out)
-    implicit none
 
     integer, intent(in):: io_log, io_out
     character(MAX_CHARS):: line
@@ -1111,7 +1105,6 @@ contains
     ! NOTE - ROCKET, SHOCK, AND DETON PROBLEMS HAVE ADDITIONAL OUTPUT.
     !***********************************************************************
     use mod_types, only: CEA_Core_Problem
-    implicit none
 
     type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: io_out
@@ -1172,7 +1165,6 @@ contains
     !***********************************************************************
     use mod_constants, only: R0
     use mod_types, only: CEA_Core_Problem, CEA_Point, Ncol
-    implicit none
 
     type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
@@ -1345,7 +1337,6 @@ contains
     ! OUT3 WRITES MOLE FRACTIONS.
     !***********************************************************************
     use mod_types, only: CEA_Core_Problem, CEA_Point, Ncol
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
     integer, intent(in):: i_col_end
@@ -1450,7 +1441,6 @@ contains
     ! OUT4 WRITES TRANSPORT PROPERTIES.
     !***********************************************************************
     use mod_types, only: CEA_Core_Problem, CEA_Point, Ncol
-    implicit none
 
     type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
@@ -1548,7 +1538,6 @@ contains
 
   subroutine get_print_cols(cea, i_col_end, i_cols_print)
     use mod_types, only: CEA_Core_Problem, Ncol
-    implicit none
 
     type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
@@ -1587,7 +1576,6 @@ contains
     ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -1876,7 +1864,6 @@ contains
     ! SPECIAL OUTPUT FOR ROCKET PROBLEMS.
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
     integer, intent(in):: it
@@ -2197,7 +2184,6 @@ contains
     ! NTL     - NUMBER OF T INTERVALS FOR A SPECIES SET.
     !***********************************************************************
     use mod_types
-    implicit none
 
     ! DUMMY ARGUMENTS
     type(CEA_Core_Problem), intent(inout):: cea
@@ -2437,7 +2423,6 @@ contains
     ! NOTE:  THIS ROUTINE MAY BE CALLED DIRECTLY  AND USED BY ITSELF TO
     ! PROCESS THE TRANSPORT PROPERTY DATA.
     !***********************************************************************
-    implicit none
     ! DUMMY ARGUMENTS
     character(*), intent(in):: filename
     integer, intent(in):: io_input
@@ -2523,7 +2508,6 @@ contains
     ! WRITE OUTPUT RECORD WITH NUMERICAL VALUES IN SPECIAL EXPONENT FORM.
     !***********************************************************************
     use mod_types
-    implicit none
 
     ! DUMMY ARGUMENTS
     character(4), intent(in):: Fone
@@ -2578,7 +2562,6 @@ contains
     ! SET DECIMAL PLACES ACCORDING TO NUMBER SIZE FOR F-FORMAT IN
     ! VARIABLE FORMAT FMT.
     !***********************************************************************
-    implicit none
 
     character(4), dimension(30):: VARFMT
 
@@ -2612,7 +2595,6 @@ contains
 
   subroutine write_plt_file(cea, filename)
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(in):: cea(:)
     character(*), intent(in):: filename

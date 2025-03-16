@@ -11,7 +11,6 @@ contains
     use mod_constants, only: stderr
     use mod_types, only: CEA_Core_Problem, MAX_FILENAME, IOOUT, allocate_points, reset_case
     use mod_legacy_io
-    implicit none
 
     class(CEA_Core_Problem), intent(inout):: cea(:)
     character(*), intent(in), optional:: out_filename
@@ -135,7 +134,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_functions
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -177,7 +175,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_functions
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -201,7 +198,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_legacy_io
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -540,7 +536,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_general
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -1607,7 +1602,6 @@ contains
     ! AND PRESSURE.  CALLED FROM ROCKET.
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -1687,7 +1681,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_functions
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -1855,7 +1848,6 @@ contains
     ! SET UP ITERATION OR DERIVATIVE MATRIX.
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -2020,7 +2012,6 @@ contains
     ! CALCULATE NEW VALUES OF B0 AND HSUB0 FOR NEW OF RATIO
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -2101,7 +2092,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_legacy_io, only: RKTOUT
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -2746,7 +2736,6 @@ contains
 
   subroutine read_libraries(cea)
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
     integer:: i, j
@@ -2822,7 +2811,6 @@ contains
     ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -3010,7 +2998,6 @@ contains
   subroutine READTR(cea)
     ! SEARCH FOR TRANSPORT PROPERTIES FOR THIS CHEMICAL SYSTEM
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -3101,7 +3088,6 @@ contains
     !  ISV=0  USE COMPOSITIONS SAVED WHEN ISV<0.
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -3184,7 +3170,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_legacy_io
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -3637,7 +3622,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_legacy_io
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -3719,7 +3703,6 @@ contains
     ! BRINGS IN AND SORTS OUT INPUT FOR TRANSPORT CALCULATIONS
     !***********************************************************************
     use mod_types
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -4026,7 +4009,6 @@ contains
     !***********************************************************************
     use mod_types
     use mod_general
-    implicit none
 
     type(CEA_Core_Problem), intent(inout):: cea
 

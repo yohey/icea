@@ -144,8 +144,6 @@ module mod_types
 contains
 
   subroutine init_case(cea)
-    implicit none
-
     class(CEA_Core_Problem), intent(inout):: cea
 
     cea%Case = 'New Case'
@@ -254,8 +252,6 @@ contains
 
 
   subroutine reset_case(cea)
-    implicit none
-
     class(CEA_Core_Problem), intent(inout):: cea
 
     cea%Eql = cea%Eql_in

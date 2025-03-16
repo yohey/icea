@@ -4,8 +4,6 @@ module mod_general
 contains
 
   subroutine gauss_elimination(G, X, Msing)
-    implicit none
-
     real(8), intent(inout):: G(:, :)
     real(8), intent(out):: X(:)
     integer, intent(out), optional:: Msing
