@@ -485,6 +485,7 @@ contains
 
     if (.not. this%Rkt) then
        write(0, *) '[ERROR] This function is only for Rocket problem.'
+       T = -1
        return
     end if
 

@@ -21,6 +21,10 @@ module mod_types
   integer:: IOOUT
   !***********************************************************************
 
+  type:: ThermoProperty
+  end type ThermoProperty
+
+
   type:: TransportProperty
      integer:: j(2)
      real(8):: data(6, 3, 2)
@@ -51,6 +55,7 @@ module mod_types
      character(MAX_FILENAME):: filename_thermo_lib
      character(MAX_FILENAME):: filename_trans_lib
 
+     type(ThermoProperty), allocatable:: thermo_properties(:)
      type(TransportProperty), allocatable:: transport_properties(:)
      type(CEA_Point), pointer:: points(:, :) => null()
 
@@ -180,6 +185,8 @@ contains
 
     cea%Hsub0 = 1d30
 
+    cea%Jray(:) = 0
+
     cea%ensert(:) = ""
 
     cea%newcom = .false.
@@ -196,6 +203,7 @@ contains
 #endif
 
     if (associated(cea%points)) deallocate(cea%points)
+    if (allocated(cea%thermo_properties)) deallocate(cea%thermo_properties)
     if (allocated(cea%transport_properties)) deallocate(cea%transport_properties)
     if (allocated(cea%Debug_in)) deallocate(cea%Debug_in)
     if (allocated(cea%U1_in)) deallocate(cea%U1_in)
@@ -253,6 +261,8 @@ contains
 
   subroutine reset_case(cea)
     class(CEA_Core_Problem), intent(inout):: cea
+    integer:: i
+    real(8):: xi
 
     cea%Eql = cea%Eql_in
     cea%Npp = cea%Npp_in
@@ -283,6 +293,23 @@ contains
 
     cea%iOF = 0
     cea%num_omitted = 0
+
+    !! migrate from read_libraries
+    if (associated(cea%points)) then
+       if (cea%Ng == 0) then
+          xi = cea%Enn
+       else
+          xi = cea%Enn / cea%Ng
+       end if
+
+       do concurrent (i = 1:cea%Nof)
+          cea%points(i, 1)%En(cea%Ng+1:cea%Ng+cea%Nc) = 0
+          cea%points(i, 1)%En(1:cea%Ng) = xi
+       end do
+
+       cea%Enln(cea%Ng+1:cea%Ng+cea%Nc) = 0
+       cea%Enln(1:cea%Ng) = log(xi)
+    end if
 
     return
   end subroutine reset_case

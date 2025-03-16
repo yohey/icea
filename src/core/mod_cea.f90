@@ -10,7 +10,7 @@ contains
   subroutine run_all_cases(cea, out_filename, plt_filename)
     use mod_constants, only: stderr
     use mod_types, only: CEA_Core_Problem, MAX_FILENAME, IOOUT, allocate_points, reset_case
-    use mod_legacy_io
+    use mod_legacy_io, only: open_legacy_output, write_input_log, write_plt_file
 
     class(CEA_Core_Problem), intent(inout):: cea(:)
     character(*), intent(in), optional:: out_filename
@@ -28,11 +28,9 @@ contains
           if (cea(icase)%io_log == 0 .or. .not. is_opened) open(newunit = cea(icase)%io_log, status = 'scratch', form = 'formatted')
        end if
 
-       if (cea(icase)%Nlm == 0) call REACT(cea(icase))
+       call read_libraries(cea(icase))
 
        if (.not. associated(cea(icase)%points)) call allocate_points(cea(icase))
-
-       call read_libraries(cea(icase))
     end do
 
     if (any_legacy_mode) then
@@ -81,7 +79,7 @@ contains
 
   subroutine run_case(cea, out_filename)
     use mod_types
-    use mod_legacy_io, only: REACT, open_legacy_output, write_input_log, write_plt_file
+    use mod_legacy_io, only: open_legacy_output, write_input_log, write_plt_file
 
     class(CEA_Core_Problem), intent(inout):: cea
     character(*), intent(in), optional:: out_filename
@@ -92,11 +90,9 @@ contains
        if (cea%io_log == 0 .or. .not. is_opened) open(newunit = cea%io_log, status = 'scratch', form = 'formatted')
     end if
 
-    if (cea%Nlm == 0) call REACT(cea)
+    call read_libraries(cea)
 
     if (.not. associated(cea%points)) call allocate_points(cea)
-
-    call read_libraries(cea)
 
     if (cea%legacy_mode) then
        call open_legacy_output(IOOUT, out_filename)
@@ -2736,12 +2732,14 @@ contains
 
   subroutine read_libraries(cea)
     use mod_types
+    use mod_legacy_io, only: REACT
 
     type(CEA_Core_Problem), intent(inout):: cea
     integer:: i, j
-    real(8):: xi, xln
 
     if (cea%invalid_case) return
+
+    if (cea%Nlm == 0) call REACT(cea)
 
     cea%Nonly = cea%Nonly_in
     cea%Prod(:) = cea%Prod_in(:)
@@ -2758,7 +2756,7 @@ contains
        cea%Nlm = cea%Nlm - 1
     end if
 
-    cea%Jray(1:cea%Nreac) = 0
+    cea%Jray(:) = 0
 
     call SEARCH(cea)
 
@@ -2775,18 +2773,6 @@ contains
     cea%Enn = 0.1d0
     cea%Ennl = -2.3025851
     cea%Sumn = cea%Enn
-    xi = cea%Ng
-    if (xi == 0.) xi = 1
-    xi = cea%Enn/xi
-    xln = log(xi)
-
-    do concurrent (i = 1:cea%Nof)
-       cea%points(i, 1)%En(cea%Ng+1:cea%Ng+cea%Nc) = 0
-       cea%points(i, 1)%En(1:cea%Ng) = xi
-    end do
-
-    cea%Enln(cea%Ng+1:cea%Ng+cea%Nc) = 0
-    cea%Enln(1:cea%Ng) = xln
 
     if (cea%Nc /= 0 .and. cea%Nsert /= 0) then
        innerLoop: do i = 1, cea%Nsert
