@@ -144,6 +144,25 @@ namespace CEA {
   }
 
 
+  double Problem::get_temperature(const size_t& iOF, const size_t& ipt) {
+    return ffi_cea_get_temperature(this->_ffi, iOF + 1, ipt + 1);
+  }
+
+  double Problem::get_chamber_temperature() {
+    return ffi_cea_get_chamber_temperature(this->_ffi);
+  }
+
+
+  double Problem::get_molecular_weight(const size_t& iOF, const size_t& ipt) {
+    return ffi_cea_get_molecular_weight(this->_ffi, iOF + 1, ipt + 1);
+  }
+
+
+  double Problem::get_specific_heat_ratio(const size_t& iOF, const size_t& ipt) {
+    return ffi_cea_get_specific_heat_ratio(this->_ffi, iOF + 1, ipt + 1);
+  }
+
+
   void Problem::write_debug_output(const char* filename) {
     ffi_cea_write_debug_output(this->_ffi, filename);
   }

@@ -44,6 +44,12 @@ namespace CEA {
     void set_only_species(const std::vector<std::string>&);
     void set_legacy_mode(const bool& legacy_mode = true);
     void run(const std::optional<const char*>& out_filename = std::nullopt);
+
+    double get_temperature(const size_t& iOF, const size_t& ipt);
+    double get_chamber_temperature();
+    double get_molecular_weight(const size_t& iOF, const size_t& ipt);
+    double get_specific_heat_ratio(const size_t& iOF, const size_t& ipt);
+
     void write_debug_output(const char* out_filename);
   };
 

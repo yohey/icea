@@ -20,6 +20,10 @@ module cea
      procedure, public, pass:: set_only_species
      procedure, public, pass:: set_legacy_mode
      procedure, public, pass:: run
+     procedure, public, pass:: get_temperature
+     procedure, public, pass:: get_chamber_temperature
+     procedure, public, pass:: get_molecular_weight
+     procedure, public, pass:: get_specific_heat_ratio
      procedure, public, pass:: write_debug_output
      final:: del_problem
   end type CEA_Problem
@@ -460,6 +464,64 @@ contains
 
     return
   end subroutine run
+
+
+  function get_temperature(this, iOF, ipt) result(T)
+    real(8):: T
+    class(CEA_Problem), intent(in):: this
+    integer, intent(in):: iOF
+    integer, intent(in):: ipt
+
+    T = this%points(iOF, ipt)%Ttt
+
+    return
+  end function get_temperature
+
+  function get_chamber_temperature(this) result(T)
+    real(8):: T
+    class(CEA_Problem), intent(in):: this
+
+    integer:: ipt
+
+    if (.not. this%Rkt) then
+       write(0, *) '[ERROR] This function is only for Rocket problem.'
+       return
+    end if
+
+    if (this%Fac) then
+       ipt = 2
+    else
+       ipt = 1
+    end if
+
+    T = this%points(1, ipt)%Ttt
+
+    return
+  end function get_chamber_temperature
+
+
+  function get_molecular_weight(this, iOF, ipt) result(M)
+    real(8):: M
+    class(CEA_Problem), intent(in):: this
+    integer, intent(in):: iOF
+    integer, intent(in):: ipt
+
+    M = this%points(iOF, ipt)%Wm
+
+    return
+  end function get_molecular_weight
+
+
+  function get_specific_heat_ratio(this, iOF, ipt) result(gamma)
+    real(8):: gamma
+    class(CEA_Problem), intent(in):: this
+    integer, intent(in):: iOF
+    integer, intent(in):: ipt
+
+    gamma = this%points(iOF, ipt)%Gammas
+
+    return
+  end function get_specific_heat_ratio
 
 
   subroutine write_debug_output(this, filename)

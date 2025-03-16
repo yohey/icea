@@ -55,6 +55,11 @@ namespace CEA {
     void ffi_cea_set_legacy_mode(const FFI_CEA_Problem_Unique_Ptr&, const bool& = true);
     void ffi_cea_run(const FFI_CEA_Problem_Unique_Ptr&, const char* = nullptr);
 
+    double ffi_cea_get_temperature(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
+    double ffi_cea_get_chamber_temperature(const FFI_CEA_Problem_Unique_Ptr&);
+    double ffi_cea_get_molecular_weight(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
+    double ffi_cea_get_specific_heat_ratio(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
+
     void ffi_cea_write_debug_output(const FFI_CEA_Problem_Unique_Ptr&, const char*);
 
     FFI_CEA_Problem_Array ffi_cea_read_legacy_input(const char*);

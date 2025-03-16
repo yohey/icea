@@ -520,6 +520,71 @@ contains
   end subroutine run
 
 
+  function ffi_get_temperature(ptr, iOF, ipt) result(T) bind(C, name = "ffi_cea_get_temperature")
+    use cea, only: CEA_Problem
+
+    real(c_double):: T
+    type(c_ptr), intent(in):: ptr
+    integer(c_size_t), intent(in):: iOF
+    integer(c_size_t), intent(in):: ipt
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) T = this%get_temperature(int(iOF), int(ipt))
+
+    return
+  end function ffi_get_temperature
+
+  function ffi_get_chamber_temperature(ptr) result(T) bind(C, name = "ffi_cea_get_chamber_temperature")
+    use cea, only: CEA_Problem
+
+    real(c_double):: T
+    type(c_ptr), intent(in):: ptr
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) T = this%get_chamber_temperature()
+
+    return
+  end function ffi_get_chamber_temperature
+
+
+  function ffi_get_molecular_weight(ptr, iOF, ipt) result(M) bind(C, name = "ffi_cea_get_molecular_weight")
+    use cea, only: CEA_Problem
+
+    real(c_double):: M
+    type(c_ptr), intent(in):: ptr
+    integer(c_size_t), intent(in):: iOF
+    integer(c_size_t), intent(in):: ipt
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) M = this%get_molecular_weight(int(iOF), int(ipt))
+
+    return
+  end function ffi_get_molecular_weight
+
+
+  function ffi_get_specific_heat_ratio(ptr, iOF, ipt) result(gamma) bind(C, name = "ffi_cea_get_specific_heat_ratio")
+    use cea, only: CEA_Problem
+
+    real(c_double):: gamma
+    type(c_ptr), intent(in):: ptr
+    integer(c_size_t), intent(in):: iOF
+    integer(c_size_t), intent(in):: ipt
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) gamma = this%get_specific_heat_ratio(int(iOF), int(ipt))
+
+    return
+  end function ffi_get_specific_heat_ratio
+
+
   function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
     use cea, only: CEA_Problem
     use mod_types, only: init_case, IOINP
