@@ -33,6 +33,9 @@ contains
     call c_f_pointer(ptr, cea)
 
     if (associated(cea)) then
+#ifndef NDEBUG
+       write(0, *) '[DEBUG] CEA_Problem (mod_ffi.f90) destructor is called.'
+#endif
        deallocate(cea)
     end if
 
@@ -160,7 +163,7 @@ contains
     if (present(debug_points)) then
        call c_f_pointer(debug_points%addr, debug_points_array, [debug_points%size])
        allocate(debug_points_array_fint(debug_points%size))
-       debug_points_array_fint(:) = debug_points_array(:)
+       debug_points_array_fint(:) = int(debug_points_array(:))
     end if
 
     if (present(SI)) then

@@ -6,16 +6,20 @@
 
 namespace CEA {
 
-  Problem::Problem() {
-    this->_ffi = ffi_cea_new_problem();
+  Problem::Problem(): _ffi(ffi_cea_new_problem(), [](void* p){ ffi_cea_del_problem(p); }) {
   }
 
-  Problem::Problem(FFI_CEA_Problem_Ptr ptr) {
-    this->_ffi = ptr;
+  Problem::Problem(Problem&& other): _ffi(std::move(other._ffi)) {
   }
 
-  Problem::~Problem() {
-    ffi_cea_del_problem(this->_ffi);
+  Problem::Problem(const Problem& other) {
+    size_t obj_size = ffi_cea_sizeof(other._ffi);
+    FFI_CEA_Problem_Ptr ptr(malloc(obj_size));
+    std::memcpy(ptr, other._ffi.get(), obj_size);
+    this->_ffi = FFI_CEA_Problem_Unique_Ptr(ptr, [](void* p){ ffi_cea_del_problem(p); });
+  }
+
+  Problem::Problem(FFI_CEA_Problem_Ptr ptr): _ffi(ptr, [](void* p){ ffi_cea_del_problem(p); }) {
   }
 
 
@@ -173,11 +177,11 @@ namespace CEA {
 
       for (size_t i = 0; i < problems.size(); ++i) {
         FFI_CEA_Problem_Ptr ptr = reinterpret_cast<FFI_CEA_Problem_Ptr>((reinterpret_cast<uintptr_t>(array.addr) + i * obj_size));
-        std::memcpy(ptr, problems[i]._ffi, obj_size);
+        std::memcpy(ptr, problems[i]._ffi.get(), obj_size);
       }
 
     } else {
-      array.addr = static_cast<FFI_CEA_Problem_Ptr*>(problems[0]._ffi);
+      array.addr = static_cast<FFI_CEA_Problem_Ptr*>(problems[0]._ffi.get());
     }
 
     const char* out_filename_ffi = out_filename.value_or(nullptr);
@@ -188,7 +192,7 @@ namespace CEA {
     if (_need_aligned_buffer) {
       for (size_t i = 0; i < problems.size(); ++i) {
         FFI_CEA_Problem_Ptr ptr = reinterpret_cast<FFI_CEA_Problem_Ptr>((reinterpret_cast<uintptr_t>(array.addr) + i * obj_size));
-        std::memcpy(problems[i]._ffi, ptr, obj_size);
+        std::memcpy(problems[i]._ffi.get(), ptr, obj_size);
       }
 
       free(array.addr);
@@ -200,11 +204,11 @@ namespace CEA {
     if (problems.size() < 2) return false;
 
     size_t obj_size = ffi_cea_sizeof(problems[0]._ffi);
-    uintptr_t head_addr = reinterpret_cast<uintptr_t>(problems[0]._ffi);
+    uintptr_t head_addr = reinterpret_cast<uintptr_t>(problems[0]._ffi.get());
     uintptr_t prev_tail_addr = head_addr + obj_size;
 
     for (size_t i = 1; i < problems.size(); ++i) {
-      head_addr = reinterpret_cast<uintptr_t>(problems[i]._ffi);
+      head_addr = reinterpret_cast<uintptr_t>(problems[i]._ffi.get());
       if (head_addr != prev_tail_addr) {
         return true;
       } else {
