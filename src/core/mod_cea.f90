@@ -1675,23 +1675,19 @@ contains
     ! CALCULATE PROPERTIES FOR TOTAL REACTANT USING THERMO DATA FOR
     ! ONE OR MORE REACTANTS. USED ONLY FOR SHOCK AND DETON PROBLEMS.
     !***********************************************************************
-    use mod_types
+    use mod_types, only: IOOUT, CEA_Core_Problem, CEA_Point
     use mod_functions
 
     type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
-    character(6):: date(maxNgc)
-    character(2):: el(5)
-    character(15):: sub
-    integer:: i, icf, ifaz, itot, j, k, l, m, n, nall, nint, ntgas, ntot
-    real(8):: bb(5), enj, er, sj, t1, t2, tem, thermo(9, 3), Tsave
-    integer:: io_thermo
+    integer:: ifaz, j, k, l, n
+    real(8):: enj, er, sj, tem, Tsave
 
     type(CEA_Point), pointer:: p !< current point
     p => cea%points(cea%iOF, cea%ipt)
 
-    icf = 0
+    ifaz = 0
 
     Tsave = cea%Tt
 
@@ -1710,94 +1706,27 @@ contains
     ! if fuel,    k = 2
     cea%Nspr = cea%Nspx
     do n = 1, cea%Nreac
-       k = 2
-       if (cea%Fox(n)(:1) == 'O' .or. cea%Fox(n)(:1) == 'o') k = 1
+       if (cea%Fox(n)(:1) == 'O' .or. cea%Fox(n)(:1) == 'o') then
+          k = 1
+       else
+          k = 2
+       end if
+
        if (cea%Tt == 0) cea%Tt = cea%Rtemp(n)
 
-       j = cea%Jray(n)
+       call search_reactant(cea, n, j, ifaz)
 
-       if (j == 0) then
-          ! SEARCH FOR REACTANT IN STORED THERMO SPECIES. STORE INDEX IN JRAY(N).
-          ifaz = 0
-          do j = 1, cea%Ngc
-             if (cea%Rname(n) == cea%Prod(j) .or. '*' // cea%Rname(n) == cea%Prod(j)) then
-                cea%Jray(n) = j
-                if (j > cea%Ng) then
-                   if (cea%legacy_mode) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
-                   cea%Tt = 0
-                   cea%Cpmix = 0
-                   return
-                end if
-                go to 50
-             end if
-          end do
-
-          ! SEARCH THERMO.LIB FOR SPECIES.
-          open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
-
-          read(io_thermo) cea%Tg, ntgas, ntot, nall
-
-          cea%Nspr = cea%Nspr + 1
-          do itot = 1, nall
-             if (itot <= ntot) then
-                icf = 3
-                if (itot > ntgas) icf = 1
-                read(io_thermo) sub, nint, date(cea%Nspr), (el(j), bb(j), j = 1, 5), ifaz, &
-                     T1, T2, cea%Mw(cea%Nspr), ((thermo(l, m), l = 1, 9), m = 1, icf)
-             else
-                read(io_thermo) sub, nint, date(cea%Nspr), (el(j), bb(j), j = 1, 5), ifaz, T1, T2, cea%Mw(cea%Nspr), er
-                if (nint /= 0) then
-                   read(io_thermo) ((thermo(i, j), i = 1, 9), j = 1, nint)
-                   icf = nint
-                end if
-             end if
-
-             if (sub == cea%Rname(n) .or. sub == '*' // cea%Rname(n)) then
-                if (ifaz <= 0 .and. nint > 0) then
-                   do j = 1, 5
-                      if (bb(j) == 0) exit
-                      cea%Nfla(n) = j
-                      cea%Ratom(n, j) = el(j)
-                      cea%Rnum(n, j) = bb(j)
-                   end do
-
-                   cea%Jray(n) = cea%Nspr
-                   j = cea%Nspr
-
-                   do concurrent (l = 1:icf, m = 1:9)
-                      cea%Coef(m, j, l) = thermo(m, l)
-                   end do
-
-                   go to 50
-
-                else
-                   if (cea%legacy_mode) then
-                      if (ifaz > 0) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
-                      if (nint == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') cea%Rname(n)
-                   end if
-                   cea%Tt = 0
-                   cea%Cpmix = 0
-                   close(io_thermo)
-                   return
-                end if
-             end if
-          end do
-
-          close(io_thermo)
-
-          cea%Nspr = cea%Nspr - 1
-          if (cea%legacy_mode) write(IOOUT, '(/" ERROR IN DATA FOR ", a15, " CHECK NAME AND TEMPERATURE", &
-               & " RANGE IN", /, " thermo.inp (HCALC)")') cea%Rname(n)
-
-          cea%Energy(n) = ' '
+       if (j > cea%Ng) then
+          if (cea%legacy_mode) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
           cea%Tt = 0
           cea%Cpmix = 0
-
+          return
+       else if (j == 0) then
           return
        end if
 
        ! CALCULATE EN FOR REACTANT AND CALCULATE PROPERTIES.
-50     if (cea%Moles) then
+       if (cea%Moles) then
           enj = cea%Pecwt(n) / cea%Wp(k)
        else
           enj = cea%Pecwt(n) / cea%Rmw(n)
@@ -1837,6 +1766,76 @@ contains
 
     return
   end subroutine HCALC
+
+
+  subroutine search_reactant(cea, n, j, ifaz)
+    use mod_types, only: IOOUT, CEA_Core_Problem, ThermoProperty
+
+    type(CEA_Core_Problem), intent(inout):: cea
+    integer, intent(in):: n
+    integer, intent(out):: j
+    integer, intent(out):: ifaz
+
+    integer:: i, k
+    type(ThermoProperty), pointer:: th
+
+    j = cea%Jray(n)
+    ifaz = 0
+
+    if (j == 0) then
+       ! SEARCH FOR REACTANT IN STORED THERMO SPECIES. STORE INDEX IN JRAY(N).
+       do j = 1, cea%Ngc
+          if (cea%Rname(n) == cea%Prod(j) .or. '*' // cea%Rname(n) == cea%Prod(j)) then
+             cea%Jray(n) = j
+             return
+          end if
+       end do
+
+       ! SEARCH THERMO.LIB FOR SPECIES.
+       do i = 1, size(cea%thermo_properties)
+          th => cea%thermo_properties(i)
+
+          if (th%name == cea%Rname(n) .or. th%name == '*' // cea%Rname(n)) then
+             if (th%ifaz <= 0 .and. th%ntl > 0) then
+                j = cea%Nspr + 1
+                ifaz = th%ifaz
+
+                cea%Jray(n) = j
+                cea%Mw(j) = th%mwt
+                do k = 1, 5
+                   if (th%fno(k) == 0) exit
+                   cea%Nfla(n) = k
+                   cea%Ratom(n, k) = th%sym(k)
+                   cea%Rnum(n, k) = th%fno(k)
+                end do
+                cea%Coef(:, j, :) = th%thermo(:, :)
+                return
+
+             else
+                if (cea%legacy_mode) then
+                   if (th%ifaz > 0) write(IOOUT, '(/" REACTANTS MUST BE GASEOUS FOR THIS PROBLEM (HCALC)")')
+                   if (th%ntl == 0) write(IOOUT, '(/" COEFFICIENTS FOR ", a15, " ARE NOT AVAILABLE (HCALC)")') cea%Rname(n)
+                end if
+                cea%Tt = 0
+                cea%Cpmix = 0
+                j = 0
+                return
+             end if
+          end if
+       end do
+
+       if (cea%legacy_mode) write(IOOUT, '(/" ERROR IN DATA FOR ", a15, " CHECK NAME AND TEMPERATURE", &
+            & " RANGE IN", /, " thermo.inp (HCALC)")') cea%Rname(n)
+
+       cea%Energy(n) = ' '
+       cea%Tt = 0
+       cea%Cpmix = 0
+       j = 0
+    end if
+
+    return
+  end subroutine search_reactant
+
 
 
   subroutine MATRIX(cea)

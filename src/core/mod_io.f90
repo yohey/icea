@@ -1,5 +1,8 @@
 module mod_io
   implicit none
+  private
+
+  public:: read_thermo_lib, set_library_paths, write_debug_output
 
   interface set_library_paths
      procedure:: set_library_paths_scalar
@@ -7,6 +10,56 @@ module mod_io
   end interface set_library_paths
 
 contains
+
+  subroutine read_thermo_lib(cea, filename)
+    use mod_types, only: CEA_Core_Problem, ThermoProperty
+
+    class(CEA_Core_Problem), intent(inout):: cea
+    character(*), intent(in), optional:: filename
+
+    integer:: i, j, ntgas, ntot, nall
+    integer:: io_thermo
+    logical:: file_exists
+    type(ThermoProperty), pointer:: th
+
+    inquire(file = filename, exist = file_exists)
+    if (file_exists) cea%filename_thermo_lib = trim(filename)
+
+    open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
+
+    read(io_thermo) cea%Tg, ntgas, ntot, nall, cea%Thdate
+
+    if (associated(cea%thermo_properties)) deallocate(cea%thermo_properties)
+    allocate(cea%thermo_properties(nall))
+
+    do i = 1, ntgas
+       th => cea%thermo_properties(i)
+       read(io_thermo) th%name, th%ntl, th%date, (th%sym(j), th%fno(j), j = 1, 5), th%ifaz, th%tl, th%mwt, th%thermo(1:9, 1:3)
+    end do
+
+    do i = ntgas + 1, ntot
+       th => cea%thermo_properties(i)
+       read(io_thermo) th%name, th%ntl, th%date, (th%sym(j), th%fno(j), j = 1, 5), th%ifaz, th%tl, th%mwt, th%thermo(1:9, 1)
+    end do
+
+    do i = ntot + 1, nall
+       th => cea%thermo_properties(i)
+       read(io_thermo) th%name, th%ntl, th%date, (th%sym(j), th%fno(j), j = 1, 5), th%ifaz, th%tl, th%mwt, th%thermo(1, 1)
+       if (th%ntl > 0) read(io_thermo) th%thermo(1:9, 1:3)
+    end do
+
+    close(io_thermo)
+
+#ifndef NDEBUG
+    write(0, *) '[DEBUG] Done: subroutine read_thermo_lib'
+    write(0, *) '[DEBUG]     Case = ', trim(cea%Case)
+    write(0, *) '[DEBUG]     Tg, ntgas, ntot, nall, thdate = ', cea%Tg, ntgas, ntot, nall, cea%Thdate
+#endif
+
+    return
+  end subroutine read_thermo_lib
+
+
 
   subroutine set_library_paths_scalar(cea, thermo_lib_candidate, trans_lib_candidate)
     use mod_constants, only: MAX_FILENAME

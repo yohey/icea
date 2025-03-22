@@ -22,6 +22,15 @@ module mod_types
   !***********************************************************************
 
   type:: ThermoProperty
+     character(15):: name
+     integer:: ntl
+     character(6):: date
+     character(2):: sym(5)
+     real(8):: fno(5)
+     integer:: ifaz
+     real(8):: tl
+     real(8):: mwt
+     real(8):: thermo(9, 3)
   end type ThermoProperty
 
 
@@ -55,7 +64,7 @@ module mod_types
      character(MAX_FILENAME):: filename_thermo_lib
      character(MAX_FILENAME):: filename_trans_lib
 
-     type(ThermoProperty), allocatable:: thermo_properties(:)
+     type(ThermoProperty), pointer:: thermo_properties(:) => null()
      type(TransportProperty), allocatable:: transport_properties(:)
      type(CEA_Point), pointer:: points(:, :) => null()
 
@@ -203,7 +212,7 @@ contains
 #endif
 
     if (associated(cea%points)) deallocate(cea%points)
-    if (allocated(cea%thermo_properties)) deallocate(cea%thermo_properties)
+    if (associated(cea%thermo_properties)) deallocate(cea%thermo_properties)
     if (allocated(cea%transport_properties)) deallocate(cea%transport_properties)
     if (allocated(cea%Debug_in)) deallocate(cea%Debug_in)
     if (allocated(cea%U1_in)) deallocate(cea%U1_in)

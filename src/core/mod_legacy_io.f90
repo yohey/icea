@@ -1576,6 +1576,7 @@ contains
     ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
     !***********************************************************************
     use mod_types
+    use mod_io, only: read_thermo_lib
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -1602,6 +1603,8 @@ contains
     dat = 0
 
     cea%B0p = 0
+
+    if (.not. associated(cea%thermo_properties)) call read_thermo_lib(cea)
 
     ! IF OXIDANT, KR = 1
     ! IF FUEL, KR = 2
