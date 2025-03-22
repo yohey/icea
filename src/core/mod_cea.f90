@@ -2795,84 +2795,89 @@ contains
     !***********************************************************************
     ! SEARCH THERMO.LIB FOR THERMO DATA FOR SPECIES TO BE CONSIDERED.
     !***********************************************************************
-    use mod_types
+    use mod_constants, only: atomic_symbol, atomic_mass
+    use mod_types, only: CEA_Core_Problem, ThermoProperty, maxNgc, maxNc, maxNg
+    use mod_io, only: read_thermo_lib
 
     type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
+    type(ThermoProperty), pointer:: th
     character(6):: date(maxNgc)
-    character(2):: el(5)
-    character(15):: sub
     integer:: i, j, k, ii
-    integer:: i5, ifaz, itot, nall, ne, nint, ntgas, ntot
-    real(8):: b(5), t1, t2, thermo(9, 3)
-    integer:: io_thermo
-    logical:: is_opened
+    integer:: i5, itot, ne
 
     ii = 0
+    ne = 0
 
     cea%Nc = 0
-    ne = 0
-    do i = 1, cea%Nlm
-       cea%Jx(i) = 0
-    end do
-    do j = 1, maxNgc
-       cea%S(j) = 0
-       cea%H0(j) = 0
-       cea%Deln(j) = 0
-       do i = 1, cea%Nlm
-          cea%A(i, j) = 0
-       end do
-    end do
+    cea%Jx(1:cea%Nlm) = 0
+    cea%S(1:maxNgc) = 0
+    cea%H0(1:maxNgc) = 0
+    cea%Deln(1:maxNgc) = 0
+    cea%A(1:cea%Nlm, 1:maxNgc) = 0
+
     ! READ TEMPERATURE RANGES FOR COEFFICIENTS OF GASEOUS SPECIES.
     ! SOME DEFINITIONS:
-    !   NTGAS = NUMBER OF GASEOUS SPECIES IN THERMO.LIB.
-    !   NTOT =  NTGAS PLUS NUMBER OF TEMPERATURE INTERVALS FOR CONDENSED.
-    !   NALL =  NTOT PLUS THE NUMBER OF REACTANT SPECIES IN THERMO.LIB.
+    !   th%type = 1: GASEOUS SPECIES IN THERMO.LIB.
+    !   th%type = 2: TEMPERATURE INTERVALS FOR CONDENSED.
+    !   th%type = 3: REACTANT SPECIES IN THERMO.LIB.
     !   NG =    NUMBER OF GASES WITH STORED COEFFICIENTS.
     !   NC =    NUMBER OF CONDENSED INTERVALS WITH STORED COEFFICIENTS.
     !   NGC =    NG + NC
     !   THDATE = DATE READ FROM THERMO.INP FILE
-    open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
-    read(io_thermo) cea%Tg, ntgas, ntot, nall, cea%Thdate
+    if (.not. associated(cea%thermo_properties)) call read_thermo_lib(cea)
+
     cea%Ngc = 1
     cea%Nc = 1
 
     ! BEGIN LOOP FOR READING SPECIES DATA FROM THERMO.LIB.
-    outerLoop: do itot = 1, ntot
-       if (itot > ntgas) then
-          read(io_thermo) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), cea%Ifz(cea%Nc), &
-               cea%Temp(1, cea%Nc), cea%Temp(2, cea%Nc), cea%Mw(cea%Ngc), (cea%Cft(k, cea%Nc), k = 1, 9)
-       else
-          read(io_thermo) sub, nint, date(cea%Ngc), (el(j), b(j), j = 1, 5), ifaz, T1, T2, cea%Mw(cea%Ngc), thermo
+    outerLoop: do itot = 1, size(cea%thermo_properties)
+       th => cea%thermo_properties(itot)
+
+       if (th%type == 3) exit
+
+       date(cea%Ngc) = th%date
+       cea%Mw(cea%Ngc) = th%mwt
+
+       if (th%type /= 1) then
+          cea%Ifz(cea%Nc) = th%ifaz
+          cea%Temp(1:2, cea%Nc) = th%tl
+          cea%Cft(:, cea%Nc) = th%thermo(:, 1)
        end if
+
        if (cea%Nonly /= 0) then
-          i = 1
-20        if (cea%Prod(i) /= sub .and. '*' // cea%Prod(i) /= sub) then
-             i = i + 1
-             if (i <= cea%Nonly) go to 20
-             cycle outerLoop
-          else
-             if (sub == cea%Prod(cea%Ngc-1)) then
-                cea%Nonly = cea%Nonly + 1
-                do k = cea%Nonly, i+1, -1
-                   cea%Prod(k) = cea%Prod(k-1)
-                end do
-             else
-                cea%Prod(i) = cea%Prod(cea%Ngc)
+
+          do i = 1, cea%Nonly
+             if (cea%Prod(i) == th%name .or. '*' // cea%Prod(i) == th%name) then
+                if (th%name == cea%Prod(cea%Ngc-1)) then
+                   cea%Nonly = cea%Nonly + 1
+                   do k = cea%Nonly, i+1, -1
+                      cea%Prod(k) = cea%Prod(k-1)
+                   end do
+                else
+                   cea%Prod(i) = cea%Prod(cea%Ngc)
+                end if
+                cea%Prod(cea%Ngc) = th%name
+                exit
              end if
-             cea%Prod(cea%Ngc) = sub
-          end if
-       else if (cea%Nomit /= 0) then
-          do i = 1, cea%Nomit
-             if (cea%Omit(i) == sub .or. '*' // cea%Omit(i) == sub) cycle outerLoop
           end do
+
+          if (i > cea%Nonly) cycle outerLoop
+
+       else if (cea%Nomit /= 0) then
+
+          do i = 1, cea%Nomit
+             if (cea%Omit(i) == th%name .or. '*' // cea%Omit(i) == th%name) cycle outerLoop
+          end do
+
        end if
+
        innerLoop: do k = 1, 5
-          if (b(k) == 0) exit
+          if (th%fno(k) == 0) exit
           do i = 1, cea%Nlm
-             if (cea%Elmt(i) == el(k)) then
-                cea%A(i, cea%Ngc) = b(k)
+             if (cea%Elmt(i) == th%sym(k)) then
+                cea%A(i, cea%Ngc) = th%fno(k)
                 cycle innerLoop
              end if
           end do
@@ -2881,22 +2886,17 @@ contains
           end do
           cycle outerLoop
        end do innerLoop
-       cea%Prod(cea%Ngc) = sub
-       if (itot > ntgas) then
-          cea%Nc = cea%Nc + 1
-          if (cea%Nc > maxNc) go to 400
-       else
+
+       cea%Prod(cea%Ngc) = th%name
+
+       if (th%type == 1) then
           cea%Ng = cea%Ngc
           if (cea%Ng > maxNg) go to 400
-          do i = 1, 3
-             do j = 1, 9
-                cea%Coef(j, cea%Ng, i) = thermo(j, i)
-             end do
-          end do
+          cea%Coef(:, cea%Ng, :) = th%thermo(:, :)
           ! IF SPECIES IS AN ATOMIC GAS, STORE INDEX IN JX
-          if (b(2) == 0 .and. b(1) == 1) then
+          if (th%fno(2) == 0 .and. th%fno(1) == 1) then
              do i = 1, cea%Nlm
-                if (cea%Elmt(i) == el(1)) then
+                if (cea%Elmt(i) == th%sym(1)) then
                    ne = ne + 1
                    cea%Jx(i) = cea%Ngc
                    cea%Jcm(i) = cea%Ngc
@@ -2904,12 +2904,15 @@ contains
                 end if
              end do
           end if
+       else
+          cea%Nc = cea%Nc + 1
+          if (cea%Nc > maxNc) go to 400
        end if
+
 150    cea%Ngc = cea%Ngc + 1
+
        if (cea%Ngc > maxNgc) go to 400
     end do outerLoop
-
-    close(io_thermo)
 
     ! FINISHED READING THERMO DATA FROM I/O UNIT io_thermo.
     cea%Ifz(cea%Nc) = 0
@@ -2928,9 +2931,7 @@ contains
           if (cea%Nspx > maxNgc) go to 400
           if (cea%Jx(i) == 0) then
              cea%Nspx = cea%Nspx + 1
-             do k = 1, cea%Nlm
-                cea%A(k, cea%Nspx) = 0
-             end do
+             cea%A(1:cea%Nlm, cea%Nspx) = 0
              cea%A(i, cea%Nspx) = 1
              cea%Prod(cea%Nspx) = cea%Elmt(i)
              do k = 1, 100
@@ -2938,10 +2939,10 @@ contains
                    cea%Mw(cea%Nspx) = atomic_mass(k)
                    cea%Atwt(i) = atomic_mass(k)
                    cea%Cp(cea%Nspx) = 2.5d0
-                   go to 210
+                   exit
                 end if
              end do
-210          cea%Jx(i) = cea%Nspx
+             cea%Jx(i) = cea%Nspx
              cea%Jcm(i) = cea%Nspx
           end if
        end do
@@ -2972,9 +2973,6 @@ contains
 
 400 write(cea%io_log, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
     cea%Ngc = 0
-
-    inquire(io_thermo, opened = is_opened)
-    if (is_opened) close(io_thermo)
 
     return
   end subroutine SEARCH

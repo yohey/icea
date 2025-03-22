@@ -1575,22 +1575,19 @@ contains
     !***********************************************************************
     ! READ AND PROCESS REACTANT RECORDS.  CALLED FROM SUBROUTINE INPUT.
     !***********************************************************************
-    use mod_types
+    use mod_constants, only: R0, atomic_symbol, atomic_mass, atomic_valence
+    use mod_types, only: CEA_Core_Problem, ThermoProperty, maxEl
     use mod_io, only: read_thermo_lib
 
     type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
-    character(6):: date
-    character(2):: el(5)
-    character(15):: sub
-    integer:: i, icf, ifaz, ifrmla, itot, j, jj, kk, kr, l, n, nall, nint, nj, ntgas, ntot
+    type(ThermoProperty), pointer:: th
+    integer:: i, ifrmla, itot, j, jj, kk, kr, l, n, nj
     logical:: fuel, rcoefs, wdone(2)
     logical:: hOK
-    real(8):: bb(5), dat(35), dift, eform, pcwt, rcf(9, 3), rm, T1, T2
+    real(8):: dat(35), dift, pcwt, rm
     real(8):: T1save, T2save
-    integer:: io_thermo
-    logical:: is_opened
 
     wdone = .false.
     cea%Wp = 0
@@ -1616,93 +1613,79 @@ contains
 
        if (cea%Energy(n) == 'lib' .or. cea%Rnum(n, 1) == 0) then
           cea%Tt = cea%Rtemp(n)
-          open(newunit = io_thermo, file = cea%filename_thermo_lib, status = 'old', form = 'unformatted', action = 'read')
-          read(io_thermo) cea%Tg, ntgas, ntot, nall
 
-          do itot = 1, nall
-             if (itot <= ntot) then
-                icf = 3
-                if (itot > ntgas) icf = 1
-                read(io_thermo) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, ((rcf(i, j), i = 1, 9), j = 1, icf)
-             else
-                read(io_thermo) sub, nint, date, (el(j), bb(j), j = 1, 5), ifaz, T1, T2, rm, eform
-                if (nint > 0) read(io_thermo) ((rcf(i, j), i = 1, 9), j = 1, nint)
-             end if
+          do itot = 1, size(cea%thermo_properties)
+             th => cea%thermo_properties(itot)
 
-             if (sub == cea%Rname(n) .or. sub == '*' // cea%Rname(n)) then
-                if (nint == 0) then
+             if (th%name == cea%Rname(n) .or. th%name == '*' // cea%Rname(n)) then
+                if (th%ntl == 0) then
                    rcoefs = .false.
                    hOK = .true.
-                   cea%Enth(n) = eform * 1000 / R0
+                   cea%Enth(n) = th%thermo(1, 1) * 1000 / R0
 
                    if (cea%Tt == 0) then
-                      cea%Tt = T1
-                      cea%Rtemp(n) = T1
+                      cea%Tt = th%tl(1)
+                      cea%Rtemp(n) = th%tl(1)
                    else
-                      dift = abs(cea%Tt - T1)
-                      if (dift > 1) then
-                         if (dift > 10) then
-                            if (cea%legacy_mode) write(cea%io_log, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
-                                 & f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", f8.2, &
-                                 & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
-                            cea%Nlm = 0
-                            hOK = .false.
-                            close(io_thermo)
-                            return
-                         else
-                            if (cea%legacy_mode) write(cea%io_log, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
-                                 & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
-                                 & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), T1, cea%Tt
-                            cea%Tt = T1
-                            cea%Rtemp(n) = T1
-                         end if
+                      dift = abs(cea%Tt - th%tl(1))
+                      if (dift > 10) then
+                         if (cea%legacy_mode) write(cea%io_log, '(/" REACTANT ", a15, "HAS BEEN DEFINED FOR THE TEMPERATURE", &
+                              & f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", f8.2, &
+                              & " IS MORE THAN 10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), th%tl(1), cea%Tt
+                         cea%Nlm = 0
+                         hOK = .false.
+                         return
+                      else if (dift > 1) then
+                         if (cea%legacy_mode) write(cea%io_log, '(/" NOTE! REACTANT ", a15, "HAS BEEN DEFINED FOR ", &
+                              & "TEMPERATURE", f8.2, "K ONLY."/" YOUR TEMPERATURE ASSIGNMENT", &
+                              & f8.2, " IS NOT = BUT <10 K FROM THIS VALUE. (REACT)")') cea%Rname(n), th%tl(1), cea%Tt
+                         cea%Tt = th%tl(1)
+                         cea%Rtemp(n) = th%tl(1)
                       end if
                    end if
                 else
-                   if (ifaz <= 0) then
+                   if (th%ifaz <= 0) then
                       T1save = min(T1save, 0.8d0 * cea%Tg(1))
-                      T2save = max(T2save, 1.2d0 * T2)
+                      T2save = max(T2save, 1.2d0 * th%tl(2))
                    else
-                      T1save = min(T1save, T1 - 0.001d0)
-                      T2save = max(T2save, T2 + 0.001d0)
+                      T1save = min(T1save, th%tl(1) - 0.001d0)
+                      T2save = max(T2save, th%tl(2) + 0.001d0)
                    endif
                    if (T1save < cea%Tt .and. cea%Tt < T2save) hOK = .true.
                 end if
 
                 do j = 1, 5
-                   if (bb(j) == 0) exit
+                   if (th%fno(j) == 0) exit
                    cea%Nfla(n) = j
-                   cea%Ratom(n, j) = el(j)
-                   cea%Rnum(n, j) = bb(j)
+                   cea%Ratom(n, j) = th%sym(j)
+                   cea%Rnum(n, j) = th%fno(j)
                 end do
 
                 if (cea%Tt == 0) then
                    if (.not. cea%Hp) go to 50
                    if (cea%legacy_mode) write(cea%io_log, '(/" TEMPERATURE MISSING FOR REACTANT NO.", i2, "(REACT)")') n
                    cea%Nlm = 0
-                   close(io_thermo)
                    return
                 end if
 
                 if (rcoefs .and. hOK) then
                    cea%Tln = log(cea%Tt)
                    l = 1
-                   if (ifaz <= 0) then
+                   if (th%ifaz <= 0) then
                       if (cea%Tt > cea%Tg(2)) l = 2
                       if (cea%Tt > cea%Tg(3)) l = 3
                    end if
 
-                   cea%Enth(n) = (((((rcf(7, l)/5) * cea%Tt + rcf(6, l) / 4) * cea%Tt + rcf(5, l) / 3) * cea%Tt &
-                        + rcf(4, l) / 2) * cea%Tt + rcf(3, l)) * cea%Tt - rcf(1, l) / cea%Tt + rcf(2, l) * cea%Tln + rcf(8, l)
+                   cea%Enth(n) = (((((th%thermo(7, l)/5) * cea%Tt + th%thermo(6, l)/4) * cea%Tt + th%thermo(5, l)/3) * cea%Tt &
+                        + th%thermo(4, l) / 2) * cea%Tt + th%thermo(3, l)) * cea%Tt - th%thermo(1, l) / cea%Tt &
+                        + th%thermo(2, l) * cea%Tln + th%thermo(8, l)
 
-                   if (cea%Vol .and. ifaz <= 0) cea%Enth(n) = cea%Enth(n) - cea%Tt
+                   if (cea%Vol .and. th%ifaz <= 0) cea%Enth(n) = cea%Enth(n) - cea%Tt
                 end if
 
                 if (hOK) go to 50
              end if
           end do
-
-          close(io_thermo)
 
           if (.not. hOK) then
              if (cea%legacy_mode) write(cea%io_log, '(/" YOUR ASSIGNED TEMPERATURE", f8.2, "K FOR ", a15, /, &
@@ -1714,9 +1697,6 @@ contains
        end if
 
 50     continue
-
-       inquire(io_thermo, opened = is_opened)
-       if (is_opened) close(io_thermo)
 
        ifrmla = cea%Nfla(n)
        if (cea%Fox(n)(:1) == 'f') then

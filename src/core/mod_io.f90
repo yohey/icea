@@ -34,16 +34,19 @@ contains
 
     do i = 1, ntgas
        th => cea%thermo_properties(i)
+       th%type = 1
        read(io_thermo) th%name, th%ntl, th%date, (th%sym(j), th%fno(j), j = 1, 5), th%ifaz, th%tl, th%mwt, th%thermo(1:9, 1:3)
     end do
 
     do i = ntgas + 1, ntot
        th => cea%thermo_properties(i)
+       th%type = 2
        read(io_thermo) th%name, th%ntl, th%date, (th%sym(j), th%fno(j), j = 1, 5), th%ifaz, th%tl, th%mwt, th%thermo(1:9, 1)
     end do
 
     do i = ntot + 1, nall
        th => cea%thermo_properties(i)
+       th%type = 3
        read(io_thermo) th%name, th%ntl, th%date, (th%sym(j), th%fno(j), j = 1, 5), th%ifaz, th%tl, th%mwt, th%thermo(1, 1)
        if (th%ntl > 0) read(io_thermo) th%thermo(1:9, 1:3)
     end do

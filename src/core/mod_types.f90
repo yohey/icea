@@ -22,13 +22,14 @@ module mod_types
   !***********************************************************************
 
   type:: ThermoProperty
+     integer:: type
      character(15):: name
      integer:: ntl
      character(6):: date
      character(2):: sym(5)
      real(8):: fno(5)
      integer:: ifaz
-     real(8):: tl
+     real(8):: tl(2)
      real(8):: mwt
      real(8):: thermo(9, 3)
   end type ThermoProperty
