@@ -1368,7 +1368,7 @@ contains
     end if
 
     if (cea%Eql) then
-       write(io_out, '(/1x, A4, " FRACTIONS"/)') mamo
+       if (cea%legacy_mode) write(io_out, '(/1x, A4, " FRACTIONS"/)') mamo
        cea%num_omitted = 0
 
        do k = 1, cea%Ngc
@@ -1406,10 +1406,12 @@ contains
           end do
 
           if (kin == 1) then
-             if (cea%Trace == 0) then
-                write(io_out, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), X(1:n_cols_print)
-             else
-                call EFMT(cea%fmt(4), cea%Prod(k), X, n_cols_print)
+             if (cea%legacy_mode) then
+                if (cea%Trace == 0) then
+                   write(io_out, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), X(1:n_cols_print)
+                else
+                   call EFMT(cea%fmt(4), cea%Prod(k), X, n_cols_print)
+                end if
              end if
              if (cea%Prod(k) == cea%Omit(cea%num_omitted)) cea%num_omitted = cea%num_omitted - 1
           else if (cea%Prod(k) /= cea%Prod(k-1)) then
@@ -1419,16 +1421,18 @@ contains
        end do
     end if
 
-    write(io_out, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') cea%Tg(4)
-    if (.not. cea%Short) then
-       write(io_out, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", a4, &
-            & " FRACTIONS", /"    WERE LESS THAN", 1pe13.6, &
-            & " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
-       write(io_out, '(5(1x, a15))') (cea%Omit(i), i = 1, cea%num_omitted)
-    end if
+    if (cea%legacy_mode) then
+       write(io_out, '(/"  * THERMODYNAMIC PROPERTIES FITTED TO", f7.0, "K")') cea%Tg(4)
+       if (.not. cea%Short) then
+          write(io_out, '(/"    PRODUCTS WHICH WERE CONSIDERED BUT WHOSE ", a4, &
+               & " FRACTIONS", /"    WERE LESS THAN", 1pe13.6, &
+               & " FOR ALL ASSIGNED CONDITIONS"/)') mamo, tra
+          write(io_out, '(5(1x, a15))') (cea%Omit(i), i = 1, cea%num_omitted)
+       end if
 
-    if (.not. cea%Moles) write(io_out, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
-         & " OXIDANT IN TOTAL OXIDANTS")')
+       if (.not. cea%Moles) write(io_out, '(/" NOTE. WEIGHT FRACTION OF FUEL IN TOTAL FUELS AND OF", &
+            & " OXIDANT IN TOTAL OXIDANTS")')
+    end if
 
     deallocate(X)
 
@@ -1884,15 +1888,17 @@ contains
        out_App(i) = p%App
     end do
 
-    if (.not. cea%Eql) then
-       write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
-       if (cea%Nfz > 1) write(IOOUT, '(33x, "AFTER POINT", i2)') cea%Nfz
-    else
-       write(IOOUT, '(/////13x, " THEORETICAL ROCKET PERFORMANCE ASSUMING EQUILIBRIUM")')
-       if (cea%Iopt /= 0) then
-          write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
+    if (cea%legacy_mode) then
+       if (.not. cea%Eql) then
+          write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
+          if (cea%Nfz > 1) write(IOOUT, '(33x, "AFTER POINT", i2)') cea%Nfz
        else
-          write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
+          write(IOOUT, '(/////13x, " THEORETICAL ROCKET PERFORMANCE ASSUMING EQUILIBRIUM")')
+          if (cea%Iopt /= 0) then
+             write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
+          else
+             write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
+          end if
        end if
     end if
 
@@ -1900,19 +1906,21 @@ contains
     p1 => cea%points(cea%iOF, 1)
     p2 => cea%points(cea%iOF, 2)
 
-    if (p1%Ttt == cea%T(it)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
+    if (cea%legacy_mode .and. p1%Ttt == cea%T(it)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
 
     tem = p1%Ppp * 14.696006d0 / 1.01325d0
-    write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
+    if (cea%legacy_mode) write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
 
     i23 = 2
     if (cea%Iopt > 0) then
-       if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), p2%App
-       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%mdotByAc, p2%App
+       if (cea%legacy_mode) then
+          if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), p2%App
+          if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%mdotByAc, p2%App
+       end if
        i23 = 3
     end if
 
-    call OUT1(cea, IOOUT)
+    if (cea%legacy_mode) call OUT1(cea, IOOUT)
 
     cea%fmt(4) = cea%fmt(6)
     nex = n_cols_print - 2
@@ -1924,22 +1932,22 @@ contains
 
     ! PRESSURE RATIOS
     if (cea%Iopt == 0) then
-       write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
+       if (cea%legacy_mode) write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
        cea%fmt = VARFMT(cea%fmt, out_App, n_cols_print)
-       write(IOOUT, cea%fmt) 'Pinf/P         ', out_App(:)
+       if (cea%legacy_mode) write(IOOUT, cea%fmt) 'Pinf/P         ', out_App(:)
     else
        nex = nex - 1
-       write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
+       if (cea%legacy_mode) write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
        X(1) = 1.d0
        do i = 2, n_cols_print
           p => cea%points(cea%iOF, i_cols_print(i))
           X(i) = p1%Ppp / p%Ppp
        end do
        cea%fmt = VARFMT(cea%fmt, X, n_cols_print)
-       write(IOOUT, cea%fmt) 'Pinj/P         ', X(:)
+       if (cea%legacy_mode) write(IOOUT, cea%fmt) 'Pinj/P         ', X(:)
     end if
 
-    call OUT2(cea, cea%ipt, IOOUT)
+    if (cea%legacy_mode) call OUT2(cea, cea%ipt, IOOUT)
 
     mppf  = 0
     mppj  = 0
@@ -2010,21 +2018,23 @@ contains
     cea%fmt(4) = '13'
     cea%fmt(5) = ''
     cea%fmt(7) = '3,'
-    write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%points(cea%iOF, i_cols_print(i))%Vmoc, i = 1, n_cols_print)
-    if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
-    write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
+    if (cea%legacy_mode) then
+       write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%points(cea%iOF, i_cols_print(i))%Vmoc, i = 1, n_cols_print)
+       if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
+       write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
+    end if
 
     ! AREA RATIO
     cea%fmt(4) = '9x,'
     cea%fmt = VARFMT(cea%fmt, out_AeAt, n_cols_print)
     cea%fmt(5) = ' '
-    write(IOOUT, cea%fmt) 'Ae/At          ', out_AeAt(2:)
+    if (cea%legacy_mode) write(IOOUT, cea%fmt) 'Ae/At          ', out_AeAt(2:)
 
     ! C*
     cea%fmt(5) = '13'
     cea%fmt(6) = cea%fmt(8)
     cea%fmt(7) = '1,'
-    write(IOOUT, cea%fmt) fr, (cea%Cstr, j = 2, n_cols_print)
+    if (cea%legacy_mode) write(IOOUT, cea%fmt) fr, (cea%Cstr, j = 2, n_cols_print)
 
     ! CF - THRUST COEFICIENT
     cea%fmt(7) = '4,'
@@ -2032,15 +2042,15 @@ contains
        p => cea%points(cea%iOF, i_cols_print(i))
        X(i) = gc * p%Spim / cea%Cstr
     end do
-    write(IOOUT, cea%fmt) 'CF             ', X(2:n_cols_print)
+    if (cea%legacy_mode) write(IOOUT, cea%fmt) 'CF             ', X(2:n_cols_print)
 
     ! VACUUM IMPULSE
     cea%fmt(5) = '13'
     cea%fmt(7) = '1,'
-    write(IOOUT, cea%fmt) fiv, vaci(2:n_cols_print)
+    if (cea%legacy_mode) write(IOOUT, cea%fmt) fiv, vaci(2:n_cols_print)
 
     ! SPECIFIC IMPULSE
-    write(IOOUT, cea%fmt) fi, (cea%points(cea%iOF, i_cols_print(i))%Spim, i = 2, n_cols_print)
+    if (cea%legacy_mode) write(IOOUT, cea%fmt) fi, (cea%points(cea%iOF, i_cols_print(i))%Spim, i = 2, n_cols_print)
 
     if (cea%Nplt > 0) then
        p1 => cea%points(cea%iOF, 1)
@@ -2061,7 +2071,7 @@ contains
        end do
     end if
 
-    write(IOOUT, *)
+    if (cea%legacy_mode) write(IOOUT, *)
     cea%fmt(4) = ' '
     cea%fmt(5) = '13'
     cea%fmt(7) = '5,'
@@ -2073,9 +2083,9 @@ contains
 
     if (.not. cea%Eql) then
        if (cea%Massf) then
-          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
+          if (cea%legacy_mode) write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
        else
-          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
+          if (cea%legacy_mode) write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
           ww = 1 / pfz%Totn
        end if
 
@@ -2099,18 +2109,18 @@ contains
 
           if (line == 3 .or. k == cea%Ngc) then
              if (line == 0) then
-                call OUT3(cea, cea%ipt, IOOUT)
+                if (cea%legacy_mode) call OUT3(cea, cea%ipt, IOOUT)
                 deallocate(out_AeAt)
                 deallocate(out_App)
                 return
              end if
-             write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), X(ln), ln = 1, line)
+             if (cea%legacy_mode) write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), X(ln), ln = 1, line)
              line = 0
           end if
        end do
     end if
 
-    call OUT3(cea, cea%ipt, IOOUT)
+    if (cea%legacy_mode) call OUT3(cea, cea%ipt, IOOUT)
 
     deallocate(out_AeAt)
     deallocate(out_App)

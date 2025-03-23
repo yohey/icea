@@ -63,10 +63,12 @@ contains
        end if
     end do
 
-    inquire(IOOUT, opened = is_opened)
-    if (is_opened) then
-       close(IOOUT)
-       IOOUT = 0
+    if (IOOUT /= 0) then
+       inquire(IOOUT, opened = is_opened)
+       if (is_opened) then
+          close(IOOUT)
+          IOOUT = 0
+       end if
     end if
 
     if (present(plt_filename)) then
@@ -114,10 +116,12 @@ contains
        call SHCK(cea)
     end if
 
-    inquire(IOOUT, opened = is_opened)
-    if (is_opened) then
-       close(IOOUT)
-       IOOUT = 0
+    if (IOOUT /= 0) then
+       inquire(IOOUT, opened = is_opened)
+       if (is_opened) then
+          close(IOOUT)
+          IOOUT = 0
+       end if
     end if
 
     return
@@ -140,8 +144,8 @@ contains
     if (cea%Tt > cea%Tg(3)) k = 3
 
     do concurrent (j = 1:cea%Ng)
-       cea%S(j) = calc_entropy(cea%Coef(:, j, k), cea%Tt, cea%Tln, .true.)
-       cea%H0(j) = calc_enthalpy(cea%Coef(:, j, k), cea%Tt, cea%Tln, .true.)
+       cea%S(j) = calc_entropy(cea%Coef(:, j, k), cea%Tt, cea%Tln, cea%legacy_mode)
+       cea%H0(j) = calc_enthalpy(cea%Coef(:, j, k), cea%Tt, cea%Tln, cea%legacy_mode)
     end do
 
     if (.not. cea%Tp .or. cea%Convg) then
@@ -155,8 +159,8 @@ contains
           j = cea%Jcond(ij)
           jj = cea%Jcond(ij) - cea%Ng
 
-          cea%S(j) = calc_entropy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
-          cea%H0(j) = calc_enthalpy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
+          cea%S(j) = calc_entropy(cea%Cft(:, jj), cea%Tt, cea%Tln, cea%legacy_mode)
+          cea%H0(j) = calc_enthalpy(cea%Cft(:, jj), cea%Tt, cea%Tln, cea%legacy_mode)
           cea%Cp(j) = calc_specific_heat(cea%Cft(:, jj), cea%Tt)
        end do
     end if
@@ -178,8 +182,8 @@ contains
 
     do concurrent (jj = 1:cea%Nc)
        j = jj + cea%Ng
-       cea%S(j) = calc_entropy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
-       cea%H0(j) = calc_enthalpy(cea%Cft(:, jj), cea%Tt, cea%Tln, .true.)
+       cea%S(j) = calc_entropy(cea%Cft(:, jj), cea%Tt, cea%Tln, cea%legacy_mode)
+       cea%H0(j) = calc_enthalpy(cea%Cft(:, jj), cea%Tt, cea%Tln, cea%legacy_mode)
        cea%Cp(j) = calc_specific_heat(cea%Cft(:, jj), cea%Tt)
     end do
 
@@ -2779,11 +2783,11 @@ contains
              if (cea%Prod(j) == cea%ensert(i)) then
                 cea%Npr = cea%Npr + 1
                 cea%Jcond(cea%Npr) = j
-                if (.not. cea%Short) write(cea%io_log, '(1X, A16, "INSERTED")') cea%Prod(j)
+                if (cea%legacy_mode .and. .not. cea%Short) write(cea%io_log, '(1X, A16, "INSERTED")') cea%Prod(j)
                 cycle innerLoop
              end if
           end do
-          write(cea%io_log, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') cea%ensert(i)
+          if (cea%legacy_mode) write(cea%io_log, '(/" WARNING!!!", A16, "NOT FOUND FOR INSERTION")') cea%ensert(i)
        end do innerLoop
     end if
 
@@ -2919,7 +2923,7 @@ contains
     cea%Nc = cea%Nc - 1
     cea%Ngc = cea%Ngc - 1
     cea%Ngp1 = cea%Ng + 1
-    if (cea%Ngc < cea%Nonly) then
+    if (cea%legacy_mode .and. cea%Ngc < cea%Nonly) then
        do k = cea%Ngc+1, cea%Nonly
           write(cea%io_log, '(/" WARNING!!  ", a15, " NOT A PRODUCT IN thermo.lib FILE (SEARCH)")') cea%Prod(k)
        end do
@@ -2953,13 +2957,13 @@ contains
           if (cea%A(i, j) /= 0) cycle outerLoop2
           ii = i
        end do
-       write(cea%io_log, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
+       if (cea%legacy_mode) write(cea%io_log, '(/" PRODUCT SPECIES CONTAINING THE ELEMENT", a3, " MISSING", &
             & //, 13x, "FATAL ERROR (SEARCH)")') cea%Elmt(ii)
        cea%Ngc = 0
        return
     end do outerLoop2
     ! WRITE POSSIBLE PRODUCT LIST
-    if (.not. cea%Short) then
+    if (cea%legacy_mode .and. .not. cea%Short) then
        write(cea%io_log, '(/2x, "SPECIES BEING CONSIDERED IN THIS SYSTEM", &
             & /" (CONDENSED PHASE MAY HAVE NAME LISTED SEVERAL TIMES)", &
             & /"  LAST thermo.inp UPDATE: ", a10, /)') cea%Thdate
@@ -2971,7 +2975,7 @@ contains
     end if
     return
 
-400 write(cea%io_log, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
+400 if (cea%legacy_mode) write(cea%io_log, '(/" INSUFFICIENT STORAGE FOR PRODUCTS-SEE RP-1311,", /"   PART 2, PAGE 39. (SEARCH)")')
     cea%Ngc = 0
 
     return
@@ -2997,7 +3001,7 @@ contains
     npure = 0
     lineb = 1
 
-    if (.not. cea%Short) write(cea%io_log, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
+    if (cea%legacy_mode .and. .not. cea%Short) write(cea%io_log, '(/" SPECIES WITH TRANSPORT PROPERTIES"//8X, "PURE SPECIES"/)')
 
     read(io_transport) nrec
 
@@ -3038,21 +3042,21 @@ contains
        end if
 
        if (npure /= 0 .and. (npure >= 6 .or. ir >= nrec)) then
-          if (.not. cea%Short) write(cea%io_log, '(4(2x, A16))') (pure(jk), jk = 1, npure)
+          if (cea%legacy_mode .and. .not. cea%Short) write(cea%io_log, '(4(2x, A16))') (pure(jk), jk = 1, npure)
           npure = 0
        end if
     end do
 
     lineb = lineb - 1
 
-    if (.not. cea%Short) then
+    if (cea%legacy_mode .and. .not. cea%Short) then
        write(cea%io_log, '(/"     BINARY INTERACTIONS"/)')
        do j = 1, lineb
           write(cea%io_log, '(5X, 2A16)') (bin(i, j), i = 1, 2)
        end do
     end if
 
-    write(cea%io_log, *)
+    if (cea%legacy_mode) write(cea%io_log, *)
 
     close(io_transport)
 
@@ -3194,7 +3198,7 @@ contains
        if (cea%points(1, i)%Mach1 == 0 .and. cea%points(1, i)%U1 == 0) exit
     end do
     if (cea%Nsk > Ncol) then
-       write(IOOUT, '(/" WARNING!!  ONLY ", I2, " u1 OR mach1 VALUES ALLOWED (SHCK)")') Ncol
+       if (cea%legacy_mode) write(IOOUT, '(/" WARNING!!  ONLY ", I2, " u1 OR mach1 VALUES ALLOWED (SHCK)")') Ncol
        cea%Nsk = Ncol
     end if
     if (cea%legacy_mode .and. .not. cea%Short) then

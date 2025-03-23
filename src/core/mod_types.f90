@@ -17,8 +17,8 @@ module mod_types
   ! The following parameters set the input/output unit numbers.
   ! These numbers are also defined in the manual, part 2 p. 39,
   ! and may be adjusted as desired.
-  integer:: IOINP
-  integer:: IOOUT
+  integer:: IOINP = 0
+  integer:: IOOUT = 0
   !***********************************************************************
 
   type:: ThermoProperty
