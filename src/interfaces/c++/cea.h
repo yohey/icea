@@ -50,6 +50,9 @@ namespace CEA {
     double get_molecular_weight(const size_t& iOF, const size_t& ipt);
     double get_specific_heat_ratio(const size_t& iOF, const size_t& ipt);
 
+    void calc_frozen_exhaust(const double& T, const std::optional<const double*>& P_ptr = std::nullopt,
+                             const std::optional<const double*>& cp_ptr = std::nullopt, const std::optional<const double*>& gamma_ptr = std::nullopt);
+
     void write_debug_output(const char* out_filename);
   };
 

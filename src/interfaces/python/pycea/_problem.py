@@ -86,6 +86,13 @@ class CEA_Problem:
         _libcea.ffi_cea_run.argtypes = [c_void_p, c_char_p]
         _libcea.ffi_cea_run(byref(self._ffi), _c_char_or_None(out_filename))
 
+    def calc_frozen_exhaust(self, T):
+        _libcea.ffi_cea_calc_frozen_exhaust.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+        _P, _cp, _gamma = c_double(), c_double(), c_double()
+        _libcea.ffi_cea_calc_frozen_exhaust(byref(self._ffi), _c_double_or_None(T), byref(_P), byref(_cp), byref(_gamma))
+        return _P.value, _cp.value, _gamma.value
+
+
     def write_debug_output(self, filename: str):
         _libcea.ffi_cea_write_debug_output.argtypes = [c_void_p, c_char_p]
         _libcea.ffi_cea_write_debug_output(byref(self._ffi), filename.encode())

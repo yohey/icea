@@ -163,6 +163,12 @@ namespace CEA {
   }
 
 
+  void Problem::calc_frozen_exhaust(const double& T, const std::optional<const double*>& P_ptr,
+                                    const std::optional<const double*>& cp_ptr, const std::optional<const double*>& gamma_ptr) {
+    ffi_cea_calc_frozen_exhaust(this->_ffi, T, P_ptr.value_or(nullptr), cp_ptr.value_or(nullptr), gamma_ptr.value_or(nullptr));
+  }
+
+
   void Problem::write_debug_output(const char* filename) {
     ffi_cea_write_debug_output(this->_ffi, filename);
   }

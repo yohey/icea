@@ -689,6 +689,26 @@ contains
   end subroutine ffi_run_all_cases
 
 
+  subroutine ffi_calc_frozen_exhaust(ptr, T, P, cp, gamma) bind(C, name = "ffi_cea_calc_frozen_exhaust")
+    use cea, only: CEA_Problem
+
+    type(c_ptr), intent(in):: ptr
+    real(c_double), intent(in):: T
+    real(c_double), intent(out), optional:: P
+    real(c_double), intent(out), optional:: cp
+    real(c_double), intent(out), optional:: gamma
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) then
+       call this%calc_frozen_exhaust(T, P, cp, gamma)
+    end if
+
+    return
+  end subroutine ffi_calc_frozen_exhaust
+
+
   subroutine write_debug_output(ptr, filename) bind(C, name = "ffi_cea_write_debug_output")
     use cea, only: CEA_Problem
 

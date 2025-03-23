@@ -60,6 +60,8 @@ namespace CEA {
     double ffi_cea_get_molecular_weight(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
     double ffi_cea_get_specific_heat_ratio(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
 
+    void ffi_cea_calc_frozen_exhaust(const FFI_CEA_Problem_Unique_Ptr&, const double&, const double* = nullptr, const double* = nullptr, const double* = nullptr);
+
     void ffi_cea_write_debug_output(const FFI_CEA_Problem_Unique_Ptr&, const char*);
 
     FFI_CEA_Problem_Array ffi_cea_read_legacy_input(const char*);

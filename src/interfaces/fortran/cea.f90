@@ -1,4 +1,5 @@
 module cea
+  use mod_constants, only: stderr
   use mod_types, only: CEA_Core_Problem
   implicit none
   private
@@ -24,6 +25,7 @@ module cea
      procedure, public, pass:: get_chamber_temperature
      procedure, public, pass:: get_molecular_weight
      procedure, public, pass:: get_specific_heat_ratio
+     procedure, public, pass:: calc_frozen_exhaust
      procedure, public, pass:: write_debug_output
      final:: del_problem
   end type CEA_Problem
@@ -34,7 +36,7 @@ contains
     type(CEA_Problem), intent(inout):: this
 
 #ifndef NDEBUG
-    write(0, *) '[DEBUG] CEA_Problem (cea.f90) destructor is called: ', trim(this%Case)
+    write(stderr, *) '[DEBUG] CEA_Problem (cea.f90) destructor is called: ', trim(this%Case)
 #endif
 
     return
@@ -43,7 +45,6 @@ contains
 
   subroutine set_problem(this, mode, name, mole_ratios, equilibrium, ions, &
        frozen, frozen_at_throat, thermo_lib, trans_lib)
-    use mod_constants, only: stderr
     use mod_types, only: init_case
     use mod_io, only: set_library_paths
 
@@ -168,7 +169,7 @@ contains
 
 
   subroutine set_chamber_pressures(this, pressure_list, unit)
-    use mod_constants, only: stderr, g0, lb_to_kg, in_to_m
+    use mod_constants, only: g0, lb_to_kg, in_to_m
 
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: pressure_list(:)
@@ -195,8 +196,6 @@ contains
 
 
   subroutine set_mixture_ratios(this, ratio_list, type)
-    use mod_constants, only: stderr
-
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
     character(*), intent(in), optional:: type
@@ -254,8 +253,6 @@ contains
 
 
   subroutine set_finite_area_combustor(this, contraction_ratio, mass_flow_ratio)
-    use mod_constants, only: stderr
-
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in), optional:: contraction_ratio
     real(8), intent(in), optional:: mass_flow_ratio
@@ -280,7 +277,7 @@ contains
 
 
   subroutine add_reactant(this, type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit)
-    use mod_constants, only: stderr, R0
+    use mod_constants, only: R0
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: type
@@ -484,7 +481,7 @@ contains
     integer:: ipt
 
     if (.not. this%Rkt) then
-       write(0, *) '[ERROR] This function is only for Rocket problem.'
+       write(stderr, *) '[ERROR] This function is only for Rocket problem.'
        T = -1
        return
     end if
@@ -523,6 +520,21 @@ contains
 
     return
   end function get_specific_heat_ratio
+
+
+  subroutine calc_frozen_exhaust(this, T, P, cp, gamma)
+    use mod_ext, only: mod_ext_calc_frozen_exhaust => calc_frozen_exhaust
+
+    class(CEA_Problem), intent(in):: this
+    real(8), intent(in):: T
+    real(8), intent(out), optional:: P
+    real(8), intent(out), optional:: cp
+    real(8), intent(out), optional:: gamma
+
+    call mod_ext_calc_frozen_exhaust(this, T, P, cp, gamma)
+
+    return
+  end subroutine calc_frozen_exhaust
 
 
   subroutine write_debug_output(this, filename)

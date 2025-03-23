@@ -20,6 +20,7 @@ target_sources(${CEA_CORE}
   src/core/mod_functions.f90
   src/core/mod_io.f90
   src/core/mod_legacy_io.f90
+  src/core/mod_ext.f90
   src/interfaces/fortran/cea.f90
 )
 
