@@ -2203,7 +2203,6 @@ contains
 
        p1 => cea%points(cea%iOF, 1)
        p2 => cea%points(cea%iOF, 2)
-       p4 => cea%points(cea%iOF, 4)
        p12 => cea%points(cea%iOF, i12)
        pfz => cea%points(cea%iOF, cea%Nfz)
        pth => cea%points(cea%iOF, nptth)
@@ -2487,6 +2486,8 @@ contains
 900          p = cea%points(cea%iOF, cea%ipt)
              p%AeAt = Aratio
              if (cea%Fac .and. .not. done) then
+                p4 => cea%points(cea%iOF, 4)
+
                 if (cea%Iopt == 1) then
                    ! OPTION 1 FOR FINITE AREA COMBUSTOR. INPUT IS ASSIGNED INJECTOR
                    ! PRESSURE AND CONTRACTION RATIO. IMPROVED ESTIMATE FOR PC
