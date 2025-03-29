@@ -508,6 +508,8 @@ contains
 
                 cea%Eql = .true.
 
+                call update_omit_species(cea)
+
                 if (cea%legacy_mode) call OUT3(cea, cea%ipt, IOOUT)
 
                 cea%Iplt = min(cea%ipt, 500)
@@ -2090,7 +2092,7 @@ contains
     ! EXECUTIVE ROUTINE FOR ROCKET PROBLEMS.
     !***********************************************************************
     use mod_types
-    use mod_legacy_io, only: RKTOUT
+    use mod_legacy_io, only: RKTOUT, RKTPLT
 
     type(CEA_Core_Problem), intent(inout):: cea
 
@@ -2103,6 +2105,9 @@ contains
          dlnp, dlnpe, dlt, dp, eln, mat, msq, Pp_old, pcpa, pcplt, pinf, pinj, &
          pinjas, pjrat, ppa, pr, pracat, prat, pratsv, pvg, test, tmelt, usq
     integer:: ip, it
+
+    integer:: i23
+    real(8):: gc, agv, aw
 
     integer:: iar
     type(CEA_Point), pointer:: p !< current point
@@ -2607,7 +2612,49 @@ contains
                 end if
              end if
 
-             call RKTOUT(cea, it)
+             if (cea%SIunit) then
+                gc = 1
+                agv = 1
+             else
+                gc = 32.174
+                agv = 9.80665
+             end if
+
+             if (cea%Iopt > 0) then
+                i23 = 3
+             else
+                i23 = 2
+             end if
+
+             do i = 2, cea%ipt
+                p => cea%points(cea%iOF, i)
+                p%Sonvel = sqrt(R0 * p%Gammas * p%Ttt / p%Wm)
+                p%Spim = sqrt(2 * R0 * (p1%Hsum - p%Hsum)) / agv
+                ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
+                aw = R0 * p%Ttt / (p%Ppp * p%Wm * p%Spim * agv**2)
+
+                if (i == i23) then
+                   if (cea%Iopt == 0) cea%Cstr = gc * p1%Ppp * aw
+                   if (cea%Iopt /= 0) cea%Cstr = gc * p1%Ppp / cea%points(cea%iOF, 2)%App * aw
+                end if
+
+                p%Ivac = p%Spim + p%Ppp * aw
+                p%Vmoc = 0
+                if (p%Sonvel /= 0) p%Vmoc = p%Spim * agv / p%Sonvel
+             end do
+
+             p1%Ivac = 0
+             p1%Spim = 0
+             p1%AeAt = 0
+             p1%Vmoc = 0
+             p => cea%points(cea%iOF, i23)
+             if (p%Gammas == 0) p%Vmoc = 0
+
+             call update_omit_species(cea)
+
+             if (cea%legacy_mode) call RKTOUT(cea, it)
+
+             if (cea%Eql .and. cea%ipt == cea%max_points) call RKTPLT(cea)
 
              cea%Iplt = cea%ipt + nptth * ((cea%ipt - 1) / Ncol)
              if (.not. cea%Page1) then
@@ -3526,10 +3573,12 @@ contains
                       end do
                    else
                       cea%Eql = .true.
+                      call update_omit_species(cea)
                       call OUT3(cea, cea%ipt, IOOUT)
                       cea%Eql = .false.
                    end if
                 else
+                   call update_omit_species(cea)
                    call OUT3(cea, cea%ipt, IOOUT)
                 end if
              end if
@@ -3668,6 +3717,7 @@ contains
                 write(IOOUT, '(/" THERMODYNAMIC PROPERTIES"/)')
                 call OUT2(cea, cea%ipt, IOOUT)
                 if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
+                call update_omit_species(cea)
                 call OUT3(cea, cea%ipt, IOOUT)
              end if
 
@@ -4151,5 +4201,80 @@ contains
        p%Preql = p%Vis * p%Cpeql / p%Coneql
     end if
   end subroutine TRANP
+
+
+  subroutine update_omit_species(cea)
+    use mod_types, only: CEA_Core_Problem, CEA_Point
+    use mod_legacy_io, only: get_print_cols
+
+    type(CEA_Core_Problem), intent(inout):: cea
+
+    logical:: kOK, kin
+    integer:: i, k, m, im
+    real(8):: tra, tem
+
+    type(CEA_Point), pointer:: p
+
+    integer:: n_cols_print
+    integer, allocatable:: i_cols_print(:)
+    real(8), allocatable:: X(:)
+
+    call get_print_cols(cea, cea%ipt, i_cols_print)
+    n_cols_print = size(i_cols_print)
+    allocate(X(n_cols_print))
+
+    tra = 5.d-6
+    if (cea%Trace /= 0.) tra = cea%Trace
+
+    if (cea%Eql) then
+       cea%num_omitted = 0
+
+       do k = 1, cea%Ngc
+          kOK = .true.
+
+          if (k > cea%Ng .and. k < cea%Ngc .and. cea%Prod(k) == cea%Prod(k+1)) then
+             kOK = .false.
+             im = 0
+          else
+             do m = 1, cea%Nplt
+                im = 0
+                if (cea%Pltvar(m) == cea%Prod(k) .or. '*' // cea%Pltvar(m) == cea%Prod(k)) then
+                   im = m
+                   exit
+                end if
+             end do
+          end if
+
+          kin = .false.
+          do i = 1, n_cols_print
+             p => cea%points(cea%iOF, i_cols_print(i))
+
+             if (cea%Massf) then
+                tem = cea%Mw(k)
+             else
+                tem = 1 / p%Totn
+             end if
+             if (k <= cea%Ng) then
+                X(i) = p%En(k) * tem
+             else
+                if (cea%Prod(k) /= cea%Prod(k-1)) X(i) = 0
+                if (p%En(k) > 0) X(i) = p%En(k) * tem
+             end if
+             if (kOK .and. X(i) >= tra) kin = .true.
+          end do
+
+          if (kin) then
+             if (cea%Prod(k) == cea%Omit(cea%num_omitted)) cea%num_omitted = cea%num_omitted - 1
+          else if (cea%Prod(k) /= cea%Prod(k-1)) then
+             cea%num_omitted = cea%num_omitted + 1
+             cea%Omit(cea%num_omitted) = cea%Prod(k)
+          end if
+       end do
+    end if
+
+    deallocate(X)
+
+    return
+  end subroutine update_omit_species
 
 end module mod_cea

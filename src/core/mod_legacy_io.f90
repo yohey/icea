@@ -1338,13 +1338,13 @@ contains
     !***********************************************************************
     use mod_types, only: CEA_Core_Problem, CEA_Point, Ncol
 
-    type(CEA_Core_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: i_col_end
     integer, intent(in):: io_out
 
     character(4):: mamo
-    logical:: kOK
-    integer:: i, k, m, im, kin
+    logical:: kOK, kin
+    integer:: i, k, m, im
     real(8):: tra, tem
 
     type(CEA_Point), pointer:: p
@@ -1369,7 +1369,6 @@ contains
 
     if (cea%Eql) then
        if (cea%legacy_mode) write(io_out, '(/1x, A4, " FRACTIONS"/)') mamo
-       cea%num_omitted = 0
 
        do k = 1, cea%Ngc
           kOK = .true.
@@ -1387,7 +1386,7 @@ contains
              end do
           end if
 
-          kin = 0
+          kin = .false.
           do i = 1, n_cols_print
              p => cea%points(cea%iOF, i_cols_print(i))
 
@@ -1402,10 +1401,10 @@ contains
                 if (cea%Prod(k) /= cea%Prod(k-1)) X(i) = 0
                 if (p%En(k) > 0) X(i) = p%En(k) * tem
              end if
-             if (kOK .and. X(i) >= tra) kin = 1
+             if (kOK .and. X(i) >= tra) kin = .true.
           end do
 
-          if (kin == 1) then
+          if (kin) then
              if (cea%legacy_mode) then
                 if (cea%Trace == 0) then
                    write(io_out, '(1x, A15, F9.5, 12F9.5)') cea%Prod(k), X(1:n_cols_print)
@@ -1413,10 +1412,6 @@ contains
                    call EFMT(cea%fmt(4), cea%Prod(k), X, n_cols_print)
                 end if
              end if
-             if (cea%Prod(k) == cea%Omit(cea%num_omitted)) cea%num_omitted = cea%num_omitted - 1
-          else if (cea%Prod(k) /= cea%Prod(k-1)) then
-             cea%num_omitted = cea%num_omitted + 1
-             cea%Omit(cea%num_omitted) = cea%Prod(k)
           end if
        end do
     end if
@@ -1852,19 +1847,19 @@ contains
     !***********************************************************************
     use mod_types
 
-    type(CEA_Core_Problem), intent(inout):: cea
+    type(CEA_Core_Problem), intent(in):: cea
     integer, intent(in):: it
 
     ! LOCAL VARIABLES
+    character(4), dimension(30):: fmt
     character(4):: exit(11) = 'EXIT'
     character(15):: fi, fiv, fr, z(4)
-    integer:: i, i23, ione, ixfr, ixfz, j, k, line, ln
-    integer:: mae, mcf, misp, mivac, mmach, mppf, mppj, nex
-    real(8):: agv, aw, gc, tem, tra, vaci(Ncol), ww
+    integer:: i, j, k, line, ln, nex
+    real(8):: agv, gc, tem, tra, vaci(Ncol), ww
 
     type(CEA_Point), pointer:: p !< current point
     type(CEA_Point), pointer:: pfz
-    type(CEA_Point), pointer:: p1, p2, p23
+    type(CEA_Point), pointer:: p1, p2
 
     integer:: i_col_end
     integer:: n_cols_print
@@ -1873,6 +1868,8 @@ contains
     real(8), allocatable:: out_AeAt(:), out_App(:), X(:)
 
     ww = 0
+
+    fmt = cea%fmt
 
     i_col_end = cea%ipt
     call get_print_cols(cea, i_col_end, i_cols_print)
@@ -1888,17 +1885,15 @@ contains
        out_App(i) = p%App
     end do
 
-    if (cea%legacy_mode) then
-       if (.not. cea%Eql) then
-          write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
-          if (cea%Nfz > 1) write(IOOUT, '(33x, "AFTER POINT", i2)') cea%Nfz
+    if (.not. cea%Eql) then
+       write(IOOUT, '(/////10x, " THEORETICAL ROCKET PERFORMANCE ASSUMING FROZEN COMPOSITION")')
+       if (cea%Nfz > 1) write(IOOUT, '(33x, "AFTER POINT", i2)') cea%Nfz
+    else
+       write(IOOUT, '(/////13x, " THEORETICAL ROCKET PERFORMANCE ASSUMING EQUILIBRIUM")')
+       if (cea%Iopt /= 0) then
+          write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
        else
-          write(IOOUT, '(/////13x, " THEORETICAL ROCKET PERFORMANCE ASSUMING EQUILIBRIUM")')
-          if (cea%Iopt /= 0) then
-             write(IOOUT, '(/11x, " COMPOSITION DURING EXPANSION FROM FINITE AREA COMBUSTOR")')
-          else
-             write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
-          end if
+          write(IOOUT, '(/10x, " COMPOSITION DURING EXPANSION FROM INFINITE AREA COMBUSTOR")')
        end if
     end if
 
@@ -1906,56 +1901,171 @@ contains
     p1 => cea%points(cea%iOF, 1)
     p2 => cea%points(cea%iOF, 2)
 
-    if (cea%legacy_mode .and. p1%Ttt == cea%T(it)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
+    if (p1%Ttt == cea%T(it)) write(IOOUT, '(25X, "AT AN ASSIGNED TEMPERATURE  ")')
 
     tem = p1%Ppp * 14.696006d0 / 1.01325d0
-    if (cea%legacy_mode) write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
+    write(IOOUT, '(/1x, a3, " =", f8.1, " PSIA")') 'Pin', tem
 
-    i23 = 2
     if (cea%Iopt > 0) then
-       if (cea%legacy_mode) then
-          if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), p2%App
-          if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%mdotByAc, p2%App
-       end if
-       i23 = 3
+       if (cea%Iopt == 1) write(IOOUT, '(" Ac/At =", f8.4, 6x, "Pinj/Pinf =", f10.6)') cea%Subar(1), p2%App
+       if (cea%Iopt == 2) write(IOOUT, '(" MDOT/Ac =", f10.3, " (KG/S)/M**2", 6x, "Pinj/Pinf =", f10.6)') cea%mdotByAc, p2%App
     end if
 
-    if (cea%legacy_mode) call OUT1(cea, IOOUT)
+    call OUT1(cea, IOOUT)
 
-    cea%fmt(4) = cea%fmt(6)
+    fmt(4) = fmt(6)
     nex = n_cols_print - 2
-    if (cea%Page1) then
-       ione = 0
-    else
-       ione = i23
-    end if
 
     ! PRESSURE RATIOS
     if (cea%Iopt == 0) then
-       if (cea%legacy_mode) write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
-       cea%fmt = VARFMT(cea%fmt, out_App, n_cols_print)
-       if (cea%legacy_mode) write(IOOUT, cea%fmt) 'Pinf/P         ', out_App(:)
+       write(IOOUT, '(/17X, "CHAMBER   THROAT", 11(5X, A4))') (exit(i), i = 1, nex)
+       fmt = VARFMT(fmt, out_App, n_cols_print)
+       write(IOOUT, fmt) 'Pinf/P         ', out_App(:)
     else
        nex = nex - 1
-       if (cea%legacy_mode) write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
+       write(IOOUT, '(/, 17X, "INJECTOR  COMB END  THROAT", 10(5X, A4))') (exit(i), i = 1, nex)
        X(1) = 1.d0
        do i = 2, n_cols_print
           p => cea%points(cea%iOF, i_cols_print(i))
           X(i) = p1%Ppp / p%Ppp
        end do
-       cea%fmt = VARFMT(cea%fmt, X, n_cols_print)
-       if (cea%legacy_mode) write(IOOUT, cea%fmt) 'Pinj/P         ', X(:)
+       fmt = VARFMT(fmt, X, n_cols_print)
+       write(IOOUT, fmt) 'Pinj/P         ', X(:)
     end if
 
-    if (cea%legacy_mode) call OUT2(cea, cea%ipt, IOOUT)
+    call OUT2(cea, cea%ipt, IOOUT)
 
-    mppf  = 0
-    mppj  = 0
-    mmach = 0
-    mae   = 0
-    mcf   = 0
-    mivac = 0
-    misp  = 0
+
+    if (cea%SIunit) then
+       agv = 1
+       gc = 1
+       fr = 'CSTAR, M/SEC'
+       fiv = 'Ivac, M/SEC'
+       fi = 'Isp, M/SEC'
+    else
+       gc = 32.174
+       agv = 9.80665
+       fr = 'CSTAR, FT/SEC'
+       fiv = 'Ivac,LB-SEC/LB'
+       fi = 'Isp, LB-SEC/LB'
+    end if
+
+    do k = 2, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(k))
+       vaci(k) = p%Ivac
+    end do
+
+    ! MACH NUMBER
+    fmt(4) = '13'
+    fmt(5) = ''
+    fmt(7) = '3,'
+    write(IOOUT, fmt) 'MACH NUMBER    ', (cea%points(cea%iOF, i_cols_print(i))%Vmoc, i = 1, n_cols_print)
+    if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
+    write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
+
+    ! AREA RATIO
+    fmt(4) = '9x,'
+    fmt = VARFMT(fmt, out_AeAt, n_cols_print)
+    fmt(5) = ' '
+    write(IOOUT, fmt) 'Ae/At          ', out_AeAt(2:)
+
+    ! C*
+    fmt(5) = '13'
+    fmt(6) = cea%fmt(8)
+    fmt(7) = '1,'
+    write(IOOUT, fmt) fr, (cea%Cstr, j = 2, n_cols_print)
+
+    ! CF - THRUST COEFICIENT
+    fmt(7) = '4,'
+    do i = 2, n_cols_print
+       p => cea%points(cea%iOF, i_cols_print(i))
+       X(i) = gc * p%Spim / cea%Cstr
+    end do
+    write(IOOUT, fmt) 'CF             ', X(2:n_cols_print)
+
+    ! VACUUM IMPULSE
+    fmt(5) = '13'
+    fmt(7) = '1,'
+    write(IOOUT, fmt) fiv, vaci(2:n_cols_print)
+
+    ! SPECIFIC IMPULSE
+    write(IOOUT, fmt) fi, (cea%points(cea%iOF, i_cols_print(i))%Spim, i = 2, n_cols_print)
+
+    write(IOOUT, *)
+    fmt(4) = ' '
+    fmt(5) = '13'
+    fmt(7) = '5,'
+
+    if (cea%Iopt /= 0) then
+       fmt(4) = fmt(8)
+       fmt(5) = fmt(9)
+    end if
+
+    if (.not. cea%Eql) then
+       if (cea%Massf) then
+          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
+       else
+          write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
+          ww = 1 / pfz%Totn
+       end if
+
+       ! MOLE (OR MASS) FRACTIONS - FROZEN
+       tra = 5e-6
+       if (cea%Trace /= 0) tra = cea%Trace
+       line = 0
+
+       do k = 1, cea%Ngc
+          if (cea%Massf) ww = cea%Mw(k)
+          X(line+1) = pfz%En(k) * ww
+
+          if (X(line+1) >= tra) then
+             line = line + 1
+             z(line) = cea%Prod(k)
+          end if
+
+          if (line == 3 .or. k == cea%Ngc) then
+             if (line == 0) then
+                call OUT3(cea, cea%ipt, IOOUT)
+                deallocate(out_AeAt)
+                deallocate(out_App)
+                return
+             end if
+             write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), X(ln), ln = 1, line)
+             line = 0
+          end if
+       end do
+    end if
+
+    call OUT3(cea, cea%ipt, IOOUT)
+
+    deallocate(i_cols_print)
+    deallocate(out_AeAt)
+    deallocate(out_App)
+    deallocate(X)
+
+    return
+  end subroutine RKTOUT
+
+
+  subroutine RKTPLT(cea)
+    use mod_types, only: CEA_Core_Problem, CEA_Point
+
+    type(CEA_Core_Problem), intent(inout):: cea
+
+    integer:: i, ipt, iplt
+    integer:: ixfr, ixfz, mppj, mppf, mmach, mae, mcf, mivac, misp
+    real(8):: gc
+    type(CEA_Point), pointer:: p, p1
+
+    p1 => cea%points(cea%iOF, 1)
+
+    mppj   = 0
+    mppf   = 0
+    mmach  = 0
+    mae    = 0
+    mcf    = 0
+    mivac  = 0
+    misp   = 0
 
     do i = 1, cea%Nplt
        ixfz = index(cea%Pltvar(i)(2:), 'fz')
@@ -1984,149 +2094,25 @@ contains
     end do
 
     if (cea%SIunit) then
-       agv = 1
        gc = 1
-       fr = 'CSTAR, M/SEC'
-       fiv = 'Ivac, M/SEC'
-       fi = 'Isp, M/SEC'
     else
        gc = 32.174
-       agv = 9.80665
-       fr = 'CSTAR, FT/SEC'
-       fiv = 'Ivac,LB-SEC/LB'
-       fi = 'Isp, LB-SEC/LB'
     end if
 
-    do k = 2, n_cols_print
-       p => cea%points(cea%iOF, i_cols_print(k))
-       p%Spim = sqrt(2 * R0 * (p1%Hsum - p%Hsum)) / agv
-       ! AW IS THE LEFT SIDE OF EQ.(6.12) IN RP-1311, PT I.
-       aw = R0 * p%Ttt / (p%Ppp * p%Wm * p%Spim * agv**2)
-       if (k == i23) then
-          if (cea%Iopt == 0) cea%Cstr = gc * p1%Ppp * aw
-          if (cea%Iopt /= 0) cea%Cstr = gc * p1%Ppp / cea%points(cea%iOF, 2)%App * aw
-       end if
-       vaci(k) = p%Spim + p%Ppp * aw
-       p%Vmoc = 0
-       if (p%Sonvel /= 0) p%Vmoc = p%Spim * agv / p%Sonvel
+    do ipt = 1, cea%max_points
+       p => cea%points(cea%iOF, ipt)
+       iplt = ipt + (cea%iOF - 1) * cea%max_points
+       if (mppj > 0)  cea%Pltout(iplt, mppj)  = p1%Ppp / p%Ppp
+       if (mppf > 0)  cea%Pltout(iplt, mppf)  = p%App
+       if (mmach > 0) cea%Pltout(iplt, mmach) = p%Vmoc
+       if (mae > 0)   cea%Pltout(iplt, mae)   = p%AeAt
+       if (mcf > 0 .and. ipt > 1) cea%Pltout(iplt, mcf) = gc * p%Spim / cea%Cstr
+       if (mivac > 0) cea%Pltout(iplt, mivac) = p%Ivac
+       if (misp > 0)  cea%Pltout(iplt, misp)  = p%Spim
     end do
-
-    ! MACH NUMBER
-    p1%Vmoc = 0
-    p23 => cea%points(cea%iOF, i_cols_print(i23))
-    if (p23%Gammas == 0) p23%Vmoc = 0
-    cea%fmt(4) = '13'
-    cea%fmt(5) = ''
-    cea%fmt(7) = '3,'
-    if (cea%legacy_mode) then
-       write(IOOUT, cea%fmt) 'MACH NUMBER    ', (cea%points(cea%iOF, i_cols_print(i))%Vmoc, i = 1, n_cols_print)
-       if (cea%Trnspt) call OUT4(cea, cea%ipt, IOOUT)
-       write(IOOUT, '(/" PERFORMANCE PARAMETERS"/)')
-    end if
-
-    ! AREA RATIO
-    cea%fmt(4) = '9x,'
-    cea%fmt = VARFMT(cea%fmt, out_AeAt, n_cols_print)
-    cea%fmt(5) = ' '
-    if (cea%legacy_mode) write(IOOUT, cea%fmt) 'Ae/At          ', out_AeAt(2:)
-
-    ! C*
-    cea%fmt(5) = '13'
-    cea%fmt(6) = cea%fmt(8)
-    cea%fmt(7) = '1,'
-    if (cea%legacy_mode) write(IOOUT, cea%fmt) fr, (cea%Cstr, j = 2, n_cols_print)
-
-    ! CF - THRUST COEFICIENT
-    cea%fmt(7) = '4,'
-    do i = 2, n_cols_print
-       p => cea%points(cea%iOF, i_cols_print(i))
-       X(i) = gc * p%Spim / cea%Cstr
-    end do
-    if (cea%legacy_mode) write(IOOUT, cea%fmt) 'CF             ', X(2:n_cols_print)
-
-    ! VACUUM IMPULSE
-    cea%fmt(5) = '13'
-    cea%fmt(7) = '1,'
-    if (cea%legacy_mode) write(IOOUT, cea%fmt) fiv, vaci(2:n_cols_print)
-
-    ! SPECIFIC IMPULSE
-    if (cea%legacy_mode) write(IOOUT, cea%fmt) fi, (cea%points(cea%iOF, i_cols_print(i))%Spim, i = 2, n_cols_print)
-
-    if (cea%Nplt > 0) then
-       p1 => cea%points(cea%iOF, 1)
-       p1%Spim = 0
-       p1%AeAt = 0
-       p1%Vmoc = 0
-       vaci(1) = 0
-       X(1) = 0
-       do i = ione + 1, n_cols_print
-          p => cea%points(cea%iOF, i_cols_print(i))
-          if (mppj > 0)  cea%Pltout(i+cea%Iplt-ione, mppj)  = p1%Ppp / p%Ppp
-          if (mppf > 0)  cea%Pltout(i+cea%Iplt-ione, mppf)  = p%App
-          if (mmach > 0) cea%Pltout(i+cea%Iplt-ione, mmach) = p%Vmoc
-          if (mae > 0)   cea%Pltout(i+cea%Iplt-ione, mae)   = p%AeAt
-          if (mcf > 0)   cea%Pltout(i+cea%Iplt-ione, mcf)   = X(i)
-          if (mivac > 0) cea%Pltout(i+cea%Iplt-ione, mivac) = vaci(i)
-          if (misp > 0)  cea%Pltout(i+cea%Iplt-ione, misp)  = p%Spim
-       end do
-    end if
-
-    if (cea%legacy_mode) write(IOOUT, *)
-    cea%fmt(4) = ' '
-    cea%fmt(5) = '13'
-    cea%fmt(7) = '5,'
-
-    if (cea%Iopt /= 0) then
-       cea%fmt(4) = cea%fmt(8)
-       cea%fmt(5) = cea%fmt(9)
-    end if
-
-    if (.not. cea%Eql) then
-       if (cea%Massf) then
-          if (cea%legacy_mode) write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MASS'
-       else
-          if (cea%legacy_mode) write(IOOUT, '(1x, A4, " FRACTIONS"/)') 'MOLE'
-          ww = 1 / pfz%Totn
-       end if
-
-       ! MOLE (OR MASS) FRACTIONS - FROZEN
-       if (cea%legacy_mode) then
-          tra = 5e-6
-       else
-          tra = 5d-6
-       end if
-       if (cea%Trace /= 0) tra = cea%Trace
-       line = 0
-
-       do k = 1, cea%Ngc
-          if (cea%Massf) ww = cea%Mw(k)
-          X(line+1) = pfz%En(k) * ww
-
-          if (X(line+1) >= tra) then
-             line = line + 1
-             z(line) = cea%Prod(k)
-          end if
-
-          if (line == 3 .or. k == cea%Ngc) then
-             if (line == 0) then
-                if (cea%legacy_mode) call OUT3(cea, cea%ipt, IOOUT)
-                deallocate(out_AeAt)
-                deallocate(out_App)
-                return
-             end if
-             if (cea%legacy_mode) write(IOOUT, '(1x, 3(a15, f8.5, 3x))') (z(ln), X(ln), ln = 1, line)
-             line = 0
-          end if
-       end do
-    end if
-
-    if (cea%legacy_mode) call OUT3(cea, cea%ipt, IOOUT)
-
-    deallocate(out_AeAt)
-    deallocate(out_App)
 
     return
-  end subroutine RKTOUT
+  end subroutine RKTPLT
 
 
   subroutine UTHERM(cea, readOK)
@@ -2593,7 +2579,7 @@ contains
     character(*), intent(in):: filename
 
     integer:: num_cases, IOPLT
-    integer:: i, j, k, icase, iof, ipt, iplt, max_points
+    integer:: i, j, k, icase, iof, ipt, iplt
     integer:: mcond, mcondf, mpn, mpnf, mvis
     integer:: mp, mt, mrho, mh, mie, mg, ms, mm, mcp, mgam, mson, mpf, mof, mph, meq, mfa, mmw, mdvt, mdvp
     real(8):: pfactor, vnum
@@ -2608,15 +2594,6 @@ contains
     Pltout(:, :, :) = 0
 
     do icase = 1, num_cases
-       if (cea(icase)%Shock) then
-          max_points = cea(icase)%Nsk
-       else
-          max_points = cea(icase)%Nt * cea(icase)%Np
-          if (cea(icase)%Rkt) then
-             max_points = max_points * (cea(icase)%Npp + cea(icase)%Nsub + cea(icase)%Nsup)
-          end if
-       end if
-
        Pltout(icase, :, :) = cea(icase)%Pltout(:, :)
 
        ! SET MXX ARRAY FOR PLOTTING PARAMETERS
@@ -2727,10 +2704,9 @@ contains
           end if
 
           do iof = 1, cea(icase)%Nof
-             do ipt = 1, max_points
+             do ipt = 1, cea(icase)%max_points
                 p => cea(icase)%points(iof, ipt)
-                iplt = ipt + (iof - 1) * max_points
-
+                iplt = ipt + (iof - 1) * cea(icase)%max_points
                 if (mof > 0) Pltout(icase, iplt, mof) = cea(icase)%Oxf(iof)
                 if (mpf > 0) Pltout(icase, iplt, mpf) = 100 / (1 + cea(icase)%Oxf(iof))
                 if (mph > 0) Pltout(icase, iplt, mph) = -(cea(icase)%Vmin(2) + cea(icase)%Vpls(2)) &

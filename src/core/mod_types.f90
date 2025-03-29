@@ -48,7 +48,7 @@ module mod_types
      real(8):: Ppp, Ssum, Totn, Ttt, Vlm, Wm
      real(8):: Sonvel, Spim, Vmoc
      ! ROCKET
-     real(8):: AeAt, App
+     real(8):: AeAt, App, Ivac
      ! SHCK
      real(8):: U1, Mach1
      ! TRANP
@@ -232,7 +232,12 @@ contains
     else
        cea%max_points = cea%Nt * cea%Np
        if (cea%Rkt) then
-          cea%max_points = cea%max_points * (cea%Npp_in + cea%Nsub_in + cea%Nsup_in) + 4
+          cea%max_points = cea%max_points * (cea%Npp_in + cea%Nsub_in + cea%Nsup_in)
+          if (cea%Fac) then
+             cea%max_points = cea%max_points + 3
+          else
+             cea%max_points = cea%max_points + 2
+          end if
        end if
     end if
 
