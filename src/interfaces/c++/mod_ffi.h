@@ -28,6 +28,7 @@ namespace CEA {
   extern "C" {
     FFI_CEA_Problem_Ptr ffi_cea_new_problem();
     void ffi_cea_del_problem(const FFI_CEA_Problem_Ptr&);
+    FFI_CEA_Problem_Ptr ffi_cea_replica(const FFI_CEA_Problem_Ptr&);
 
     void ffi_cea_set_problem(const FFI_CEA_Problem_Unique_Ptr&, const char*, const char* = nullptr, const bool& = false, const bool& = false, const bool& = false,
                              const bool& = false, const bool& = false, const char* = nullptr, const char* = nullptr);

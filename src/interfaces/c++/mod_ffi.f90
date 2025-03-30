@@ -43,6 +43,28 @@ contains
   end subroutine del_problem
 
 
+  function replica(ptr) result(ptr_replica) bind(C, name = "ffi_cea_replica")
+    use cea, only: CEA_Problem
+
+    type(c_ptr):: ptr_replica
+    type(c_ptr), intent(in):: ptr
+
+    type(CEA_Problem), pointer:: cea => null()
+    type(CEA_Problem), pointer:: cea_replica => null()
+
+    call c_f_pointer(ptr, cea)
+
+    if (associated(cea)) then
+       allocate(cea_replica)
+       call cea%copy_problem(cea_replica)
+    end if
+
+    ptr_replica = c_loc(cea_replica)
+
+    return
+  end function replica
+
+
   subroutine set_problem(ptr, mode, name, mole_ratios, equilibrium, ions, &
        frozen, frozen_at_throat, thermo_lib, trans_lib) bind(C, name = "ffi_cea_set_problem")
     use cea, only: CEA_Problem

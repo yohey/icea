@@ -12,11 +12,7 @@ namespace CEA {
   Problem::Problem(Problem&& other): _ffi(std::move(other._ffi)) {
   }
 
-  Problem::Problem(const Problem& other) {
-    size_t obj_size = ffi_cea_sizeof(other._ffi);
-    FFI_CEA_Problem_Ptr ptr(malloc(obj_size));
-    std::memcpy(ptr, other._ffi.get(), obj_size);
-    this->_ffi = FFI_CEA_Problem_Unique_Ptr(ptr, [](void* p){ ffi_cea_del_problem(p); });
+  Problem::Problem(const Problem& other): _ffi(ffi_cea_replica(other._ffi.get()), [](void* p){ ffi_cea_del_problem(p); }) {
   }
 
   Problem::Problem(FFI_CEA_Problem_Ptr ptr): _ffi(ptr, [](void* p){ ffi_cea_del_problem(p); }) {

@@ -7,6 +7,8 @@ module cea
   type, extends(CEA_Core_Problem), public:: CEA_Problem
      private
    contains
+     final:: del_problem
+     procedure, public, pass:: copy_problem
      procedure, public, pass:: set_problem
      procedure, public, pass:: set_output_options
      procedure, public, pass:: set_chamber_pressures
@@ -29,7 +31,6 @@ module cea
      procedure, public, pass:: calc_frozen_exhaust
      procedure, public, pass:: get_thermo_reference_properties
      procedure, public, pass:: write_debug_output
-     final:: del_problem
   end type CEA_Problem
 
 contains
@@ -45,10 +46,33 @@ contains
   end subroutine del_problem
 
 
+  subroutine copy_problem(this, cea_copy)
+    class(CEA_Problem), intent(in):: this
+    type(CEA_Problem), intent(out):: cea_copy
+
+    cea_copy = this
+
+    nullify(cea_copy%thermo_properties)
+    nullify(cea_copy%points)
+
+    if (associated(this%thermo_properties)) then
+       allocate(cea_copy%thermo_properties(size(this%thermo_properties)))
+       cea_copy%thermo_properties = this%thermo_properties
+    end if
+
+    if (associated(this%points)) then
+       allocate(cea_copy%points(size(this%points, 1), size(this%points, 2)))
+       cea_copy%points = this%points
+    end if
+
+    return
+  end subroutine copy_problem
+
+
   subroutine set_problem(this, mode, name, mole_ratios, equilibrium, ions, &
        frozen, frozen_at_throat, thermo_lib, trans_lib)
     use mod_types, only: init_case
-    use mod_io, only: set_library_paths
+    use mod_io, only: set_library_paths, read_thermo_lib
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: mode
@@ -123,6 +147,8 @@ contains
     end if
 
     call set_library_paths(this, thermo_lib, trans_lib)
+
+    if (.not. associated(this%thermo_properties)) call read_thermo_lib(this)
 
     return
   end subroutine set_problem
@@ -624,7 +650,7 @@ contains
   subroutine get_thermo_reference_properties(this, name, M, T_ref, h0_ref)
     use mod_ext, only: mod_ext_get_thermo_reference_properties => get_thermo_reference_properties
 
-    class(CEA_Problem), intent(inout):: this
+    class(CEA_Problem), intent(in):: this
     character(*), intent(in):: name
     real(8), intent(out):: M
     real(8), intent(out):: T_ref

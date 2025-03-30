@@ -108,11 +108,9 @@ contains
 
 
   subroutine get_thermo_reference_properties(cea, name, M, T_ref, h0_ref)
-    use mod_constants, only: cal_to_J
     use mod_types, only: CEA_Core_Problem, ThermoProperty
-    use mod_io, only: read_thermo_lib
 
-    class(CEA_Core_Problem), intent(inout):: cea
+    class(CEA_Core_Problem), intent(in):: cea
     character(*), intent(in):: name
     real(8), intent(out):: M
     real(8), intent(out):: T_ref
@@ -124,8 +122,6 @@ contains
     M = 0
     T_ref = 0
     h0_ref = 0
-
-    if (.not. associated(cea%thermo_properties)) call read_thermo_lib(cea)
 
     do i = 1, size(cea%thermo_properties)
        th => cea%thermo_properties(i)
