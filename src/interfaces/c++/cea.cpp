@@ -88,6 +88,24 @@ namespace CEA {
     ffi_cea_add_reactant(this->_ffi, type, name, formula_ffi, ratio_ptr, T_ptr, rho_ptr, h_ptr, u_ptr, T_unit_ffi, rho_unit_ffi, h_unit_ffi, u_unit_ffi);
   }
 
+  void Problem::set_reactant(const size_t& index, const std::optional<double>& ratio,
+                             const std::optional<double>& T, const std::optional<double>& rho,
+                             const std::optional<double>& h, const std::optional<double>& u,
+                             const std::optional<const char*>& T_unit, const std::optional<const char*>& rho_unit,
+                             const std::optional<const char*>& h_unit, const std::optional<const char*>& u_unit) {
+    const double* ratio_ptr = ratio.has_value() ? &ratio.value() : nullptr;
+    const double* T_ptr = T.has_value() ? &T.value() : nullptr;
+    const double* rho_ptr = rho.has_value() ? &rho.value() : nullptr;
+    const double* h_ptr = h.has_value() ? &h.value() : nullptr;
+    const double* u_ptr = u.has_value() ? &u.value() : nullptr;
+    const char* T_unit_ffi = T_unit.value_or(nullptr);
+    const char* rho_unit_ffi = rho_unit.value_or(nullptr);
+    const char* h_unit_ffi = h_unit.value_or(nullptr);
+    const char* u_unit_ffi = u_unit.value_or(nullptr);
+
+    ffi_cea_set_reactant(this->_ffi, index, ratio_ptr, T_ptr, rho_ptr, h_ptr, u_ptr, T_unit_ffi, rho_unit_ffi, h_unit_ffi, u_unit_ffi);
+  }
+
 
   void Problem::set_insert_species(const std::vector<std::string>& species) {
     std::vector<size_t> char_length_array(species.size());

@@ -53,12 +53,6 @@ contains
 
     close(io_thermo)
 
-#ifndef NDEBUG
-    write(0, *) '[DEBUG] Done: subroutine read_thermo_lib'
-    write(0, *) '[DEBUG]     Case = ', trim(cea%Case)
-    write(0, *) '[DEBUG]     Tg, ntgas, ntot, nall, thdate = ', cea%Tg, ntgas, ntot, nall, cea%Thdate
-#endif
-
     return
   end subroutine read_thermo_lib
 

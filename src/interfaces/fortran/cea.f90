@@ -16,6 +16,7 @@ module cea
      procedure, public, pass:: set_supersonic_area_ratios
      procedure, public, pass:: set_finite_area_combustor
      procedure, public, pass:: add_reactant
+     procedure, public, pass:: set_reactant
      procedure, public, pass:: set_insert_species
      procedure, public, pass:: set_omit_species
      procedure, public, pass:: set_only_species
@@ -306,7 +307,8 @@ contains
        return
     end if
 
-    this%Nreac = this%Nreac + 1
+    this%Nreac_in = this%Nreac_in + 1
+    this%Nreac = this%Nreac_in
 
     this%Energy(this%Nreac) = 'lib'
 
@@ -395,6 +397,87 @@ contains
 
     return
   end subroutine add_reactant
+
+
+  subroutine set_reactant(this, index, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit)
+    use mod_constants, only: R0
+    use mod_legacy_io, only: REACT
+
+    class(CEA_Problem), intent(inout):: this
+    integer, intent(in):: index
+    real(8), intent(in), optional:: ratio
+    real(8), intent(in), optional:: T
+    real(8), intent(in), optional:: rho
+    real(8), intent(in), optional:: h
+    real(8), intent(in), optional:: u
+    character(*), intent(in), optional:: T_unit
+    character(*), intent(in), optional:: rho_unit
+    character(*), intent(in), optional:: h_unit
+    character(*), intent(in), optional:: u_unit
+
+    real(8):: T_factor = 1
+    real(8):: rho_factor = 1
+    real(8):: h_factor = 1000 / R0
+    real(8):: u_factor = 1000 / R0
+
+    if (index > this%Nreac) then
+       write(stderr, *) '[ERROR] Invalid reactant index: ', index, ' (< ', this%Nreac, ')'
+       return
+    end if
+
+    this%Energy(index) = 'lib'
+    this%Nreac = this%Nreac_in
+
+    if (present(ratio)) then
+       this%Pecwt(index) = ratio
+    else
+       this%Pecwt(index) = 1
+    end if
+
+    if (present(T)) then
+       if (present(T_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: T_unit = ', trim(T_unit)
+          return
+       end if
+
+       this%Rtemp(index) = T * T_factor
+    end if
+
+    if (present(rho)) then
+       if (present(rho_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
+          return
+       end if
+
+       this%Dens(index) = rho * rho_factor
+    end if
+
+    if (present(h)) then
+       if (present(h_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: h_unit = ', trim(h_unit)
+          return
+       end if
+
+       this%Energy(index) = 'h,j'
+       this%Enth(index) = h * h_factor
+    end if
+
+    if (present(u)) then
+       if (present(u_unit)) then
+          write(stderr, *) '[ERROR] Not implemented yet: u_unit = ', trim(u_unit)
+          return
+       end if
+
+       this%Energy(index) = 'u,j'
+       this%Enth(index) = u * u_factor
+    end if
+
+    this%Nlm = 0
+    this%Size = 0
+    this%Hsub0 = 1d30
+
+    return
+  end subroutine set_reactant
 
 
   subroutine set_insert_species(this, species)

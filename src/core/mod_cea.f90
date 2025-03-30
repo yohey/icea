@@ -1963,7 +1963,7 @@ contains
        ! COMPLETE ENERGY ROW AND TEMPERATURE COLUMN
        if (kmat /= iq2) then
           if (cea%Sp) energyl = cea%S0 + cea%Enn - cea%Sumn - sss
-          if (cea%Hp) energyl = cea%Hsub0/cea%Tt - p%Hsum
+          if (cea%Hp) energyl = cea%Hsub0 / cea%Tt - p%Hsum
           cea%G(iq2, iq3) = cea%G(iq2, iq3) + energyl
           cea%G(iq2, iq2) = cea%G(iq2, iq2) + cea%Cpsum
        end if
@@ -2018,11 +2018,10 @@ contains
 
     ! LOCAL VARIABLES
     integer:: i, j
-    real(8):: assval, bigb, bratio, dbi, smalb, tem, v1, v2
+    real(8):: bigb, bratio, dbi, smalb, tem, v1, v2
 
     type(CEA_Point), pointer:: p !< current point
 
-    assval = 0
     bigb = 0
     smalb = 0
 
@@ -2059,8 +2058,7 @@ contains
     end if
 
     ! IF ASSIGNED U OR H NOT GIVEN IN PROB DATA, INITIAL HSUB0 = 1.d30
-    if (cea%Size == 0) assval = cea%Hsub0
-    if (assval >= 1.d30) cea%Hsub0 = (cea%Oxfl * cea%Hpp(1) + cea%Hpp(2)) / tem
+    if (cea%Size == 0 .and. cea%Hsub0 >= 1.d30) cea%Hsub0 = (cea%Oxfl * cea%Hpp(1) + cea%Hpp(2)) / tem
 
     ! NOTE THAT "BRATIO" IS "BRATIO" IN SEC 3.2 IN RP-1311.
     bratio = smalb / bigb

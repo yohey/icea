@@ -48,6 +48,10 @@ namespace CEA {
                               const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr,
                               const char* = nullptr, const char* = nullptr, const char* = nullptr, const char* = nullptr);
 
+    void ffi_cea_set_reactant(const FFI_CEA_Problem_Unique_Ptr&, const size_t&, const double* = nullptr,
+                              const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr,
+                              const char* = nullptr, const char* = nullptr, const char* = nullptr, const char* = nullptr);
+
     void ffi_cea_set_insert_species(const FFI_CEA_Problem_Unique_Ptr&, const char* const*, const FFI_SizeT_Array&);
     void ffi_cea_set_omit_species(const FFI_CEA_Problem_Unique_Ptr&, const char* const*, const FFI_SizeT_Array&);
     void ffi_cea_set_only_species(const FFI_CEA_Problem_Unique_Ptr&, const char* const*, const FFI_SizeT_Array&);

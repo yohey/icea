@@ -406,6 +406,48 @@ contains
   end subroutine add_reactant
 
 
+  subroutine set_reactant(ptr, index, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit) &
+       bind(C, name = "ffi_cea_set_reactant")
+    use cea, only: CEA_Problem
+
+    type(c_ptr), intent(in):: ptr
+    integer(c_size_t), intent(in):: index
+    real(c_double), intent(in), optional:: ratio
+    real(c_double), intent(in), optional:: T
+    real(c_double), intent(in), optional:: rho
+    real(c_double), intent(in), optional:: h
+    real(c_double), intent(in), optional:: u
+    character(len = 1, kind = c_char), intent(in), optional:: T_unit
+    character(len = 1, kind = c_char), intent(in), optional:: rho_unit
+    character(len = 1, kind = c_char), intent(in), optional:: h_unit
+    character(len = 1, kind = c_char), intent(in), optional:: u_unit
+
+    character(len = :, kind = c_char), allocatable:: T_unit_fstr
+    character(len = :, kind = c_char), allocatable:: rho_unit_fstr
+    character(len = :, kind = c_char), allocatable:: h_unit_fstr
+    character(len = :, kind = c_char), allocatable:: u_unit_fstr
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (present(T_unit)) T_unit_fstr = get_string(T_unit)
+    if (present(rho_unit)) rho_unit_fstr = get_string(rho_unit)
+    if (present(h_unit)) h_unit_fstr = get_string(h_unit)
+    if (present(u_unit)) u_unit_fstr = get_string(u_unit)
+
+    if (associated(this)) then
+       call this%set_reactant(int(index), ratio, T, rho, h, u, &
+                              T_unit_fstr, rho_unit_fstr, h_unit_fstr, u_unit_fstr)
+#ifndef NDEBUG
+    else
+       write(0, *) '[DEBUG] pointer is not associated. (set_reactant)'
+#endif
+    end if
+
+    return
+  end subroutine set_reactant
+
+
   subroutine set_insert_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_insert_species")
     use cea, only: CEA_Problem
 

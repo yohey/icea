@@ -73,7 +73,7 @@ module mod_types
      integer:: ipt !< index of point (new)
      integer:: max_points
 
-     integer:: Nonly_in
+     integer:: Nonly_in, Nreac_in
      logical:: Eql_in
      character(15):: Prod_in(0:maxNgc)
      integer:: Npp_in, Nsub_in, Nsup_in
@@ -188,6 +188,8 @@ contains
     cea%Refleq = .false.
     cea%Reflfz = .false.
 
+    cea%Nreac_in = 0
+    cea%Nonly_in = 0
     cea%Nsub_in = 0
     cea%Nsup_in = 0
     cea%AcAt_in = 0

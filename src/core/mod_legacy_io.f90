@@ -278,6 +278,7 @@ contains
           else if (code == 'reac') then
              reacts = .true.
              cea%Moles = .false.
+             cea%Nreac_in = 0
              cea%Nreac = 0
              cea%Pecwt(1:maxR) = -1
 
@@ -302,7 +303,8 @@ contains
 
                 ! NEW REACTANT
                 if (cx2 == 'na' .or. cx2 == 'ox' .or. cx2 == 'fu') then
-                   cea%Nreac = min(cea%Nreac+1, maxR)
+                   cea%Nreac_in = min(cea%Nreac_in + 1, maxR)
+                   cea%Nreac = cea%Nreac_in
                    cea%Fox(cea%Nreac) = trim(cx15)
                    i = i + 1
                    if (lcin(i) < 0) cea%Rname(cea%Nreac) = cin(i)
@@ -1698,11 +1700,11 @@ contains
 50     continue
 
        ifrmla = cea%Nfla(n)
-       if (cea%Fox(n)(:1) == 'f') then
+       if (cea%Fox(n)(:1) == 'f' .or. cea%Fox(n)(:1) == 'F') then
           fuel = .true.
           kr = 2
           cea%Fox(n) = 'FUEL'
-       else if (cea%Fox(n)(:4) == 'name') then
+       else if (cea%Fox(n)(:4) == 'name' .or. cea%Fox(n)(:4) == 'NAME') then
           fuel = .true.
           kr = 2
           cea%Fox(n) = 'NAME'
