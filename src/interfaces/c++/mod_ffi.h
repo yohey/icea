@@ -65,6 +65,7 @@ namespace CEA {
     double ffi_cea_get_specific_heat_ratio(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
 
     void ffi_cea_calc_frozen_exhaust(const FFI_CEA_Problem_Unique_Ptr&, const double&, const double* = nullptr, const double* = nullptr, const double* = nullptr);
+    void ffi_cea_get_thermo_reference_properties(const FFI_CEA_Problem_Unique_Ptr&, const char*, const double*, const double*, const double*);
 
     void ffi_cea_write_debug_output(const FFI_CEA_Problem_Unique_Ptr&, const char*);
 

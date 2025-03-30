@@ -2,7 +2,7 @@ module mod_ext
   implicit none
   private
 
-  public:: calc_frozen_exhaust
+  public:: calc_frozen_exhaust, get_thermo_reference_properties
 
 contains
 
@@ -105,5 +105,43 @@ contains
 
     return
   end subroutine calc_thermo_properties
+
+
+  subroutine get_thermo_reference_properties(cea, name, M, T_ref, h0_ref)
+    use mod_constants, only: cal_to_J
+    use mod_types, only: CEA_Core_Problem, ThermoProperty
+    use mod_io, only: read_thermo_lib
+
+    class(CEA_Core_Problem), intent(inout):: cea
+    character(*), intent(in):: name
+    real(8), intent(out):: M
+    real(8), intent(out):: T_ref
+    real(8), intent(out):: h0_ref
+
+    integer:: i
+    type(ThermoProperty), pointer:: th
+
+    M = 0
+    T_ref = 0
+    h0_ref = 0
+
+    if (.not. associated(cea%thermo_properties)) call read_thermo_lib(cea)
+
+    do i = 1, size(cea%thermo_properties)
+       th => cea%thermo_properties(i)
+
+       if (th%name == name .or. th%name == '*' // name) then
+          if (th%type == 3) then
+             M = th%mwt
+             T_ref = th%tl(1)
+             h0_ref = th%thermo(1, 1)
+          else
+             write(0, *) '[ERROR] Not implemented yet.'
+          end if
+       end if
+    end do
+
+    return
+  end subroutine get_thermo_reference_properties
 
 end module mod_ext

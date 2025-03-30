@@ -751,6 +751,35 @@ contains
   end subroutine ffi_calc_frozen_exhaust
 
 
+  subroutine ffi_get_thermo_reference_properties(ptr, name, M, T_ref, h0_ref) &
+       bind(C, name = "ffi_cea_get_thermo_reference_properties")
+    use cea, only: CEA_Problem
+
+    type(c_ptr), intent(in):: ptr
+    character(len = 1, kind = c_char), intent(in):: name
+    real(c_double), intent(out):: M
+    real(c_double), intent(out):: T_ref
+    real(c_double), intent(out):: h0_ref
+
+    type(CEA_Problem), pointer:: this => null()
+    character(len = :, kind = c_char), allocatable:: name_fstr
+
+    call c_f_pointer(ptr, this)
+
+    name_fstr = get_string(name)
+
+    M = 0
+    T_ref = 0
+    h0_ref = 0
+
+    if (associated(this)) then
+       call this%get_thermo_reference_properties(name_fstr, M, T_ref, h0_ref)
+    end if
+
+    return
+  end subroutine ffi_get_thermo_reference_properties
+
+
   subroutine write_debug_output(ptr, filename) bind(C, name = "ffi_cea_write_debug_output")
     use cea, only: CEA_Problem
 

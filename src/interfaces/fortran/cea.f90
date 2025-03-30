@@ -27,6 +27,7 @@ module cea
      procedure, public, pass:: get_molecular_weight
      procedure, public, pass:: get_specific_heat_ratio
      procedure, public, pass:: calc_frozen_exhaust
+     procedure, public, pass:: get_thermo_reference_properties
      procedure, public, pass:: write_debug_output
      final:: del_problem
   end type CEA_Problem
@@ -618,6 +619,21 @@ contains
 
     return
   end subroutine calc_frozen_exhaust
+
+
+  subroutine get_thermo_reference_properties(this, name, M, T_ref, h0_ref)
+    use mod_ext, only: mod_ext_get_thermo_reference_properties => get_thermo_reference_properties
+
+    class(CEA_Problem), intent(inout):: this
+    character(*), intent(in):: name
+    real(8), intent(out):: M
+    real(8), intent(out):: T_ref
+    real(8), intent(out):: h0_ref
+
+    call mod_ext_get_thermo_reference_properties(this, name, M, T_ref, h0_ref)
+
+    return
+  end subroutine get_thermo_reference_properties
 
 
   subroutine write_debug_output(this, filename)

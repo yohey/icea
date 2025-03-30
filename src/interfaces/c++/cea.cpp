@@ -187,6 +187,11 @@ namespace CEA {
   }
 
 
+  void Problem::get_thermo_reference_properties(const char* name, const double* M_ptr, const double* T_ref_ptr, const double* h0_ref_ptr) {
+    ffi_cea_get_thermo_reference_properties(this->_ffi, name, M_ptr, T_ref_ptr, h0_ref_ptr);
+  }
+
+
   void Problem::write_debug_output(const char* filename) {
     ffi_cea_write_debug_output(this->_ffi, filename);
   }
