@@ -86,6 +86,26 @@ class CEA_Problem:
         _libcea.ffi_cea_run.argtypes = [c_void_p, c_char_p]
         _libcea.ffi_cea_run(byref(self._ffi), _c_char_or_None(out_filename))
 
+    def get_temperature(self, iOF, ipt):
+        _libcea.ffi_cea_get_temperature.restype = c_double
+        _libcea.ffi_cea_get_temperature.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea.ffi_cea_get_temperature(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+
+    def get_chamber_temperature(self):
+        _libcea.ffi_cea_get_chamber_temperature.restype = c_double
+        _libcea.ffi_cea_get_chamber_temperature.argtypes = [c_void_p]
+        return _libcea.ffi_cea_get_chamber_temperature(byref(self._ffi))
+
+    def get_molecular_weight(self, iOF, ipt):
+        _libcea.ffi_cea_get_molecular_weight.restype = c_double
+        _libcea.ffi_cea_get_molecular_weight.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea.ffi_cea_get_molecular_weight(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+
+    def get_specific_heat_ratio(self, iOF, ipt):
+        _libcea.ffi_cea_get_specific_heat_ratio.restype = c_double
+        _libcea.ffi_cea_get_specific_heat_ratio.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea.ffi_cea_get_specific_heat_ratio(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+
     def calc_frozen_exhaust(self, T):
         _libcea.ffi_cea_calc_frozen_exhaust.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
         _P, _cp, _gamma = c_double(), c_double(), c_double()
@@ -104,11 +124,11 @@ def _c_bool_or_None(b: bool | None):
     else:
         return byref(c_bool(b))
 
-def _c_double_or_None(b: float | None):
-    if b is None:
+def _c_double_or_None(x: float | None):
+    if x is None:
         return None
     else:
-        return byref(c_double(b))
+        return byref(c_double(x))
 
 def _c_char_or_None(s: str | None):
     if s is None:

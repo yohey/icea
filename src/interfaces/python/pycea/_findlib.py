@@ -7,19 +7,22 @@ _libpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 if sys.platform == 'linux':
     if 'LD_LIBRARY_PATH' in os.environ:
-        os.environ['LD_LIBRARY_PATH'] = _libpath + ';' + os.environ['LD_LIBRARY_PATH']
+        if _libpath not in os.environ['LD_LIBRARY_PATH']:
+            os.environ['LD_LIBRARY_PATH'] = _libpath + ';' + os.environ['LD_LIBRARY_PATH']
     else:
         os.environ['LD_LIBRARY_PATH'] = _libpath
 
 elif sys.platform == 'darwin':
     if 'DYLD_LIBRARY_PATH' in os.environ:
-        os.environ['DYLD_LIBRARY_PATH'] = _libpath + ';' + os.environ['DYLD_LIBRARY_PATH']
+        if _libpath not in os.environ['DYLD_LIBRARY_PATH']:
+            os.environ['DYLD_LIBRARY_PATH'] = _libpath + ';' + os.environ['DYLD_LIBRARY_PATH']
     else:
         os.environ['DYLD_LIBRARY_PATH'] = _libpath
 
 elif sys.platform == 'win32':
     if 'PATH' in os.environ:
-        os.environ['PATH'] = _libpath + ';' + os.environ['PATH']
+        if _libpath not in os.environ['PATH']:
+            os.environ['PATH'] = _libpath + ';' + os.environ['PATH']
     else:
         os.environ['PATH'] = _libpath
 
