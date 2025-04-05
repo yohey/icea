@@ -39,14 +39,14 @@ void run_example_10() {
   //   - h:               double (optional)
   //   - u:               double (optional)
   //   - T_unit:          std::string (optional, default: K)
-  //   - rho_unit:        std::string (optional, default: g/cc)
+  //   - rho_unit:        std::string (optional, default: kg/m^3)
   //   - h_unit:          std::string (optional, default: J/mol)
   //   - u_unit:          std::string (optional, default: J/mol)
   prob.add_reactant("fuel", "H2(L)", std::nullopt, 100, 20.27);
   prob.add_reactant("oxyd", "O2(L)", std::nullopt, 100, 90.17);
 
   prob.set_finite_area_combustor(std::nullopt, 1333.9);
-  prob.set_chamber_pressures({53.3172});
+  prob.set_chamber_pressures({5.33172});
   prob.set_mixture_ratios({5.55157});
   prob.set_pressure_ratios({10, 100, 1000});
   prob.set_supersonic_area_ratios({25, 50, 75});

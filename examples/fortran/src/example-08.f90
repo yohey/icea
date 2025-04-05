@@ -10,7 +10,7 @@ subroutine run_example_08()
   call prob%add_reactant('fuel', 'H2(L)', ratio = 100d0, T = 20.27d0)
   call prob%add_reactant('oxyd', 'O2(L)', ratio = 100d0, T = 90.17d0)
 
-  call prob%set_chamber_pressures([53.3172d0])
+  call prob%set_chamber_pressures([5.33172d0])
   call prob%set_mixture_ratios([5.55157d0])
   call prob%set_pressure_ratios([1d1, 1d2, 1d3])
   call prob%set_subsonic_area_ratios([1.58d0])

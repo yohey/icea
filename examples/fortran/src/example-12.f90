@@ -7,8 +7,8 @@ subroutine run_example_12()
   call prob%set_problem(mode = 'rocket', name = 'Example 12', equilibrium = .true., frozen = .true., frozen_at_throat = .true.)
   call prob%set_output_options(SI = .true., mass_fractions = .true.)
 
-  call prob%add_reactant('fuel', 'CH6N2(L)', rho = 0.874d0)
-  call prob%add_reactant('oxyd', 'N2O4(L)',  rho = 1.431d0)
+  call prob%add_reactant('fuel', 'CH6N2(L)', rho =  874d0)
+  call prob%add_reactant('oxyd', 'N2O4(L)',  rho = 1431d0)
 
   call prob%set_chamber_pressures([1000d0], unit = 'legacy-psi')
   call prob%set_mixture_ratios([2.5d0])

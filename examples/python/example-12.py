@@ -9,8 +9,8 @@ prob = CEA_Problem()
 prob.set_problem(mode = 'rocket', name = 'Example 12', equilibrium = True, frozen = True, frozen_at_throat = True)
 prob.set_output_options(SI = True, mass_fractions = True)
 
-prob.add_reactant('fuel', 'CH6N2(L)', rho = 0.874)
-prob.add_reactant('oxyd', 'N2O4(L)',  rho = 1.431)
+prob.add_reactant('fuel', 'CH6N2(L)', rho =  874)
+prob.add_reactant('oxyd', 'N2O4(L)',  rho = 1431)
 
 prob.set_chamber_pressures([1000], unit = 'legacy-psi')
 prob.set_mixture_ratios([2.5])

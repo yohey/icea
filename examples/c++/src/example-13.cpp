@@ -39,11 +39,11 @@ void run_example_13() {
   //   - h:               double (optional)
   //   - u:               double (optional)
   //   - T_unit:          std::string (optional, default: K)
-  //   - rho_unit:        std::string (optional, default: g/cc)
+  //   - rho_unit:        std::string (optional, default: kg/m^3)
   //   - h_unit:          std::string (optional, default: J/mol)
   //   - u_unit:          std::string (optional, default: J/mol)
-  prob.add_reactant("fuel", "N2H4(L)", std::nullopt, 0.8, 298.15, 0.874);
-  prob.add_reactant("fuel", "Be(a)",   std::nullopt, 0.2, 298.15, 1.431);
+  prob.add_reactant("fuel", "N2H4(L)", std::nullopt, 0.8, 298.15,  874);
+  prob.add_reactant("fuel", "Be(a)",   std::nullopt, 0.2, 298.15, 1431);
   prob.add_reactant("oxyd", "H2O2(L)", std::nullopt, 1.0, 298.15);
 
   prob.set_chamber_pressures({3000}, "legacy-psi");

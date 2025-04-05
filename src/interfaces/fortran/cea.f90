@@ -203,17 +203,30 @@ contains
     real(8), intent(in):: pressure_list(:)
     character(*), intent(in), optional:: unit
     real(8), parameter:: legacy_psi_factor = 1.01325d0 / 14.696006d0
-    real(8):: factor = 1
+    real(8):: factor
+
+    factor = 10 ! default: MPa
 
     if (present(unit)) then
-       if (trim(unit) == 'psi') then
+       select case (trim(unit))
+       case ('MPa')
+          factor = 10
+       case ('kPa')
+          factor = 1d-2
+       case ('Pa')
+          factor = 1d-5
+       case ('atm')
+          factor = 1.01325d0
+       case ('bar')
+          factor = 1
+       case ('psi')
           factor = 1d-5 * g0 * lb_to_kg / in_to_m**2
-       else if (trim(unit) == 'legacy-psi') then
+       case ('legacy-psi')
           factor = legacy_psi_factor
-       else
+       case default
           write(stderr, *) '[ERROR] Unsupported unit: ', trim(unit)
           return
-       end if
+       end select
     end if
 
     this%Np = size(pressure_list)
@@ -324,10 +337,15 @@ contains
     integer:: istart, iend, iatom
     logical:: atom_found
 
-    real(8):: T_factor = 1
-    real(8):: rho_factor = 1
-    real(8):: h_factor = 1000 / R0
-    real(8):: u_factor = 1000 / R0
+    real(8):: T_factor
+    real(8):: rho_factor
+    real(8):: h_factor
+    real(8):: u_factor
+
+    T_factor = 1 ! default: K
+    rho_factor = 1d-3 ! default: kg/m^3
+    h_factor = 1000 / R0 ! default: J/mol
+    u_factor = 1000 / R0 ! default: J/mol
 
     if (.not. (type(:2) == 'fu' .or. type(:2) == 'ox' .or. type(:2) == 'na')) then
        write(stderr, *) '[ERROR] Invalid reactant type: ', trim(type)
@@ -376,8 +394,13 @@ contains
 
     if (present(T)) then
        if (present(T_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: T_unit = ', trim(T_unit)
-          return
+          select case (trim(T_unit))
+          case ('K')
+             T_factor = 1
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(T_unit)
+             return
+          end select
        end if
 
        this%Rtemp(this%Nreac) = T * T_factor
@@ -385,8 +408,15 @@ contains
 
     if (present(rho)) then
        if (present(rho_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
-          return
+          select case (trim(rho_unit))
+          case ('kg/m^3', 'kg/m3')
+             rho_factor = 1d-3
+          case ('g/cc', 'g/cm^3', 'g/cm3')
+             rho_factor = 1
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(rho_unit)
+             return
+          end select
        end if
 
        this%Dens(this%Nreac) = rho * rho_factor
@@ -399,8 +429,13 @@ contains
        end if
 
        if (present(h_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: h_unit = ', trim(h_unit)
-          return
+          select case (trim(h_unit))
+          case ('J/mol')
+             h_factor = 1000 / R0
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(h_unit)
+             return
+          end select
        end if
 
        this%Energy(this%Nreac) = 'h,j'
@@ -414,8 +449,13 @@ contains
        end if
 
        if (present(u_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: u_unit = ', trim(u_unit)
-          return
+          select case (trim(u_unit))
+          case ('J/mol')
+             u_factor = 1000 / R0
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(u_unit)
+             return
+          end select
        end if
 
        this%Energy(this%Nreac) = 'u,j'
@@ -442,10 +482,15 @@ contains
     character(*), intent(in), optional:: h_unit
     character(*), intent(in), optional:: u_unit
 
-    real(8):: T_factor = 1
-    real(8):: rho_factor = 1
-    real(8):: h_factor = 1000 / R0
-    real(8):: u_factor = 1000 / R0
+    real(8):: T_factor
+    real(8):: rho_factor
+    real(8):: h_factor
+    real(8):: u_factor
+
+    T_factor = 1 ! default: K
+    rho_factor = 1d-3 ! default: kg/m^3
+    h_factor = 1000 / R0 ! default: J/mol
+    u_factor = 1000 / R0 ! default: J/mol
 
     if (index > this%Nreac) then
        write(stderr, *) '[ERROR] Invalid reactant index: ', index, ' (< ', this%Nreac, ')'
@@ -463,8 +508,13 @@ contains
 
     if (present(T)) then
        if (present(T_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: T_unit = ', trim(T_unit)
-          return
+          select case (trim(T_unit))
+          case ('K')
+             T_factor = 1
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(T_unit)
+             return
+          end select
        end if
 
        this%Rtemp(index) = T * T_factor
@@ -472,8 +522,15 @@ contains
 
     if (present(rho)) then
        if (present(rho_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: rho_unit = ', trim(rho_unit)
-          return
+          select case (trim(rho_unit))
+          case ('kg/m^3', 'kg/m3')
+             rho_factor = 1d-3
+          case ('g/cc', 'g/cm^3', 'g/cm3')
+             rho_factor = 1
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(rho_unit)
+             return
+          end select
        end if
 
        this%Dens(index) = rho * rho_factor
@@ -481,8 +538,13 @@ contains
 
     if (present(h)) then
        if (present(h_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: h_unit = ', trim(h_unit)
-          return
+          select case (trim(h_unit))
+          case ('J/mol')
+             h_factor = 1000 / R0
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(h_unit)
+             return
+          end select
        end if
 
        this%Energy(index) = 'h,j'
@@ -491,8 +553,13 @@ contains
 
     if (present(u)) then
        if (present(u_unit)) then
-          write(stderr, *) '[ERROR] Not implemented yet: u_unit = ', trim(u_unit)
-          return
+          select case (trim(u_unit))
+          case ('J/mol')
+             u_factor = 1000 / R0
+          case default
+             write(stderr, *) '[ERROR] Unsupported unit: ', trim(u_unit)
+             return
+          end select
        end if
 
        this%Energy(index) = 'u,j'

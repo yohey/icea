@@ -39,7 +39,7 @@ void run_example_11() {
   //   - h:               double (optional)
   //   - u:               double (optional)
   //   - T_unit:          std::string (optional, default: K)
-  //   - rho_unit:        std::string (optional, default: g/cc)
+  //   - rho_unit:        std::string (optional, default: kg/m^3)
   //   - h_unit:          std::string (optional, default: J/mol)
   //   - u_unit:          std::string (optional, default: J/mol)
   prob.add_reactant("fuel", "Li(cr)", std::nullopt, 1.0000, 298.15);
