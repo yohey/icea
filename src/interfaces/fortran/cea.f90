@@ -699,16 +699,19 @@ contains
   end function get_specific_heat_ratio
 
 
-  subroutine calc_frozen_exhaust(this, T, P, cp, gamma)
+  subroutine calc_frozen_exhaust(this, T, P, cp, gamma, mu, k, Pr)
     use mod_ext, only: mod_ext_calc_frozen_exhaust => calc_frozen_exhaust
 
     class(CEA_Problem), intent(in):: this
-    real(8), intent(in):: T
-    real(8), intent(out), optional:: P
-    real(8), intent(out), optional:: cp
-    real(8), intent(out), optional:: gamma
+    real(8), intent(in):: T  !< [K]
+    real(8), intent(out), optional:: P  !< [MPa]
+    real(8), intent(out), optional:: cp  !< [kJ/(kg·K)]
+    real(8), intent(out), optional:: gamma  !< [-]
+    real(8), intent(out), optional:: mu  !< [µPa·s]
+    real(8), intent(out), optional:: k  !< [W/(m·K)]
+    real(8), intent(out), optional:: Pr  !< [-]
 
-    call mod_ext_calc_frozen_exhaust(this, T, P, cp, gamma)
+    call mod_ext_calc_frozen_exhaust(this, T, P, cp, gamma, mu, k, Pr)
 
     return
   end subroutine calc_frozen_exhaust

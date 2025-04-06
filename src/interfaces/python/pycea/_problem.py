@@ -107,10 +107,10 @@ class CEA_Problem:
         return _libcea.ffi_cea_get_specific_heat_ratio(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
 
     def calc_frozen_exhaust(self, T):
-        _libcea.ffi_cea_calc_frozen_exhaust.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
-        _P, _cp, _gamma = c_double(), c_double(), c_double()
-        _libcea.ffi_cea_calc_frozen_exhaust(byref(self._ffi), _c_double_or_None(T), byref(_P), byref(_cp), byref(_gamma))
-        return _P.value, _cp.value, _gamma.value
+        _libcea.ffi_cea_calc_frozen_exhaust.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+        _P, _cp, _gamma, _mu, _k, _Pr = c_double(), c_double(), c_double(), c_double(), c_double(), c_double()
+        _libcea.ffi_cea_calc_frozen_exhaust(byref(self._ffi), _c_double_or_None(T), byref(_P), byref(_cp), byref(_gamma), byref(_mu), byref(_k), byref(_Pr))
+        return _P.value, _cp.value, _gamma.value, _mu.value, _k.value, _Pr.value
 
 
     def write_debug_output(self, filename: str):

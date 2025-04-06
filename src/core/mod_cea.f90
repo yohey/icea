@@ -132,38 +132,11 @@ contains
     !***********************************************************************
     ! CALCULATES THERMODYNAMIC PROPERTIES FOR INDIVIDUAL SPECIES
     !***********************************************************************
-    use mod_types
-    use mod_functions
+    use mod_types, only: CEA_Core_Problem
 
     type(CEA_Core_Problem), intent(inout):: cea
 
-    integer:: ij, j, jj, k
-
-    k = 1
-    if (cea%Tt > cea%Tg(2)) k = 2
-    if (cea%Tt > cea%Tg(3)) k = 3
-
-    do concurrent (j = 1:cea%Ng)
-       cea%S(j) = calc_entropy(cea%Coef(:, j, k), cea%Tt, cea%Tln, cea%legacy_mode)
-       cea%H0(j) = calc_enthalpy(cea%Coef(:, j, k), cea%Tt, cea%Tln, cea%legacy_mode)
-    end do
-
-    if (.not. cea%Tp .or. cea%Convg) then
-       do concurrent (j = 1:cea%Ng)
-          cea%Cp(j) = calc_specific_heat(cea%Coef(:, j, k), cea%Tt)
-       end do
-    end if
-
-    if (cea%Npr /= 0 .and. k /= 3 .and. cea%Ng /= cea%Ngc) then
-       do concurrent (ij = 1:cea%Npr)
-          j = cea%Jcond(ij)
-          jj = cea%Jcond(ij) - cea%Ng
-
-          cea%S(j) = calc_entropy(cea%Cft(:, jj), cea%Tt, cea%Tln, cea%legacy_mode)
-          cea%H0(j) = calc_enthalpy(cea%Cft(:, jj), cea%Tt, cea%Tln, cea%legacy_mode)
-          cea%Cp(j) = calc_specific_heat(cea%Cft(:, jj), cea%Tt)
-       end do
-    end if
+    call calc_thermo_properties(cea, cea%Tt, cea%Cp(1:cea%Ng), cea%H0(1:cea%Ng), cea%S(1:cea%Ng))
 
     return
   end subroutine CPHS
@@ -190,6 +163,67 @@ contains
     return
   end subroutine ALLCON
 
+
+  subroutine calc_thermo_properties(cea, T, cp, h0, s)
+    use mod_types, only: CEA_Core_Problem
+    use mod_functions, only: calc_enthalpy, calc_entropy, calc_specific_heat
+
+    class(CEA_Core_Problem), intent(in):: cea
+    real(8), intent(in):: T
+    real(8), intent(out):: cp(cea%Ng)
+    real(8), intent(out), optional:: h0(cea%Ng)
+    real(8), intent(out), optional:: s(cea%Ng)
+
+    integer:: j, k, j1(cea%Npr), j2(cea%Npr)
+    real(8):: lnT
+
+    lnT = log(T)
+
+    k = 1
+    if (T > cea%Tg(2)) k = 2
+    if (T > cea%Tg(3)) k = 3
+
+    if (.not. cea%Tp .or. cea%Convg) then
+       do concurrent (j = 1:cea%Ng)
+          cp(j) = calc_specific_heat(cea%Coef(:, j, k), T)
+       end do
+    end if
+
+    if (present(h0)) then
+       do concurrent (j = 1:cea%Ng)
+          h0(j) = calc_enthalpy(cea%Coef(:, j, k), T, lnT, cea%legacy_mode)
+       end do
+    end if
+
+    if (present(s)) then
+       do concurrent (j = 1:cea%Ng)
+          s(j) = calc_entropy(cea%Coef(:, j, k), T, lnT, cea%legacy_mode)
+       end do
+    end if
+
+    if (cea%Npr /= 0 .and. k /= 3 .and. cea%Ng /= cea%Ngc) then
+       j1(:) = cea%Jcond(1:cea%Npr)
+       j2(:) = j1(:) - cea%Ng
+
+       do concurrent (j = 1:cea%Npr)
+          cp(j1(j)) = calc_specific_heat(cea%Cft(:, j2(j)), T)
+       end do
+
+       if (present(h0)) then
+          do concurrent (j = 1:cea%Npr)
+             h0(j1(j)) = calc_enthalpy(cea%Cft(:, j2(j)), T, lnT, cea%legacy_mode)
+          end do
+       end if
+
+       if (present(s)) then
+          do concurrent (j = 1:cea%Npr)
+             s(j1(j)) = calc_entropy(cea%Cft(:, j2(j)), T, lnT, cea%legacy_mode)
+          end do
+       end if
+    end if
+
+    return
+  end subroutine calc_thermo_properties
 
 
   subroutine DETON(cea)
@@ -3742,17 +3776,59 @@ contains
 
     type(CEA_Core_Problem), intent(inout):: cea
 
+    type(CEA_Point), pointer:: p !< current point
+    p => cea%points(cea%iOF, cea%ipt)
+
+    call TRANIN_core(cea, cea%ipt, cea%Tt, cea%Nm, cea%Nms, cea%Nr, cea%Ind, cea%inds, &
+         cea%Cprr, cea%Con, cea%Wmol, cea%Xs, cea%xss, cea%wmols, cea%Stc, cea%Eta, p%En)
+
+    return
+  end subroutine TRANIN
+
+
+  subroutine TRANIN_core(cea, ipt, Tt, Nm, Nms, Nr, Ind, inds, Cprr, Con, Wmol, Xs, xss, wmols, Stc, Eta, En)
+    use mod_types
+
+    type(CEA_Core_Problem), intent(in):: cea
+    integer, intent(in):: ipt
+    real(8), intent(in):: Tt
+    integer, intent(out):: Nm, Nms, Nr, Ind(:), inds(:)
+    real(8), intent(out):: Cprr(:), Con(:), Wmol(:), Xs(:), xss(:), wmols(:)
+    real(8), intent(out):: Eta(:, :), Stc(:, :), En(:)
+
     ! LOCAL VARIABLES
     integer:: i, ii, ir, j, jtape(2), k, k1, k2, kt, kvc, l, loop, m
     logical:: change, elc1, elc2, ion1, ion2, setx
     real(8):: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
          stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
-         trc(6, 3, 2), wmred, xsel
+         trc(6, 3, 2), wmred, xsel, Tln, cp(cea%Ng)
 
     type(CEA_Point), pointer:: p !< current point
     type(CEA_Point), pointer:: p1
 
+    p => cea%points(cea%iOF, ipt)
     p1 => cea%points(cea%iOF, 1)
+
+    Nm = cea%Nm
+    Nms = cea%Nms
+    Nr = cea%Nr
+    Ind(:) = cea%Ind(:)
+    inds(:) = cea%inds(:)
+    Cprr(:) = cea%Cprr(:)
+    Con(:) = cea%Con(:)
+    Wmol(:) = cea%Wmol(:)
+    Xs(:) = cea%Xs(:)
+    xss(:) = cea%xss(:)
+    wmols(:) = cea%wmols(:)
+    Stc(:, :) = cea%Stc(:, :)
+    Eta(:, :) = cea%Eta(:, :)
+    En(:) = p%En(:)
+
+    if (Tt == cea%Tt) then
+       cp(:) = cea%Cp(1:cea%Ng)
+    else
+       call calc_thermo_properties(cea, Tt, cp)
+    end if
 
     m = 0
     enel = 0
@@ -3760,27 +3836,28 @@ contains
     qc = 0
     total = 0
     setx = .false.
+    Tln = log(Tt)
 
     if (.not. cea%Eql) then
        if (.not. cea%Shock) then
           if (.not. setx) then
              setx = .true.
-             cea%Nm = cea%Nms
-             do i = 1, cea%Nm
-                cea%Xs(i) = cea%xss(i)
-                cea%Wmol(i) = cea%wmols(i)
-                cea%Ind(i) = cea%inds(i)
+             Nm = Nms
+             do i = 1, Nm
+                Xs(i) = xss(i)
+                Wmol(i) = wmols(i)
+                Ind(i) = inds(i)
              end do
           end if
           go to 300
        else if (.not. cea%Incdeq) then
-          if (cea%ipt <= 1) then
-             cea%Nm = cea%Nreac
-             do i = 1, cea%Nm
+          if (ipt <= 1) then
+             Nm = cea%Nreac
+             do i = 1, Nm
                 j = cea%Jray(i)
-                cea%Ind(i) = j
-                cea%Wmol(i) = cea%Mw(j)
-                cea%Xs(i) = p1%En(j) * p1%Wm
+                Ind(i) = j
+                Wmol(i) = cea%Mw(j)
+                Xs(i) = p1%En(j) * p1%Wm
              end do
           end if
           go to 300
@@ -3788,21 +3865,20 @@ contains
     end if
 
     ! PICK OUT IMPORTANT SPECIES
-    p => cea%points(cea%iOF, cea%ipt)
-    cea%Nm = 0
+    Nm = 0
     total = 0
     enmin = 1.0d-11 / p%Wm
     testot = 0.999999999d0 / p%Wm
     do i = 1, cea%Lsave
        j = cea%Jcm(i)
-       if (p%En(j) <= 0 .and. j <= cea%Ngc) then
-          if ((cea%Enln(j) - cea%Ennl + 25.328436d0) > 0) p%En(j) = exp(cea%Enln(j))
+       if (En(j) <= 0 .and. j <= cea%Ngc) then
+          if ((cea%Enln(j) - cea%Ennl + 25.328436d0) > 0) En(j) = exp(cea%Enln(j))
        end if
-       cea%Nm = cea%Nm + 1
-       cea%Ind(cea%Nm) = j
-       total = total + p%En(j)
-       if (cea%Mw(j) < 1) enel = p%En(j)
-       p%En(j) = -p%En(j)
+       Nm = Nm + 1
+       Ind(Nm) = j
+       total = total + En(j)
+       if (cea%Mw(j) < 1) enel = En(j)
+       En(j) = -En(j)
     end do
     testen = 1 / (cea%Ng * p%Wm)
 
@@ -3811,17 +3887,17 @@ contains
           testen = testen / 10
 
           do j = 1, cea%Ng
-             if (p%En(j) >= testen) then
-                if (cea%Nm >= maxTr) then
+             if (En(j) >= testen) then
+                if (Nm >= maxTr) then
                    if (cea%legacy_mode) &
                         write(IOOUT, '(/" WARNING!!  MAXIMUM ALLOWED NO. OF SPECIES", I3, " WAS USED IN ", &
-                        & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') cea%Nm, cea%ipt
+                        & /" TRANSPORT PROPERTY CALCULATIONS FOR POINT", I3, "(TRANIN))")') Nm, ipt
                    exit outerLoop1
                 else
-                   total = total + p%En(j)
-                   cea%Nm = cea%Nm + 1
-                   cea%Ind(cea%Nm) = j
-                   p%En(j) = -p%En(j)
+                   total = total + En(j)
+                   Nm = Nm + 1
+                   Ind(Nm) = j
+                   En(j) = -En(j)
                 end if
              end if
           end do
@@ -3831,82 +3907,80 @@ contains
     end if
 
     ! CALCULATE MOLE FRACTIONS FROM THE EN(J, NPT)
-    do j = 1, cea%Ng
-       p%En(j) = abs(p%En(j))
+    do concurrent (j = 1:cea%Ng)
+       En(j) = abs(En(j))
     end do
-    do i = 1, cea%Nm
-       j = cea%Ind(i)
-       cea%Wmol(i) = cea%Mw(j)
-       cea%Xs(i) = p%En(j) / total
+    do i = 1, Nm
+       j = Ind(i)
+       Wmol(i) = cea%Mw(j)
+       Xs(i) = En(j) / total
     end do
-    if (cea%ipt == cea%Nfz) then
-       cea%Nms = cea%Nm
-       do i = 1, cea%Nm
-          cea%xss(i) = cea%Xs(i)
-          cea%wmols(i) = cea%Wmol(i)
-          cea%inds(i) = cea%Ind(i)
+    if (ipt == cea%Nfz) then
+       Nms = Nm
+       do i = 1, Nm
+          xss(i) = Xs(i)
+          wmols(i) = Wmol(i)
+          inds(i) = Ind(i)
        end do
        setx = .false.
     end if
     ! REWRITE REACTIONS TO ELIMINATE TRACE ELEMENTS
-    cea%Nr = cea%Nm - cea%Lsave
-    if (cea%Nr /= 0) then
+    Nr = Nm - cea%Lsave
+    if (Nr /= 0) then
        do k = 1, maxTr
           do m = 1, maxTr
-             cea%Stc(k, m) = 0
+             Stc(k, m) = 0
           end do
        end do
        k = 1
-       do i = cea%Lsave + 1, cea%Nm
-          cea%Stc(k, i) = -1
-          j = cea%Ind(i)
+       do i = cea%Lsave + 1, Nm
+          Stc(k, i) = -1
+          j = Ind(i)
           do m = 1, cea%Lsave
-             cea%Stc(k, m) = cea%A(m, j)
+             Stc(k, m) = cea%A(m, j)
           end do
           k = k + 1
        end do
-       do i = 1, cea%Nm
-          if (cea%Xs(i) < 1.0d-10) then
+       do i = 1, Nm
+          if (Xs(i) < 1.0d-10) then
              m = 1
              change = .false.
 
-             do j = 1, cea%Nr
-                coeff = cea%Stc(j, i)
+             do j = 1, Nr
+                coeff = Stc(j, i)
                 if (abs(coeff) > 1.0d-05) then
                    if (.not. change) then
                       change = .true.
-                      do k = 1, cea%Nm
-                         stcoef(k) = cea%Stc(j, k) / coeff
+                      do k = 1, Nm
+                         stcoef(k) = Stc(j, k) / coeff
                       end do
                       cycle
                    else
-                      do k = 1, cea%Nm
-                         cea%Stc(j, k) = cea%Stc(j, k) / coeff - stcoef(k)
+                      do k = 1, Nm
+                         Stc(j, k) = Stc(j, k) / coeff - stcoef(k)
                       end do
                    end if
                 end if
-                do k = 1, cea%Nm
-                   stcf(m, k) = cea%Stc(j, k)
+                do k = 1, Nm
+                   stcf(m, k) = Stc(j, k)
                 end do
                 m = m + 1
              end do
 
-             do ii = 1, cea%Nm
-                do j = 1, cea%Nr
-                   cea%Stc(j, ii) = stcf(j, ii)
+             do ii = 1, Nm
+                do j = 1, Nr
+                   Stc(j, ii) = stcf(j, ii)
                 end do
              end do
-             cea%Nr = m - 1
+             Nr = m - 1
           end if
        end do
     end if
 
     ! FIND TRANSPORT DATA FOR IMPORTANT INTERACTIONS
-300 do i = 1, cea%Nm
-       cea%Con(i) = 0
-       do j = 1, cea%Nm
-          cea%Eta(i, j) = 0
-       end do
+300 do concurrent (i = 1:Nm, j = 1:Nm)
+       Con(i) = 0
+       Eta(i, j) = 0
     end do
 
     outerLoop2: do ir = 1, cea%Ntape
@@ -3914,8 +3988,8 @@ contains
        trc = cea%transport_properties(ir)%data
 
        innerLoop: do k = 1, 2
-          do i = 1, cea%Nm
-             j = cea%Ind(i)
+          do i = 1, Nm
+             j = Ind(i)
              if (j == jtape(k)) then
                 l = i
                 if (k == 2) then
@@ -3925,21 +3999,21 @@ contains
                       kt = 1
                       if (trc(2, 1, kvc) /= 0) then
                          if (trc(2, 2, kvc) /= 0) then
-                            if (cea%Tt > trc(2, 1, kvc)) kt = 2
+                            if (Tt > trc(2, 1, kvc)) kt = 2
                             if (trc(2, 3, kvc) /= 0) then
-                               if (cea%Tt > trc(2, 2, kvc)) kt = 3
+                               if (Tt > trc(2, 2, kvc)) kt = 3
                             end if
                          end if
 
-                         prop = exp(trc(6, kt, kvc) + (trc(5, kt, kvc) / cea%Tt + trc(4, kt, kvc)) / cea%Tt &
-                              + trc(3, kt, kvc) * cea%Tln)
+                         prop = exp(trc(6, kt, kvc) + (trc(5, kt, kvc) / Tt + trc(4, kt, kvc)) / Tt &
+                              + trc(3, kt, kvc) * Tln)
 
                          if (kvc == 2) then
-                            cea%Con(l) = prop
+                            Con(l) = prop
                             cycle outerLoop2
                          else
-                            cea%Eta(l, m) = prop
-                            if (l /= m) cea%Eta(m, l) = cea%Eta(l, m)
+                            Eta(l, m) = prop
+                            if (l /= m) Eta(m, l) = Eta(l, m)
                          end if
 
                       else if (kvc == 2) then
@@ -3966,7 +4040,7 @@ contains
     ! ESTIMATES FOR  E-ION, ION-ION, E-NEUTRAL, ION-NEUTRAL
     ! DEBYE SHIELDING WITH IONIC CUTOFF DISTANCE
     if (cea%Ions) then
-       te = cea%Tt / 1000
+       te = Tt / 1000
        ekt = 4.8032d0**2 / (Boltz * te)
        qc = 100 * ekt**2
        xsel = enel / total
@@ -3976,62 +4050,62 @@ contains
        lambda = sqrt(debye + ionic)
        lambda = max(lambda, 2.71828183d0)
     end if
-    do i = 1, cea%Nm
-       k = cea%Ind(i)
-       cea%Cprr(i) = cea%Cp(k)
-       if (.not. (cea%Ions .and. (abs(cea%A(cea%Nlm, k)) == 1) .and. (cea%Eta(i, i) == 0))) then
-          if (cea%Eta(i, i) == 0) then
-             omega = log(50 * cea%Wmol(i)**4.6 / cea%Tt**1.4)
+    do i = 1, Nm
+       k = Ind(i)
+       Cprr(i) = cp(k)
+       if (.not. (cea%Ions .and. (abs(cea%A(cea%Nlm, k)) == 1) .and. (Eta(i, i) == 0))) then
+          if (Eta(i, i) == 0) then
+             omega = log(50 * Wmol(i)**4.6 / Tt**1.4)
              omega = max(omega, 1d0)
-             cea%Eta(i, i) = cea%Viscns * sqrt(cea%Wmol(i) * cea%Tt) / omega
+             Eta(i, i) = cea%Viscns * sqrt(Wmol(i) * Tt) / omega
           end if
-          if (cea%Con(i) == 0) cea%Con(i) = cea%Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (cea%Cprr(i) - 2.5d0)) / cea%Wmol(i)
+          if (Con(i) == 0) Con(i) = Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
        end if
     end do
 
-    do i = 1, cea%Nm
-       do j = i, cea%Nm
+    do i = 1, Nm
+       do j = i, Nm
           ion1 = .false.
           ion2 = .false.
           elc1 = .false.
           elc2 = .false.
           omega = 0
-          if (cea%Eta(i, j) == 0) cea%Eta(i, j) = cea%Eta(j, i)
-          if (cea%Eta(j, i) == 0) cea%Eta(j, i) = cea%Eta(i, j)
-          if (cea%Eta(i, j) == 0) then
+          if (Eta(i, j) == 0) Eta(i, j) = Eta(j, i)
+          if (Eta(j, i) == 0) Eta(j, i) = Eta(i, j)
+          if (Eta(i, j) == 0) then
              if (cea%Ions) then
                 ! ESTIMATE FOR IONS
-                k1 = cea%Ind(i)
-                k2 = cea%Ind(j)
+                k1 = Ind(i)
+                k2 = Ind(j)
                 if (abs(cea%A(cea%Nlm, k1)) == 1) ion1 = .true.
                 if (abs(cea%A(cea%Nlm, k2)) == 1) ion2 = .true.
-                if (cea%Wmol(i) < 1) elc1 = .true.
-                if (cea%Wmol(j) < 1) elc2 = .true.
+                if (Wmol(i) < 1) elc1 = .true.
+                if (Wmol(j) < 1) elc2 = .true.
                 if (ion1 .and. ion2) omega = 1.36d0 * qc * log(lambda)
                 if ((ion1 .and. elc2) .or. (ion2 .and. elc1)) omega = 1.29d0 * qc * log(lambda)
-                if ((ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1)) omega = exp(6.776 - 0.4 * cea%Tln)
+                if ((ion1 .and. .not. ion2) .or. (ion2 .and. .not. ion1)) omega = exp(6.776 - 0.4 * Tln)
                 if (omega /= 0) then
-                   wmred = sqrt(2 * cea%Tt * cea%Wmol(i) * cea%Wmol(j) / (cea%Wmol(i) + cea%Wmol(j)))
-                   cea%Eta(i, j) = cea%Viscns * wmred * pi / omega
-                   cea%Eta(j, i) = cea%Eta(i, j)
+                   wmred = sqrt(2 * Tt * Wmol(i) * Wmol(j) / (Wmol(i) + Wmol(j)))
+                   Eta(i, j) = cea%Viscns * wmred * pi / omega
+                   Eta(j, i) = Eta(i, j)
                    if (i == j) then
-                      cea%Cprr(i) = cea%Cp(k1)
-                      cea%Con(i) = cea%Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (cea%Cprr(i) - 2.5d0)) / cea%Wmol(i)
+                      Cprr(i) = cp(k1)
+                      Con(i) = Eta(i, i) * R0 * (0.00375d0 + 0.00132d0 * (Cprr(i) - 2.5d0)) / Wmol(i)
                    end if
                    cycle
                 end if
              end if
              ! ESTIMATE FOR UNLIKE INTERACTIONS FROM RIGID SPHERE ANALOGY
-             ratio = sqrt(cea%Wmol(j) / cea%Wmol(i))
-             cea%Eta(i, j) = 5.656854d0 * cea%Eta(i, i) * sqrt(cea%Wmol(j) / (cea%Wmol(i) + cea%Wmol(j)))
-             cea%Eta(i, j) = cea%Eta(i, j) / (1 + sqrt(ratio * cea%Eta(i, i) / cea%Eta(j, j)))**2
-             cea%Eta(j, i) = cea%Eta(i, j)
+             ratio = sqrt(Wmol(j) / Wmol(i))
+             Eta(i, j) = 5.656854d0 * Eta(i, i) * sqrt(Wmol(j) / (Wmol(i) + Wmol(j)))
+             Eta(i, j) = Eta(i, j) / (1 + sqrt(ratio * Eta(i, i) / Eta(j, j)))**2
+             Eta(j, i) = Eta(i, j)
           end if
        end do
     end do
 
     return
-  end subroutine TRANIN
+  end subroutine TRANIN_core
 
 
 
@@ -4049,7 +4123,7 @@ contains
     type(CEA_Core_Problem), intent(inout):: cea
 
     ! LOCAL VARIABLES
-    integer:: i, i1, j, jj, k, m, mm, nlmm, nmm
+    integer:: i, i1, j, jj, k, m, mm, nlmm
     real(8):: cpreac, delh(maxTr), gmat(maxMat, maxMat+1), phi(maxTr, maxTr), &
          psi(maxTr, maxTr), reacon, rtpd(maxTr, maxTr), stx(maxTr), &
          stxij(maxTr, maxTr), sumc, sumv, wtmol, xskm(maxTr, maxTr)
@@ -4060,15 +4134,13 @@ contains
     call TRANIN(cea)
 
     ! CALCULATE VISCOSITY AND FROZEN THERMAL CONDUCTIVITY
-    nmm = cea%Nm - 1
-    do i = 1, cea%Nm
-       rtpd(i, i) = 0
-       phi(i, i) = 1
-       psi(i, i) = 1
-    end do
+    rtpd(:, :) = 0
+    phi(:, :) = 1
+    psi(:, :) = 1
+
     p%Confro = 0
     p%Vis = 0
-    do i = 1, nmm
+    do i = 1, cea%Nm - 1
        i1 = i + 1
        !DIR$ IVDEP
        do j = i1, cea%Nm
@@ -4080,6 +4152,7 @@ contains
           psi(j, i) = phi(j, i) * (1 + 2.41d0 * (cea%Wmol(j) - cea%Wmol(i)) * (cea%Wmol(j) - 0.142d0 * cea%Wmol(i)) / sumc)
        end do
     end do
+
     do i = 1, cea%Nm
        sumc = 0
        sumv = 0
@@ -4090,6 +4163,7 @@ contains
        p%Vis = p%Vis + cea%Eta(i, i) * cea%Xs(i) / sumv
        p%Confro = p%Confro + cea%Con(i) * cea%Xs(i) / sumc
     end do
+
     if (cea%Eql .and. cea%Nr > 0) then
        ! CALCULATE REACTION HEAT CAPACITY AND THERMAL CONDUCTIVITY
        m = cea%Nr + 1

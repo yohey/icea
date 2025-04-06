@@ -6,19 +6,24 @@ module mod_ext
 
 contains
 
-  subroutine calc_frozen_exhaust(cea, T, P, cp, gamma)
+  subroutine calc_frozen_exhaust(cea, T, P, cp, gamma, mu, k, Pr)
     use mod_constants, only: R0
     use mod_types, only: CEA_Core_Problem, CEA_Point
+    use mod_cea, only: calc_thermo_properties
 
     class(CEA_Core_Problem), intent(in):: cea
     real(8), intent(in):: T  !< [K]
     real(8), intent(out), optional:: P  !< [MPa]
-    real(8), intent(out), optional:: cp  !< [kJ/(kg*K)]
-    real(8), intent(out), optional:: gamma
+    real(8), intent(out), optional:: cp  !< [kJ/(kg·K)]
+    real(8), intent(out), optional:: gamma  !< [-]
+    real(8), intent(out), optional:: mu  !< [µPa·s]
+    real(8), intent(out), optional:: k  !< [W/(m·K)]
+    real(8), intent(out), optional:: Pr  !< [-]
 
     integer:: j
     real(8):: cp_tmp, s, lnwm(cea%Ng), lnPsum
     real(8):: cp_array(cea%Ng), h0_array(cea%Ng), s_array(cea%Ng)
+    real(8):: mu_tmp, k_tmp, Pr_tmp
     type(CEA_Point), pointer:: pfz
 
     if (.not. cea%Rkt) then
@@ -60,51 +65,15 @@ contains
        P = 0.1d0 * exp(lnPsum / sum(pfz%En(1:cea%Ng)))
     end if
 
+    if (present(mu) .or. present(k) .or. present(Pr)) then
+       call calc_frozen_transport_properties(cea, T, mu_tmp, k_tmp, Pr_tmp)
+       if (present(mu)) mu = mu_tmp
+       if (present(k)) k = k_tmp
+       if (present(Pr)) Pr = Pr_tmp
+    end if
+
     return
   end subroutine calc_frozen_exhaust
-
-
-  subroutine calc_thermo_properties(cea, T, cp, h0, s)
-    use mod_types, only: CEA_Core_Problem
-    use mod_functions, only: calc_enthalpy, calc_entropy, calc_specific_heat
-
-    class(CEA_Core_Problem), intent(in):: cea
-    real(8), intent(in):: T
-    real(8), intent(out):: cp(cea%Ng), h0(cea%Ng), s(cea%Ng)
-
-    integer:: ij, j, jj, k
-    real(8):: lnT
-
-    lnT = log(T)
-
-    k = 1
-    if (T > cea%Tg(2)) k = 2
-    if (T > cea%Tg(3)) k = 3
-
-    do concurrent (j = 1:cea%Ng)
-       s(j) = calc_entropy(cea%Coef(:, j, k), T, lnT, cea%legacy_mode)
-       h0(j) = calc_enthalpy(cea%Coef(:, j, k), T, lnT, cea%legacy_mode)
-    end do
-
-    if (.not. cea%Tp .or. cea%Convg) then
-       do concurrent (j = 1:cea%Ng)
-          cp(j) = calc_specific_heat(cea%Coef(:, j, k), T)
-       end do
-    end if
-
-    if (cea%Npr /= 0 .and. k /= 3 .and. cea%Ng /= cea%Ngc) then
-       do concurrent (ij = 1:cea%Npr)
-          j = cea%Jcond(ij)
-          jj = cea%Jcond(ij) - cea%Ng
-
-          s(j) = calc_entropy(cea%Cft(:, jj), T, lnT, cea%legacy_mode)
-          h0(j) = calc_enthalpy(cea%Cft(:, jj), T, lnT, cea%legacy_mode)
-          cp(j) = calc_specific_heat(cea%Cft(:, jj), T)
-       end do
-    end if
-
-    return
-  end subroutine calc_thermo_properties
 
 
   subroutine get_thermo_reference_properties(cea, name, M, T_ref, h0_ref)
@@ -139,5 +108,69 @@ contains
 
     return
   end subroutine get_thermo_reference_properties
+
+
+  subroutine calc_frozen_transport_properties(cea, T, mu, k, Pr)
+    use mod_constants, only: stderr, R0
+    use mod_types, only: CEA_Core_Problem, maxTr, maxNgc
+    use mod_cea, only: TRANIN_core
+
+    class(CEA_Core_Problem), intent(in):: cea
+    real(8), intent(in):: T
+    real(8), intent(out):: mu, k, Pr
+
+    integer:: ipt, Nm, idummy1(2), idummy2(2, maxTr)
+    real(8):: Cprr(maxTr), Con(maxTr), Wmol(maxTr), Xs(maxTr), Eta(maxTr, maxTr)
+    real(8):: dummy1(2, maxTr), dummy2(maxTr, maxTr), dummy3(maxNgc)
+
+    integer:: i, j, i1
+    real(8):: phi(maxTr, maxTr), psi(maxTr, maxTr), rtpd(maxTr, maxTr), sumc, sumv
+    real(8):: cp
+
+    ipt = cea%Nfz + 1
+
+    call TRANIN_core(cea, ipt, T, Nm, idummy1(1), idummy1(2), idummy2(1, :), idummy2(1, :), &
+         Cprr, Con, Wmol, Xs, dummy1(1, :), dummy1(2, :), dummy2(:, :), Eta, dummy3(:))
+
+    rtpd(:, :) = 0
+    phi(:, :) = 1
+    psi(:, :) = 1
+
+    mu = 0
+    k = 0
+
+    do i = 1, Nm - 1
+       i1 = i + 1
+       do j = i1, Nm
+          sumc = 2 / (Eta(i, j) * (Wmol(i) + Wmol(j)))
+          phi(i, j) = sumc * Wmol(j) * Eta(i, i)
+          phi(j, i) = sumc * Wmol(i) * Eta(j, j)
+          sumc = (Wmol(i) + Wmol(j))**2
+          psi(i, j) = phi(i, j) * (1 + 2.41d0 * (Wmol(i) - Wmol(j)) * (Wmol(i) - 0.142d0 * Wmol(j)) / sumc)
+          psi(j, i) = phi(j, i) * (1 + 2.41d0 * (Wmol(j) - Wmol(i)) * (Wmol(j) - 0.142d0 * Wmol(i)) / sumc)
+       end do
+    end do
+
+    do i = 1, Nm
+       sumc = 0
+       sumv = 0
+       do j = 1, Nm
+          sumc = sumc + psi(i, j) * Xs(j)
+          sumv = sumv + phi(i, j) * Xs(j)
+       end do
+       k = k + Con(i) * Xs(i) / sumc
+       mu = mu + Eta(i, i) * Xs(i) / sumv
+    end do
+
+    cp = R0 * sum(Xs(1:cea%Nm) * Cprr(1:cea%Nm)) / sum(Xs(1:cea%Nm) * Wmol(1:cea%Nm))
+
+    cp = cp * 1d-3  ! [kJ/(kg·K)]
+    k = k * 1d-4  ! [W/(m·K)]
+    mu = mu / 10  ! [µPa·s]
+
+    Pr = 1d-3 * mu * cp / k
+
+    return
+  end subroutine calc_frozen_transport_properties
 
 end module mod_ext
