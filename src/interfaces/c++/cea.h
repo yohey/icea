@@ -50,10 +50,14 @@ namespace CEA {
     void set_legacy_mode(const bool& legacy_mode = true);
     void run(const std::optional<const char*>& out_filename = std::nullopt);
 
+    double get_pressure(const size_t& iOF, const size_t& ipt);
     double get_temperature(const size_t& iOF, const size_t& ipt);
     double get_chamber_temperature();
     double get_molecular_weight(const size_t& iOF, const size_t& ipt);
+    double get_specific_heat(const size_t& iOF, const size_t& ipt);
     double get_specific_heat_ratio(const size_t& iOF, const size_t& ipt);
+    double get_characteristic_velocity();
+    double get_specific_impulse(const size_t& iOF, const size_t& ipt, const bool& vacuum = false);
 
     void calc_frozen_exhaust(const double& T, const std::optional<const double*>& P_ptr = std::nullopt,
                              const std::optional<const double*>& cp_ptr = std::nullopt, const std::optional<const double*>& gamma_ptr = std::nullopt,

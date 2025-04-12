@@ -60,10 +60,14 @@ namespace CEA {
     void ffi_cea_set_legacy_mode(const FFI_CEA_Problem_Unique_Ptr&, const bool& = true);
     void ffi_cea_run(const FFI_CEA_Problem_Unique_Ptr&, const char* = nullptr);
 
-    double ffi_cea_get_temperature(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
+    double ffi_cea_get_pressure(const FFI_CEA_Problem_Unique_Ptr&, const size_t&, const size_t&);
+    double ffi_cea_get_temperature(const FFI_CEA_Problem_Unique_Ptr&, const size_t&, const size_t&);
     double ffi_cea_get_chamber_temperature(const FFI_CEA_Problem_Unique_Ptr&);
-    double ffi_cea_get_molecular_weight(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
-    double ffi_cea_get_specific_heat_ratio(const FFI_CEA_Problem_Unique_Ptr&, const size_t& iOF, const size_t& ipt);
+    double ffi_cea_get_molecular_weight(const FFI_CEA_Problem_Unique_Ptr&, const size_t&, const size_t&);
+    double ffi_cea_get_specific_heat(const FFI_CEA_Problem_Unique_Ptr&, const size_t&, const size_t&);
+    double ffi_cea_get_specific_heat_ratio(const FFI_CEA_Problem_Unique_Ptr&, const size_t&, const size_t&);
+    double ffi_cea_get_characteristic_velocity(const FFI_CEA_Problem_Unique_Ptr&);
+    double ffi_cea_get_specific_impulse(const FFI_CEA_Problem_Unique_Ptr&, const size_t&, const size_t&, const bool& = false);
 
     void ffi_cea_calc_frozen_exhaust(const FFI_CEA_Problem_Unique_Ptr&, const double&, const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr);
     void ffi_cea_get_thermo_reference_properties(const FFI_CEA_Problem_Unique_Ptr&, const char*, const double*, const double*, const double*);

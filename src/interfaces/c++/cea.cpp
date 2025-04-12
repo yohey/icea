@@ -158,6 +158,11 @@ namespace CEA {
   }
 
 
+  double Problem::get_pressure(const size_t& iOF, const size_t& ipt) {
+    return ffi_cea_get_pressure(this->_ffi, iOF + 1, ipt + 1);
+  }
+
+
   double Problem::get_temperature(const size_t& iOF, const size_t& ipt) {
     return ffi_cea_get_temperature(this->_ffi, iOF + 1, ipt + 1);
   }
@@ -172,8 +177,23 @@ namespace CEA {
   }
 
 
+  double Problem::get_specific_heat(const size_t& iOF, const size_t& ipt) {
+    return ffi_cea_get_specific_heat(this->_ffi, iOF + 1, ipt + 1);
+  }
+
+
   double Problem::get_specific_heat_ratio(const size_t& iOF, const size_t& ipt) {
     return ffi_cea_get_specific_heat_ratio(this->_ffi, iOF + 1, ipt + 1);
+  }
+
+
+  double Problem::get_characteristic_velocity() {
+    return ffi_cea_get_characteristic_velocity(this->_ffi);
+  }
+
+
+  double Problem::get_specific_impulse(const size_t& iOF, const size_t& ipt, const bool& vacuum) {
+    return ffi_cea_get_specific_impulse(this->_ffi, iOF + 1, ipt + 1, vacuum);
   }
 
 

@@ -66,6 +66,15 @@ class CEA_Problem:
                                      _c_double_or_None(T), _c_double_or_None(rho), _c_double_or_None(h), _c_double_or_None(u),
                                      _c_char_or_None(T_unit), _c_char_or_None(rho_unit), _c_char_or_None(h_unit), _c_char_or_None(u_unit))
 
+    def set_reactant(self, index, ratio = None, T = None, rho = None, h = None, u = None,
+                     T_unit = None, rho_unit = None, h_unit = None, u_unit = None):
+        _libcea.ffi_cea_set_reactant.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_double),
+                                                 POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double),
+                                                 c_char_p, c_char_p, c_char_p, c_char_p]
+        _libcea.ffi_cea_set_reactant(byref(self._ffi), byref(c_size_t(index + 1)), _c_double_or_None(ratio),
+                                     _c_double_or_None(T), _c_double_or_None(rho), _c_double_or_None(h), _c_double_or_None(u),
+                                     _c_char_or_None(T_unit), _c_char_or_None(rho_unit), _c_char_or_None(h_unit), _c_char_or_None(u_unit))
+
     def set_insert_species(self, species):
         _libcea.ffi_cea_set_insert_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
         _libcea.ffi_cea_set_insert_species(byref(self._ffi), *_c_char_array(species))
@@ -86,6 +95,11 @@ class CEA_Problem:
         _libcea.ffi_cea_run.argtypes = [c_void_p, c_char_p]
         _libcea.ffi_cea_run(byref(self._ffi), _c_char_or_None(out_filename))
 
+    def get_pressure(self, iOF, ipt):
+        _libcea.ffi_cea_get_pressure.restype = c_double
+        _libcea.ffi_cea_get_pressure.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea.ffi_cea_get_pressure(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+
     def get_temperature(self, iOF, ipt):
         _libcea.ffi_cea_get_temperature.restype = c_double
         _libcea.ffi_cea_get_temperature.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
@@ -101,16 +115,37 @@ class CEA_Problem:
         _libcea.ffi_cea_get_molecular_weight.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
         return _libcea.ffi_cea_get_molecular_weight(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
 
+    def get_specific_heat(self, iOF, ipt):
+        _libcea.ffi_cea_get_specific_heat.restype = c_double
+        _libcea.ffi_cea_get_specific_heat.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea.ffi_cea_get_specific_heat(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+
     def get_specific_heat_ratio(self, iOF, ipt):
         _libcea.ffi_cea_get_specific_heat_ratio.restype = c_double
         _libcea.ffi_cea_get_specific_heat_ratio.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
         return _libcea.ffi_cea_get_specific_heat_ratio(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+
+    def get_characteristic_velocity(self):
+        _libcea.ffi_cea_get_characteristic_velocity.restype = c_double
+        _libcea.ffi_cea_get_characteristic_velocity.argtypes = [c_void_p]
+        return _libcea.ffi_cea_get_characteristic_velocity(byref(self._ffi))
+
+    def get_specific_impulse(self, iOF, ipt, vacuum):
+        _libcea.ffi_cea_get_specific_impulse.restype = c_double
+        _libcea.ffi_cea_get_specific_impulse.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t), POINTER(c_bool)]
+        return _libcea.ffi_cea_get_specific_impulse(byref(self._ffi), byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)), _c_bool_or_None(vacuum))
 
     def calc_frozen_exhaust(self, T):
         _libcea.ffi_cea_calc_frozen_exhaust.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
         _P, _cp, _gamma, _mu, _k, _Pr = c_double(), c_double(), c_double(), c_double(), c_double(), c_double()
         _libcea.ffi_cea_calc_frozen_exhaust(byref(self._ffi), _c_double_or_None(T), byref(_P), byref(_cp), byref(_gamma), byref(_mu), byref(_k), byref(_Pr))
         return _P.value, _cp.value, _gamma.value, _mu.value, _k.value, _Pr.value
+
+    def get_thermo_reference_properties(self, name: str):
+        _libcea.ffi_cea_get_thermo_reference_properties.argtypes = [c_void_p, c_char_p, POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+        _M, _T_ref, _h0_ref = c_double(), c_double(), c_double()
+        _libcea.ffi_cea_get_thermo_reference_properties(byref(self._ffi), name.encode(), byref(_M), byref(_T_ref), byref(_h0_ref))
+        return _M.value, _T_ref.value, _h0_ref.value
 
 
     def write_debug_output(self, filename: str):

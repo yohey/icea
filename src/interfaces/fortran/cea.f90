@@ -24,10 +24,14 @@ module cea
      procedure, public, pass:: set_only_species
      procedure, public, pass:: set_legacy_mode
      procedure, public, pass:: run
+     procedure, public, pass:: get_pressure
      procedure, public, pass:: get_temperature
      procedure, public, pass:: get_chamber_temperature
      procedure, public, pass:: get_molecular_weight
+     procedure, public, pass:: get_specific_heat
      procedure, public, pass:: get_specific_heat_ratio
+     procedure, public, pass:: get_characteristic_velocity
+     procedure, public, pass:: get_specific_impulse
      procedure, public, pass:: calc_frozen_exhaust
      procedure, public, pass:: get_thermo_reference_properties
      procedure, public, pass:: write_debug_output
@@ -640,6 +644,18 @@ contains
   end subroutine run
 
 
+  function get_pressure(this, iOF, ipt) result(P)
+    real(8):: P
+    class(CEA_Problem), intent(in):: this
+    integer, intent(in):: iOF
+    integer, intent(in):: ipt
+
+    P = this%points(iOF, ipt)%Ppp * 1d-1
+
+    return
+  end function get_pressure
+
+
   function get_temperature(this, iOF, ipt) result(T)
     real(8):: T
     class(CEA_Problem), intent(in):: this
@@ -687,6 +703,19 @@ contains
   end function get_molecular_weight
 
 
+  function get_specific_heat(this, iOF, ipt) result(cp)
+    use mod_constants, only: R0
+    real(8):: cp
+    class(CEA_Problem), intent(in):: this
+    integer, intent(in):: iOF
+    integer, intent(in):: ipt
+
+    cp = this%points(iOF, ipt)%Cpr * R0 / 1000
+
+    return
+  end function get_specific_heat
+
+
   function get_specific_heat_ratio(this, iOF, ipt) result(gamma)
     real(8):: gamma
     class(CEA_Problem), intent(in):: this
@@ -697,6 +726,45 @@ contains
 
     return
   end function get_specific_heat_ratio
+
+
+  function get_characteristic_velocity(this) result(c_star)
+    real(8):: c_star
+    class(CEA_Problem), intent(in):: this
+
+    c_star = this%Cstr
+
+    return
+  end function get_characteristic_velocity
+
+
+  function get_specific_impulse(this, iOF, ipt, vacuum) result(Isp)
+    use mod_constants, only: g0, R0
+    use mod_types, only: CEA_Point
+
+    real(8):: Isp
+    class(CEA_Problem), intent(in):: this
+    integer, intent(in):: iOF
+    integer, intent(in):: ipt
+    logical, intent(in), optional:: vacuum
+
+    type(CEA_Point), pointer:: p
+    p => this%points(iOF, ipt)
+
+    Isp = p%Spim / g0
+
+    if (present(vacuum)) then
+       if (vacuum) then
+          if (p%Wm * p%Spim == 0) then
+             Isp = 0
+          else
+             Isp = (p%Spim + R0 * p%Ttt / (p%Wm * p%Spim)) / g0
+          end if
+       end if
+    end if
+
+    return
+  end function get_specific_impulse
 
 
   subroutine calc_frozen_exhaust(this, T, P, cp, gamma, mu, k, Pr)

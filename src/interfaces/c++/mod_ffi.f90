@@ -584,6 +584,23 @@ contains
   end subroutine run
 
 
+  function ffi_get_pressure(ptr, iOF, ipt) result(P) bind(C, name = "ffi_cea_get_pressure")
+    use cea, only: CEA_Problem
+
+    real(c_double):: P
+    type(c_ptr), intent(in):: ptr
+    integer(c_size_t), intent(in):: iOF
+    integer(c_size_t), intent(in):: ipt
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) P = this%get_pressure(int(iOF), int(ipt))
+
+    return
+  end function ffi_get_pressure
+
+
   function ffi_get_temperature(ptr, iOF, ipt) result(T) bind(C, name = "ffi_cea_get_temperature")
     use cea, only: CEA_Problem
 
@@ -632,6 +649,23 @@ contains
   end function ffi_get_molecular_weight
 
 
+  function ffi_get_specific_heat(ptr, iOF, ipt) result(cp) bind(C, name = "ffi_cea_get_specific_heat")
+    use cea, only: CEA_Problem
+
+    real(c_double):: cp
+    type(c_ptr), intent(in):: ptr
+    integer(c_size_t), intent(in):: iOF
+    integer(c_size_t), intent(in):: ipt
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) cp = this%get_specific_heat(int(iOF), int(ipt))
+
+    return
+  end function ffi_get_specific_heat
+
+
   function ffi_get_specific_heat_ratio(ptr, iOF, ipt) result(gamma) bind(C, name = "ffi_cea_get_specific_heat_ratio")
     use cea, only: CEA_Problem
 
@@ -647,6 +681,50 @@ contains
 
     return
   end function ffi_get_specific_heat_ratio
+
+
+  function ffi_get_characteristic_velocity(ptr) result(c_star) bind(C, name = "ffi_cea_get_characteristic_velocity")
+    use cea, only: CEA_Problem
+
+    real(c_double):: c_star
+    type(c_ptr), intent(in):: ptr
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) c_star = this%get_characteristic_velocity()
+
+    return
+  end function ffi_get_characteristic_velocity
+
+
+  function ffi_get_specific_impulse(ptr, iOF, ipt, vacuum) result(Isp) bind(C, name = "ffi_cea_get_specific_impulse")
+    use cea, only: CEA_Problem
+
+    real(c_double):: Isp
+    type(c_ptr), intent(in):: ptr
+    integer(c_size_t), intent(in):: iOF
+    integer(c_size_t), intent(in):: ipt
+    logical(c_bool), intent(in), optional:: vacuum
+
+    logical, pointer:: vacuum_ptr
+
+    type(CEA_Problem), pointer:: this => null()
+    call c_f_pointer(ptr, this)
+
+    if (present(vacuum)) then
+       allocate(vacuum_ptr)
+       vacuum_ptr = logical(vacuum)
+    else
+       nullify(vacuum_ptr)
+    end if
+
+    if (associated(this)) Isp = this%get_specific_impulse(int(iOF), int(ipt), vacuum_ptr)
+
+    if (associated(vacuum_ptr)) deallocate(vacuum_ptr)
+
+    return
+  end function ffi_get_specific_impulse
 
 
   function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")

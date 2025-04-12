@@ -78,6 +78,8 @@ contains
 
   subroutine get_thermo_reference_properties(cea, name, M, T_ref, h0_ref)
     use mod_types, only: CEA_Core_Problem, ThermoProperty
+    use mod_functions, only: calc_enthalpy
+    use mod_constants, only: R0
 
     class(CEA_Core_Problem), intent(in):: cea
     character(*), intent(in):: name
@@ -96,12 +98,18 @@ contains
        th => cea%thermo_properties(i)
 
        if (th%name == name .or. th%name == '*' // name) then
-          if (th%type == 3) then
+          if (th%type == 1) then
+             M = th%mwt
+             T_ref = 298.15d0
+             h0_ref = calc_enthalpy(th%thermo(:, 1), T_ref, log(T_ref), cea%legacy_mode) * R0 * 1d-3 * T_ref
+
+          else if (th%type == 3) then
              M = th%mwt
              T_ref = th%tl(1)
              h0_ref = th%thermo(1, 1)
+
           else
-             write(0, *) '[ERROR] Not implemented yet.'
+             write(0, *) '[ERROR] subroutine get_thermo_reference_properties: Not implemented yet for type = ', th%type
           end if
        end if
     end do
