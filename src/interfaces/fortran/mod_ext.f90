@@ -22,7 +22,7 @@ contains
 
     integer:: j
     real(8):: cp_tmp, s, lnwm(cea%Ng), lnPsum
-    real(8):: cp_array(cea%Ng), h0_array(cea%Ng), s_array(cea%Ng)
+    real(8):: cp_array(cea%Ngc), h0_array(cea%Ngc), s_array(cea%Ngc)
     real(8):: mu_tmp, k_tmp, Pr_tmp
     type(CEA_Point), pointer:: pfz
 

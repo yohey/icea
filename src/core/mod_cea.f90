@@ -136,7 +136,7 @@ contains
 
     type(CEA_Core_Problem), intent(inout):: cea
 
-    call calc_thermo_properties(cea, cea%Tt, cea%Cp(1:cea%Ng), cea%H0(1:cea%Ng), cea%S(1:cea%Ng))
+    call calc_thermo_properties(cea, cea%Tt, cea%Cp(1:cea%Ngc), cea%H0(1:cea%Ngc), cea%S(1:cea%Ngc))
 
     return
   end subroutine CPHS
@@ -170,9 +170,9 @@ contains
 
     class(CEA_Core_Problem), intent(in):: cea
     real(8), intent(in):: T
-    real(8), intent(out):: cp(cea%Ng)
-    real(8), intent(out), optional:: h0(cea%Ng)
-    real(8), intent(out), optional:: s(cea%Ng)
+    real(8), intent(out):: cp(cea%Ngc)
+    real(8), intent(out), optional:: h0(cea%Ngc)
+    real(8), intent(out), optional:: s(cea%Ngc)
 
     integer:: j, k, j1(cea%Npr), j2(cea%Npr)
     real(8):: lnT
@@ -3801,7 +3801,7 @@ contains
     logical:: change, elc1, elc2, ion1, ion2, setx
     real(8):: coeff, debye, ekt, enel, enmin, ionic, lambda, omega, prop, qc, ratio, &
          stcf(maxTr, maxTr), stcoef(maxTr), te, testen, testot, total, &
-         trc(6, 3, 2), wmred, xsel, Tln, cp(cea%Ng)
+         trc(6, 3, 2), wmred, xsel, Tln, cp(cea%Ngc)
 
     type(CEA_Point), pointer:: p !< current point
     type(CEA_Point), pointer:: p1
@@ -3825,7 +3825,7 @@ contains
     En(:) = p%En(:)
 
     if (Tt == cea%Tt) then
-       cp(:) = cea%Cp(1:cea%Ng)
+       cp(:) = cea%Cp(1:cea%Ngc)
     else
        call calc_thermo_properties(cea, Tt, cp)
     end if
