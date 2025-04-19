@@ -831,12 +831,11 @@ contains
   end subroutine ffi_run_all_cases
 
 
-  subroutine ffi_calc_frozen_exhaust(ptr, T, P, cp, gamma, mu, k, Pr) bind(C, name = "ffi_cea_calc_frozen_exhaust")
+  subroutine ffi_calc_frozen_exhaust(ptr, T, cp, gamma, mu, k, Pr) bind(C, name = "ffi_cea_calc_frozen_exhaust")
     use cea, only: CEA_Problem
 
     type(c_ptr), intent(in):: ptr
     real(c_double), intent(in):: T
-    real(c_double), intent(out), optional:: P
     real(c_double), intent(out), optional:: cp
     real(c_double), intent(out), optional:: gamma
     real(c_double), intent(out), optional:: mu
@@ -847,7 +846,7 @@ contains
     call c_f_pointer(ptr, this)
 
     if (associated(this)) then
-       call this%calc_frozen_exhaust(T, P, cp, gamma, mu, k, Pr)
+       call this%calc_frozen_exhaust(T, cp, gamma, mu, k, Pr)
     end if
 
     return

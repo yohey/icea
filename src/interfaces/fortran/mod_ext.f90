@@ -6,71 +6,43 @@ module mod_ext
 
 contains
 
-  subroutine calc_frozen_exhaust(cea, T, P, cp, gamma, mu, k, Pr)
+  subroutine calc_frozen_exhaust(cea, T, cp, gamma, mu, k, Pr)
     use mod_constants, only: R0
     use mod_types, only: CEA_Core_Problem, CEA_Point
     use mod_cea, only: calc_thermo_properties
 
     class(CEA_Core_Problem), intent(in):: cea
     real(8), intent(in):: T  !< [K]
-    real(8), intent(out), optional:: P  !< [MPa]
     real(8), intent(out), optional:: cp  !< [kJ/(kg·K)]
     real(8), intent(out), optional:: gamma  !< [-]
     real(8), intent(out), optional:: mu  !< [µPa·s]
     real(8), intent(out), optional:: k  !< [W/(m·K)]
     real(8), intent(out), optional:: Pr  !< [-]
 
-    integer:: j
-    real(8):: cp_tmp, s, lnwm(cea%Ng), lnPsum
-    real(8):: cp_array(cea%Ngc), h0_array(cea%Ngc), s_array(cea%Ngc)
-    real(8):: mu_tmp, k_tmp, Pr_tmp
+    real(8):: cp_tmp, mu_tmp, k_tmp, Pr_tmp
     type(CEA_Point), pointer:: pfz
 
     if (.not. cea%Rkt) then
        write(0, *) '[ERROR] This function is only for Rocket problem.'
-       if (present(P)) P = 0
        if (present(cp)) cp = 0
        if (present(gamma)) gamma = 0
+       if (present(mu)) mu = 0
+       if (present(k)) k = 0
+       if (present(Pr)) Pr = 0
        return
     end if
 
     pfz => cea%points(cea%iOF, cea%Nfz)
 
-    call calc_thermo_properties(cea, T, cp_array, h0_array, s_array)
+    call calc_frozen_transport_properties(cea, T, cp_tmp, mu_tmp, k_tmp, Pr_tmp)
 
-    cp_tmp = sum(pfz%En(1:cea%Ng) * cp_array(1:cea%Ng))
+    if (present(cp)) cp = cp_tmp
 
-    if (cea%Npr /= 0) then
-       cp_tmp = cp_tmp + sum(pfz%En(cea%Jcond(1:cea%Npr)) * cp_array(cea%Jcond(1:cea%Npr)))
-    end if
+    if (present(gamma)) gamma = cp_tmp / (cp_tmp - R0 * 1d-3 / pfz%Wm)
 
-    if (present(cp)) cp = cp_tmp * R0 * 1d-3
-
-    if (present(gamma)) gamma = cp_tmp / (cp_tmp - 1 / pfz%Wm)
-
-    if (present(P)) then
-       s = pfz%Ssum
-
-       lnwm(:) = 0
-       do concurrent (j = 1:cea%Ng, pfz%En(j) /= 0)
-          lnwm(j) = -log(pfz%En(j) * pfz%Wm)
-       end do
-
-       lnPsum = sum(pfz%En(1:cea%Ng) * (s_array(1:cea%Ng) + lnwm(1:cea%Ng))) - s
-
-       if (cea%Npr /= 0) then
-          lnPsum = lnPsum + sum(pfz%En(cea%Jcond(1:cea%Npr)) * s_array(cea%Jcond(1:cea%Npr)))
-       end if
-
-       P = 0.1d0 * exp(lnPsum / sum(pfz%En(1:cea%Ng)))
-    end if
-
-    if (present(mu) .or. present(k) .or. present(Pr)) then
-       call calc_frozen_transport_properties(cea, T, mu_tmp, k_tmp, Pr_tmp)
-       if (present(mu)) mu = mu_tmp
-       if (present(k)) k = k_tmp
-       if (present(Pr)) Pr = Pr_tmp
-    end if
+    if (present(mu)) mu = mu_tmp
+    if (present(k)) k = k_tmp
+    if (present(Pr)) Pr = Pr_tmp
 
     return
   end subroutine calc_frozen_exhaust
@@ -118,14 +90,14 @@ contains
   end subroutine get_thermo_reference_properties
 
 
-  subroutine calc_frozen_transport_properties(cea, T, mu, k, Pr)
+  subroutine calc_frozen_transport_properties(cea, T, cp, mu, k, Pr)
     use mod_constants, only: stderr, R0
     use mod_types, only: CEA_Core_Problem, maxTr, maxNgc
     use mod_cea, only: TRANIN_core
 
     class(CEA_Core_Problem), intent(in):: cea
     real(8), intent(in):: T
-    real(8), intent(out):: mu, k, Pr
+    real(8), intent(out):: cp, mu, k, Pr
 
     integer:: ipt, Nm, idummy1(2), idummy2(2, maxTr)
     real(8):: Cprr(maxTr), Con(maxTr), Wmol(maxTr), Xs(maxTr), Eta(maxTr, maxTr)
@@ -133,7 +105,6 @@ contains
 
     integer:: i, j, i1
     real(8):: phi(maxTr, maxTr), psi(maxTr, maxTr), rtpd(maxTr, maxTr), sumc, sumv
-    real(8):: cp
 
     ipt = cea%Nfz + 1
 
