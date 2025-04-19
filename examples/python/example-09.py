@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from pycea import CEA_Problem
+from icea import CEA_Problem
 
 
 prob = CEA_Problem()

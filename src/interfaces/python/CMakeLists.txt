@@ -1,4 +1,4 @@
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pycea/__init__.py DESTINATION lib/pycea/)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pycea/_findlib.py DESTINATION lib/pycea/)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pycea/_problem.py DESTINATION lib/pycea/)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/icea/__init__.py DESTINATION lib/icea/)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/icea/_findlib.py DESTINATION lib/icea/)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/icea/_problem.py DESTINATION lib/icea/)
