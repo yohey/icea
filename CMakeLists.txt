@@ -6,7 +6,12 @@ project(CEA Fortran)
 set(CEA_CORE cea-core)
 set(CEA_EXECUTABLE cea)
 
-set(CEA_Fortran_FLAGS -cpp -std=f2018)
+set(CEA_Fortran_FLAGS
+  -cpp
+  -std=f2018
+  -DCEA_ROOT='${CMAKE_INSTALL_PREFIX}'
+  $<$<CONFIG:Release>:-DNDEBUG>
+)
 
 
 add_library(${CEA_CORE} OBJECT)
@@ -28,7 +33,6 @@ set_property(TARGET ${CEA_CORE} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_compile_options(${CEA_CORE}
   PRIVATE
-  "-DCEA_ROOT='${CMAKE_INSTALL_PREFIX}'"
   ${CEA_Fortran_FLAGS}
 )
 

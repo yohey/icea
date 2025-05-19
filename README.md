@@ -17,9 +17,27 @@ Fortran, C++, Python からライブラリとして呼び出すことができ�
 ## インストール方法
 
 ```
-cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0
+cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Release
 cmake --build _build
 cmake --install _build
+```
+
+## 動作テスト
+
+下記により正常にビルドできたかどうかの動作テストを実行できます。
+```
+cmake --build _build --target test
+```
+
+ただし，コンパイラの最適化レベルが `-O2` や `-O3` の場合は計算結果が微妙に異なるためテストは失敗と判定されます。
+テストを成功させたい場合は `-O0` または `-O1` を指定する必要があります。
+```
+cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_FLAGS_RELEASE="-O1"
+```
+
+デバッグしたい場合の例：
+```
+cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_Fortran_FLAGS_RELEASE="-O0 -Wall -g -fbacktrace"
 ```
 
 ## 使用方法
