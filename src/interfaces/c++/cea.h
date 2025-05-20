@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
@@ -18,7 +19,7 @@ namespace CEA {
     ~Problem() = default;
 
   private:
-    FFI_CEA_Problem_Unique_Ptr _ffi;
+    std::unique_ptr<void, std::function<void(const FFI_CEA_Problem_Ptr&)>> _ffi;
 
     friend void run_all_cases(std::vector<Problem>&, const std::optional<const char*>&, const std::optional<const char*>&);
     friend bool ffi_need_aligned(const std::vector<Problem>&);

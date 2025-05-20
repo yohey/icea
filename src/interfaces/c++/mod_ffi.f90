@@ -27,7 +27,7 @@ contains
   subroutine del_problem(ptr) bind(C, name = "ffi_cea_del_problem")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
 
     type(CEA_Problem), pointer:: cea => null()
     call c_f_pointer(ptr, cea)
@@ -47,7 +47,7 @@ contains
     use cea, only: CEA_Problem
 
     type(c_ptr):: ptr_replica
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
 
     type(CEA_Problem), pointer:: cea => null()
     type(CEA_Problem), pointer:: cea_replica => null()
@@ -69,7 +69,7 @@ contains
        frozen, frozen_at_throat, thermo_lib, trans_lib) bind(C, name = "ffi_cea_set_problem")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     character(len = 1, kind = c_char), intent(in):: mode
     character(len = 1, kind = c_char), intent(in), optional:: name
     logical(c_bool), intent(in), optional:: mole_ratios
@@ -164,7 +164,7 @@ contains
        bind(C, name = "ffi_cea_set_output_options")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     logical(c_bool), intent(in), optional:: SI
     type(FFI_C_Ptr_Array), intent(in), optional:: debug_points
     logical(c_bool), intent(in), optional:: mass_fractions
@@ -230,7 +230,7 @@ contains
   subroutine set_chamber_pressures(ptr, pressures_ptr, unit) bind(C, name = "ffi_cea_set_chamber_pressures")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: pressures_ptr
     character(len = 1, kind = c_char), intent(in), optional:: unit
 
@@ -258,7 +258,7 @@ contains
   subroutine set_mixture_ratios(ptr, ratios_ptr, type) bind(C, name = "ffi_cea_set_mixture_ratios")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
     character(len = 1, kind = c_char), intent(in), optional:: type
 
@@ -286,7 +286,7 @@ contains
   subroutine set_pressure_ratios(ptr, ratios_ptr) bind(C, name = "ffi_cea_set_pressure_ratios")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
 
     type(CEA_Problem), pointer:: this => null()
@@ -310,7 +310,7 @@ contains
   subroutine set_subsonic_area_ratios(ptr, ratios_ptr) bind(C, name = "ffi_cea_set_subsonic_area_ratios")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
 
     type(CEA_Problem), pointer:: this => null()
@@ -334,7 +334,7 @@ contains
   subroutine set_supersonic_area_ratios(ptr, ratios_ptr) bind(C, name = "ffi_cea_set_supersonic_area_ratios")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     type(FFI_C_Ptr_Array), intent(in):: ratios_ptr
 
     type(CEA_Problem), pointer:: this => null()
@@ -358,7 +358,7 @@ contains
   subroutine set_finite_area_combustor(ptr, contraction_ratio, mass_flow_ratio) bind(C, name = "ffi_cea_set_finite_area_combustor")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     real(c_double), intent(in), optional:: contraction_ratio
     real(c_double), intent(in), optional:: mass_flow_ratio
 
@@ -381,7 +381,7 @@ contains
        bind(C, name = "ffi_cea_add_reactant")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     character(len = 1, kind = c_char), intent(in):: type
     character(len = 1, kind = c_char), intent(in):: name
     character(len = 1, kind = c_char), intent(in), optional:: formula
@@ -432,7 +432,7 @@ contains
        bind(C, name = "ffi_cea_set_reactant")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     integer(c_size_t), intent(in):: index
     real(c_double), intent(in), optional:: ratio
     real(c_double), intent(in), optional:: T
@@ -473,9 +473,9 @@ contains
   subroutine set_insert_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_insert_species")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
-    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
+    type(c_ptr), value, intent(in):: ptr
     type(c_ptr), intent(in):: species_ptr
+    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
 
     type(CEA_Problem), pointer:: this => null()
     integer(c_size_t), dimension(:), pointer:: char_length_array
@@ -497,9 +497,9 @@ contains
   subroutine set_omit_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_omit_species")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
-    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
+    type(c_ptr), value, intent(in):: ptr
     type(c_ptr), intent(in):: species_ptr
+    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
 
     type(CEA_Problem), pointer:: this => null()
     integer(c_size_t), dimension(:), pointer:: char_length_array
@@ -521,9 +521,9 @@ contains
   subroutine set_only_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_only_species")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
-    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
+    type(c_ptr), value, intent(in):: ptr
     type(c_ptr), intent(in):: species_ptr
+    type(FFI_C_Ptr_Array), intent(in):: char_length_array_ptr
 
     type(CEA_Problem), pointer:: this => null()
     integer(c_size_t), dimension(:), pointer:: char_length_array
@@ -532,9 +532,23 @@ contains
     call c_f_pointer(ptr, this)
     call c_f_pointer(char_length_array_ptr%addr, char_length_array, [char_length_array_ptr%size])
 
-    species = get_string_array(species_ptr, char_length_array, char_length_array_ptr%size)
+#ifndef NDEBUG
+    if (associated(char_length_array)) then
+#endif
+       species = get_string_array(species_ptr, char_length_array, char_length_array_ptr%size)
+#ifndef NDEBUG
+    else
+       write(0, *) '[DEBUG] pointer is not associated. (set_only_species, char_length_array)'
+    end if
 
-    call this%set_only_species(species)
+    if (associated(this)) then
+#endif
+       call this%set_only_species(species)
+#ifndef NDEBUG
+    else
+       write(0, *) '[DEBUG] pointer is not associated. (set_only_species, this)'
+    end if
+#endif
 
     deallocate(species)
 
@@ -545,7 +559,7 @@ contains
   subroutine set_legacy_mode(ptr, legacy_mode) bind(C, name = "ffi_cea_set_legacy_mode")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     logical(c_bool), intent(in), optional:: legacy_mode
 
     type(CEA_Problem), pointer:: this => null()
@@ -566,7 +580,7 @@ contains
   subroutine run(ptr, out_filename) bind(C, name = "ffi_cea_run")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     character(len = 1, kind = c_char), intent(in), optional:: out_filename
 
     character(len = :, kind = c_char), allocatable:: out_filename_fstr
@@ -588,7 +602,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: P
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     integer(c_size_t), intent(in):: iOF
     integer(c_size_t), intent(in):: ipt
 
@@ -605,7 +619,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: T
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     integer(c_size_t), intent(in):: iOF
     integer(c_size_t), intent(in):: ipt
 
@@ -621,7 +635,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: T
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
 
     type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
@@ -636,7 +650,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: M
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     integer(c_size_t), intent(in):: iOF
     integer(c_size_t), intent(in):: ipt
 
@@ -653,7 +667,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: cp
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     integer(c_size_t), intent(in):: iOF
     integer(c_size_t), intent(in):: ipt
 
@@ -670,7 +684,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: gamma
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     integer(c_size_t), intent(in):: iOF
     integer(c_size_t), intent(in):: ipt
 
@@ -687,7 +701,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: c_star
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
 
     type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
@@ -702,7 +716,7 @@ contains
     use cea, only: CEA_Problem
 
     real(c_double):: Isp
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     integer(c_size_t), intent(in):: iOF
     integer(c_size_t), intent(in):: ipt
     logical(c_bool), intent(in), optional:: vacuum
@@ -834,7 +848,7 @@ contains
   subroutine ffi_calc_frozen_exhaust(ptr, T, cp, gamma, mu, k, Pr) bind(C, name = "ffi_cea_calc_frozen_exhaust")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     real(c_double), intent(in):: T
     real(c_double), intent(out), optional:: cp
     real(c_double), intent(out), optional:: gamma
@@ -857,7 +871,7 @@ contains
        bind(C, name = "ffi_cea_get_thermo_reference_properties")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     character(len = 1, kind = c_char), intent(in):: name
     real(c_double), intent(out):: M
     real(c_double), intent(out):: T_ref
@@ -885,7 +899,7 @@ contains
   subroutine write_debug_output(ptr, filename) bind(C, name = "ffi_cea_write_debug_output")
     use cea, only: CEA_Problem
 
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
     character(len = 1, kind = c_char), intent(in):: filename
 
     type(CEA_Problem), pointer:: this => null()
@@ -903,7 +917,7 @@ contains
     use cea, only: CEA_Problem
 
     integer(c_size_t):: size
-    type(c_ptr), intent(in):: ptr
+    type(c_ptr), value, intent(in):: ptr
 
     type(CEA_Problem), pointer:: cea => null()
     call c_f_pointer(ptr, cea)
