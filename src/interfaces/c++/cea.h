@@ -28,7 +28,7 @@ namespace CEA {
     void set_problem(const char* mode, const std::optional<const char*>& name = std::nullopt, const bool& mole_ratios = false, const bool& equilibrium = false, const bool& ions = false,
                      const bool& frozen = false, const bool& frozen_at_throat = false, const std::optional<const char*>& thermo_lib = std::nullopt, const std::optional<const char*>& trans_lib = std::nullopt);
     void set_output_options(const bool& SI = true, const std::vector<size_t>& debug_points = {}, const bool& mass_fractions = false, const bool& _short = false,
-                            const double& trace_tol = 0, const bool& transport = false);
+                            const double& trace_tol = 0, const bool& transport = false, const std::vector<std::string>& plot = {});
     void set_chamber_pressures(const std::vector<double>& pressure_list, const std::optional<const char*>& unit = std::nullopt);
     void set_mixture_ratios(const std::vector<double>& ratio_list, const std::optional<const char*>& type = std::nullopt);
     void set_pressure_ratios(const std::vector<double>& ratio_list);
@@ -49,7 +49,7 @@ namespace CEA {
     void set_omit_species(const std::vector<std::string>&);
     void set_only_species(const std::vector<std::string>&);
     void set_legacy_mode(const bool& legacy_mode = true);
-    void run(const std::optional<const char*>& out_filename = std::nullopt);
+    void run(const std::optional<const char*>& out_filename = std::nullopt, const std::optional<const char*>& plt_filename = std::nullopt);
 
     double get_pressure(const size_t& iOF, const size_t& ipt);
     double get_temperature(const size_t& iOF, const size_t& ipt);

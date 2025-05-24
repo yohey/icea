@@ -60,3 +60,9 @@ add_test(NAME diff-fortran-example-13 COMMAND bash -c "[ $(cat example-13.out | 
 foreach(i IN ITEMS 08 09 10 11 12 13)
   set_tests_properties(diff-fortran-example-${i} PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
 endforeach()
+
+add_test(
+  NAME diff-fortran-example-12-plt
+  COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/tests/orig/cea2.plt example-12.plt
+)
+set_tests_properties(diff-fortran-example-12-plt PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)

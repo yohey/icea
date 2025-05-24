@@ -27,7 +27,8 @@ void run_example_12() {
   //   - _short:          bool (optional, default: false)
   //   - trace_tol:       double (optional, default: 0.0)
   //   - transport:       bool (optional, default: false)
-  prob.set_output_options(true, {}, true);
+  //   - plot:            std::vector<std::string> (optional, default: {})
+  prob.set_output_options(true, {}, true, false, 0.0, false, {"aeat", "t", "p", "ivac", "isp", "mach", "cf"});
 
   // void CEA::Problem::add_reactant
   //   - type:            std::string (required, must start with "fu", "ox" or "na")
@@ -56,6 +57,6 @@ void run_example_12() {
 
   prob.set_legacy_mode(true);
 
-  prob.run("example-12.out");
+  prob.run("example-12.out", "example-12.plt");
 
 }

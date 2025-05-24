@@ -158,7 +158,7 @@ contains
   end subroutine set_problem
 
 
-  subroutine set_output_options(this, SI, debug_points, mass_fractions, short, trace_tol, transport)
+  subroutine set_output_options(this, SI, debug_points, mass_fractions, short, trace_tol, transport, plot)
     use mod_types, only: maxMix
 
     class(CEA_Problem), intent(inout):: this
@@ -168,6 +168,7 @@ contains
     logical, intent(in), optional:: short
     real(8), intent(in), optional:: trace_tol
     logical, intent(in), optional:: transport
+    character(*), intent(in), optional:: plot(:)
     integer:: i, j
 
     if (present(SI)) then
@@ -194,6 +195,12 @@ contains
 
     if (present(transport)) then
        this%Trnspt = transport
+    end if
+
+    if (present(plot)) then
+       this%Nplt = min(20, size(plot))
+       this%Pltvar(:) = ''
+       this%Pltvar(1:this%Nplt) = plot(1:this%Nplt)
     end if
 
     return
@@ -632,13 +639,14 @@ contains
   end subroutine set_legacy_mode
 
 
-  subroutine run(this, out_filename)
+  subroutine run(this, out_filename, plt_filename)
     use mod_cea, only: run_case
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in), optional:: out_filename
+    character(*), intent(in), optional:: plt_filename
 
-    call run_case(this, out_filename)
+    call run_case(this, out_filename, plt_filename)
 
     return
   end subroutine run

@@ -7,7 +7,7 @@ from icea import CEA_Problem
 prob = CEA_Problem()
 
 prob.set_problem(mode = 'rocket', name = 'Example 12', equilibrium = True, frozen = True, frozen_at_throat = True)
-prob.set_output_options(SI = True, mass_fractions = True)
+prob.set_output_options(SI = True, mass_fractions = True, plot = ['aeat', 't', 'p', 'ivac', 'isp', 'mach', 'cf'])
 
 prob.add_reactant('fuel', 'CH6N2(L)', rho =  874)
 prob.add_reactant('oxyd', 'N2O4(L)',  rho = 1431)
@@ -23,4 +23,4 @@ prob.set_only_species(['CO', 'CO2', 'H',   'HNO', 'HNO2',   'HO2', 'H2', 'H2O', 
 
 prob.set_legacy_mode(True)
 
-prob.run(out_filename = 'example-12.out')
+prob.run(out_filename = 'example-12.out', plt_filename = 'example-12.plt')

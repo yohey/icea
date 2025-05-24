@@ -5,6 +5,11 @@ module mod_legacy_io
 
   private:: INPUT, INFREE, UTHERM, UTRAN, EFMT, VARFMT
 
+  interface write_plt_file
+     procedure:: write_plt_file_scalar
+     procedure:: write_plt_file_array
+  end interface write_plt_file
+
 contains
 
   subroutine count_cases(inp_filename, num_cases)
@@ -2574,7 +2579,22 @@ contains
   end function VARFMT
 
 
-  subroutine write_plt_file(cea, filename)
+  subroutine write_plt_file_scalar(cea, filename)
+    use mod_types, only: CEA_Core_Problem
+
+    type(CEA_Core_Problem), intent(in):: cea
+    character(*), intent(in):: filename
+    type(CEA_Core_Problem), allocatable:: cea_array(:)
+
+    allocate(cea_array(1))
+    cea_array(1) = cea
+    call write_plt_file_array(cea_array, filename)
+    deallocate(cea_array)
+
+    return
+  end subroutine write_plt_file_scalar
+
+  subroutine write_plt_file_array(cea, filename)
     use mod_types
 
     type(CEA_Core_Problem), intent(in):: cea(:)
@@ -2776,6 +2796,6 @@ contains
     deallocate(Pltout)
 
     return
-  end subroutine write_plt_file
+  end subroutine write_plt_file_array
 
 end module mod_legacy_io

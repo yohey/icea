@@ -28,10 +28,11 @@ class CEA_Problem:
         _libcea.ffi_cea_set_problem(self._ffi, mode.encode(), _c_char_or_None(name), _c_bool_or_None(mole_ratios), _c_bool_or_None(equilibrium), _c_bool_or_None(ions),
                                     _c_bool_or_None(frozen), _c_bool_or_None(frozen_at_throat), _c_char_or_None(thermo_lib), _c_char_or_None(trans_lib))
 
-    def set_output_options(self, SI = None, debug_points = None, mass_fractions = None, short = None, trace_tol = None, transport = None):
-        _libcea.ffi_cea_set_output_options.argtypes = [c_void_p, POINTER(c_bool), POINTER(FFI_C_Ptr_Array), POINTER(c_bool), POINTER(c_bool), POINTER(c_double), POINTER(c_bool)]
+    def set_output_options(self, SI = None, debug_points = None, mass_fractions = None, short = None, trace_tol = None, transport = None, plot = None):
+        _libcea.ffi_cea_set_output_options.argtypes = [c_void_p, POINTER(c_bool), POINTER(FFI_C_Ptr_Array), POINTER(c_bool), POINTER(c_bool),
+                                                       POINTER(c_double), POINTER(c_bool), c_void_p, POINTER(FFI_C_Ptr_Array)]
         _libcea.ffi_cea_set_output_options(self._ffi, _c_bool_or_None(SI), _c_size_t_array_or_None(debug_points), _c_bool_or_None(mass_fractions),
-                                           _c_bool_or_None(short), _c_double_or_None(trace_tol), _c_bool_or_None(transport))
+                                           _c_bool_or_None(short), _c_double_or_None(trace_tol), _c_bool_or_None(transport), *_c_char_array_or_None(plot))
 
     def set_chamber_pressures(self, pressures, unit = None):
         _libcea.ffi_cea_set_chamber_pressures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
@@ -77,23 +78,23 @@ class CEA_Problem:
 
     def set_insert_species(self, species):
         _libcea.ffi_cea_set_insert_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_insert_species(self._ffi, *_c_char_array(species))
+        _libcea.ffi_cea_set_insert_species(self._ffi, *_c_char_array_or_None(species))
 
     def set_omit_species(self, species):
         _libcea.ffi_cea_set_omit_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_omit_species(self._ffi, *_c_char_array(species))
+        _libcea.ffi_cea_set_omit_species(self._ffi, *_c_char_array_or_None(species))
 
     def set_only_species(self, species):
         _libcea.ffi_cea_set_only_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_only_species(self._ffi, *_c_char_array(species))
+        _libcea.ffi_cea_set_only_species(self._ffi, *_c_char_array_or_None(species))
 
     def set_legacy_mode(self, legacy_mode = None):
         _libcea.ffi_cea_set_legacy_mode.argtypes = [c_void_p, POINTER(c_bool)]
         _libcea.ffi_cea_set_legacy_mode(self._ffi, _c_bool_or_None(legacy_mode))
 
-    def run(self, out_filename = None):
-        _libcea.ffi_cea_run.argtypes = [c_void_p, c_char_p]
-        _libcea.ffi_cea_run(self._ffi, _c_char_or_None(out_filename))
+    def run(self, out_filename = None, plt_filename = None):
+        _libcea.ffi_cea_run.argtypes = [c_void_p, c_char_p, c_char_p]
+        _libcea.ffi_cea_run(self._ffi, _c_char_or_None(out_filename), _c_char_or_None(plt_filename))
 
     def get_pressure(self, iOF, ipt):
         _libcea.ffi_cea_get_pressure.restype = c_double
@@ -184,8 +185,11 @@ def _c_size_t_array_or_None(a: Iterable[int] | None):
         ptr = FFI_C_Ptr_Array(addr = cast(_a, c_void_p), size = len(a))
         return byref(ptr)
 
-def _c_char_array(a: Iterable[str]):
-    char_array_ptr = (c_char_p * len(a))(*[s.encode() for s in a])
-    char_length_array = (c_size_t * len(a))(*[len(s) for s in a])
-    char_length_array_ptr = FFI_C_Ptr_Array(addr = cast(char_length_array, c_void_p), size = len(a))
-    return byref(char_array_ptr), byref(char_length_array_ptr)
+def _c_char_array_or_None(a: Iterable[str] | None):
+    if a is None:
+        return None, None
+    else:
+        char_array_ptr = (c_char_p * len(a))(*[s.encode() for s in a])
+        char_length_array = (c_size_t * len(a))(*[len(s) for s in a])
+        char_length_array_ptr = FFI_C_Ptr_Array(addr = cast(char_length_array, c_void_p), size = len(a))
+        return byref(char_array_ptr), byref(char_length_array_ptr)

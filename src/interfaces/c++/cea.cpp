@@ -29,9 +29,20 @@ namespace CEA {
   }
 
   void Problem::set_output_options(const bool& SI, const std::vector<size_t>& debug_points, const bool& mass_fractions, const bool& _short,
-                                   const double& trace_tol, const bool& transport) {
+                                   const double& trace_tol, const bool& transport, const std::vector<std::string>& plot) {
     FFI_SizeT_Array array{debug_points.data(), debug_points.size()};
-    ffi_cea_set_output_options(this->_ffi.get(), SI, array, mass_fractions, _short, trace_tol, transport);
+
+    std::vector<size_t> char_length_array(plot.size());
+    std::vector<const char*> char_ptr_array(plot.size());
+
+    for (size_t i = 0; i < plot.size(); ++i) {
+      char_length_array[i] = plot[i].length();
+      char_ptr_array[i] = plot[i].c_str();
+    }
+
+    FFI_SizeT_Array char_length_array_ptr{char_length_array.data(), char_length_array.size()};
+
+    ffi_cea_set_output_options(this->_ffi.get(), SI, array, mass_fractions, _short, trace_tol, transport, char_ptr_array.data(), char_length_array_ptr);
   }
 
   void Problem::set_chamber_pressures(const std::vector<double>& pressure_list, const std::optional<const char*>& unit) {
@@ -153,8 +164,8 @@ namespace CEA {
   }
 
 
-  void Problem::run(const std::optional<const char*>& out_filename) {
-    ffi_cea_run(this->_ffi.get(), out_filename.value_or(nullptr));
+  void Problem::run(const std::optional<const char*>& out_filename, const std::optional<const char*>& plt_filename) {
+    ffi_cea_run(this->_ffi.get(), out_filename.value_or(nullptr), plt_filename.value_or(nullptr));
   }
 
 

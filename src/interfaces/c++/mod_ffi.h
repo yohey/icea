@@ -32,7 +32,8 @@ namespace CEA {
                              const bool& = false, const bool& = false, const char* = nullptr, const char* = nullptr);
 
     void ffi_cea_set_output_options(const FFI_CEA_Problem_Ptr, const bool& = true, const FFI_SizeT_Array& = {},
-                                    const bool& = false, const bool& = false, const double& = 0, const bool& = false);
+                                    const bool& = false, const bool& = false, const double& = 0, const bool& = false,
+                                    const char* const* = nullptr, const FFI_SizeT_Array& = {});
 
     void ffi_cea_set_chamber_pressures(const FFI_CEA_Problem_Ptr, const FFI_Double_Array&, const char* = nullptr);
 
@@ -56,7 +57,7 @@ namespace CEA {
     void ffi_cea_set_only_species(const FFI_CEA_Problem_Ptr, const char* const*, const FFI_SizeT_Array&);
 
     void ffi_cea_set_legacy_mode(const FFI_CEA_Problem_Ptr, const bool& = true);
-    void ffi_cea_run(const FFI_CEA_Problem_Ptr, const char* = nullptr);
+    void ffi_cea_run(const FFI_CEA_Problem_Ptr, const char* = nullptr, const char* = nullptr);
 
     double ffi_cea_get_pressure(const FFI_CEA_Problem_Ptr, const size_t&, const size_t&);
     double ffi_cea_get_temperature(const FFI_CEA_Problem_Ptr, const size_t&, const size_t&);

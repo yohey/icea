@@ -79,12 +79,13 @@ contains
   end subroutine run_all_cases
 
 
-  subroutine run_case(cea, out_filename)
+  subroutine run_case(cea, out_filename, plt_filename)
     use mod_types
     use mod_legacy_io, only: open_legacy_output, write_input_log, write_plt_file
 
     class(CEA_Core_Problem), intent(inout):: cea
     character(*), intent(in), optional:: out_filename
+    character(*), intent(in), optional:: plt_filename
     logical:: is_opened
 
     if (cea%legacy_mode) then
@@ -122,6 +123,10 @@ contains
           close(IOOUT)
           IOOUT = 0
        end if
+    end if
+
+    if (present(plt_filename)) then
+       call write_plt_file(cea, plt_filename)
     end if
 
     return

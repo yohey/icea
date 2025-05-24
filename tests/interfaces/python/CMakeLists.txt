@@ -45,3 +45,9 @@ add_test(NAME diff-python-example-13 COMMAND bash -c "[ $(cat example-13.out | w
 foreach(i IN ITEMS 08 09 10 11 12 13)
   set_tests_properties(diff-python-example-${i} PROPERTIES DEPENDS test-python-example-${i})
 endforeach()
+
+add_test(
+  NAME diff-python-example-12-plt
+  COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/tests/orig/cea2.plt example-12.plt
+)
+set_tests_properties(diff-python-example-12-plt PROPERTIES DEPENDS test-python-example-12)

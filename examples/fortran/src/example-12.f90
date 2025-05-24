@@ -5,7 +5,8 @@ subroutine run_example_12()
   type(CEA_Problem):: prob
 
   call prob%set_problem(mode = 'rocket', name = 'Example 12', equilibrium = .true., frozen = .true., frozen_at_throat = .true.)
-  call prob%set_output_options(SI = .true., mass_fractions = .true.)
+  call prob%set_output_options(SI = .true., mass_fractions = .true., &
+                               plot = ['aeat', 't   ', 'p   ', 'ivac', 'isp ', 'mach', 'cf  '])
 
   call prob%add_reactant('fuel', 'CH6N2(L)', rho =  874d0)
   call prob%add_reactant('oxyd', 'N2O4(L)',  rho = 1431d0)
@@ -21,7 +22,7 @@ subroutine run_example_12()
 
   call prob%set_legacy_mode(.true.)
 
-  call prob%run(out_filename = 'example-12.out')
+  call prob%run(out_filename = 'example-12.out', plt_filename = 'example-12.plt')
 
   return
 end subroutine run_example_12

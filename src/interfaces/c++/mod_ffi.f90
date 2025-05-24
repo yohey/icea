@@ -160,8 +160,8 @@ contains
   end subroutine set_problem
 
 
-  subroutine set_output_options(ptr, SI, debug_points, mass_fractions, short, trace_tol, transport) &
-       bind(C, name = "ffi_cea_set_output_options")
+  subroutine set_output_options(ptr, SI, debug_points, mass_fractions, short, trace_tol, transport, &
+       plot_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_output_options")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -171,6 +171,8 @@ contains
     logical(c_bool), intent(in), optional:: short
     real(c_double), intent(in), optional:: trace_tol
     logical(c_bool), intent(in), optional:: transport
+    type(c_ptr), intent(in), optional:: plot_ptr
+    type(FFI_C_Ptr_Array), intent(in), optional:: char_length_array_ptr
 
     type(CEA_Problem), pointer:: this => null()
     integer(c_size_t), pointer:: debug_points_array(:)
@@ -179,6 +181,8 @@ contains
     logical, pointer:: mass_fractions_ptr
     logical, pointer:: short_ptr
     logical, pointer:: transport_ptr
+    integer(c_size_t), dimension(:), pointer:: char_length_array
+    character(len = :, kind = c_char), dimension(:), allocatable:: plot
 
     call c_f_pointer(ptr, this)
 
@@ -216,12 +220,19 @@ contains
        nullify(transport_ptr)
     end if
 
+    if (present(plot_ptr) .and. present(char_length_array_ptr)) then
+       call c_f_pointer(char_length_array_ptr%addr, char_length_array, [char_length_array_ptr%size])
+       plot = get_string_array(plot_ptr, char_length_array, char_length_array_ptr%size)
+    end if
+
     if (associated(this)) then
        call this%set_output_options(SI_ptr, debug_points_array_fint, mass_fractions_ptr, short_ptr, &
-            trace_tol, transport_ptr)
+            trace_tol, transport_ptr, plot)
     end if
 
     if (present(debug_points)) deallocate(debug_points_array_fint)
+
+    if (present(plot_ptr) .and. present(char_length_array_ptr)) deallocate(plot)
 
     return
   end subroutine set_output_options
@@ -577,21 +588,24 @@ contains
   end subroutine set_legacy_mode
 
 
-  subroutine run(ptr, out_filename) bind(C, name = "ffi_cea_run")
+  subroutine run(ptr, out_filename, plt_filename) bind(C, name = "ffi_cea_run")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
     character(len = 1, kind = c_char), intent(in), optional:: out_filename
+    character(len = 1, kind = c_char), intent(in), optional:: plt_filename
 
     character(len = :, kind = c_char), allocatable:: out_filename_fstr
+    character(len = :, kind = c_char), allocatable:: plt_filename_fstr
 
     type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
 
     if (present(out_filename)) out_filename_fstr = get_string(out_filename)
+    if (present(plt_filename)) plt_filename_fstr = get_string(plt_filename)
 
     if (associated(this)) then
-       call this%run(out_filename_fstr)
+       call this%run(out_filename_fstr, plt_filename_fstr)
     end if
 
     return
