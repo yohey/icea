@@ -18,6 +18,7 @@ add_executable(${EXECUTABLE})
 target_sources(${EXECUTABLE}
   PRIVATE
   src/main.cpp
+  src/example-01.cpp
   src/example-08.cpp
   src/example-09.cpp
   src/example-10.cpp

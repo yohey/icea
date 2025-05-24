@@ -12,6 +12,7 @@ module cea
      procedure, public, pass:: set_problem
      procedure, public, pass:: set_output_options
      procedure, public, pass:: set_chamber_pressures
+     procedure, public, pass:: set_chamber_temperatures
      procedure, public, pass:: set_mixture_ratios
      procedure, public, pass:: set_pressure_ratios
      procedure, public, pass:: set_subsonic_area_ratios
@@ -115,6 +116,9 @@ contains
              end if
           end if
        end if
+
+    case ('tp')
+       this%Tp = .true.
 
     case ('thermp')
        write(stderr, *) '[ERROR] Not implemented yet.'
@@ -247,6 +251,31 @@ contains
   end subroutine set_chamber_pressures
 
 
+  subroutine set_chamber_temperatures(this, temperature_list, unit)
+    class(CEA_Problem), intent(inout):: this
+    real(8), intent(in):: temperature_list(:)
+    character(*), intent(in), optional:: unit
+    real(8):: factor
+
+    factor = 1 ! default: K
+
+    if (present(unit)) then
+       select case (trim(unit))
+       case ('K')
+          factor = 1
+       case default
+          write(stderr, *) '[ERROR] Unsupported unit: ', trim(unit)
+          return
+       end select
+    end if
+
+    this%Nt = size(temperature_list)
+    this%T(1:this%Nt) = temperature_list * factor
+
+    return
+  end subroutine set_chamber_temperatures
+
+
   subroutine set_mixture_ratios(this, ratio_list, type)
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: ratio_list(:)
@@ -254,12 +283,25 @@ contains
     integer:: iof
 
     this%Nof = size(ratio_list)
-    this%Oxf(1:this%Nof) = ratio_list
+    this%eqrats_in = .false.
+
+    if (allocated(this%Oxf_in)) then
+       if (size(this%Oxf_in) /= this%Nof) then
+          deallocate(this%Oxf_in)
+          allocate(this%Oxf_in(this%Nof))
+       end if
+    else
+       allocate(this%Oxf_in(this%Nof))
+    end if
+
+    this%Oxf_in(1:this%Nof) = ratio_list
 
     if (present(type)) then
-       if (trim(type) == '%fuel') then
-          do concurrent (iof = 1:this%Nof, this%Oxf(iof) > 0)
-             this%Oxf(iof) = (100 - this%Oxf(iof)) / this%Oxf(iof)
+       if (trim(type) == 'eq.ratio') then
+          this%eqrats_in = .true.
+       else if (trim(type) == '%fuel') then
+          do concurrent (iof = 1:this%Nof, this%Oxf_in(iof) > 0)
+             this%Oxf_in(iof) = (100 - this%Oxf_in(iof)) / this%Oxf_in(iof)
           end do
        else
           write(stderr, *) '[ERROR] Unsupported type: ', trim(type)

@@ -1,5 +1,6 @@
 #pragma once
 
+void run_example_01();
 void run_example_08();
 void run_example_09();
 void run_example_10();

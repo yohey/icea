@@ -28,13 +28,14 @@ add_test(
 )
 
 
-foreach(i IN ITEMS 08 09 10 11 12 13)
+foreach(i IN ITEMS 01 08 09 10 11 12 13)
   add_test(NAME test-python-example-${i} COMMAND ${Python_INTERPRETER} ${EXAMPLE_DIR}/example-${i}.py)
   set_tests_properties(test-python-example-${i} PROPERTIES ENVIRONMENT "${${JOB_NAME}_ENVIRON_LIST}" DEPENDS prepare-${JOB_NAME})
 endforeach()
 
 
 set(ORIG_OUT "${CMAKE_SOURCE_DIR}/tests/orig/cea2.out")
+add_test(NAME diff-python-example-01 COMMAND bash -c "[ $(cat example-01.out | wc -l) -ge 200 ] && [ $(awk 'NR ==    1, NR ==  245' ${ORIG_OUT} | diff -Bb - example-01.out | wc -l) -le 52 ]")
 add_test(NAME diff-python-example-08 COMMAND bash -c "[ $(cat example-08.out | wc -l) -ge 180 ] && [ $(awk 'NR == 1621, NR == 1800' ${ORIG_OUT} | diff -Bb - example-08.out | wc -l) -le 18 ]")
 add_test(NAME diff-python-example-09 COMMAND bash -c "[ $(cat example-09.out | wc -l) -ge 193 ] && [ $(awk 'NR == 1834, NR == 2026' ${ORIG_OUT} | diff -Bb - example-09.out | wc -l) -le 18 ]")
 add_test(NAME diff-python-example-10 COMMAND bash -c "[ $(cat example-10.out | wc -l) -ge 122 ] && [ $(awk 'NR == 2057, NR == 2178' ${ORIG_OUT} | diff -Bb - example-10.out | wc -l) -le 22 ]")

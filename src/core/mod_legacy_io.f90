@@ -123,7 +123,7 @@ contains
     call allocate_points(cea)
 
     do iof = 1, cea%Nof
-       if (cea%Oxf(iof) == 0. .and. cea%B0p(1, 1) /= 0.) then
+       if (cea%Oxf_in(iof) == 0. .and. cea%B0p(1, 1) /= 0.) then
           do i = 1, cea%Nlm
              if (cea%B0p(i, 1) == 0. .or. cea%B0p(i, 2) == 0.) then
                 write(cea%io_log, '(/, "OXIDANT NOT PERMITTED WHEN SPECIFYING 100% FUEL(main)")')
@@ -609,9 +609,10 @@ contains
 
              if (cea%Nof == 0) then
                 cea%Nof = 1
-                cea%Oxf(1) = 0
+                allocate(cea%Oxf_in(1))
+                cea%Oxf_in(1) = 0
                 if (cea%Wp(2) > 0) then
-                   cea%Oxf(1) = cea%Wp(1) / cea%Wp(2)
+                   cea%Oxf_in(1) = cea%Wp(1) / cea%Wp(2)
                 else
                    caseOK = .false.
                    write(cea%io_log, '(/" REACTANT AMOUNT MISSING (INPUT)")')
@@ -619,16 +620,11 @@ contains
                    return
                 end if
 
-             else if (phi .or. eqrats) then
+             else if (phi) then
                 do i = 1, cea%Nof
-                   eratio = cea%Oxf(i)
-                   if (eqrats) then
-                      xyz = -eratio * cea%Vmin(2) - cea%Vpls(2)
-                      denmtr = eratio * cea%Vmin(1) + cea%Vpls(1)
-                   else
-                      xyz = -cea%Vmin(2) - cea%Vpls(2)
-                      denmtr = eratio * (cea%Vmin(1) + cea%Vpls(1))
-                   end if
+                   eratio = cea%Oxf_in(i)
+                   xyz = -cea%Vmin(2) - cea%Vpls(2)
+                   denmtr = eratio * (cea%Vmin(1) + cea%Vpls(1))
 
                    if (abs(denmtr) < 1.d-30) then
                       caseOK = .false.
@@ -636,7 +632,7 @@ contains
                       write(cea%io_log, '(/" FATAL ERROR IN DATASET (INPUT)")')
                       return
                    end if
-                   cea%Oxf(i) = xyz / denmtr
+                   cea%Oxf_in(i) = xyz / denmtr
                 end do
              end if
 
@@ -832,22 +828,23 @@ contains
                 cea%Nof = maxMix
                 write(cea%io_log, '(/" NOTE!! MAXIMUM NUMBER OF ASSIGNED ", a5, " VALUES IS", i3, " (INPUT)", /)') 'o/f', cea%Nof
              end if
-             cea%Oxf(1:cea%Nof) = mix(1:cea%Nof)
+             allocate(cea%Oxf_in(cea%Nof))
+             cea%Oxf_in(1:cea%Nof) = mix(1:cea%Nof)
 
              if (cx3 == 'phi') then
                 phi = .true.
 
              else if (cx1 == 'r') then
-                eqrats = .true.
+                cea%eqrats_in = .true.
 
              else if (cx3 == 'f/a') then
-                do concurrent (k = 1:cea%Nof, cea%Oxf(k) > 0)
-                   cea%Oxf(k) = 1/cea%Oxf(k)
+                do concurrent (k = 1:cea%Nof, cea%Oxf_in(k) > 0)
+                   cea%Oxf_in(k) = 1 / cea%Oxf_in(k)
                 end do
 
              else if (cx4 == '%fue') then
-                do concurrent (k = 1:cea%Nof, cea%Oxf(k) > 0)
-                   cea%Oxf(k) = (100 - cea%Oxf(k)) / cea%Oxf(k)
+                do concurrent (k = 1:cea%Nof, cea%Oxf_in(k) > 0)
+                   cea%Oxf_in(k) = (100 - cea%Oxf_in(k)) / cea%Oxf_in(k)
                 end do
              end if
 

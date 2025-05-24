@@ -38,6 +38,10 @@ class CEA_Problem:
         _libcea.ffi_cea_set_chamber_pressures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
         _libcea.ffi_cea_set_chamber_pressures(self._ffi, _c_double_array(pressures), _c_char_or_None(unit))
 
+    def set_chamber_temperatures(self, temperatures, unit = None):
+        _libcea.ffi_cea_set_chamber_temperatures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
+        _libcea.ffi_cea_set_chamber_temperatures(self._ffi, _c_double_array(temperatures), _c_char_or_None(unit))
+
     def set_mixture_ratios(self, ratios, type_ = None):
         _libcea.ffi_cea_set_mixture_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
         _libcea.ffi_cea_set_mixture_ratios(self._ffi, _c_double_array(ratios), _c_char_or_None(type_))

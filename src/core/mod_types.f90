@@ -80,6 +80,8 @@ module mod_types
      real(8):: AcAt_in, mdotByAc_in
      integer, allocatable:: Debug_in(:)
      real(8), allocatable:: U1_in(:), Ma1_in(:)
+     logical:: eqrats_in
+     real(8), allocatable:: Oxf_in(:)
 
      character(15):: ensert(20)
 
@@ -279,7 +281,7 @@ contains
   subroutine reset_case(cea)
     class(CEA_Core_Problem), intent(inout):: cea
     integer:: i
-    real(8):: xi
+    real(8):: xi, xyz, denmtr
 
     cea%Eql = cea%Eql_in
     cea%Npp = cea%Npp_in
@@ -298,6 +300,18 @@ contains
        else
           cea%Oxf(1) = 0
        end if
+    else if (cea%eqrats_in) then
+       do concurrent (i = 1:cea%Nof, cea%Oxf_in(i) > 0)
+          xyz = -cea%Oxf_in(i) * cea%Vmin(2) - cea%Vpls(2)
+          denmtr = cea%Oxf_in(i) * cea%Vmin(1) + cea%Vpls(1)
+          if (abs(denmtr) < 1d-30) then
+             cea%Oxf(i) = 0
+          else
+             cea%Oxf(i) = xyz / denmtr
+          end if
+       end do
+    else
+       cea%Oxf(1:cea%Nof) = cea%Oxf_in(1:cea%Nof)
     end if
 
     if (cea%Trnspt) cea%Viscns = 0.3125d0 * sqrt(1d5 * Boltz / (pi * Avgdr))
