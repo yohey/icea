@@ -14,6 +14,7 @@ module cea
      procedure, public, pass:: set_chamber_pressures
      procedure, public, pass:: set_chamber_temperatures
      procedure, public, pass:: set_chamber_densities
+     procedure, public, pass:: set_chamber_internal_energy
      procedure, public, pass:: set_mixture_ratios
      procedure, public, pass:: set_pressure_ratios
      procedure, public, pass:: set_subsonic_area_ratios
@@ -123,6 +124,10 @@ contains
 
     case ('hp', 'ph')
        this%Hp = .true.
+
+    case ('uv', 'vu')
+       this%Hp = .true.
+       this%Vol = .true.
 
     case ('tv', 'vt')
        this%Tp = .true.
@@ -311,6 +316,18 @@ contains
 
     return
   end subroutine set_chamber_densities
+
+
+  subroutine set_chamber_internal_energy(this, uByR)
+    use mod_types, only: maxPv
+
+    class(CEA_Problem), intent(inout):: this
+    real(8), intent(in):: uByR
+
+    this%Hsub0 = uByR
+
+    return
+  end subroutine set_chamber_internal_energy
 
 
   subroutine set_mixture_ratios(this, ratio_list, type)

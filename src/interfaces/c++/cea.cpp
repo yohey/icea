@@ -60,6 +60,10 @@ namespace CEA {
     ffi_cea_set_chamber_densities(this->_ffi.get(), array, unit.value_or(nullptr));
   }
 
+  void Problem::set_chamber_internal_energy(const double& uByR) {
+    ffi_cea_set_chamber_internal_energy(this->_ffi.get(), uByR);
+  }
+
   void Problem::set_mixture_ratios(const std::vector<double>& ratio_list, const std::optional<const char*>& type) {
     FFI_Double_Array array{ratio_list.data(), ratio_list.size()};
     ffi_cea_set_mixture_ratios(this->_ffi.get(), array, type.value_or(nullptr));

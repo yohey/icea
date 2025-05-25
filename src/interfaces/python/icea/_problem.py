@@ -46,6 +46,10 @@ class CEA_Problem:
         _libcea.ffi_cea_set_chamber_densities.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
         _libcea.ffi_cea_set_chamber_densities(self._ffi, _c_double_array(densities), _c_char_or_None(unit))
 
+    def set_chamber_internal_energy(self, uByR):
+        _libcea.ffi_cea_set_chamber_internal_energy.argtypes = [c_void_p, POINTER(c_double)]
+        _libcea.ffi_cea_set_chamber_internal_energy(self._ffi, _c_double_or_None(uByR))
+
     def set_mixture_ratios(self, ratios, type_ = None):
         _libcea.ffi_cea_set_mixture_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
         _libcea.ffi_cea_set_mixture_ratios(self._ffi, _c_double_array(ratios), _c_char_or_None(type_))

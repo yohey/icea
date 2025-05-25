@@ -322,6 +322,28 @@ contains
   end subroutine set_chamber_densities
 
 
+  subroutine set_chamber_internal_energy(ptr, uByR) bind(C, name = "ffi_cea_set_chamber_internal_energy")
+    use cea, only: CEA_Problem
+
+    type(c_ptr), value, intent(in):: ptr
+    real(c_double), intent(in):: uByR
+
+    type(CEA_Problem), pointer:: this => null()
+
+    call c_f_pointer(ptr, this)
+
+    if (associated(this)) then
+       call this%set_chamber_internal_energy(uByR)
+#ifndef NDEBUG
+    else
+       write(0, *) '[DEBUG] pointer is not associated. (set_chamber_internal_energy)'
+#endif
+    end if
+
+    return
+  end subroutine set_chamber_internal_energy
+
+
   subroutine set_mixture_ratios(ptr, ratios_ptr, type) bind(C, name = "ffi_cea_set_mixture_ratios")
     use cea, only: CEA_Problem
 
