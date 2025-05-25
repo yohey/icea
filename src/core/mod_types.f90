@@ -190,6 +190,7 @@ contains
     cea%Refleq = .false.
     cea%Reflfz = .false.
 
+    cea%Nt = 1
     cea%Nreac_in = 0
     cea%Nonly_in = 0
     cea%Nsub_in = 0

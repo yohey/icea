@@ -13,6 +13,9 @@ add_executable(${EXECUTABLE})
 target_sources(${EXECUTABLE}
   PRIVATE
   src/main.f90
+  src/example-01.f90
+  src/example-02.f90
+  src/example-03.f90
   src/example-08.f90
   src/example-09.f90
   src/example-10.f90

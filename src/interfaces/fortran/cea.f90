@@ -121,6 +121,9 @@ contains
     case ('tp', 'pt')
        this%Tp = .true.
 
+    case ('hp', 'ph')
+       this%Hp = .true.
+
     case ('tv', 'vt')
        this%Tp = .true.
        this%Vol = .true.
