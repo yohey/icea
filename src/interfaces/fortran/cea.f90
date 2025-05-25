@@ -13,6 +13,7 @@ module cea
      procedure, public, pass:: set_output_options
      procedure, public, pass:: set_chamber_pressures
      procedure, public, pass:: set_chamber_temperatures
+     procedure, public, pass:: set_chamber_densities
      procedure, public, pass:: set_mixture_ratios
      procedure, public, pass:: set_pressure_ratios
      procedure, public, pass:: set_subsonic_area_ratios
@@ -117,8 +118,12 @@ contains
           end if
        end if
 
-    case ('tp')
+    case ('tp', 'pt')
        this%Tp = .true.
+
+    case ('tv', 'vt')
+       this%Tp = .true.
+       this%Vol = .true.
 
     case ('thermp')
        write(stderr, *) '[ERROR] Not implemented yet.'
@@ -274,6 +279,35 @@ contains
 
     return
   end subroutine set_chamber_temperatures
+
+
+  subroutine set_chamber_densities(this, density_list, unit)
+    use mod_types, only: maxPv
+
+    class(CEA_Problem), intent(inout):: this
+    real(8), intent(in):: density_list(:)
+    character(*), intent(in), optional:: unit
+    real(8):: factor
+
+    factor = 1d5 ! default: kg/m^3
+
+    if (present(unit)) then
+       select case (trim(unit))
+       case ('kg/m^3')
+          factor = 1d5
+       case ('g/cc')
+          factor = 1d2
+       case default
+          write(stderr, *) '[ERROR] Unsupported unit: ', trim(unit)
+          return
+       end select
+    end if
+
+    this%Np = min(maxPv, size(density_list))
+    this%V(1:this%Np) = factor / density_list
+
+    return
+  end subroutine set_chamber_densities
 
 
   subroutine set_mixture_ratios(this, ratio_list, type)

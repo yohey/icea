@@ -31,6 +31,7 @@ namespace CEA {
                             const double& trace_tol = 0, const bool& transport = false, const std::vector<std::string>& plot = {});
     void set_chamber_pressures(const std::vector<double>& pressure_list, const std::optional<const char*>& unit = std::nullopt);
     void set_chamber_temperatures(const std::vector<double>& temperature_list, const std::optional<const char*>& unit = std::nullopt);
+    void set_chamber_densities(const std::vector<double>& density_list, const std::optional<const char*>& unit = std::nullopt);
     void set_mixture_ratios(const std::vector<double>& ratio_list, const std::optional<const char*>& type = std::nullopt);
     void set_pressure_ratios(const std::vector<double>& ratio_list);
     void set_subsonic_area_ratios(const std::vector<double>& ratio_list);

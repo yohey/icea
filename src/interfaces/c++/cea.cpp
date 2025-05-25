@@ -55,6 +55,11 @@ namespace CEA {
     ffi_cea_set_chamber_temperatures(this->_ffi.get(), array, unit.value_or(nullptr));
   }
 
+  void Problem::set_chamber_densities(const std::vector<double>& density_list, const std::optional<const char*>& unit) {
+    const FFI_Double_Array array{density_list.data(), density_list.size()};
+    ffi_cea_set_chamber_densities(this->_ffi.get(), array, unit.value_or(nullptr));
+  }
+
   void Problem::set_mixture_ratios(const std::vector<double>& ratio_list, const std::optional<const char*>& type) {
     FFI_Double_Array array{ratio_list.data(), ratio_list.size()};
     ffi_cea_set_mixture_ratios(this->_ffi.get(), array, type.value_or(nullptr));

@@ -294,6 +294,34 @@ contains
   end subroutine set_chamber_temperatures
 
 
+  subroutine set_chamber_densities(ptr, densities_ptr, unit) bind(C, name = "ffi_cea_set_chamber_densities")
+    use cea, only: CEA_Problem
+
+    type(c_ptr), value, intent(in):: ptr
+    type(FFI_C_Ptr_Array), intent(in):: densities_ptr
+    character(len = 1, kind = c_char), intent(in), optional:: unit
+
+    type(CEA_Problem), pointer:: this => null()
+    real(c_double), pointer:: density_list(:)
+    character(len = :, kind = c_char), allocatable:: unit_fstr
+
+    call c_f_pointer(ptr, this)
+    call c_f_pointer(densities_ptr%addr, density_list, [densities_ptr%size])
+
+    if (present(unit)) unit_fstr = get_string(unit)
+
+    if (associated(this)) then
+       call this%set_chamber_densities(density_list, unit_fstr)
+#ifndef NDEBUG
+    else
+       write(0, *) '[DEBUG] pointer is not associated. (set_chamber_densities)'
+#endif
+    end if
+
+    return
+  end subroutine set_chamber_densities
+
+
   subroutine set_mixture_ratios(ptr, ratios_ptr, type) bind(C, name = "ffi_cea_set_mixture_ratios")
     use cea, only: CEA_Problem
 

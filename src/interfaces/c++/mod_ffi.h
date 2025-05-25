@@ -37,6 +37,7 @@ namespace CEA {
 
     void ffi_cea_set_chamber_pressures(const FFI_CEA_Problem_Ptr, const FFI_Double_Array&, const char* = nullptr);
     void ffi_cea_set_chamber_temperatures(const FFI_CEA_Problem_Ptr, const FFI_Double_Array&, const char* = nullptr);
+    void ffi_cea_set_chamber_densities(const FFI_CEA_Problem_Ptr, const FFI_Double_Array&, const char* = nullptr);
 
     void ffi_cea_set_mixture_ratios(const FFI_CEA_Problem_Ptr, const FFI_Double_Array&, const char* = nullptr);
     void ffi_cea_set_pressure_ratios(const FFI_CEA_Problem_Ptr, const FFI_Double_Array&);
