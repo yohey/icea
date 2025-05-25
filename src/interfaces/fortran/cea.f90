@@ -257,6 +257,10 @@ contains
        end select
     end if
 
+#ifndef NDEBUG
+    if (size(pressure_list) == 0) write(stderr, *) '[ERROR] empty pressure list (set_chamber_pressures).'
+#endif
+
     this%Np = size(pressure_list)
     this%P(1:this%Np) = pressure_list * factor
 
@@ -425,7 +429,7 @@ contains
 
 
   subroutine add_reactant(this, type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit)
-    use mod_constants, only: R0
+    use mod_constants, only: R0, cal_to_J
 
     class(CEA_Problem), intent(inout):: this
     character(*), intent(in):: type
@@ -538,7 +542,11 @@ contains
        if (present(h_unit)) then
           select case (trim(h_unit))
           case ('J/mol')
-             h_factor = 1000 / R0
+             h_factor = 1d3 / R0
+          case ('kJ/mol')
+             h_factor = 1d6 / R0
+          case ('cal/mol')
+             h_factor = 1d3 * cal_to_J / R0
           case default
              write(stderr, *) '[ERROR] Unsupported unit: ', trim(h_unit)
              return
@@ -558,7 +566,11 @@ contains
        if (present(u_unit)) then
           select case (trim(u_unit))
           case ('J/mol')
-             u_factor = 1000 / R0
+             u_factor = 1d3 / R0
+          case ('kJ/mol')
+             h_factor = 1d6 / R0
+          case ('cal/mol')
+             h_factor = 1d3 * cal_to_J / R0
           case default
              write(stderr, *) '[ERROR] Unsupported unit: ', trim(u_unit)
              return
