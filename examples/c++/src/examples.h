@@ -5,6 +5,7 @@ void run_example_02();
 void run_example_03();
 void run_example_04();
 void run_example_05();
+void run_example_06();
 void run_example_08();
 void run_example_09();
 void run_example_10();

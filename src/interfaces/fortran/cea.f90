@@ -138,8 +138,7 @@ contains
        return
 
     case ('deton')
-       write(stderr, *) '[ERROR] Not implemented yet.'
-       return
+       this%Detn = .true.
 
     case ('shock')
        write(stderr, *) '[ERROR] Not implemented yet.'

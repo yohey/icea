@@ -28,6 +28,7 @@ target_sources(${TEST_EXECUTABLE}
   ${EXAMPLE_DIR}/src/example-03.cpp
   ${EXAMPLE_DIR}/src/example-04.cpp
   ${EXAMPLE_DIR}/src/example-05.cpp
+  ${EXAMPLE_DIR}/src/example-06.cpp
   ${EXAMPLE_DIR}/src/example-08.cpp
   ${EXAMPLE_DIR}/src/example-09.cpp
   ${EXAMPLE_DIR}/src/example-10.cpp
@@ -63,11 +64,12 @@ set_tests_properties(${JOB_NAME} PROPERTIES FIXTURES_SETUP ${JOB_NAME}_fixtures)
 
 
 set(ORIG_OUT "${CMAKE_SOURCE_DIR}/tests/orig/cea2.out")
-add_test(NAME diff-c++-example-01 COMMAND bash -c "[ $(cat example-01.out | wc -l) -ge 201 ] && [ $(awk 'NR ==    1, NR ==  245' ${ORIG_OUT} | diff -Bb - example-01.out | wc -l) -le 52 ]")
-add_test(NAME diff-c++-example-02 COMMAND bash -c "[ $(cat example-02.out | wc -l) -ge 164 ] && [ $(awk 'NR ==  250, NR ==  434' ${ORIG_OUT} | diff -Bb - example-02.out | wc -l) -le 42 ]")
-add_test(NAME diff-c++-example-03 COMMAND bash -c "[ $(cat example-03.out | wc -l) -ge 172 ] && [ $(awk 'NR ==  439, NR ==  654' ${ORIG_OUT} | diff -Bb - example-03.out | wc -l) -le 65 ]")
-add_test(NAME diff-c++-example-04 COMMAND bash -c "[ $(cat example-04.out | wc -l) -ge 168 ] && [ $(awk 'NR ==  659, NR ==  870' ${ORIG_OUT} | diff -Bb - example-04.out | wc -l) -le 65 ]")
-add_test(NAME diff-c++-example-05 COMMAND bash -c "[ $(cat example-05.out | wc -l) -ge 255 ] && [ $(awk 'NR ==  875, NR == 1183' ${ORIG_OUT} | diff -Bb - example-05.out | wc -l) -le 75 ]")
+add_test(NAME diff-c++-example-01 COMMAND bash -c "[ $(cat example-01.out | wc -l) -ge 201 ] && [ $(awk 'NR ==   53, NR ==  245' ${ORIG_OUT} | diff -Bb - example-01.out | wc -l) -le 18 ]")
+add_test(NAME diff-c++-example-02 COMMAND bash -c "[ $(cat example-02.out | wc -l) -ge 164 ] && [ $(awk 'NR ==  279, NR ==  434' ${ORIG_OUT} | diff -Bb - example-02.out | wc -l) -le 14 ]")
+add_test(NAME diff-c++-example-03 COMMAND bash -c "[ $(cat example-03.out | wc -l) -ge 172 ] && [ $(awk 'NR ==  491, NR ==  654' ${ORIG_OUT} | diff -Bb - example-03.out | wc -l) -le 14 ]")
+add_test(NAME diff-c++-example-04 COMMAND bash -c "[ $(cat example-04.out | wc -l) -ge 168 ] && [ $(awk 'NR ==  711, NR ==  870' ${ORIG_OUT} | diff -Bb - example-04.out | wc -l) -le 14 ]")
+add_test(NAME diff-c++-example-05 COMMAND bash -c "[ $(cat example-05.out | wc -l) -ge 255 ] && [ $(awk 'NR ==  937, NR == 1183' ${ORIG_OUT} | diff -Bb - example-05.out | wc -l) -le 14 ]")
+add_test(NAME diff-c++-example-06 COMMAND bash -c "[ $(cat example-06.out | wc -l) -ge 158 ] && [ $(awk 'NR == 1214, NR == 1363' ${ORIG_OUT} | diff -Bb - example-06.out | wc -l) -le 14 ]")
 add_test(NAME diff-c++-example-08 COMMAND bash -c "[ $(cat example-08.out | wc -l) -ge 189 ] && [ $(awk 'NR == 1621, NR == 1800' ${ORIG_OUT} | diff -Bb - example-08.out | wc -l) -le 18 ]")
 add_test(NAME diff-c++-example-09 COMMAND bash -c "[ $(cat example-09.out | wc -l) -ge 202 ] && [ $(awk 'NR == 1834, NR == 2026' ${ORIG_OUT} | diff -Bb - example-09.out | wc -l) -le 18 ]")
 add_test(NAME diff-c++-example-10 COMMAND bash -c "[ $(cat example-10.out | wc -l) -ge 135 ] && [ $(awk 'NR == 2057, NR == 2178' ${ORIG_OUT} | diff -Bb - example-10.out | wc -l) -le 22 ]")
@@ -75,7 +77,7 @@ add_test(NAME diff-c++-example-11 COMMAND bash -c "[ $(cat example-11.out | wc -
 add_test(NAME diff-c++-example-12 COMMAND bash -c "[ $(cat example-12.out | wc -l) -ge 369 ] && [ $(awk 'NR == 2415, NR == 2774' ${ORIG_OUT} | diff -Bb - example-12.out | wc -l) -le 26 ]")
 add_test(NAME diff-c++-example-13 COMMAND bash -c "[ $(cat example-13.out | wc -l) -ge 194 ] && [ $(awk 'NR == 2819, NR == 3003' ${ORIG_OUT} | diff -Bb - example-13.out | wc -l) -le 22 ]")
 
-foreach(i IN ITEMS 01 02 03 04 05 08 09 10 11 12 13)
+foreach(i IN ITEMS 01 02 03 04 05 06 08 09 10 11 12 13)
   set_tests_properties(diff-c++-example-${i} PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
 endforeach()
 
