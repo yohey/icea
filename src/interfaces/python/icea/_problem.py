@@ -198,7 +198,7 @@ def _c_size_t_array_or_None(a: Iterable[int] | None):
     if a is None:
         return None
     else:
-        _a = (c_size_t * len(a))(*a)
+        _a = (c_size_t * len(a))(*(i + 1 for i in a))
         ptr = FFI_C_Ptr_Array(addr = cast(_a, c_void_p), size = len(a))
         return byref(ptr)
 

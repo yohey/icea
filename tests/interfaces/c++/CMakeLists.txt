@@ -36,6 +36,7 @@ target_sources(${TEST_EXECUTABLE}
   ${EXAMPLE_DIR}/src/example-11.cpp
   ${EXAMPLE_DIR}/src/example-12.cpp
   ${EXAMPLE_DIR}/src/example-13.cpp
+  ${EXAMPLE_DIR}/src/example-14.cpp
 )
 
 target_include_directories(${TEST_EXECUTABLE} PRIVATE ${CMAKE_SOURCE_DIR}/src/interfaces/c++ ${EXAMPLE_DIR}/src)
@@ -78,8 +79,9 @@ add_test(NAME diff-c++-example-10 COMMAND bash -c "[ $(cat example-10.out | wc -
 add_test(NAME diff-c++-example-11 COMMAND bash -c "[ $(cat example-11.out | wc -l) -ge 154 ] && [ $(awk 'NR == 2219, NR == 2363' ${ORIG_OUT} | diff -Bb - example-11.out | wc -l) -le 20 ]")
 add_test(NAME diff-c++-example-12 COMMAND bash -c "[ $(cat example-12.out | wc -l) -ge 369 ] && [ $(awk 'NR == 2415, NR == 2774' ${ORIG_OUT} | diff -Bb - example-12.out | wc -l) -le 26 ]")
 add_test(NAME diff-c++-example-13 COMMAND bash -c "[ $(cat example-13.out | wc -l) -ge 194 ] && [ $(awk 'NR == 2819, NR == 3003' ${ORIG_OUT} | diff -Bb - example-13.out | wc -l) -le 22 ]")
+add_test(NAME diff-c++-example-14 COMMAND bash -c "[ $(cat example-14.out | wc -l) -ge 333 ] && [ $(awk 'NR == 3043, NR == 3367' ${ORIG_OUT} | diff -Bb - example-14.out | wc -l) -le 58 ]")
 
-foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13)
+foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13 14)
   set_tests_properties(diff-c++-example-${i} PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
 endforeach()
 

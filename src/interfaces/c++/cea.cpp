@@ -31,7 +31,10 @@ namespace CEA {
 
   void Problem::set_output_options(const bool& SI, const std::vector<size_t>& debug_points, const bool& mass_fractions, const bool& _short,
                                    const double& trace_tol, const bool& transport, const std::vector<std::string>& plot) {
-    FFI_SizeT_Array array{debug_points.data(), debug_points.size()};
+    std::vector<size_t> debug_points_fidx;
+    debug_points_fidx.reserve(debug_points.size());
+    for (size_t i: debug_points) { debug_points_fidx.push_back(i + 1); }
+    FFI_SizeT_Array array{debug_points_fidx.data(), debug_points_fidx.size()};
 
     std::vector<size_t> char_length_array(plot.size());
     std::vector<const char*> char_ptr_array(plot.size());

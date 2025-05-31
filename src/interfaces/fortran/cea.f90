@@ -196,16 +196,15 @@ contains
     real(8), intent(in), optional:: trace_tol
     logical, intent(in), optional:: transport
     character(*), intent(in), optional:: plot(:)
-    integer:: i, j
 
     if (present(SI)) then
        this%SIunit = SI
     end if
 
     if (present(debug_points)) then
-       do concurrent (i = 1:maxMix, j = 1:size(debug_points), debug_points(j) <= this%max_points)
-          this%points(i, debug_points(j))%Debug = .true.
-       end do
+       if (allocated(this%Debug_in)) deallocate(this%Debug_in)
+       allocate(this%Debug_in(size(debug_points)))
+       this%Debug_in = debug_points
     end if
 
     if (present(mass_fractions)) then
@@ -510,6 +509,7 @@ contains
     this%Rname(this%Nreac) = trim(name)
 
     if (present(formula)) then
+       this%Energy(this%Nreac) = ' '
        this%Ratom(this%Nreac, :) = ''
        this%Rnum(this%Nreac, :) = 0
        istart = 1

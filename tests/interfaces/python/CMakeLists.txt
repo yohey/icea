@@ -28,7 +28,7 @@ add_test(
 )
 
 
-foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13)
+foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13 14)
   add_test(NAME test-python-example-${i} COMMAND ${Python_INTERPRETER} ${EXAMPLE_DIR}/example-${i}.py)
   set_tests_properties(test-python-example-${i} PROPERTIES ENVIRONMENT "${${JOB_NAME}_ENVIRON_LIST}" DEPENDS prepare-${JOB_NAME})
 endforeach()
@@ -48,8 +48,9 @@ add_test(NAME diff-python-example-10 COMMAND bash -c "[ $(cat example-10.out | w
 add_test(NAME diff-python-example-11 COMMAND bash -c "[ $(cat example-11.out | wc -l) -ge 154 ] && [ $(awk 'NR == 2219, NR == 2363' ${ORIG_OUT} | diff -Bb - example-11.out | wc -l) -le 20 ]")
 add_test(NAME diff-python-example-12 COMMAND bash -c "[ $(cat example-12.out | wc -l) -ge 369 ] && [ $(awk 'NR == 2415, NR == 2774' ${ORIG_OUT} | diff -Bb - example-12.out | wc -l) -le 26 ]")
 add_test(NAME diff-python-example-13 COMMAND bash -c "[ $(cat example-13.out | wc -l) -ge 194 ] && [ $(awk 'NR == 2819, NR == 3003' ${ORIG_OUT} | diff -Bb - example-13.out | wc -l) -le 22 ]")
+add_test(NAME diff-python-example-14 COMMAND bash -c "[ $(cat example-14.out | wc -l) -ge 333 ] && [ $(awk 'NR == 3043, NR == 3367' ${ORIG_OUT} | diff -Bb - example-14.out | wc -l) -le 58 ]")
 
-foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13)
+foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13 14)
   set_tests_properties(diff-python-example-${i} PROPERTIES DEPENDS test-python-example-${i})
 endforeach()
 
