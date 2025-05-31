@@ -8,9 +8,15 @@ set(JOB_NAME test-python-interface)
 
 set(EXAMPLE_DIR "${CMAKE_SOURCE_DIR}/examples/python")
 
+if(APPLE)
+  set(LIBRARY_PATH_NAME "DYLD_LIBRARY_PATH")
+else()
+  set(LIBRARY_PATH_NAME "LD_LIBRARY_PATH")
+endif()
+
 set("${JOB_NAME}_ENVIRON_LIST"
-  "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/interfaces/c++"
-  "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}"
+  "${LIBRARY_PATH_NAME}=${CMAKE_BINARY_DIR}/src/interfaces/c++:$ENV{${LIBRARY_PATH_NAME}}"
+  "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH}"
 )
 
 include(FindPython)
