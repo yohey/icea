@@ -20,6 +20,7 @@ module cea
      procedure, public, pass:: set_subsonic_area_ratios
      procedure, public, pass:: set_supersonic_area_ratios
      procedure, public, pass:: set_finite_area_combustor
+     procedure, public, pass:: set_initial_velocities
      procedure, public, pass:: add_reactant
      procedure, public, pass:: set_reactant
      procedure, public, pass:: set_insert_species
@@ -77,7 +78,7 @@ contains
 
 
   subroutine set_problem(this, mode, name, mole_ratios, equilibrium, ions, &
-       frozen, frozen_at_throat, thermo_lib, trans_lib)
+       frozen, frozen_at_throat, incident, reflected, thermo_lib, trans_lib)
     use mod_types, only: init_case
     use mod_io, only: set_library_paths, read_thermo_lib
 
@@ -89,6 +90,8 @@ contains
     logical, intent(in), optional:: ions
     logical, intent(in), optional:: frozen
     logical, intent(in), optional:: frozen_at_throat
+    logical, intent(in), optional:: incident
+    logical, intent(in), optional:: reflected
     character(*), intent(in), optional:: thermo_lib
     character(*), intent(in), optional:: trans_lib
 
@@ -141,8 +144,8 @@ contains
        this%Detn = .true.
 
     case ('shock')
-       write(stderr, *) '[ERROR] Not implemented yet.'
-       return
+       this%Shock = .true.
+       if (present(frozen)) this%Froz = frozen
 
     case default
        write(stderr, *) '[ERROR] Invalid mode: ', trim(mode)
@@ -160,6 +163,14 @@ contains
 
     if (present(ions)) then
        this%Ions = ions
+    end if
+
+    if (present(incident)) then
+       this%incd_in = incident
+    end if
+
+    if (present(reflected)) then
+       this%refl_in = reflected
     end if
 
     if (present(mole_ratios)) then
@@ -229,7 +240,6 @@ contains
     class(CEA_Problem), intent(inout):: this
     real(8), intent(in):: pressure_list(:)
     character(*), intent(in), optional:: unit
-    real(8), parameter:: legacy_psi_factor = 1.01325d0 / 14.696006d0
     real(8):: factor
 
     factor = 10 ! default: MPa
@@ -246,10 +256,12 @@ contains
           factor = 1.01325d0
        case ('bar')
           factor = 1
+       case ('mmHg')
+          factor = 1.01325d0 / 760
        case ('psi')
           factor = 1d-5 * g0 * lb_to_kg / in_to_m**2
        case ('legacy-psi')
-          factor = legacy_psi_factor
+          factor = 1.01325d0 / 14.696006d0
        case default
           write(stderr, *) '[ERROR] Unsupported unit: ', trim(unit)
           return
@@ -425,6 +437,33 @@ contains
 
     return
   end subroutine set_finite_area_combustor
+
+
+  subroutine set_initial_velocities(this, velocity_list, is_mach)
+    use mod_types, only: Ncol
+
+    class(CEA_Problem), intent(inout):: this
+    real(8), intent(in):: velocity_list(:)
+    logical, intent(in), optional:: is_mach
+
+    this%Nsk = min(Ncol, size(velocity_list))
+
+    if (allocated(this%U1_in)) deallocate(this%U1_in)
+    if (allocated(this%Ma1_in)) deallocate(this%Ma1_in)
+
+    if (present(is_mach)) then
+       if (is_mach) then
+          allocate(this%Ma1_in(this%Nsk))
+          this%Ma1_in(1:this%Nsk) = velocity_list
+          return
+       end if
+    end if
+
+    allocate(this%U1_in(this%Nsk))
+    this%U1_in(1:this%Nsk) = velocity_list
+
+    return
+  end subroutine set_initial_velocities
 
 
   subroutine add_reactant(this, type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit)

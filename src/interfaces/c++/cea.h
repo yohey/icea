@@ -26,7 +26,8 @@ namespace CEA {
 
   public:
     void set_problem(const char* mode, const std::optional<const char*>& name = std::nullopt, const bool& mole_ratios = false, const bool& equilibrium = false, const bool& ions = false,
-                     const bool& frozen = false, const bool& frozen_at_throat = false, const std::optional<const char*>& thermo_lib = std::nullopt, const std::optional<const char*>& trans_lib = std::nullopt);
+                     const bool& frozen = false, const bool& frozen_at_throat = false, const bool& incident = false, const bool& reflected = false,
+                     const std::optional<const char*>& thermo_lib = std::nullopt, const std::optional<const char*>& trans_lib = std::nullopt);
     void set_output_options(const bool& SI = true, const std::vector<size_t>& debug_points = {}, const bool& mass_fractions = false, const bool& _short = false,
                             const double& trace_tol = 0, const bool& transport = false, const std::vector<std::string>& plot = {});
     void set_chamber_pressures(const std::vector<double>& pressure_list, const std::optional<const char*>& unit = std::nullopt);
@@ -38,6 +39,7 @@ namespace CEA {
     void set_subsonic_area_ratios(const std::vector<double>& ratio_list);
     void set_supersonic_area_ratios(const std::vector<double>& ratio_list);
     void set_finite_area_combustor(const std::optional<double>& contraction_ratio = std::nullopt, const std::optional<double>& mass_flow_ratio = std::nullopt);
+    void set_initial_velocities(const std::vector<double>& velocity_list, const bool& is_mach = false);
     void add_reactant(const char* type, const char* name, const std::optional<const char*>& formula = std::nullopt, const std::optional<double>& ratio = std::nullopt,
                       const std::optional<double>& T = std::nullopt, const std::optional<double>& rho = std::nullopt,
                       const std::optional<double>& h = std::nullopt, const std::optional<double>& u = std::nullopt,

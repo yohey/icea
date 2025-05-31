@@ -66,7 +66,7 @@ contains
 
 
   subroutine set_problem(ptr, mode, name, mole_ratios, equilibrium, ions, &
-       frozen, frozen_at_throat, thermo_lib, trans_lib) bind(C, name = "ffi_cea_set_problem")
+       frozen, frozen_at_throat, incident, reflected, thermo_lib, trans_lib) bind(C, name = "ffi_cea_set_problem")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -77,6 +77,8 @@ contains
     logical(c_bool), intent(in), optional:: ions
     logical(c_bool), intent(in), optional:: frozen
     logical(c_bool), intent(in), optional:: frozen_at_throat
+    logical(c_bool), intent(in), optional:: incident
+    logical(c_bool), intent(in), optional:: reflected
     character(len = 1, kind = c_char), intent(in), optional:: thermo_lib
     character(len = 1, kind = c_char), intent(in), optional:: trans_lib
 
@@ -89,6 +91,8 @@ contains
     logical, pointer:: ions_ptr
     logical, pointer:: frozen_ptr
     logical, pointer:: frozen_at_throat_ptr
+    logical, pointer:: incident_ptr
+    logical, pointer:: reflected_ptr
 
     type(CEA_Problem), pointer:: this => null()
     call c_f_pointer(ptr, this)
@@ -131,6 +135,20 @@ contains
        nullify(frozen_at_throat_ptr)
     end if
 
+    if (present(incident)) then
+       allocate(incident_ptr)
+       incident_ptr = logical(incident)
+    else
+       nullify(incident_ptr)
+    end if
+
+    if (present(reflected)) then
+       allocate(reflected_ptr)
+       reflected_ptr = logical(reflected)
+    else
+       nullify(reflected_ptr)
+    end if
+
     if (present(thermo_lib)) then
        thermo_lib_fstr = get_string(thermo_lib)
        if (len_trim(thermo_lib_fstr) == 0) deallocate(thermo_lib_fstr)
@@ -143,7 +161,7 @@ contains
 
     if (associated(this)) then
        call this%set_problem(mode_fstr, name_fstr, mole_ratios_ptr, equilibrium_ptr, ions_ptr, &
-            frozen_ptr, frozen_at_throat_ptr, thermo_lib_fstr, trans_lib_fstr)
+            frozen_ptr, frozen_at_throat_ptr, incident_ptr, reflected_ptr, thermo_lib_fstr, trans_lib_fstr)
     end if
 
     if (allocated(mode_fstr)) deallocate(mode_fstr)
@@ -464,6 +482,39 @@ contains
 
     return
   end subroutine set_finite_area_combustor
+
+
+  subroutine set_initial_velocities(ptr, velocities_ptr, is_mach) bind(C, name = "ffi_cea_set_initial_velocities")
+    use cea, only: CEA_Problem
+
+    type(c_ptr), value, intent(in):: ptr
+    type(FFI_C_Ptr_Array), intent(in):: velocities_ptr
+    logical(c_bool), intent(in), optional:: is_mach
+
+    type(CEA_Problem), pointer:: this => null()
+    real(c_double), pointer:: velocity_list(:)
+    logical, pointer:: is_mach_ptr
+
+    call c_f_pointer(ptr, this)
+    call c_f_pointer(velocities_ptr%addr, velocity_list, [velocities_ptr%size])
+
+    if (present(is_mach)) then
+       allocate(is_mach_ptr)
+       is_mach_ptr = logical(is_mach)
+    else
+       nullify(is_mach_ptr)
+    end if
+
+    if (associated(this)) then
+       call this%set_initial_velocities(velocity_list, is_mach_ptr)
+#ifndef NDEBUG
+    else
+       write(0, *) '[DEBUG] pointer is not associated. (set_initial_velocities)'
+#endif
+    end if
+
+    return
+  end subroutine set_initial_velocities
 
 
   subroutine add_reactant(ptr, type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit) &

@@ -7,6 +7,7 @@ program main
   call run_example_04()
   call run_example_05()
   call run_example_06()
+  call run_example_07()
   call run_example_08()
   call run_example_09()
   call run_example_10()

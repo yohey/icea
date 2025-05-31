@@ -20,12 +20,13 @@ namespace CEA {
 
 
   void Problem::set_problem(const char* mode, const std::optional<const char*>& name, const bool& mole_ratios, const bool& equilibrium, const bool& ions,
-                            const bool& frozen, const bool& frozen_at_throat, const std::optional<const char*>& thermo_lib, const std::optional<const char*>& trans_lib) {
+                            const bool& frozen, const bool& frozen_at_throat, const bool& incident, const bool& reflected,
+                            const std::optional<const char*>& thermo_lib, const std::optional<const char*>& trans_lib) {
     const char* name_ffi = name.value_or(nullptr);
     const char* thermo_lib_ffi = thermo_lib.value_or(nullptr);
     const char* trans_lib_ffi = trans_lib.value_or(nullptr);
 
-    ffi_cea_set_problem(this->_ffi.get(), mode, name_ffi, mole_ratios, equilibrium, ions, frozen, frozen_at_throat, thermo_lib_ffi, trans_lib_ffi);
+    ffi_cea_set_problem(this->_ffi.get(), mode, name_ffi, mole_ratios, equilibrium, ions, frozen, frozen_at_throat, incident, reflected, thermo_lib_ffi, trans_lib_ffi);
   }
 
   void Problem::set_output_options(const bool& SI, const std::vector<size_t>& debug_points, const bool& mass_fractions, const bool& _short,
@@ -88,6 +89,11 @@ namespace CEA {
     const double* contraction_ratio_ptr = (contraction_ratio) ? &contraction_ratio.value() : nullptr;
     const double* mass_flow_ratio_ptr = (mass_flow_ratio) ? &mass_flow_ratio.value() : nullptr;
     ffi_cea_set_finite_area_combustor(this->_ffi.get(), contraction_ratio_ptr, mass_flow_ratio_ptr);
+  }
+
+  void Problem::set_initial_velocities(const std::vector<double>& velocity_list, const bool& is_mach) {
+    FFI_Double_Array array{velocity_list.data(), velocity_list.size()};
+    ffi_cea_set_initial_velocities(this->_ffi.get(), array, is_mach);
   }
 
   void Problem::add_reactant(const char* type, const char* name, const std::optional<const char*>& formula, const std::optional<double>& ratio,

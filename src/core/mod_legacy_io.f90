@@ -155,7 +155,7 @@ contains
     character(1):: cx1
     character(2):: cx2
     character(3):: cx3
-    logical:: eqrats, incd, phi, pltdat, reacts, refl
+    logical:: eqrats, phi, pltdat, reacts
     integer:: i, ifrmla, ii, in, iv, ix, j, jj, k, lcin(maxNgc), ncin, nmix
     real(8):: denmtr, dpin(maxNgc), eratio, hr, mix(maxNgc), ur, xyz
 
@@ -445,8 +445,6 @@ contains
              cea%Gamma1 = 0
              phi = .false.
              eqrats = .false.
-             incd = .false.
-             refl = .false.
              cea%Shkdbg = .false.
              cea%Incdeq = .false.
              cea%Incdfz = .false.
@@ -517,17 +515,11 @@ contains
 
                    else if (cx3 == 'inc') then
                       cea%Shock = .true.
-                      incd = .true.
-                      if (index(cx15, 'eq') > 0) cea%Eql_in = .true.
-                      if (index(cx15, 'fr') > 0) cea%Froz = .true.
-                      if (index(cx15, 'fz') > 0) cea%Froz = .true.
+                      cea%incd_in = .true.
 
                    else if (cx3 == 'ref') then
                       cea%Shock = .true.
-                      refl = .true.
-                      if (index(cx15, 'eq') > 0) cea%Eql_in = .true.
-                      if (index(cx15, 'fr') > 0) cea%Froz = .true.
-                      if (index(cx15, 'fz') > 0) cea%Froz = .true.
+                      cea%refl_in = .true.
 
                    else if (cx3 == 'det') then
                       cea%Detn = .true.
@@ -548,13 +540,6 @@ contains
              exit
 
           else if (code(1:3) == 'end') then
-             if (cea%Shock) then
-                if (incd .and. cea%Froz) cea%Incdfz = .true.
-                if (incd .and. cea%Eql_in) cea%Incdeq = .true.
-                if (refl .and. cea%Froz) cea%Reflfz = .true.
-                if (refl .and. cea%Eql_in) cea%Refleq = .true.
-             end if
-
              cea%Hsub0 = min(hr, ur)
              cea%Size = 0
 
@@ -570,8 +555,8 @@ contains
                      & "  EQL=", l1, "  IONS=", l1, "  SIUNIT=", l1, "  DEBUGF=", l1, &
                      & "  SHKDBG=", l1, "  DETDBG=", l1, "  TRNSPT=", l1)') &
                      cea%Tp, (cea%Hp .and. .not. cea%Vol), cea%Sp, (cea%Tp .and. cea%Vol), (cea%Hp .and. cea%Vol), &
-                     (cea%Sp .and. cea%Vol), cea%Detn, cea%Shock, refl, incd, cea%Rkt, cea%Froz, cea%Eql_in, cea%Ions, &
-                     cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
+                     (cea%Sp .and. cea%Vol), cea%Detn, cea%Shock, cea%refl_in, cea%incd_in, cea%Rkt, cea%Froz, cea%Eql_in, &
+                     cea%Ions, cea%SIunit, cea%Debugf, cea%Shkdbg, cea%Detdbg, cea%Trnspt
 
                 if (cea%T(1) > 0) then
                    write(cea%io_log, '(/" T,K =", 7f11.4)') (cea%T(jj), jj = 1, cea%Nt)

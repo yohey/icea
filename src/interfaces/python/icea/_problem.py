@@ -22,11 +22,12 @@ class CEA_Problem:
         _libcea.ffi_cea_del_problem(self._ffi)
 
     def set_problem(self, mode, name = None, mole_ratios = None, equilibrium = None, ions = None,
-                    frozen = None, frozen_at_throat = None, thermo_lib = None, trans_lib = None):
+                    frozen = None, frozen_at_throat = None, incident = None, reflected = None, thermo_lib = None, trans_lib = None):
         _libcea.ffi_cea_set_problem.argtypes = [c_void_p, c_char_p, c_char_p, POINTER(c_bool), POINTER(c_bool), POINTER(c_bool),
-                                                POINTER(c_bool), POINTER(c_bool), c_char_p, c_char_p]
+                                                POINTER(c_bool), POINTER(c_bool), POINTER(c_bool), POINTER(c_bool), c_char_p, c_char_p]
         _libcea.ffi_cea_set_problem(self._ffi, mode.encode(), _c_char_or_None(name), _c_bool_or_None(mole_ratios), _c_bool_or_None(equilibrium), _c_bool_or_None(ions),
-                                    _c_bool_or_None(frozen), _c_bool_or_None(frozen_at_throat), _c_char_or_None(thermo_lib), _c_char_or_None(trans_lib))
+                                    _c_bool_or_None(frozen), _c_bool_or_None(frozen_at_throat), _c_bool_or_None(incident), _c_bool_or_None(reflected),
+                                    _c_char_or_None(thermo_lib), _c_char_or_None(trans_lib))
 
     def set_output_options(self, SI = None, debug_points = None, mass_fractions = None, short = None, trace_tol = None, transport = None, plot = None):
         _libcea.ffi_cea_set_output_options.argtypes = [c_void_p, POINTER(c_bool), POINTER(FFI_C_Ptr_Array), POINTER(c_bool), POINTER(c_bool),
@@ -69,6 +70,10 @@ class CEA_Problem:
     def set_finite_area_combustor(self, contraction_ratio = None, mass_flow_ratio = None):
         _libcea.ffi_cea_set_finite_area_combustor.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double)]
         _libcea.ffi_cea_set_finite_area_combustor(self._ffi, _c_double_or_None(contraction_ratio), _c_double_or_None(mass_flow_ratio))
+
+    def set_initial_velocities(self, velocities, is_mach = None):
+        _libcea.ffi_cea_set_initial_velocities.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), POINTER(c_bool)]
+        _libcea.ffi_cea_set_initial_velocities(self._ffi, _c_double_array(velocities), _c_bool_or_None(is_mach))
 
     def add_reactant(self, type_, name, formula = None, ratio = None, T = None, rho = None, h = None, u = None,
                      T_unit = None, rho_unit = None, h_unit = None, u_unit = None):

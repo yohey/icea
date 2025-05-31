@@ -81,6 +81,8 @@ module mod_types
      integer, allocatable:: Debug_in(:)
      real(8), allocatable:: U1_in(:), Ma1_in(:)
      logical:: eqrats_in
+     logical:: incd_in = .false.
+     logical:: refl_in = .false.
      real(8), allocatable:: Oxf_in(:)
 
      character(15):: ensert(20)
@@ -325,6 +327,14 @@ contains
 
     cea%iOF = 0
     cea%num_omitted = 0
+
+    !! migrate from INIT
+    if (cea%Shock) then
+       cea%Incdfz = cea%incd_in .and. cea%Froz
+       cea%Incdeq = cea%incd_in .and. cea%Eql_in
+       cea%Reflfz = cea%refl_in .and. cea%Froz
+       cea%Refleq = cea%refl_in .and. cea%Eql_in
+    end if
 
     !! migrate from read_libraries
     if (associated(cea%points)) then

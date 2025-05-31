@@ -17,6 +17,9 @@ target_sources(${EXECUTABLE}
   src/example-02.f90
   src/example-03.f90
   src/example-04.f90
+  src/example-05.f90
+  src/example-06.f90
+  src/example-07.f90
   src/example-08.f90
   src/example-09.f90
   src/example-10.f90

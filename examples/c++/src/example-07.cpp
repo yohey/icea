@@ -4,7 +4,7 @@
 #include "cea.h"
 
 
-void run_example_06() {
+void run_example_07() {
 
   CEA::Problem prob;
 
@@ -20,16 +20,7 @@ void run_example_06() {
   //   - reflected:         bool (optional, default: false)
   //   - thermo_lib:        std::string (optional, default: auto detect)
   //   - trans_lib:         std::string (optional, default: auto detect)
-  prob.set_problem("deton", "Example 6");
-
-  // void CEA::Problem::set_output_options
-  //   - SI:              bool (optional, default: true)
-  //   - debug_points:    std::vector<size_t> (optional, default: {})
-  //   - mass_fractions:  bool (optional, default: false)
-  //   - _short:          bool (optional, default: false)
-  //   - trace_tol:       double (optional, default: 0.0)
-  //   - transport:       bool (optional, default: false)
-  prob.set_output_options(false, {}, false, false, 0., true);
+  prob.set_problem("shock", "Example 7", true, true, false, true, false, true);
 
   // void CEA::Problem::add_reactant
   //   - type:            std::string (required, must start with "fu", "ox" or "na")
@@ -44,15 +35,16 @@ void run_example_06() {
   //   - rho_unit:        std::string (optional, default: kg/m^3)
   //   - h_unit:          std::string (optional, default: J/mol)
   //   - u_unit:          std::string (optional, default: J/mol)
-  prob.add_reactant("oxyd", "O2", std::nullopt, 100., 298.15);
-  prob.add_reactant("fuel", "H2", std::nullopt, 100., 298.15);
+  prob.add_reactant("name", "H2", std::nullopt, 0.05, 300.);
+  prob.add_reactant("name", "O2", std::nullopt, 0.05, 300.);
+  prob.add_reactant("name", "Ar", std::nullopt, 0.90, 300.);
 
-  prob.set_chamber_temperatures({298.15, 500.});
-  prob.set_mixture_ratios({1.0}, "eq.ratio");
-  prob.set_chamber_pressures({1.0, 20.0}, "bar");
+  prob.set_chamber_pressures({10.0, 20.0}, "mmHg");
+
+  prob.set_initial_velocities({1000., 1100., 1200., 1250., 1300., 1350., 1400.});
 
   prob.set_legacy_mode(true);
 
-  prob.run("example-06.out");
+  prob.run("example-07.out");
 
 }

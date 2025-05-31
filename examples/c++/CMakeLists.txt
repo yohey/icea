@@ -21,6 +21,10 @@ target_sources(${EXECUTABLE}
   src/example-01.cpp
   src/example-02.cpp
   src/example-03.cpp
+  src/example-04.cpp
+  src/example-05.cpp
+  src/example-06.cpp
+  src/example-07.cpp
   src/example-08.cpp
   src/example-09.cpp
   src/example-10.cpp

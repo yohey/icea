@@ -16,6 +16,8 @@ void run_example_09() {
   //   - ions:              bool (optional, default: false)
   //   - frozen:            bool (optional, default: false)
   //   - frozen_at_throat:  bool (optional, default: false)
+  //   - incident:          bool (optional, default: false)
+  //   - reflected:         bool (optional, default: false)
   //   - thermo_lib:        std::string (optional, default: auto detect)
   //   - trans_lib:         std::string (optional, default: auto detect)
   prob.set_problem("rocket", "Example 9", false, false);
