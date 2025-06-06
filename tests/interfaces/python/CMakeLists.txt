@@ -35,7 +35,7 @@ add_test(
 
 
 foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13 14)
-  add_test(NAME test-python-example-${i} COMMAND ${Python_INTERPRETER} ${EXAMPLE_DIR}/example-${i}.py)
+  add_test(NAME test-python-example-${i} COMMAND ${Python_EXECUTABLE} ${EXAMPLE_DIR}/example-${i}.py)
   set_tests_properties(test-python-example-${i} PROPERTIES ENVIRONMENT "${${JOB_NAME}_ENVIRON_LIST}" DEPENDS prepare-${JOB_NAME})
 endforeach()
 
