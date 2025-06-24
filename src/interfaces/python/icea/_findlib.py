@@ -32,6 +32,8 @@ from ctypes.util import find_library
 
 _libceapath = find_library('cea')
 
+if _libceapath is None:
+    _libceapath = find_library('libcea')
 
 if _libceapath is None:
     raise RuntimeError('Library is not found.')
@@ -55,8 +57,15 @@ if not os.path.isabs(_libceapath):
                 _libceapath = os.path.join(d, _libceapath)
                 break
 
-
 if sys.platform == 'win32':
-    _libcea = ctypes.WinDLL(_libceapath)
-else:
-    _libcea = ctypes.CDLL(_libceapath)
+    os.add_dll_directory(os.path.dirname(_libceapath))
+
+    _mingw64path = find_library('libgfortran-5')
+    if not os.path.isabs(_mingw64path):
+        for d in os.environ['PATH'].split(';'):
+            if os.path.exists(os.path.join(d, _mingw64path)):
+                _mingw64path = os.path.join(d, _mingw64path)
+
+    os.add_dll_directory(os.path.dirname(_mingw64path))
+
+_libcea = ctypes.CDLL(_libceapath)

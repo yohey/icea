@@ -10,11 +10,20 @@ Fortran, C++, Python からライブラリとして呼び出すことができ�
 ## 依存関係
 
 あらかじめ下記がインストールされている必要があります。
-* CMake 3.12 以上
+* CMake 3.18 以上
 * C++ コンパイラ (gcc, clang 等)
 * Fortran コンパイラ (gfortran 等)
 
 ## インストール方法
+
+### macOS で Homebrwe を使用している場合
+
+```
+brew tap yohey/opencae
+brew install icea
+```
+
+### Linux や macOS でソースからビルドする場合
 
 ```
 cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Release
@@ -22,9 +31,26 @@ cmake --build _build
 cmake --install _build
 ```
 
+### Windows でソースからビルドする場合
+
+* [mingw-w64](https://www.mingw-w64.org/) および [cmake](https://cmake.org/) が事前にインストールされ，PATH が通っていることを前提とします。
+* オプションとして `-G "MinGW Makefiles"` を付けてください。
+* 最後の `cmake --install _build` でエラー (`Permission denied.`) となった場合は，PowerShell（またはコマンドプロンプト）を管理者権限で起動したうえで再度実行してください。
+```
+cmake . -B _build --install-prefix="C:\Program Files\CEA" -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build _build
+cmake --install _build
+```
+
+インストールが完了したら，下記二つの環境変数を追加してください。
+* `PATH`: `C:\Program Files\CEA\bin`
+* `PYTHONPATH`: `C:\Program Files\CEA\lib`
+
+`C:\Program Files\CEA` の部分は任意です。ビルド時に `--install-prefix` で指定した場所に合わせてください。
+
 ## 動作テスト
 
-下記により正常にビルドできたかどうかの動作テストを実行できます。
+下記により正常にビルドできたかどうかの動作テストを実行できます (Windows 未対応)。
 ```
 cmake --build _build --target test
 ```

@@ -52,11 +52,19 @@ target_compile_options(${CEA_EXECUTABLE}
 target_link_libraries(${CEA_EXECUTABLE} PRIVATE ${CEA_CORE})
 
 
+if(WIN32)
+  set(PATH_DELIMITER "\\")
+  set(NULL_DEVICE "NUL")
+else()
+  set(PATH_DELIMITER "/")
+  set(NULL_DEVICE "/dev/null")
+endif()
+
 foreach(LIB IN ITEMS "thermo" "trans")
   add_custom_target(${LIB}.lib ALL
-    COMMAND cp -a ${CMAKE_SOURCE_DIR}/src/core/${LIB}.inp ${CMAKE_BINARY_DIR}/
-    COMMAND rm -f ${LIB}.lib
-    COMMAND echo ${LIB} | ./${CEA_EXECUTABLE} --legacy-mode > /dev/null
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/src/core/${LIB}.inp ${CMAKE_BINARY_DIR}/
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${LIB}.lib
+    COMMAND echo ${LIB} | .${PATH_DELIMITER}${CEA_EXECUTABLE} --legacy-mode > ${NULL_DEVICE}
     DEPENDS ${CEA_EXECUTABLE}
   )
 endforeach()
