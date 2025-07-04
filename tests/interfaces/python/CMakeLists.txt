@@ -3,29 +3,46 @@ if(NOT DEFINED CEA_CORE)
   message(FATAL_ERROR "This file must be loaded from parent CMakeLists.txt.")
 endif()
 
+include(${CMAKE_SOURCE_DIR}/tests/cmake/AddCompareFilesTest.cmake)
+
 
 set(JOB_NAME test-python-interface)
 
 set(EXAMPLE_DIR "${CMAKE_SOURCE_DIR}/examples/python")
 
-if(APPLE)
-  set(LIBRARY_PATH_NAME "DYLD_LIBRARY_PATH")
+if(WIN32)
+  set(ENV_DELIMITER ";")
+  set(LIBRARY_PATH_NAME "PATH")
 else()
-  set(LIBRARY_PATH_NAME "LD_LIBRARY_PATH")
+  set(ENV_DELIMITER ":")
+  if(APPLE)
+    set(LIBRARY_PATH_NAME "DYLD_LIBRARY_PATH")
+  else()
+    set(LIBRARY_PATH_NAME "LD_LIBRARY_PATH")
+  endif()
 endif()
 
+set(LIBRARY_PATH_LIST "${CMAKE_BINARY_DIR}/src/interfaces/c++${ENV_DELIMITER}$ENV{${LIBRARY_PATH_NAME}}")
+set(PYTHONPATH_LIST "${CMAKE_CURRENT_BINARY_DIR}${ENV_DELIMITER}$ENV{PYTHONPATH}")
+
 set("${JOB_NAME}_ENVIRON_LIST"
-  "${LIBRARY_PATH_NAME}=${CMAKE_BINARY_DIR}/src/interfaces/c++:$ENV{${LIBRARY_PATH_NAME}}"
-  "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}:$ENV{PYTHONPATH}"
+  "${LIBRARY_PATH_NAME}=${LIBRARY_PATH_LIST}"
+  "PYTHONPATH=${PYTHONPATH_LIST}"
 )
+
+if(WIN32)
+  set("${JOB_NAME}_ENVIRON_LIST" "\"${${JOB_NAME}_ENVIRON_LIST}\"")
+endif()
+
 
 include(FindPython)
 
 
 add_custom_target(copy-${JOB_NAME}-files
-  COMMAND ln -s ${CMAKE_BINARY_DIR}/thermo.lib ${CMAKE_CURRENT_BINARY_DIR}/
-  COMMAND ln -s ${CMAKE_BINARY_DIR}/trans.lib  ${CMAKE_CURRENT_BINARY_DIR}/
-  COMMAND cp -a ${CMAKE_SOURCE_DIR}/src/interfaces/python/icea ${CMAKE_CURRENT_BINARY_DIR}/
+  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/thermo.lib ${CMAKE_CURRENT_BINARY_DIR}/thermo.lib
+  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/trans.lib  ${CMAKE_CURRENT_BINARY_DIR}/trans.lib
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/src/interfaces/python/icea ${CMAKE_CURRENT_BINARY_DIR}/icea
+  COMMAND ${CMAKE_COMMAND} -E echo "${JOB_NAME}_ENVIRON_LIST = ${${JOB_NAME}_ENVIRON_LIST}"
 )
 
 add_test(
@@ -41,27 +58,28 @@ endforeach()
 
 
 set(ORIG_OUT "${CMAKE_SOURCE_DIR}/tests/orig/cea2.out")
-add_test(NAME diff-python-example-01 COMMAND bash -c "[ $(cat example-01.out | wc -l) -ge 201 ] && [ $(awk 'NR ==   53, NR ==  245' ${ORIG_OUT} | diff -Bb - example-01.out | wc -l) -le 18 ]")
-add_test(NAME diff-python-example-02 COMMAND bash -c "[ $(cat example-02.out | wc -l) -ge 164 ] && [ $(awk 'NR ==  279, NR ==  434' ${ORIG_OUT} | diff -Bb - example-02.out | wc -l) -le 14 ]")
-add_test(NAME diff-python-example-03 COMMAND bash -c "[ $(cat example-03.out | wc -l) -ge 172 ] && [ $(awk 'NR ==  491, NR ==  654' ${ORIG_OUT} | diff -Bb - example-03.out | wc -l) -le 14 ]")
-add_test(NAME diff-python-example-04 COMMAND bash -c "[ $(cat example-04.out | wc -l) -ge 168 ] && [ $(awk 'NR ==  711, NR ==  870' ${ORIG_OUT} | diff -Bb - example-04.out | wc -l) -le 14 ]")
-add_test(NAME diff-python-example-05 COMMAND bash -c "[ $(cat example-05.out | wc -l) -ge 255 ] && [ $(awk 'NR ==  937, NR == 1183' ${ORIG_OUT} | diff -Bb - example-05.out | wc -l) -le 14 ]")
-add_test(NAME diff-python-example-06 COMMAND bash -c "[ $(cat example-06.out | wc -l) -ge 158 ] && [ $(awk 'NR == 1214, NR == 1363' ${ORIG_OUT} | diff -Bb - example-06.out | wc -l) -le 14 ]")
-add_test(NAME diff-python-example-07 COMMAND bash -c "[ $(cat example-07.out | wc -l) -ge 188 ] && [ $(awk 'NR == 1402, NR == 1581' ${ORIG_OUT} | diff -Bb - example-07.out | wc -l) -le 18 ]")
-add_test(NAME diff-python-example-08 COMMAND bash -c "[ $(cat example-08.out | wc -l) -ge 189 ] && [ $(awk 'NR == 1621, NR == 1800' ${ORIG_OUT} | diff -Bb - example-08.out | wc -l) -le 18 ]")
-add_test(NAME diff-python-example-09 COMMAND bash -c "[ $(cat example-09.out | wc -l) -ge 202 ] && [ $(awk 'NR == 1834, NR == 2026' ${ORIG_OUT} | diff -Bb - example-09.out | wc -l) -le 18 ]")
-add_test(NAME diff-python-example-10 COMMAND bash -c "[ $(cat example-10.out | wc -l) -ge 135 ] && [ $(awk 'NR == 2057, NR == 2178' ${ORIG_OUT} | diff -Bb - example-10.out | wc -l) -le 22 ]")
-add_test(NAME diff-python-example-11 COMMAND bash -c "[ $(cat example-11.out | wc -l) -ge 154 ] && [ $(awk 'NR == 2219, NR == 2363' ${ORIG_OUT} | diff -Bb - example-11.out | wc -l) -le 20 ]")
-add_test(NAME diff-python-example-12 COMMAND bash -c "[ $(cat example-12.out | wc -l) -ge 369 ] && [ $(awk 'NR == 2415, NR == 2774' ${ORIG_OUT} | diff -Bb - example-12.out | wc -l) -le 26 ]")
-add_test(NAME diff-python-example-13 COMMAND bash -c "[ $(cat example-13.out | wc -l) -ge 194 ] && [ $(awk 'NR == 2819, NR == 3003' ${ORIG_OUT} | diff -Bb - example-13.out | wc -l) -le 22 ]")
-add_test(NAME diff-python-example-14 COMMAND bash -c "[ $(cat example-14.out | wc -l) -ge 333 ] && [ $(awk 'NR == 3043, NR == 3367' ${ORIG_OUT} | diff -Bb - example-14.out | wc -l) -le 58 ]")
+add_compare_files_test(NAME diff-python-example-01 TEST_FILE example-01.out ORIG_FILE ${ORIG_OUT} ORIG_START   53 ORIG_END  245 MIN_SIZE  9318 MAX_DIFF 18)
+add_compare_files_test(NAME diff-python-example-02 TEST_FILE example-02.out ORIG_FILE ${ORIG_OUT} ORIG_START  279 ORIG_END  434 MIN_SIZE  5692 MAX_DIFF 14)
+add_compare_files_test(NAME diff-python-example-03 TEST_FILE example-03.out ORIG_FILE ${ORIG_OUT} ORIG_START  491 ORIG_END  654 MIN_SIZE  8168 MAX_DIFF 14)
+add_compare_files_test(NAME diff-python-example-04 TEST_FILE example-04.out ORIG_FILE ${ORIG_OUT} ORIG_START  711 ORIG_END  870 MIN_SIZE  7022 MAX_DIFF 14)
+add_compare_files_test(NAME diff-python-example-05 TEST_FILE example-05.out ORIG_FILE ${ORIG_OUT} ORIG_START  937 ORIG_END 1183 MIN_SIZE 15074 MAX_DIFF 14)
+add_compare_files_test(NAME diff-python-example-06 TEST_FILE example-06.out ORIG_FILE ${ORIG_OUT} ORIG_START 1214 ORIG_END 1363 MIN_SIZE  5835 MAX_DIFF 14)
+add_compare_files_test(NAME diff-python-example-07 TEST_FILE example-07.out ORIG_FILE ${ORIG_OUT} ORIG_START 1402 ORIG_END 1581 MIN_SIZE  9615 MAX_DIFF 18)
+add_compare_files_test(NAME diff-python-example-08 TEST_FILE example-08.out ORIG_FILE ${ORIG_OUT} ORIG_START 1621 ORIG_END 1800 MIN_SIZE  8004 MAX_DIFF 18)
+add_compare_files_test(NAME diff-python-example-09 TEST_FILE example-09.out ORIG_FILE ${ORIG_OUT} ORIG_START 1834 ORIG_END 2026 MIN_SIZE  8788 MAX_DIFF 18)
+add_compare_files_test(NAME diff-python-example-10 TEST_FILE example-10.out ORIG_FILE ${ORIG_OUT} ORIG_START 2057 ORIG_END 2178 MIN_SIZE  6100 MAX_DIFF 22)
+add_compare_files_test(NAME diff-python-example-11 TEST_FILE example-11.out ORIG_FILE ${ORIG_OUT} ORIG_START 2219 ORIG_END 2363 MIN_SIZE  7177 MAX_DIFF 20)
+add_compare_files_test(NAME diff-python-example-12 TEST_FILE example-12.out ORIG_FILE ${ORIG_OUT} ORIG_START 2415 ORIG_END 2774 MIN_SIZE 17022 MAX_DIFF 26)
+add_compare_files_test(NAME diff-python-example-13 TEST_FILE example-13.out ORIG_FILE ${ORIG_OUT} ORIG_START 2819 ORIG_END 3003 MIN_SIZE  9590 MAX_DIFF 22)
+add_compare_files_test(NAME diff-python-example-14 TEST_FILE example-14.out ORIG_FILE ${ORIG_OUT} ORIG_START 3043 ORIG_END 3367 MIN_SIZE 19036 MAX_DIFF 58)
 
 foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13 14)
   set_tests_properties(diff-python-example-${i} PROPERTIES DEPENDS test-python-example-${i})
 endforeach()
 
-add_test(
-  NAME diff-python-example-12-plt
-  COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/tests/orig/cea2.plt example-12.plt
+add_compare_files_test(
+  NAME      diff-python-example-12-plt
+  TEST_FILE example-12.plt
+  ORIG_FILE ${CMAKE_SOURCE_DIR}/tests/orig/cea2.plt
 )
 set_tests_properties(diff-python-example-12-plt PROPERTIES DEPENDS test-python-example-12)

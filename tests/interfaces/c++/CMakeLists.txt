@@ -3,6 +3,8 @@ if(NOT DEFINED CEA_CORE)
   message(FATAL_ERROR "This file must be loaded from parent CMakeLists.txt.")
 endif()
 
+include(${CMAKE_SOURCE_DIR}/tests/cmake/AddCompareFilesTest.cmake)
+
 
 set(JOB_NAME test-c++-interface)
 
@@ -45,13 +47,13 @@ target_link_libraries(${TEST_EXECUTABLE} PRIVATE ${CEA_SHARED_LIBRARY})
 
 
 add_custom_target(run-${JOB_NAME}
-  COMMAND cp -a ${CMAKE_SOURCE_DIR}/tests/orig/cea2.inp .
-  COMMAND cp -a ${CMAKE_SOURCE_DIR}/tests/thermp/test-thermp.inp .
-  COMMAND cp -a ${CMAKE_SOURCE_DIR}/tests/deton/test-deton.inp .
-  COMMAND cp -a ${CMAKE_SOURCE_DIR}/tests/shock/test-shock.inp .
-  COMMAND cp -a ${CMAKE_SOURCE_DIR}/tests/rocket/test-rocket.inp .
-  COMMAND ln -fs ${CMAKE_BINARY_DIR}/thermo.lib .
-  COMMAND ln -fs ${CMAKE_BINARY_DIR}/trans.lib .
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tests/orig/cea2.inp .
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tests/thermp/test-thermp.inp .
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tests/deton/test-deton.inp .
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tests/shock/test-shock.inp .
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/tests/rocket/test-rocket.inp .
+  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/thermo.lib ./thermo.lib
+  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/trans.lib  ./trans.lib
   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${TEST_EXECUTABLE}
   DEPENDS ${TEST_EXECUTABLE}
 )
@@ -66,28 +68,29 @@ set_tests_properties(${JOB_NAME} PROPERTIES FIXTURES_SETUP ${JOB_NAME}_fixtures)
 
 
 set(ORIG_OUT "${CMAKE_SOURCE_DIR}/tests/orig/cea2.out")
-add_test(NAME diff-c++-example-01 COMMAND bash -c "[ $(cat example-01.out | wc -l) -ge 201 ] && [ $(awk 'NR ==   53, NR ==  245' ${ORIG_OUT} | diff -Bb - example-01.out | wc -l) -le 18 ]")
-add_test(NAME diff-c++-example-02 COMMAND bash -c "[ $(cat example-02.out | wc -l) -ge 164 ] && [ $(awk 'NR ==  279, NR ==  434' ${ORIG_OUT} | diff -Bb - example-02.out | wc -l) -le 14 ]")
-add_test(NAME diff-c++-example-03 COMMAND bash -c "[ $(cat example-03.out | wc -l) -ge 172 ] && [ $(awk 'NR ==  491, NR ==  654' ${ORIG_OUT} | diff -Bb - example-03.out | wc -l) -le 14 ]")
-add_test(NAME diff-c++-example-04 COMMAND bash -c "[ $(cat example-04.out | wc -l) -ge 168 ] && [ $(awk 'NR ==  711, NR ==  870' ${ORIG_OUT} | diff -Bb - example-04.out | wc -l) -le 14 ]")
-add_test(NAME diff-c++-example-05 COMMAND bash -c "[ $(cat example-05.out | wc -l) -ge 255 ] && [ $(awk 'NR ==  937, NR == 1183' ${ORIG_OUT} | diff -Bb - example-05.out | wc -l) -le 14 ]")
-add_test(NAME diff-c++-example-06 COMMAND bash -c "[ $(cat example-06.out | wc -l) -ge 158 ] && [ $(awk 'NR == 1214, NR == 1363' ${ORIG_OUT} | diff -Bb - example-06.out | wc -l) -le 14 ]")
-add_test(NAME diff-c++-example-07 COMMAND bash -c "[ $(cat example-07.out | wc -l) -ge 188 ] && [ $(awk 'NR == 1402, NR == 1581' ${ORIG_OUT} | diff -Bb - example-07.out | wc -l) -le 18 ]")
-add_test(NAME diff-c++-example-08 COMMAND bash -c "[ $(cat example-08.out | wc -l) -ge 189 ] && [ $(awk 'NR == 1621, NR == 1800' ${ORIG_OUT} | diff -Bb - example-08.out | wc -l) -le 18 ]")
-add_test(NAME diff-c++-example-09 COMMAND bash -c "[ $(cat example-09.out | wc -l) -ge 202 ] && [ $(awk 'NR == 1834, NR == 2026' ${ORIG_OUT} | diff -Bb - example-09.out | wc -l) -le 18 ]")
-add_test(NAME diff-c++-example-10 COMMAND bash -c "[ $(cat example-10.out | wc -l) -ge 135 ] && [ $(awk 'NR == 2057, NR == 2178' ${ORIG_OUT} | diff -Bb - example-10.out | wc -l) -le 22 ]")
-add_test(NAME diff-c++-example-11 COMMAND bash -c "[ $(cat example-11.out | wc -l) -ge 154 ] && [ $(awk 'NR == 2219, NR == 2363' ${ORIG_OUT} | diff -Bb - example-11.out | wc -l) -le 20 ]")
-add_test(NAME diff-c++-example-12 COMMAND bash -c "[ $(cat example-12.out | wc -l) -ge 369 ] && [ $(awk 'NR == 2415, NR == 2774' ${ORIG_OUT} | diff -Bb - example-12.out | wc -l) -le 26 ]")
-add_test(NAME diff-c++-example-13 COMMAND bash -c "[ $(cat example-13.out | wc -l) -ge 194 ] && [ $(awk 'NR == 2819, NR == 3003' ${ORIG_OUT} | diff -Bb - example-13.out | wc -l) -le 22 ]")
-add_test(NAME diff-c++-example-14 COMMAND bash -c "[ $(cat example-14.out | wc -l) -ge 333 ] && [ $(awk 'NR == 3043, NR == 3367' ${ORIG_OUT} | diff -Bb - example-14.out | wc -l) -le 58 ]")
+add_compare_files_test(NAME diff-c++-example-01 TEST_FILE example-01.out ORIG_FILE ${ORIG_OUT} ORIG_START   53 ORIG_END  245 MIN_SIZE  9318 MAX_DIFF 18)
+add_compare_files_test(NAME diff-c++-example-02 TEST_FILE example-02.out ORIG_FILE ${ORIG_OUT} ORIG_START  279 ORIG_END  434 MIN_SIZE  5692 MAX_DIFF 14)
+add_compare_files_test(NAME diff-c++-example-03 TEST_FILE example-03.out ORIG_FILE ${ORIG_OUT} ORIG_START  491 ORIG_END  654 MIN_SIZE  8168 MAX_DIFF 14)
+add_compare_files_test(NAME diff-c++-example-04 TEST_FILE example-04.out ORIG_FILE ${ORIG_OUT} ORIG_START  711 ORIG_END  870 MIN_SIZE  7022 MAX_DIFF 14)
+add_compare_files_test(NAME diff-c++-example-05 TEST_FILE example-05.out ORIG_FILE ${ORIG_OUT} ORIG_START  937 ORIG_END 1183 MIN_SIZE 15074 MAX_DIFF 14)
+add_compare_files_test(NAME diff-c++-example-06 TEST_FILE example-06.out ORIG_FILE ${ORIG_OUT} ORIG_START 1214 ORIG_END 1363 MIN_SIZE  5835 MAX_DIFF 14)
+add_compare_files_test(NAME diff-c++-example-07 TEST_FILE example-07.out ORIG_FILE ${ORIG_OUT} ORIG_START 1402 ORIG_END 1581 MIN_SIZE  9615 MAX_DIFF 18)
+add_compare_files_test(NAME diff-c++-example-08 TEST_FILE example-08.out ORIG_FILE ${ORIG_OUT} ORIG_START 1621 ORIG_END 1800 MIN_SIZE  8004 MAX_DIFF 18)
+add_compare_files_test(NAME diff-c++-example-09 TEST_FILE example-09.out ORIG_FILE ${ORIG_OUT} ORIG_START 1834 ORIG_END 2026 MIN_SIZE  8788 MAX_DIFF 18)
+add_compare_files_test(NAME diff-c++-example-10 TEST_FILE example-10.out ORIG_FILE ${ORIG_OUT} ORIG_START 2057 ORIG_END 2178 MIN_SIZE  6100 MAX_DIFF 22)
+add_compare_files_test(NAME diff-c++-example-11 TEST_FILE example-11.out ORIG_FILE ${ORIG_OUT} ORIG_START 2219 ORIG_END 2363 MIN_SIZE  7177 MAX_DIFF 20)
+add_compare_files_test(NAME diff-c++-example-12 TEST_FILE example-12.out ORIG_FILE ${ORIG_OUT} ORIG_START 2415 ORIG_END 2774 MIN_SIZE 17022 MAX_DIFF 26)
+add_compare_files_test(NAME diff-c++-example-13 TEST_FILE example-13.out ORIG_FILE ${ORIG_OUT} ORIG_START 2819 ORIG_END 3003 MIN_SIZE  9590 MAX_DIFF 22)
+add_compare_files_test(NAME diff-c++-example-14 TEST_FILE example-14.out ORIG_FILE ${ORIG_OUT} ORIG_START 3043 ORIG_END 3367 MIN_SIZE 19036 MAX_DIFF 58)
 
 foreach(i IN ITEMS 01 02 03 04 05 06 07 08 09 10 11 12 13 14)
   set_tests_properties(diff-c++-example-${i} PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
 endforeach()
 
-add_test(
-  NAME diff-c++-example-12-plt
-  COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/tests/orig/cea2.plt example-12.plt
+add_compare_files_test(
+  NAME      diff-c++-example-12-plt
+  TEST_FILE example-12.plt
+  ORIG_FILE ${CMAKE_SOURCE_DIR}/tests/orig/cea2.plt
 )
 set_tests_properties(diff-c++-example-12-plt PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
 
@@ -96,9 +99,10 @@ foreach(TEST_PATH IN ITEMS "orig/cea2" "thermp/test-thermp" "deton/test-deton" "
   get_filename_component(JOB_NAME ${TEST_PATH} NAME)
   foreach(EXT IN ITEMS "out" "plt")
     if(EXISTS ${CMAKE_SOURCE_DIR}/tests/${TEST_PATH}.${EXT})
-      add_test(
-        NAME c++/${JOB_NAME}.${EXT}
-        COMMAND diff -Bb ${CMAKE_SOURCE_DIR}/tests/${TEST_PATH}.${EXT} ${CMAKE_CURRENT_BINARY_DIR}/${JOB_NAME}.${EXT}
+      add_compare_files_test(
+        NAME      c++/${JOB_NAME}.${EXT}
+        TEST_FILE ${CMAKE_CURRENT_BINARY_DIR}/${JOB_NAME}.${EXT}
+        ORIG_FILE ${CMAKE_SOURCE_DIR}/tests/${TEST_PATH}.${EXT}
       )
       set_tests_properties(c++/${JOB_NAME}.${EXT} PROPERTIES FIXTURES_REQUIRED ${JOB_NAME}_fixtures)
     endif()

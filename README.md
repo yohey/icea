@@ -50,7 +50,7 @@ cmake --install _build
 
 ## 動作テスト
 
-下記により正常にビルドできたかどうかの動作テストを実行できます (Windows 未対応)。
+下記により正常にビルドできたかどうかの動作テストを実行できます。
 ```
 cmake --build _build --target test
 ```
@@ -65,6 +65,8 @@ cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=
 ```
 cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_Fortran_FLAGS_RELEASE="-O0 -Wall -g -fbacktrace"
 ```
+
+この動作テストを Windows で実行するには，あらかじめ「設定」→「システム」→「開発者向け」→「開発者モード」をオンにしておく必要があります。
 
 ## 使用方法
 
