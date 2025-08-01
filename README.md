@@ -26,7 +26,7 @@ brew install icea
 ### Linux や macOS でソースからビルドする場合
 
 ```
-cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Release
+cmake . -B _build --install-prefix=/opt/local/cea/icea-0.2.2 -DCMAKE_BUILD_TYPE=Release
 cmake --build _build
 cmake --install _build
 ```
@@ -58,12 +58,12 @@ cmake --build _build --target test
 ただし，コンパイラの最適化レベルが `-O2` や `-O3` の場合は計算結果が微妙に異なるためテストは失敗と判定されます。
 テストを成功させたい場合は `-O0` または `-O1` を指定する必要があります。
 ```
-cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_FLAGS_RELEASE="-O1"
+cmake . -B _build --install-prefix=/opt/local/cea/icea-0.2.2 -DCMAKE_BUILD_TYPE=Release -DCMAKE_Fortran_FLAGS_RELEASE="-O1"
 ```
 
 デバッグしたい場合の例：
 ```
-cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_Fortran_FLAGS_RELEASE="-O0 -Wall -g -fbacktrace"
+cmake . -B _build --install-prefix=/opt/local/cea/icea-0.2.2 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_Fortran_FLAGS_RELEASE="-O0 -Wall -g -fbacktrace"
 ```
 
 この動作テストを Windows で実行するには，あらかじめ「設定」→「システム」→「開発者向け」→「開発者モード」をオンにしておく必要があります。
@@ -83,7 +83,7 @@ cmake . -B _build --install-prefix=/opt/local/cea/icea-0.1.0 -DCMAKE_BUILD_TYPE=
 インプットファイル名はオリジナル版 CEA と同様に対話的な入力が求められます。
 
 ```
-/opt/local/cea/icea-0.1.0/bin/cea --legacy-mode
+/opt/local/cea/icea-0.2.2/bin/cea --legacy-mode
 ```
 
 ### ライブラリとして呼び出す方法
