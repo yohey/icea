@@ -1,0 +1,792 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>icea._problem &mdash; iCEA 0.2.2 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=50ac24c3" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=99162911"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/translations.js?v=4755f45a"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="../../genindex.html" />
+    <link rel="search" title="検索" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            iCEA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../icea.html">Python API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../libraries.html">物性値ライブラリについて</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">iCEA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">モジュールコード</a></li>
+      <li class="breadcrumb-item active">icea._problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>icea._problem のソースコード</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ctypes</span><span class="w"> </span><span class="kn">import</span> <span class="n">POINTER</span><span class="p">,</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">byref</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">c_bool</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_double</span><span class="p">,</span> <span class="n">c_size_t</span><span class="p">,</span> <span class="n">c_void_p</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">._findlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">_libcea</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FFI_C_Ptr_Array</span><span class="p">(</span><span class="n">Structure</span><span class="p">):</span>
+    <span class="n">_fields_</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;addr&#39;</span><span class="p">,</span> <span class="n">c_void_p</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="n">c_size_t</span><span class="p">)]</span>
+
+
+<div class="viewcode-block" id="CEA_Problem">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem">[ドキュメント]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CEA_Problem</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_new_problem</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_void_p</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span> <span class="o">=</span> <span class="n">c_void_p</span><span class="p">(</span><span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_new_problem</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_del_problem</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_del_problem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CEA_Problem.set_problem">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_problem">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mole_ratios</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">equilibrium</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ions</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">frozen</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">frozen_at_throat</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">incident</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reflected</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">thermo_lib</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">trans_lib</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;問題の基本設定を行います。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mode (str): 計算モードを設定します。有効な選択肢は ``tp``, ``pt``, ``hp``, ``ph``, ``uv``, ``vu``, ``tv``, ``vt``, ``deton``, ``shock``, ``rocket`` です。</span>
+<span class="sd">            name (str): ケース名称を半角 15 文字以内で設定します。</span>
+<span class="sd">            mole_ratios (bool): 混合比をモル比で定義する場合は ``True`` にします。デフォルトでは質量比で定義されます。</span>
+<span class="sd">            equilibrium (bool): 平衡状態を仮定する場合は ``True`` にします。</span>
+<span class="sd">            ions (bool): 燃焼過程でイオン化を考慮する場合は ``True`` にします。</span>
+<span class="sd">            frozen (bool): ``rocket`` モード専用のオプションです。凍結流を仮定する場合は ``True`` にします。</span>
+<span class="sd">            frozen_at_throat (bool): ``rocket`` モード専用，かつ ``frozen`` が ``True`` の場合のみ有効です。凍結位置をスロートにする場合は ``True`` にします。デフォルトの凍結位置はチャンバです。</span>
+<span class="sd">            incident (bool): ``shock`` モード専用のオプションです。入射衝撃波を計算する場合は ``True`` にします。</span>
+<span class="sd">            reflected (bool): ``shock`` モード専用のオプションです。反射衝撃波を計算する場合は ``True`` にします。</span>
+<span class="sd">            thermo_lib (str): 物性値ファイル thermo.lib のを明示的に指定したい場合にフルパスを設定します。デフォルトでは自動探索します。</span>
+<span class="sd">            trans_lib (str): 物性値ファイル trans.lib を明示的に指定したい場合にフルパスを設定します。デフォルトでは自動探索します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_problem</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span>
+                                                <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_problem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">mode</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">mole_ratios</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">equilibrium</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">ions</span><span class="p">),</span>
+                                    <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">frozen</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">frozen_at_throat</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">incident</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">reflected</span><span class="p">),</span>
+                                    <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">thermo_lib</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">trans_lib</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_output_options">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_output_options">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_output_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">SI</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">debug_points</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mass_fractions</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">short</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">trace_tol</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">transport</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;結果出力に関する設定を行います。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            SI (bool): 結果を SI（国際単位系）で出力します。</span>
+<span class="sd">            debug_points (Iterable[int]): デバッグ用に冗長な出力をさせる点のインデックスを指定します。</span>
+<span class="sd">            mass_fractions (bool): 生成物の組成情報を質量比で出力します。デフォルトではモル比で出力されます。</span>
+<span class="sd">            short (bool): 計算の途中経過などの出力を抑制し，出力される情報量を減らします。</span>
+<span class="sd">            trace_tol (float): モル比または質量比がこの値以上の物質のみが計算結果として出力されます。デフォルト挙動は ``shock`` モードでは 5 × 10\\ :sup:`-9`，それ以外のモードでは 5 × 10\\ :sup:`-6` となります。</span>
+<span class="sd">            transport (bool): 出力情報に輸送関連パラメータを含めます。</span>
+<span class="sd">            plot (Iterable[str]): plt ファイルに出力するパラメータ名を指定します。有効なキーワードは `NASA-RP-1331 &lt;https://ntrs.nasa.gov/citations/19960044559&gt;`_ の 2.5.4 項を参照してください。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_output_options(SI = True, transport = True)</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_output_options(SI = True, mass_fractions = True, plot = [&#39;aeat&#39;, &#39;t&#39;, &#39;p&#39;, &#39;ivac&#39;, &#39;isp&#39;, &#39;mach&#39;, &#39;cf&#39;])</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_output_options(SI = False, trace_tol = 1e-10)</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_output_options(SI = True, debug_points = [4])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_output_options</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span>
+                                                       <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">),</span> <span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_output_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">SI</span><span class="p">),</span> <span class="n">_c_size_t_array_or_None</span><span class="p">(</span><span class="n">debug_points</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">mass_fractions</span><span class="p">),</span>
+                                           <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">short</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">trace_tol</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">transport</span><span class="p">),</span> <span class="o">*</span><span class="n">_c_char_array_or_None</span><span class="p">(</span><span class="n">plot</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_chamber_pressures">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_chamber_pressures">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_chamber_pressures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pressures</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;MPa&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;チャンバ圧力を設定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pressures (Iterable[float]): 圧力の値を設定します。</span>
+<span class="sd">            unit (str): 圧力の単位を指定します。有効な選択肢は ``MPa``，``kPa``，``Pa``，``atm``，``bar``，``psi``，``legacy-psi`` です。``psi`` は 6894.76 Pa（現代の定義）であり，``legacy-psi`` は 6894.73 Pa（オリジナル CEA に合わせたもの）です。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_chamber_pressures([1.0, 2.0, 5.0], &#39;MPa&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_pressures</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">),</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_pressures</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">pressures</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">unit</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_chamber_temperatures">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_chamber_temperatures">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_chamber_temperatures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">temperatures</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;K&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;チャンバ温度を設定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            temperatures (Iterable[float]): 温度の値を設定します。</span>
+<span class="sd">            unit (str): 温度の単位を設定します。現時点では有効な選択肢は ``K`` のみです。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_chamber_temperatures([300.0, 500.0, 1000.0])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_temperatures</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">),</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_temperatures</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">temperatures</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">unit</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_chamber_densities">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_chamber_densities">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_chamber_densities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">densities</span><span class="p">,</span> <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;kg/m^3&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``tv``, ``uv``, ``sv`` モードにおいて，比体積のかわりに密度を指定する場合に使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            densities (Iterable[float]): 密度の値を設定します。</span>
+<span class="sd">            unit (str): 密度の単位を設定します。有効な選択肢は ``kg/m^3`` または ``g/cc`` です。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_chamber_densities([9.1864e-5, 8.0877e-6, 6.6054e-7], unit = &#39;g/cc&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_densities</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">),</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_densities</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">densities</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">unit</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_chamber_internal_energy">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_chamber_internal_energy">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_chamber_internal_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uByR</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``uv`` モードにおいて，内部エネルギを指定する場合に使用します。</span>
+<span class="sd">        内部エネルギの値は気体定数 R0 = 8.31451 [J/(K·mol)] で無次元化した値として入力します</span>
+<span class="sd">        （現代の定義 R0 = 8.31446261815324 [J/(K·mol)] とは異なることに注意）。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            uByR (float): 内部エネルギを気体定数で無次元化した値を設定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_chamber_internal_energy(-45.1343)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_internal_energy</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_chamber_internal_energy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">uByR</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_mixture_ratios">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_mixture_ratios">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_mixture_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ratios</span><span class="p">,</span> <span class="n">type_</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;混合比を設定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ratios (Iterable[float]): 混合比の値を設定します。</span>
+<span class="sd">            type_ (str): 混合比のタイプを指定します。デフォルトでは O/F 質量比となります。有効な選択肢は ``eq.ratio`` または ``%fuel`` です。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_mixture_ratios([1.0, 1.5], type_ = &#39;eq.ratio&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_mixture_ratios</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">),</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_mixture_ratios</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">ratios</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">type_</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_pressure_ratios">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_pressure_ratios">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_pressure_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ratios</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;圧力比を設定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ratios (Iterable[float]): 圧力比の値を設定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_pressure_ratios([10.0, 100.0, 1000.0])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_pressure_ratios</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_pressure_ratios</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">ratios</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_subsonic_area_ratios">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_subsonic_area_ratios">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_subsonic_area_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ratios</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;亜音速の面積比を設定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ratios (Iterable[float]): 面積比の値を設定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_subsonic_area_ratios([1.58])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_subsonic_area_ratios</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_subsonic_area_ratios</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">ratios</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_supersonic_area_ratios">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_supersonic_area_ratios">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_supersonic_area_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ratios</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;超音速の面積比を設定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ratios (Iterable[float]): 面積比の値を設定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_supersonic_area_ratios([25.0, 50.0, 75.0])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_supersonic_area_ratios</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_supersonic_area_ratios</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">ratios</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_finite_area_combustor">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_finite_area_combustor">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_finite_area_combustor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contraction_ratio</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mass_flow_ratio</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;有限面積の燃焼室を仮定する場合に指定します。</span>
+<span class="sd">        引数として ``contraction_ratio`` または ``mass_flow_ratio`` どちらか一方を必ず指定する必要があります。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            contraction_ratio (float): 収縮比（燃焼室面積／スロート面積）を指定します。</span>
+<span class="sd">            mass_flow_ratio (float): 面積あたりの質量流量比 [(kg/s)/m^2] を指定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_finite_area_combustor(contraction_ratio = 1.58)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_finite_area_combustor</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_finite_area_combustor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">contraction_ratio</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">mass_flow_ratio</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_initial_velocities">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_initial_velocities">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_initial_velocities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">velocities</span><span class="p">,</span> <span class="n">is_mach</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``shock`` モードにおいて，初期速度を指定する際に使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            velocities (Iterable[float]): 速度の値を設定します。</span>
+<span class="sd">            is_mach (bool): ``True`` にすると指定した値をマッハ数とみなします。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_initial_velocities([1000, 1100, 1200, 1250, 1300, 1350, 1400])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_initial_velocities</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_initial_velocities</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_array</span><span class="p">(</span><span class="n">velocities</span><span class="p">),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">is_mach</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.add_reactant">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.add_reactant">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_reactant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">formula</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rho</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                     <span class="n">T_unit</span> <span class="o">=</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="n">rho_unit</span> <span class="o">=</span> <span class="s1">&#39;kg/m^3&#39;</span><span class="p">,</span> <span class="n">h_unit</span> <span class="o">=</span> <span class="s1">&#39;J/mol&#39;</span><span class="p">,</span> <span class="n">u_unit</span> <span class="o">=</span> <span class="s1">&#39;J/mol&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;新しい反応物質を追加します。``h`` と ``u`` はどちらか片方のみ指定できます。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            type_ (str): 物質の種類を指定します。有効な選択肢は ``fuel``, ``oxyd``, ``name`` です。</span>
+<span class="sd">            name (str): 物質名称を指定します。</span>
+<span class="sd">            formula (str): 物質の組成をスペース区切りで指定します。たとえば CH\\ :sub:`4` ならば ``&quot;C 1.0 H 4.0&quot;`` とします。基本的に ``name`` に指定した名称が thermo.lib 内の名称と一致している場合は省略可能ですが，``h``, ``u`` を指定する場合は ``formula`` が必須です（今後改善予定）。</span>
+<span class="sd">            ratio (float): 物質の存在比率を指定します。``set_problem`` で ``mole_ratios`` を ``True`` にした場合はモル比，そうでない場合は質量比として解釈されます。値は自動的に正規化されます (たとえば 0.4, 0.6 のように指定しても 40, 60 のように指定しても同じ結果となります)。</span>
+<span class="sd">            T (float): 物質の温度を指定します。</span>
+<span class="sd">            rho (float): 物質の密度を指定します。</span>
+<span class="sd">            h (float): 物質のエンタルピを指定します。</span>
+<span class="sd">            u (float): 物質の内部エネルギを指定します。</span>
+<span class="sd">            T_unit (str): 温度の単位を指定します。有効な選択肢は現時点では ``K`` のみです。</span>
+<span class="sd">            rho_unit (str): 密度の単位を指定します。有効な選択肢は ``kg/m^3``, ``g/cm^3``, ``g/cc`` です。</span>
+<span class="sd">            h_unit (str): エンタルピの単位を指定します。有効な選択肢は ``J/mol``, ``kJ/mol``, ``cal/mol`` です。</span>
+<span class="sd">            u_unit (str): 内部エネルギの単位を指定します。有効な選択肢は ``J/mol``, ``kJ/mol``, ``cal/mol`` です。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.add_reactant(&#39;fuel&#39;, &#39;H2(L)&#39;, ratio = 100, T = 20.27)</span>
+<span class="sd">            &gt;&gt;&gt; prob.add_reactant(&#39;oxyd&#39;, &#39;O2(L)&#39;, ratio = 100, T = 90.17)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_add_reactant</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span>
+                                                 <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span>
+                                                 <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_add_reactant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">type_</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">formula</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">ratio</span><span class="p">),</span>
+                                     <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">rho</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">h</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">u</span><span class="p">),</span>
+                                     <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">T_unit</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">rho_unit</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">h_unit</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">u_unit</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_reactant">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_reactant">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_reactant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">rho</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                     <span class="n">T_unit</span> <span class="o">=</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="n">rho_unit</span> <span class="o">=</span> <span class="s1">&#39;kg/m^3&#39;</span><span class="p">,</span> <span class="n">h_unit</span> <span class="o">=</span> <span class="s1">&#39;J/mol&#39;</span><span class="p">,</span> <span class="n">u_unit</span> <span class="o">=</span> <span class="s1">&#39;J/mol&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;既存の反応物質の設定を変更します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): 変更したい物質のインデックス（0 始まりで ``add_reactant`` した順）を指定します。</span>
+<span class="sd">            ratio (float): 物質の存在比率を指定します。</span>
+<span class="sd">            T (float): 物質の温度を指定します。</span>
+<span class="sd">            rho (float): 物質の密度を指定します。</span>
+<span class="sd">            h (float): 物質のエンタルピを指定します。</span>
+<span class="sd">            u (float): 物質の内部エネルギを指定します。</span>
+<span class="sd">            T_unit (str): 温度の単位を指定します。</span>
+<span class="sd">            rho_unit (str): 密度の単位を指定します。</span>
+<span class="sd">            h_unit (str): エンタルピの単位を指定します。</span>
+<span class="sd">            u_unit (str): 内部エネルギの単位を指定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_reactant</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span>
+                                                 <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span>
+                                                 <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_reactant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">ratio</span><span class="p">),</span>
+                                     <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">rho</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">h</span><span class="p">),</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">u</span><span class="p">),</span>
+                                     <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">T_unit</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">rho_unit</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">h_unit</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">u_unit</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_insert_species">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_insert_species">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_insert_species</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">species</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;最初の計算点から考慮に追加する物質を指定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            species (Iterable[str]): 考慮に追加する物質を指定します。thermo.lib 内の名称と完全に一致させる必要があります。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_insert_species([&#39;BeO(L)&#39;])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_insert_species</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_insert_species</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="o">*</span><span class="n">_c_char_array_or_None</span><span class="p">(</span><span class="n">species</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_omit_species">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_omit_species">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_omit_species</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">species</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;燃焼過程において無視する物質を設定します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            species (Iterable[str]): 無視する物質を指定します。thermo.lib 内の名称と完全に一致させる必要があります。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_omit_species([&#39;C(gr)&#39;])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_omit_species</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_omit_species</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="o">*</span><span class="n">_c_char_array_or_None</span><span class="p">(</span><span class="n">species</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_only_species">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_only_species">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_only_species</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">species</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;計算に考慮する物質を限定する場合に使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            species (Iterable[str]): 計算に考慮する物質を指定します。thermo.lib 内の名称と完全に一致させる必要があります。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_only_species([&#39;Ar&#39;, &#39;CO&#39;, &#39;CO2&#39;, &#39;H2&#39;, &#39;H2O&#39;, &#39;HNO&#39;, &#39;HO2&#39;, &#39;NH&#39;, &#39;NO&#39;, &#39;N2&#39;, &#39;O2&#39;, &#39;OH&#39;])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_only_species</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">FFI_C_Ptr_Array</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_only_species</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="o">*</span><span class="n">_c_char_array_or_None</span><span class="p">(</span><span class="n">species</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.set_legacy_mode">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.set_legacy_mode">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_legacy_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">legacy_mode</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;なるべく本家 CEA に近い動作を再現したい場合に指定します。本家 CEA と同じ結果を保証するわけではありません。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            legacy_mode (bool): ``True`` にすると再現モードとなります。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.set_legacy_mode(True)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_legacy_mode</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">)]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_set_legacy_mode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">legacy_mode</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.run">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.run">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_filename</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">plt_filename</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;計算を実行します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            out_filename (str): アウトプットファイル名を指定します。省略した場合は，</span>
+<span class="sd">                                ``legacy_mode = True`` ならば標準出力に結果を出力し，</span>
+<span class="sd">                                ``legacy_mode = False`` ならば何も出力せずに計算だけが実行されます。</span>
+<span class="sd">            plt_filename (str): プロットファイル名を指定します。省略した場合は何も出力しません。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; prob.run(out_filename = &#39;example-12.out&#39;, plt_filename = &#39;example-12.plt&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_run</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">out_filename</span><span class="p">),</span> <span class="n">_c_char_or_None</span><span class="p">(</span><span class="n">plt_filename</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_pressure">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_pressure">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_pressure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iOF</span><span class="p">,</span> <span class="n">ipt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;計算結果の圧力の値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iOF (int): 0 から始まる混合比インデックスを指定します。</span>
+<span class="sd">            ipt (int): 0 から始まる計算点インデックスを指定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: 圧力 [MPa]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; P = prob.get_pressure(0, 2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_pressure</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_pressure</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_pressure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">iOF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_temperature">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_temperature">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iOF</span><span class="p">,</span> <span class="n">ipt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;計算結果の温度の値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iOF (int): 0 から始まる混合比インデックスを指定します。</span>
+<span class="sd">            ipt (int): 0 から始まる計算点インデックスを指定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: 温度 [K]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; T = prob.get_temperature(0, 2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_temperature</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_temperature</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_temperature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">iOF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_chamber_temperature">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_chamber_temperature">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_chamber_temperature</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``rocket`` モードにおいて，計算結果のチャンバ温度の値を取得します。``.run()`` の実行より後で使用します。</span>
+<span class="sd">        ``FAC`` (Finite Area Combustor) モードが有効の場合は ``get_temperature(0, 1)`` と同じ，</span>
+<span class="sd">        それ以外の場合は ``get_temperature(0, 0)`` と同じです。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: 温度 [K]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; Tc = prob.get_chamber_temperature()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_chamber_temperature</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_chamber_temperature</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_chamber_temperature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_molecular_weight">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_molecular_weight">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_molecular_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iOF</span><span class="p">,</span> <span class="n">ipt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;計算結果のモル質量の値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iOF (int): 0 から始まる混合比インデックスを指定します。</span>
+<span class="sd">            ipt (int): 0 から始まる計算点インデックスを指定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: モル質量 [g/mol]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; M = prob.get_molecular_weight(0, 2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_molecular_weight</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_molecular_weight</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_molecular_weight</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">iOF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_specific_heat">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_specific_heat">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_specific_heat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iOF</span><span class="p">,</span> <span class="n">ipt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;計算結果の比熱の値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iOF (int): 0 から始まる混合比インデックスを指定します。</span>
+<span class="sd">            ipt (int): 0 から始まる計算点インデックスを指定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: 比熱 [kJ/(kg·K)] または [cal/(g·K)] （単位は ``set_output_options`` の ``SI`` により変化）</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; cp = prob.get_specific_heat(0, 2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_heat</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_heat</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_heat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">iOF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_specific_heat_ratio">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_specific_heat_ratio">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_specific_heat_ratio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iOF</span><span class="p">,</span> <span class="n">ipt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;計算結果の比熱比の値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iOF (int): 0 から始まる混合比インデックスを指定します。</span>
+<span class="sd">            ipt (int): 0 から始まる計算点インデックスを指定します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: 比熱比 [-]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; gamma = prob.get_specific_heat_ratio(0, 2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_heat_ratio</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_heat_ratio</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_heat_ratio</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">iOF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_characteristic_velocity">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_characteristic_velocity">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_characteristic_velocity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``rocket`` モードにおいて，計算結果の特性排気速度の値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            なし</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: 特性排気速度 [m/s]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; cstar = prob.get_characteristic_velocity()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_characteristic_velocity</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_characteristic_velocity</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_characteristic_velocity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_specific_impulse">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_specific_impulse">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_specific_impulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iOF</span><span class="p">,</span> <span class="n">ipt</span><span class="p">,</span> <span class="n">vacuum</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;``rocket`` モードにおいて，計算結果の比推力の値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iOF (int): 0 から始まる混合比インデックスを指定します。</span>
+<span class="sd">            ipt (int): 0 から始まる計算点インデックスを指定します。</span>
+<span class="sd">            vacuum (bool): ``True`` の場合は真空中比推力を返します。</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: 比推力 [s]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; Isp = prob.get_specific_impulse(0, 2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_impulse</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_double</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_impulse</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_bool</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_specific_impulse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">iOF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_size_t</span><span class="p">(</span><span class="n">ipt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> <span class="n">_c_bool_or_None</span><span class="p">(</span><span class="n">vacuum</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.calc_frozen_exhaust">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.calc_frozen_exhaust">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_frozen_exhaust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;凍結流として指定の温度になった場合の物性値を取得します。``.run()`` の実行より後で使用します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            T (float): 温度 [K]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[float, float, float, float, float]:</span>
+<span class="sd">            比熱 [kJ/(kg·K)]，比熱比 [-]，粘性係数 [µPa·s]，熱伝導率 [W/(m·K)]，プラントル数 [-]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; cp, gamma, mu, k, Pr = prob.calc_frozen_exhaust(650.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_calc_frozen_exhaust</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">)]</span>
+        <span class="n">_cp</span><span class="p">,</span> <span class="n">_gamma</span><span class="p">,</span> <span class="n">_mu</span><span class="p">,</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_Pr</span> <span class="o">=</span> <span class="n">c_double</span><span class="p">(),</span> <span class="n">c_double</span><span class="p">(),</span> <span class="n">c_double</span><span class="p">(),</span> <span class="n">c_double</span><span class="p">(),</span> <span class="n">c_double</span><span class="p">()</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_calc_frozen_exhaust</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">_c_double_or_None</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_cp</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_gamma</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_mu</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_k</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_Pr</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_cp</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">_gamma</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">_mu</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">_k</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">_Pr</span><span class="o">.</span><span class="n">value</span></div>
+
+
+<div class="viewcode-block" id="CEA_Problem.get_thermo_reference_properties">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.get_thermo_reference_properties">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_thermo_reference_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;指定した物質の参照状態量を取得します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): 物質名</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[float, float, float]: モル質量 [g/mol]，参照温度 [K]，参照エンタルピ [kJ/kg]</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; M, T_ref, h_ref = prob.get_thermo_reference_properties(&#39;O2(L)&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_thermo_reference_properties</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">,</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">),</span> <span class="n">POINTER</span><span class="p">(</span><span class="n">c_double</span><span class="p">)]</span>
+        <span class="n">_M</span><span class="p">,</span> <span class="n">_T_ref</span><span class="p">,</span> <span class="n">_h0_ref</span> <span class="o">=</span> <span class="n">c_double</span><span class="p">(),</span> <span class="n">c_double</span><span class="p">(),</span> <span class="n">c_double</span><span class="p">()</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_get_thermo_reference_properties</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_M</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_T_ref</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">_h0_ref</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_M</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">_T_ref</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">_h0_ref</span><span class="o">.</span><span class="n">value</span></div>
+
+
+
+<div class="viewcode-block" id="CEA_Problem.write_debug_output">
+<a class="viewcode-back" href="../../icea.html#icea.CEA_Problem.write_debug_output">[ドキュメント]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">write_debug_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;デバッグ用の情報をファイルに出力します。</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filename (str): 出力ファイル名</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            なし</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_write_debug_output</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">c_void_p</span><span class="p">,</span> <span class="n">c_char_p</span><span class="p">]</span>
+        <span class="n">_libcea</span><span class="o">.</span><span class="n">ffi_cea_write_debug_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ffi</span><span class="p">,</span> <span class="n">filename</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_c_bool_or_None</span><span class="p">(</span><span class="n">b</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_bool</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_c_double_or_None</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">byref</span><span class="p">(</span><span class="n">c_double</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_c_char_or_None</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_c_double_array</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">]):</span>
+    <span class="n">_a</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_double</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))(</span><span class="o">*</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">ptr</span> <span class="o">=</span> <span class="n">FFI_C_Ptr_Array</span><span class="p">(</span><span class="n">addr</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">_a</span><span class="p">,</span> <span class="n">c_void_p</span><span class="p">),</span> <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">byref</span><span class="p">(</span><span class="n">ptr</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_c_size_t_array_or_None</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_a</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_size_t</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))(</span><span class="o">*</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">a</span><span class="p">))</span>
+        <span class="n">ptr</span> <span class="o">=</span> <span class="n">FFI_C_Ptr_Array</span><span class="p">(</span><span class="n">addr</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">_a</span><span class="p">,</span> <span class="n">c_void_p</span><span class="p">),</span> <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">byref</span><span class="p">(</span><span class="n">ptr</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_c_char_array_or_None</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">char_array_ptr</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_char_p</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))(</span><span class="o">*</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">a</span><span class="p">])</span>
+        <span class="n">char_length_array</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_size_t</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))(</span><span class="o">*</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">a</span><span class="p">])</span>
+        <span class="n">char_length_array_ptr</span> <span class="o">=</span> <span class="n">FFI_C_Ptr_Array</span><span class="p">(</span><span class="n">addr</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">char_length_array</span><span class="p">,</span> <span class="n">c_void_p</span><span class="p">),</span> <span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">byref</span><span class="p">(</span><span class="n">char_array_ptr</span><span class="p">),</span> <span class="n">byref</span><span class="p">(</span><span class="n">char_length_array_ptr</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

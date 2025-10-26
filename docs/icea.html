@@ -1,0 +1,808 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ja" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python API &mdash; iCEA 0.2.2 ドキュメント</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=50ac24c3" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=99162911"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="_static/translations.js?v=4755f45a"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="索引" href="genindex.html" />
+    <link rel="search" title="検索" href="search.html" />
+    <link rel="next" title="物性値ライブラリについて" href="libraries.html" />
+    <link rel="prev" title="iCEA (Interface-extended CEA)" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            iCEA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#icea.CEA_Problem"><code class="docutils literal notranslate"><span class="pre">CEA_Problem</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_problem"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_problem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_output_options"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_output_options()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_chamber_pressures"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_chamber_pressures()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_chamber_temperatures"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_chamber_temperatures()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_chamber_densities"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_chamber_densities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_chamber_internal_energy"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_chamber_internal_energy()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_mixture_ratios"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_mixture_ratios()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_pressure_ratios"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_pressure_ratios()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_subsonic_area_ratios"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_subsonic_area_ratios()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_supersonic_area_ratios"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_supersonic_area_ratios()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_finite_area_combustor"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_finite_area_combustor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_initial_velocities"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_initial_velocities()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.add_reactant"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.add_reactant()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_reactant"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_reactant()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_insert_species"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_insert_species()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_omit_species"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_omit_species()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_only_species"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_only_species()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.set_legacy_mode"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.set_legacy_mode()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.run"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_pressure"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_pressure()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_temperature"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_temperature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_chamber_temperature"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_chamber_temperature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_molecular_weight"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_molecular_weight()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_specific_heat"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_specific_heat()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_specific_heat_ratio"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_specific_heat_ratio()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_characteristic_velocity"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_characteristic_velocity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_specific_impulse"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_specific_impulse()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.calc_frozen_exhaust"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.calc_frozen_exhaust()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.get_thermo_reference_properties"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.get_thermo_reference_properties()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#icea.CEA_Problem.write_debug_output"><code class="docutils literal notranslate"><span class="pre">CEA_Problem.write_debug_output()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="libraries.html">物性値ライブラリについて</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">iCEA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Python API</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-api">
+<h1>Python API<a class="headerlink" href="#python-api" title="Link to this heading"></a></h1>
+<p>下記に示す設定項目の大部分はオリジナル CEA と対応しています。
+<a class="reference external" href="https://ntrs.nasa.gov/citations/19960044559">公式マニュアル (NASA-RP-1331)</a> も併せて参照してください。</p>
+<p>各種配列のインデックスは，内部計算では Fortran 方式で 1 始まりとなっていますが，Python インタフェースでは Python の文化になじみやすいように 0 始まりとしています。</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="icea.CEA_Problem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">icea.</span></span><span class="sig-name descname"><span class="pre">CEA_Problem</span></span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem" title="Link to this definition"></a></dt>
+<dd><p>ベースクラス: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_problem">
+<span class="sig-name descname"><span class="pre">set_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mole_ratios</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">equilibrium</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frozen_at_throat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">incident</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reflected</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thermo_lib</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_lib</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_problem"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_problem" title="Link to this definition"></a></dt>
+<dd><p>問題の基本設定を行います。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<em>str</em>) -- 計算モードを設定します。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">tp</span></code>, <code class="docutils literal notranslate"><span class="pre">pt</span></code>, <code class="docutils literal notranslate"><span class="pre">hp</span></code>, <code class="docutils literal notranslate"><span class="pre">ph</span></code>, <code class="docutils literal notranslate"><span class="pre">uv</span></code>, <code class="docutils literal notranslate"><span class="pre">vu</span></code>, <code class="docutils literal notranslate"><span class="pre">tv</span></code>, <code class="docutils literal notranslate"><span class="pre">vt</span></code>, <code class="docutils literal notranslate"><span class="pre">deton</span></code>, <code class="docutils literal notranslate"><span class="pre">shock</span></code>, <code class="docutils literal notranslate"><span class="pre">rocket</span></code> です。</p></li>
+<li><p><strong>name</strong> (<em>str</em>) -- ケース名称を半角 15 文字以内で設定します。</p></li>
+<li><p><strong>mole_ratios</strong> (<em>bool</em>) -- 混合比をモル比で定義する場合は <code class="docutils literal notranslate"><span class="pre">True</span></code> にします。デフォルトでは質量比で定義されます。</p></li>
+<li><p><strong>equilibrium</strong> (<em>bool</em>) -- 平衡状態を仮定する場合は <code class="docutils literal notranslate"><span class="pre">True</span></code> にします。</p></li>
+<li><p><strong>ions</strong> (<em>bool</em>) -- 燃焼過程でイオン化を考慮する場合は <code class="docutils literal notranslate"><span class="pre">True</span></code> にします。</p></li>
+<li><p><strong>frozen</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">rocket</span></code> モード専用のオプションです。凍結流を仮定する場合は <code class="docutils literal notranslate"><span class="pre">True</span></code> にします。</p></li>
+<li><p><strong>frozen_at_throat</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">rocket</span></code> モード専用，かつ <code class="docutils literal notranslate"><span class="pre">frozen</span></code> が <code class="docutils literal notranslate"><span class="pre">True</span></code> の場合のみ有効です。凍結位置をスロートにする場合は <code class="docutils literal notranslate"><span class="pre">True</span></code> にします。デフォルトの凍結位置はチャンバです。</p></li>
+<li><p><strong>incident</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">shock</span></code> モード専用のオプションです。入射衝撃波を計算する場合は <code class="docutils literal notranslate"><span class="pre">True</span></code> にします。</p></li>
+<li><p><strong>reflected</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">shock</span></code> モード専用のオプションです。反射衝撃波を計算する場合は <code class="docutils literal notranslate"><span class="pre">True</span></code> にします。</p></li>
+<li><p><strong>thermo_lib</strong> (<em>str</em>) -- 物性値ファイル thermo.lib のを明示的に指定したい場合にフルパスを設定します。デフォルトでは自動探索します。</p></li>
+<li><p><strong>trans_lib</strong> (<em>str</em>) -- 物性値ファイル trans.lib を明示的に指定したい場合にフルパスを設定します。デフォルトでは自動探索します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_output_options">
+<span class="sig-name descname"><span class="pre">set_output_options</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SI</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_fractions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">short</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trace_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transport</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_output_options"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_output_options" title="Link to this definition"></a></dt>
+<dd><p>結果出力に関する設定を行います。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>SI</strong> (<em>bool</em>) -- 結果を SI（国際単位系）で出力します。</p></li>
+<li><p><strong>debug_points</strong> (<em>Iterable</em><em>[</em><em>int</em><em>]</em>) -- デバッグ用に冗長な出力をさせる点のインデックスを指定します。</p></li>
+<li><p><strong>mass_fractions</strong> (<em>bool</em>) -- 生成物の組成情報を質量比で出力します。デフォルトではモル比で出力されます。</p></li>
+<li><p><strong>short</strong> (<em>bool</em>) -- 計算の途中経過などの出力を抑制し，出力される情報量を減らします。</p></li>
+<li><p><strong>trace_tol</strong> (<em>float</em>) -- モル比または質量比がこの値以上の物質のみが計算結果として出力されます。デフォルト挙動は <code class="docutils literal notranslate"><span class="pre">shock</span></code> モードでは 5 × 10<sup>-9</sup>，それ以外のモードでは 5 × 10<sup>-6</sup> となります。</p></li>
+<li><p><strong>transport</strong> (<em>bool</em>) -- 出力情報に輸送関連パラメータを含めます。</p></li>
+<li><p><strong>plot</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) -- plt ファイルに出力するパラメータ名を指定します。有効なキーワードは <a class="reference external" href="https://ntrs.nasa.gov/citations/19960044559">NASA-RP-1331</a> の 2.5.4 項を参照してください。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_output_options</span><span class="p">(</span><span class="n">SI</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">transport</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_output_options</span><span class="p">(</span><span class="n">SI</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">mass_fractions</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;aeat&#39;</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;ivac&#39;</span><span class="p">,</span> <span class="s1">&#39;isp&#39;</span><span class="p">,</span> <span class="s1">&#39;mach&#39;</span><span class="p">,</span> <span class="s1">&#39;cf&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_output_options</span><span class="p">(</span><span class="n">SI</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">trace_tol</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_output_options</span><span class="p">(</span><span class="n">SI</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">debug_points</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_chamber_pressures">
+<span class="sig-name descname"><span class="pre">set_chamber_pressures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pressures</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MPa'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_chamber_pressures"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_chamber_pressures" title="Link to this definition"></a></dt>
+<dd><p>チャンバ圧力を設定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pressures</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 圧力の値を設定します。</p></li>
+<li><p><strong>unit</strong> (<em>str</em>) -- 圧力の単位を指定します。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">MPa</span></code>，<code class="docutils literal notranslate"><span class="pre">kPa</span></code>，<code class="docutils literal notranslate"><span class="pre">Pa</span></code>，<code class="docutils literal notranslate"><span class="pre">atm</span></code>，<code class="docutils literal notranslate"><span class="pre">bar</span></code>，<code class="docutils literal notranslate"><span class="pre">psi</span></code>，<code class="docutils literal notranslate"><span class="pre">legacy-psi</span></code> です。<code class="docutils literal notranslate"><span class="pre">psi</span></code> は 6894.76 Pa（現代の定義）であり，<code class="docutils literal notranslate"><span class="pre">legacy-psi</span></code> は 6894.73 Pa（オリジナル CEA に合わせたもの）です。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_chamber_pressures</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span> <span class="s1">&#39;MPa&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_chamber_temperatures">
+<span class="sig-name descname"><span class="pre">set_chamber_temperatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">temperatures</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'K'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_chamber_temperatures"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_chamber_temperatures" title="Link to this definition"></a></dt>
+<dd><p>チャンバ温度を設定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>temperatures</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 温度の値を設定します。</p></li>
+<li><p><strong>unit</strong> (<em>str</em>) -- 温度の単位を設定します。現時点では有効な選択肢は <code class="docutils literal notranslate"><span class="pre">K</span></code> のみです。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_chamber_temperatures</span><span class="p">([</span><span class="mf">300.0</span><span class="p">,</span> <span class="mf">500.0</span><span class="p">,</span> <span class="mf">1000.0</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_chamber_densities">
+<span class="sig-name descname"><span class="pre">set_chamber_densities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">densities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'kg/m^3'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_chamber_densities"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_chamber_densities" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">tv</span></code>, <code class="docutils literal notranslate"><span class="pre">uv</span></code>, <code class="docutils literal notranslate"><span class="pre">sv</span></code> モードにおいて，比体積のかわりに密度を指定する場合に使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>densities</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 密度の値を設定します。</p></li>
+<li><p><strong>unit</strong> (<em>str</em>) -- 密度の単位を設定します。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">kg/m^3</span></code> または <code class="docutils literal notranslate"><span class="pre">g/cc</span></code> です。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_chamber_densities</span><span class="p">([</span><span class="mf">9.1864e-5</span><span class="p">,</span> <span class="mf">8.0877e-6</span><span class="p">,</span> <span class="mf">6.6054e-7</span><span class="p">],</span> <span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;g/cc&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_chamber_internal_energy">
+<span class="sig-name descname"><span class="pre">set_chamber_internal_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uByR</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_chamber_internal_energy"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_chamber_internal_energy" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">uv</span></code> モードにおいて，内部エネルギを指定する場合に使用します。
+内部エネルギの値は気体定数 R0 = 8.31451 [J/(K·mol)] で無次元化した値として入力します
+（現代の定義 R0 = 8.31446261815324 [J/(K·mol)] とは異なることに注意）。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>uByR</strong> (<em>float</em>) -- 内部エネルギを気体定数で無次元化した値を設定します。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_chamber_internal_energy</span><span class="p">(</span><span class="o">-</span><span class="mf">45.1343</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_mixture_ratios">
+<span class="sig-name descname"><span class="pre">set_mixture_ratios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ratios</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_mixture_ratios"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_mixture_ratios" title="Link to this definition"></a></dt>
+<dd><p>混合比を設定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ratios</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 混合比の値を設定します。</p></li>
+<li><p><strong>type</strong> (<em>str</em>) -- 混合比のタイプを指定します。デフォルトでは O/F 質量比となります。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">eq.ratio</span></code> または <code class="docutils literal notranslate"><span class="pre">%fuel</span></code> です。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_mixture_ratios</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span> <span class="n">type_</span> <span class="o">=</span> <span class="s1">&#39;eq.ratio&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_pressure_ratios">
+<span class="sig-name descname"><span class="pre">set_pressure_ratios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ratios</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_pressure_ratios"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_pressure_ratios" title="Link to this definition"></a></dt>
+<dd><p>圧力比を設定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ratios</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 圧力比の値を設定します。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_pressure_ratios</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">,</span> <span class="mf">1000.0</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_subsonic_area_ratios">
+<span class="sig-name descname"><span class="pre">set_subsonic_area_ratios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ratios</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_subsonic_area_ratios"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_subsonic_area_ratios" title="Link to this definition"></a></dt>
+<dd><p>亜音速の面積比を設定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ratios</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 面積比の値を設定します。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_subsonic_area_ratios</span><span class="p">([</span><span class="mf">1.58</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_supersonic_area_ratios">
+<span class="sig-name descname"><span class="pre">set_supersonic_area_ratios</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ratios</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_supersonic_area_ratios"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_supersonic_area_ratios" title="Link to this definition"></a></dt>
+<dd><p>超音速の面積比を設定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ratios</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 面積比の値を設定します。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_supersonic_area_ratios</span><span class="p">([</span><span class="mf">25.0</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">,</span> <span class="mf">75.0</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_finite_area_combustor">
+<span class="sig-name descname"><span class="pre">set_finite_area_combustor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">contraction_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mass_flow_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_finite_area_combustor"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_finite_area_combustor" title="Link to this definition"></a></dt>
+<dd><p>有限面積の燃焼室を仮定する場合に指定します。
+引数として <code class="docutils literal notranslate"><span class="pre">contraction_ratio</span></code> または <code class="docutils literal notranslate"><span class="pre">mass_flow_ratio</span></code> どちらか一方を必ず指定する必要があります。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>contraction_ratio</strong> (<em>float</em>) -- 収縮比（燃焼室面積／スロート面積）を指定します。</p></li>
+<li><p><strong>mass_flow_ratio</strong> (<em>float</em>) -- 面積あたりの質量流量比 [(kg/s)/m^2] を指定します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_finite_area_combustor</span><span class="p">(</span><span class="n">contraction_ratio</span> <span class="o">=</span> <span class="mf">1.58</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_initial_velocities">
+<span class="sig-name descname"><span class="pre">set_initial_velocities</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">velocities</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_mach</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_initial_velocities"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_initial_velocities" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">shock</span></code> モードにおいて，初期速度を指定する際に使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>velocities</strong> (<em>Iterable</em><em>[</em><em>float</em><em>]</em>) -- 速度の値を設定します。</p></li>
+<li><p><strong>is_mach</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">True</span></code> にすると指定した値をマッハ数とみなします。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_initial_velocities</span><span class="p">([</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1100</span><span class="p">,</span> <span class="mi">1200</span><span class="p">,</span> <span class="mi">1250</span><span class="p">,</span> <span class="mi">1300</span><span class="p">,</span> <span class="mi">1350</span><span class="p">,</span> <span class="mi">1400</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.add_reactant">
+<span class="sig-name descname"><span class="pre">add_reactant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">formula</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'K'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'kg/m^3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'J/mol'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'J/mol'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.add_reactant"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.add_reactant" title="Link to this definition"></a></dt>
+<dd><p>新しい反応物質を追加します。<code class="docutils literal notranslate"><span class="pre">h</span></code> と <code class="docutils literal notranslate"><span class="pre">u</span></code> はどちらか片方のみ指定できます。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>type</strong> (<em>str</em>) -- 物質の種類を指定します。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">fuel</span></code>, <code class="docutils literal notranslate"><span class="pre">oxyd</span></code>, <code class="docutils literal notranslate"><span class="pre">name</span></code> です。</p></li>
+<li><p><strong>name</strong> (<em>str</em>) -- 物質名称を指定します。</p></li>
+<li><p><strong>formula</strong> (<em>str</em>) -- 物質の組成をスペース区切りで指定します。たとえば CH<sub>4</sub> ならば <code class="docutils literal notranslate"><span class="pre">&quot;C</span> <span class="pre">1.0</span> <span class="pre">H</span> <span class="pre">4.0&quot;</span></code> とします。基本的に <code class="docutils literal notranslate"><span class="pre">name</span></code> に指定した名称が thermo.lib 内の名称と一致している場合は省略可能ですが，<code class="docutils literal notranslate"><span class="pre">h</span></code>, <code class="docutils literal notranslate"><span class="pre">u</span></code> を指定する場合は <code class="docutils literal notranslate"><span class="pre">formula</span></code> が必須です（今後改善予定）。</p></li>
+<li><p><strong>ratio</strong> (<em>float</em>) -- 物質の存在比率を指定します。<code class="docutils literal notranslate"><span class="pre">set_problem</span></code> で <code class="docutils literal notranslate"><span class="pre">mole_ratios</span></code> を <code class="docutils literal notranslate"><span class="pre">True</span></code> にした場合はモル比，そうでない場合は質量比として解釈されます。値は自動的に正規化されます (たとえば 0.4, 0.6 のように指定しても 40, 60 のように指定しても同じ結果となります)。</p></li>
+<li><p><strong>T</strong> (<em>float</em>) -- 物質の温度を指定します。</p></li>
+<li><p><strong>rho</strong> (<em>float</em>) -- 物質の密度を指定します。</p></li>
+<li><p><strong>h</strong> (<em>float</em>) -- 物質のエンタルピを指定します。</p></li>
+<li><p><strong>u</strong> (<em>float</em>) -- 物質の内部エネルギを指定します。</p></li>
+<li><p><strong>T_unit</strong> (<em>str</em>) -- 温度の単位を指定します。有効な選択肢は現時点では <code class="docutils literal notranslate"><span class="pre">K</span></code> のみです。</p></li>
+<li><p><strong>rho_unit</strong> (<em>str</em>) -- 密度の単位を指定します。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">kg/m^3</span></code>, <code class="docutils literal notranslate"><span class="pre">g/cm^3</span></code>, <code class="docutils literal notranslate"><span class="pre">g/cc</span></code> です。</p></li>
+<li><p><strong>h_unit</strong> (<em>str</em>) -- エンタルピの単位を指定します。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">J/mol</span></code>, <code class="docutils literal notranslate"><span class="pre">kJ/mol</span></code>, <code class="docutils literal notranslate"><span class="pre">cal/mol</span></code> です。</p></li>
+<li><p><strong>u_unit</strong> (<em>str</em>) -- 内部エネルギの単位を指定します。有効な選択肢は <code class="docutils literal notranslate"><span class="pre">J/mol</span></code>, <code class="docutils literal notranslate"><span class="pre">kJ/mol</span></code>, <code class="docutils literal notranslate"><span class="pre">cal/mol</span></code> です。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">add_reactant</span><span class="p">(</span><span class="s1">&#39;fuel&#39;</span><span class="p">,</span> <span class="s1">&#39;H2(L)&#39;</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="mf">20.27</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">add_reactant</span><span class="p">(</span><span class="s1">&#39;oxyd&#39;</span><span class="p">,</span> <span class="s1">&#39;O2(L)&#39;</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="mf">90.17</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_reactant">
+<span class="sig-name descname"><span class="pre">set_reactant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'K'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rho_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'kg/m^3'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'J/mol'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'J/mol'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_reactant"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_reactant" title="Link to this definition"></a></dt>
+<dd><p>既存の反応物質の設定を変更します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<em>int</em>) -- 変更したい物質のインデックス（0 始まりで <code class="docutils literal notranslate"><span class="pre">add_reactant</span></code> した順）を指定します。</p></li>
+<li><p><strong>ratio</strong> (<em>float</em>) -- 物質の存在比率を指定します。</p></li>
+<li><p><strong>T</strong> (<em>float</em>) -- 物質の温度を指定します。</p></li>
+<li><p><strong>rho</strong> (<em>float</em>) -- 物質の密度を指定します。</p></li>
+<li><p><strong>h</strong> (<em>float</em>) -- 物質のエンタルピを指定します。</p></li>
+<li><p><strong>u</strong> (<em>float</em>) -- 物質の内部エネルギを指定します。</p></li>
+<li><p><strong>T_unit</strong> (<em>str</em>) -- 温度の単位を指定します。</p></li>
+<li><p><strong>rho_unit</strong> (<em>str</em>) -- 密度の単位を指定します。</p></li>
+<li><p><strong>h_unit</strong> (<em>str</em>) -- エンタルピの単位を指定します。</p></li>
+<li><p><strong>u_unit</strong> (<em>str</em>) -- 内部エネルギの単位を指定します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_insert_species">
+<span class="sig-name descname"><span class="pre">set_insert_species</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_insert_species"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_insert_species" title="Link to this definition"></a></dt>
+<dd><p>最初の計算点から考慮に追加する物質を指定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>species</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) -- 考慮に追加する物質を指定します。thermo.lib 内の名称と完全に一致させる必要があります。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_insert_species</span><span class="p">([</span><span class="s1">&#39;BeO(L)&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_omit_species">
+<span class="sig-name descname"><span class="pre">set_omit_species</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_omit_species"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_omit_species" title="Link to this definition"></a></dt>
+<dd><p>燃焼過程において無視する物質を設定します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>species</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) -- 無視する物質を指定します。thermo.lib 内の名称と完全に一致させる必要があります。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_omit_species</span><span class="p">([</span><span class="s1">&#39;C(gr)&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_only_species">
+<span class="sig-name descname"><span class="pre">set_only_species</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">species</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_only_species"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_only_species" title="Link to this definition"></a></dt>
+<dd><p>計算に考慮する物質を限定する場合に使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>species</strong> (<em>Iterable</em><em>[</em><em>str</em><em>]</em>) -- 計算に考慮する物質を指定します。thermo.lib 内の名称と完全に一致させる必要があります。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_only_species</span><span class="p">([</span><span class="s1">&#39;Ar&#39;</span><span class="p">,</span> <span class="s1">&#39;CO&#39;</span><span class="p">,</span> <span class="s1">&#39;CO2&#39;</span><span class="p">,</span> <span class="s1">&#39;H2&#39;</span><span class="p">,</span> <span class="s1">&#39;H2O&#39;</span><span class="p">,</span> <span class="s1">&#39;HNO&#39;</span><span class="p">,</span> <span class="s1">&#39;HO2&#39;</span><span class="p">,</span> <span class="s1">&#39;NH&#39;</span><span class="p">,</span> <span class="s1">&#39;NO&#39;</span><span class="p">,</span> <span class="s1">&#39;N2&#39;</span><span class="p">,</span> <span class="s1">&#39;O2&#39;</span><span class="p">,</span> <span class="s1">&#39;OH&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.set_legacy_mode">
+<span class="sig-name descname"><span class="pre">set_legacy_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">legacy_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.set_legacy_mode"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.set_legacy_mode" title="Link to this definition"></a></dt>
+<dd><p>なるべく本家 CEA に近い動作を再現したい場合に指定します。本家 CEA と同じ結果を保証するわけではありません。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>legacy_mode</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">True</span></code> にすると再現モードとなります。</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">set_legacy_mode</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plt_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.run"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.run" title="Link to this definition"></a></dt>
+<dd><p>計算を実行します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_filename</strong> (<em>str</em>) -- アウトプットファイル名を指定します。省略した場合は，
+<code class="docutils literal notranslate"><span class="pre">legacy_mode</span> <span class="pre">=</span> <span class="pre">True</span></code> ならば標準出力に結果を出力し，
+<code class="docutils literal notranslate"><span class="pre">legacy_mode</span> <span class="pre">=</span> <span class="pre">False</span></code> ならば何も出力せずに計算だけが実行されます。</p></li>
+<li><p><strong>plt_filename</strong> (<em>str</em>) -- プロットファイル名を指定します。省略した場合は何も出力しません。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">prob</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_filename</span> <span class="o">=</span> <span class="s1">&#39;example-12.out&#39;</span><span class="p">,</span> <span class="n">plt_filename</span> <span class="o">=</span> <span class="s1">&#39;example-12.plt&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_pressure">
+<span class="sig-name descname"><span class="pre">get_pressure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iOF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ipt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_pressure"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_pressure" title="Link to this definition"></a></dt>
+<dd><p>計算結果の圧力の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>iOF</strong> (<em>int</em>) -- 0 から始まる混合比インデックスを指定します。</p></li>
+<li><p><strong>ipt</strong> (<em>int</em>) -- 0 から始まる計算点インデックスを指定します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>圧力 [MPa]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">P</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_pressure</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_temperature">
+<span class="sig-name descname"><span class="pre">get_temperature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iOF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ipt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_temperature"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_temperature" title="Link to this definition"></a></dt>
+<dd><p>計算結果の温度の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>iOF</strong> (<em>int</em>) -- 0 から始まる混合比インデックスを指定します。</p></li>
+<li><p><strong>ipt</strong> (<em>int</em>) -- 0 から始まる計算点インデックスを指定します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>温度 [K]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">T</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_temperature</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_chamber_temperature">
+<span class="sig-name descname"><span class="pre">get_chamber_temperature</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_chamber_temperature"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_chamber_temperature" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">rocket</span></code> モードにおいて，計算結果のチャンバ温度の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。
+<code class="docutils literal notranslate"><span class="pre">FAC</span></code> (Finite Area Combustor) モードが有効の場合は <code class="docutils literal notranslate"><span class="pre">get_temperature(0,</span> <span class="pre">1)</span></code> と同じ，
+それ以外の場合は <code class="docutils literal notranslate"><span class="pre">get_temperature(0,</span> <span class="pre">0)</span></code> と同じです。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>なし</strong></p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>温度 [K]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Tc</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_chamber_temperature</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_molecular_weight">
+<span class="sig-name descname"><span class="pre">get_molecular_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iOF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ipt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_molecular_weight"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_molecular_weight" title="Link to this definition"></a></dt>
+<dd><p>計算結果のモル質量の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>iOF</strong> (<em>int</em>) -- 0 から始まる混合比インデックスを指定します。</p></li>
+<li><p><strong>ipt</strong> (<em>int</em>) -- 0 から始まる計算点インデックスを指定します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>モル質量 [g/mol]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_molecular_weight</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_specific_heat">
+<span class="sig-name descname"><span class="pre">get_specific_heat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iOF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ipt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_specific_heat"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_specific_heat" title="Link to this definition"></a></dt>
+<dd><p>計算結果の比熱の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>iOF</strong> (<em>int</em>) -- 0 から始まる混合比インデックスを指定します。</p></li>
+<li><p><strong>ipt</strong> (<em>int</em>) -- 0 から始まる計算点インデックスを指定します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>比熱 [kJ/(kg·K)] または [cal/(g·K)] （単位は <code class="docutils literal notranslate"><span class="pre">set_output_options</span></code> の <code class="docutils literal notranslate"><span class="pre">SI</span></code> により変化）</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cp</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_specific_heat</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_specific_heat_ratio">
+<span class="sig-name descname"><span class="pre">get_specific_heat_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iOF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ipt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_specific_heat_ratio"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_specific_heat_ratio" title="Link to this definition"></a></dt>
+<dd><p>計算結果の比熱比の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>iOF</strong> (<em>int</em>) -- 0 から始まる混合比インデックスを指定します。</p></li>
+<li><p><strong>ipt</strong> (<em>int</em>) -- 0 から始まる計算点インデックスを指定します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>比熱比 [-]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">gamma</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_specific_heat_ratio</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_characteristic_velocity">
+<span class="sig-name descname"><span class="pre">get_characteristic_velocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_characteristic_velocity"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_characteristic_velocity" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">rocket</span></code> モードにおいて，計算結果の特性排気速度の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>なし</strong></p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>特性排気速度 [m/s]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cstar</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_characteristic_velocity</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_specific_impulse">
+<span class="sig-name descname"><span class="pre">get_specific_impulse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iOF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ipt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vacuum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_specific_impulse"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_specific_impulse" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">rocket</span></code> モードにおいて，計算結果の比推力の値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>iOF</strong> (<em>int</em>) -- 0 から始まる混合比インデックスを指定します。</p></li>
+<li><p><strong>ipt</strong> (<em>int</em>) -- 0 から始まる計算点インデックスを指定します。</p></li>
+<li><p><strong>vacuum</strong> (<em>bool</em>) -- <code class="docutils literal notranslate"><span class="pre">True</span></code> の場合は真空中比推力を返します。</p></li>
+</ul>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>比推力 [s]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Isp</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_specific_impulse</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.calc_frozen_exhaust">
+<span class="sig-name descname"><span class="pre">calc_frozen_exhaust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">T</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.calc_frozen_exhaust"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.calc_frozen_exhaust" title="Link to this definition"></a></dt>
+<dd><p>凍結流として指定の温度になった場合の物性値を取得します。<code class="docutils literal notranslate"><span class="pre">.run()</span></code> の実行より後で使用します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>T</strong> (<em>float</em>) -- 温度 [K]</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>比熱 [kJ/(kg·K)]，比熱比 [-]，粘性係数 [µPa·s]，熱伝導率 [W/(m·K)]，プラントル数 [-]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float, float, float]</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cp</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">Pr</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">calc_frozen_exhaust</span><span class="p">(</span><span class="mf">650.</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.get_thermo_reference_properties">
+<span class="sig-name descname"><span class="pre">get_thermo_reference_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.get_thermo_reference_properties"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.get_thermo_reference_properties" title="Link to this definition"></a></dt>
+<dd><p>指定した物質の参照状態量を取得します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) -- 物質名</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>モル質量 [g/mol]，参照温度 [K]，参照エンタルピ [kJ/kg]</p>
+</dd>
+<dt class="field-odd">戻り値の型<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float]</p>
+</dd>
+</dl>
+<p class="rubric">サンプル</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="p">,</span> <span class="n">T_ref</span><span class="p">,</span> <span class="n">h_ref</span> <span class="o">=</span> <span class="n">prob</span><span class="o">.</span><span class="n">get_thermo_reference_properties</span><span class="p">(</span><span class="s1">&#39;O2(L)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="icea.CEA_Problem.write_debug_output">
+<span class="sig-name descname"><span class="pre">write_debug_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/icea/_problem.html#CEA_Problem.write_debug_output"><span class="viewcode-link"><span class="pre">[ソース]</span></span></a><a class="headerlink" href="#icea.CEA_Problem.write_debug_output" title="Link to this definition"></a></dt>
+<dd><p>デバッグ用の情報をファイルに出力します。</p>
+<dl class="field-list simple">
+<dt class="field-odd">パラメータ<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) -- 出力ファイル名</p>
+</dd>
+<dt class="field-even">戻り値<span class="colon">:</span></dt>
+<dd class="field-even"><p>なし</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="iCEA (Interface-extended CEA)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="libraries.html" class="btn btn-neutral float-right" title="物性値ライブラリについて" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
