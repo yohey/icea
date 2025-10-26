@@ -108,6 +108,8 @@ install(FILES     ${EXAMPLES_PYTHON}  DESTINATION share/doc/cea/examples/python/
 
 install(EXPORT cea-config DESTINATION share/cmake/cea/ EXPORT_LINK_INTERFACE_LIBRARIES)
 
+add_subdirectory(src/docs)
+
 
 enable_testing()
 add_subdirectory(tests/orig)
