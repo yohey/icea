@@ -6,7 +6,7 @@
 #       [-DMIN_SIZE=<bytes>]
 #       [-DMAX_DIFF=<lines>]
 # =============================================================================
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 
 # --- Required arguments check ------------------------------------------------
 if(NOT DEFINED TEST_FILE OR NOT DEFINED ORIG_FILE)
