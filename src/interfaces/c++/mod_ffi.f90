@@ -11,7 +11,7 @@ module mod_ffi
 
 contains
 
-  function new_problem() result(ptr) bind(C, name = "ffi_cea_new_problem")
+  function new_problem() result(ptr) bind(C, name = "_ffi_cea_new_problem")
     use cea, only: CEA_Problem
 
     type(c_ptr):: ptr
@@ -24,7 +24,7 @@ contains
   end function new_problem
 
 
-  subroutine del_problem(ptr) bind(C, name = "ffi_cea_del_problem")
+  subroutine del_problem(ptr) bind(C, name = "_ffi_cea_del_problem")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -43,7 +43,7 @@ contains
   end subroutine del_problem
 
 
-  function replica(ptr) result(ptr_replica) bind(C, name = "ffi_cea_replica")
+  function replica(ptr) result(ptr_replica) bind(C, name = "_ffi_cea_replica")
     use cea, only: CEA_Problem
 
     type(c_ptr):: ptr_replica
@@ -66,7 +66,7 @@ contains
 
 
   subroutine set_problem(ptr, mode, name, mole_ratios, equilibrium, ions, &
-       frozen, frozen_at_throat, incident, reflected, thermo_lib, trans_lib) bind(C, name = "ffi_cea_set_problem")
+       frozen, frozen_at_throat, incident, reflected, thermo_lib, trans_lib) bind(C, name = "_ffi_cea_set_problem")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -179,7 +179,7 @@ contains
 
 
   subroutine set_output_options(ptr, SI, debug_points, mass_fractions, short, trace_tol, transport, &
-       plot_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_output_options")
+       plot_ptr, char_length_array_ptr) bind(C, name = "_ffi_cea_set_output_options")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -256,7 +256,7 @@ contains
   end subroutine set_output_options
 
 
-  subroutine set_chamber_pressures(ptr, pressures_ptr, unit) bind(C, name = "ffi_cea_set_chamber_pressures")
+  subroutine set_chamber_pressures(ptr, pressures_ptr, unit) bind(C, name = "_ffi_cea_set_chamber_pressures")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -284,7 +284,7 @@ contains
   end subroutine set_chamber_pressures
 
 
-  subroutine set_chamber_temperatures(ptr, temperatures_ptr, unit) bind(C, name = "ffi_cea_set_chamber_temperatures")
+  subroutine set_chamber_temperatures(ptr, temperatures_ptr, unit) bind(C, name = "_ffi_cea_set_chamber_temperatures")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -312,7 +312,7 @@ contains
   end subroutine set_chamber_temperatures
 
 
-  subroutine set_chamber_densities(ptr, densities_ptr, unit) bind(C, name = "ffi_cea_set_chamber_densities")
+  subroutine set_chamber_densities(ptr, densities_ptr, unit) bind(C, name = "_ffi_cea_set_chamber_densities")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -340,7 +340,7 @@ contains
   end subroutine set_chamber_densities
 
 
-  subroutine set_chamber_internal_energy(ptr, uByR) bind(C, name = "ffi_cea_set_chamber_internal_energy")
+  subroutine set_chamber_internal_energy(ptr, uByR) bind(C, name = "_ffi_cea_set_chamber_internal_energy")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -362,7 +362,7 @@ contains
   end subroutine set_chamber_internal_energy
 
 
-  subroutine set_mixture_ratios(ptr, ratios_ptr, type) bind(C, name = "ffi_cea_set_mixture_ratios")
+  subroutine set_mixture_ratios(ptr, ratios_ptr, type) bind(C, name = "_ffi_cea_set_mixture_ratios")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -390,7 +390,7 @@ contains
   end subroutine set_mixture_ratios
 
 
-  subroutine set_pressure_ratios(ptr, ratios_ptr) bind(C, name = "ffi_cea_set_pressure_ratios")
+  subroutine set_pressure_ratios(ptr, ratios_ptr) bind(C, name = "_ffi_cea_set_pressure_ratios")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -414,7 +414,7 @@ contains
   end subroutine set_pressure_ratios
 
 
-  subroutine set_subsonic_area_ratios(ptr, ratios_ptr) bind(C, name = "ffi_cea_set_subsonic_area_ratios")
+  subroutine set_subsonic_area_ratios(ptr, ratios_ptr) bind(C, name = "_ffi_cea_set_subsonic_area_ratios")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -438,7 +438,7 @@ contains
   end subroutine set_subsonic_area_ratios
 
 
-  subroutine set_supersonic_area_ratios(ptr, ratios_ptr) bind(C, name = "ffi_cea_set_supersonic_area_ratios")
+  subroutine set_supersonic_area_ratios(ptr, ratios_ptr) bind(C, name = "_ffi_cea_set_supersonic_area_ratios")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -462,7 +462,7 @@ contains
   end subroutine set_supersonic_area_ratios
 
 
-  subroutine set_finite_area_combustor(ptr, contraction_ratio, mass_flow_ratio) bind(C, name = "ffi_cea_set_finite_area_combustor")
+  subroutine set_finite_area_combustor(ptr, contraction_ratio, mass_flow_ratio) bind(C, name = "_ffi_cea_set_finite_area_combustor")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -484,7 +484,7 @@ contains
   end subroutine set_finite_area_combustor
 
 
-  subroutine set_initial_velocities(ptr, velocities_ptr, is_mach) bind(C, name = "ffi_cea_set_initial_velocities")
+  subroutine set_initial_velocities(ptr, velocities_ptr, is_mach) bind(C, name = "_ffi_cea_set_initial_velocities")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -518,7 +518,7 @@ contains
 
 
   subroutine add_reactant(ptr, type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit) &
-       bind(C, name = "ffi_cea_add_reactant")
+       bind(C, name = "_ffi_cea_add_reactant")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -569,7 +569,7 @@ contains
 
 
   subroutine set_reactant(ptr, index, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit) &
-       bind(C, name = "ffi_cea_set_reactant")
+       bind(C, name = "_ffi_cea_set_reactant")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -610,7 +610,7 @@ contains
   end subroutine set_reactant
 
 
-  subroutine set_insert_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_insert_species")
+  subroutine set_insert_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "_ffi_cea_set_insert_species")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -634,7 +634,7 @@ contains
   end subroutine set_insert_species
 
 
-  subroutine set_omit_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_omit_species")
+  subroutine set_omit_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "_ffi_cea_set_omit_species")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -658,7 +658,7 @@ contains
   end subroutine set_omit_species
 
 
-  subroutine set_only_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "ffi_cea_set_only_species")
+  subroutine set_only_species(ptr, species_ptr, char_length_array_ptr) bind(C, name = "_ffi_cea_set_only_species")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -696,7 +696,7 @@ contains
   end subroutine set_only_species
 
 
-  subroutine set_legacy_mode(ptr, legacy_mode) bind(C, name = "ffi_cea_set_legacy_mode")
+  subroutine set_legacy_mode(ptr, legacy_mode) bind(C, name = "_ffi_cea_set_legacy_mode")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -717,7 +717,7 @@ contains
   end subroutine set_legacy_mode
 
 
-  subroutine run(ptr, out_filename, plt_filename) bind(C, name = "ffi_cea_run")
+  subroutine run(ptr, out_filename, plt_filename) bind(C, name = "_ffi_cea_run")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -741,7 +741,7 @@ contains
   end subroutine run
 
 
-  function ffi_get_pressure(ptr, iOF, ipt) result(P) bind(C, name = "ffi_cea_get_pressure")
+  function ffi_get_pressure(ptr, iOF, ipt) result(P) bind(C, name = "_ffi_cea_get_pressure")
     use cea, only: CEA_Problem
 
     real(c_double):: P
@@ -758,7 +758,7 @@ contains
   end function ffi_get_pressure
 
 
-  function ffi_get_temperature(ptr, iOF, ipt) result(T) bind(C, name = "ffi_cea_get_temperature")
+  function ffi_get_temperature(ptr, iOF, ipt) result(T) bind(C, name = "_ffi_cea_get_temperature")
     use cea, only: CEA_Problem
 
     real(c_double):: T
@@ -774,7 +774,7 @@ contains
     return
   end function ffi_get_temperature
 
-  function ffi_get_chamber_temperature(ptr) result(T) bind(C, name = "ffi_cea_get_chamber_temperature")
+  function ffi_get_chamber_temperature(ptr) result(T) bind(C, name = "_ffi_cea_get_chamber_temperature")
     use cea, only: CEA_Problem
 
     real(c_double):: T
@@ -789,7 +789,7 @@ contains
   end function ffi_get_chamber_temperature
 
 
-  function ffi_get_molecular_weight(ptr, iOF, ipt) result(M) bind(C, name = "ffi_cea_get_molecular_weight")
+  function ffi_get_molecular_weight(ptr, iOF, ipt) result(M) bind(C, name = "_ffi_cea_get_molecular_weight")
     use cea, only: CEA_Problem
 
     real(c_double):: M
@@ -806,7 +806,7 @@ contains
   end function ffi_get_molecular_weight
 
 
-  function ffi_get_specific_heat(ptr, iOF, ipt) result(cp) bind(C, name = "ffi_cea_get_specific_heat")
+  function ffi_get_specific_heat(ptr, iOF, ipt) result(cp) bind(C, name = "_ffi_cea_get_specific_heat")
     use cea, only: CEA_Problem
 
     real(c_double):: cp
@@ -823,7 +823,7 @@ contains
   end function ffi_get_specific_heat
 
 
-  function ffi_get_specific_heat_ratio(ptr, iOF, ipt) result(gamma) bind(C, name = "ffi_cea_get_specific_heat_ratio")
+  function ffi_get_specific_heat_ratio(ptr, iOF, ipt) result(gamma) bind(C, name = "_ffi_cea_get_specific_heat_ratio")
     use cea, only: CEA_Problem
 
     real(c_double):: gamma
@@ -840,7 +840,7 @@ contains
   end function ffi_get_specific_heat_ratio
 
 
-  function ffi_get_characteristic_velocity(ptr) result(c_star) bind(C, name = "ffi_cea_get_characteristic_velocity")
+  function ffi_get_characteristic_velocity(ptr) result(c_star) bind(C, name = "_ffi_cea_get_characteristic_velocity")
     use cea, only: CEA_Problem
 
     real(c_double):: c_star
@@ -855,7 +855,7 @@ contains
   end function ffi_get_characteristic_velocity
 
 
-  function ffi_get_specific_impulse(ptr, iOF, ipt, vacuum) result(Isp) bind(C, name = "ffi_cea_get_specific_impulse")
+  function ffi_get_specific_impulse(ptr, iOF, ipt, vacuum) result(Isp) bind(C, name = "_ffi_cea_get_specific_impulse")
     use cea, only: CEA_Problem
 
     real(c_double):: Isp
@@ -884,7 +884,7 @@ contains
   end function ffi_get_specific_impulse
 
 
-  function ffi_read_legacy_input(filename) result(array) bind(C, name = "ffi_cea_read_legacy_input")
+  function ffi_read_legacy_input(filename) result(array) bind(C, name = "_ffi_cea_read_legacy_input")
     use cea, only: CEA_Problem
     use mod_types, only: init_case, IOINP
     use mod_legacy_io, only: count_cases, read_legacy_case
@@ -946,7 +946,7 @@ contains
   end function ffi_read_legacy_input
 
 
-  subroutine ffi_deallocate_array_ptr(array) bind(C, name = "ffi_cea_deallocate_array_ptr")
+  subroutine ffi_deallocate_array_ptr(array) bind(C, name = "_ffi_cea_deallocate_array_ptr")
     use cea, only: CEA_Problem
 
     type(FFI_C_Ptr_Array), intent(in), target:: array
@@ -961,7 +961,7 @@ contains
   end subroutine ffi_deallocate_array_ptr
 
 
-  subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "ffi_cea_run_all_cases")
+  subroutine ffi_run_all_cases(array, out_filename, plt_filename) bind(C, name = "_ffi_cea_run_all_cases")
     use cea, only: CEA_Problem
     use mod_cea, only: run_all_cases
 
@@ -988,7 +988,7 @@ contains
   end subroutine ffi_run_all_cases
 
 
-  subroutine ffi_calc_frozen_exhaust(ptr, T, cp, gamma, mu, k, Pr) bind(C, name = "ffi_cea_calc_frozen_exhaust")
+  subroutine ffi_calc_frozen_exhaust(ptr, T, cp, gamma, mu, k, Pr) bind(C, name = "_ffi_cea_calc_frozen_exhaust")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -1011,7 +1011,7 @@ contains
 
 
   subroutine ffi_get_thermo_reference_properties(ptr, name, M, T_ref, h0_ref) &
-       bind(C, name = "ffi_cea_get_thermo_reference_properties")
+       bind(C, name = "_ffi_cea_get_thermo_reference_properties")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -1039,7 +1039,7 @@ contains
   end subroutine ffi_get_thermo_reference_properties
 
 
-  subroutine write_debug_output(ptr, filename) bind(C, name = "ffi_cea_write_debug_output")
+  subroutine write_debug_output(ptr, filename) bind(C, name = "_ffi_cea_write_debug_output")
     use cea, only: CEA_Problem
 
     type(c_ptr), value, intent(in):: ptr
@@ -1056,7 +1056,7 @@ contains
   end subroutine write_debug_output
 
 
-  function ffi_sizeof(ptr) result(size) bind(C, name = "ffi_cea_sizeof")
+  function ffi_sizeof(ptr) result(size) bind(C, name = "_ffi_cea_sizeof")
     use cea, only: CEA_Problem
 
     integer(c_size_t):: size

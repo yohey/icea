@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = 'Yohey Ishizu'
-__versioninfo__ = (0, 2, 0)
+__versioninfo__ = (0, 3, 0)
 __version__ = '.'.join(map(str, __versioninfo__))
 
 

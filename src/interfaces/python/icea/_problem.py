@@ -14,12 +14,12 @@ class FFI_C_Ptr_Array(Structure):
 class CEA_Problem:
 
     def __init__(self):
-        _libcea.ffi_cea_new_problem.restype = c_void_p
-        self._ffi = c_void_p(_libcea.ffi_cea_new_problem())
+        _libcea._ffi_cea_new_problem.restype = c_void_p
+        self._ffi = c_void_p(_libcea._ffi_cea_new_problem())
 
     def __del__(self):
-        _libcea.ffi_cea_del_problem.argtypes = [c_void_p]
-        _libcea.ffi_cea_del_problem(self._ffi)
+        _libcea._ffi_cea_del_problem.argtypes = [c_void_p]
+        _libcea._ffi_cea_del_problem(self._ffi)
 
     def set_problem(self, mode, name = None, mole_ratios = None, equilibrium = None, ions = None,
                     frozen = None, frozen_at_throat = None, incident = None, reflected = None, thermo_lib = None, trans_lib = None):
@@ -41,11 +41,11 @@ class CEA_Problem:
         Returns:
             なし
         """
-        _libcea.ffi_cea_set_problem.argtypes = [c_void_p, c_char_p, c_char_p, POINTER(c_bool), POINTER(c_bool), POINTER(c_bool),
-                                                POINTER(c_bool), POINTER(c_bool), POINTER(c_bool), POINTER(c_bool), c_char_p, c_char_p]
-        _libcea.ffi_cea_set_problem(self._ffi, mode.encode(), _c_char_or_None(name), _c_bool_or_None(mole_ratios), _c_bool_or_None(equilibrium), _c_bool_or_None(ions),
-                                    _c_bool_or_None(frozen), _c_bool_or_None(frozen_at_throat), _c_bool_or_None(incident), _c_bool_or_None(reflected),
-                                    _c_char_or_None(thermo_lib), _c_char_or_None(trans_lib))
+        _libcea._ffi_cea_set_problem.argtypes = [c_void_p, c_char_p, c_char_p, POINTER(c_bool), POINTER(c_bool), POINTER(c_bool),
+                                                 POINTER(c_bool), POINTER(c_bool), POINTER(c_bool), POINTER(c_bool), c_char_p, c_char_p]
+        _libcea._ffi_cea_set_problem(self._ffi, mode.encode(), _c_char_or_None(name), _c_bool_or_None(mole_ratios), _c_bool_or_None(equilibrium), _c_bool_or_None(ions),
+                                     _c_bool_or_None(frozen), _c_bool_or_None(frozen_at_throat), _c_bool_or_None(incident), _c_bool_or_None(reflected),
+                                     _c_char_or_None(thermo_lib), _c_char_or_None(trans_lib))
 
     def set_output_options(self, SI = True, debug_points = None, mass_fractions = False, short = False, trace_tol = None, transport = False, plot = None):
         """結果出力に関する設定を行います。
@@ -68,10 +68,10 @@ class CEA_Problem:
             >>> prob.set_output_options(SI = False, trace_tol = 1e-10)
             >>> prob.set_output_options(SI = True, debug_points = [4])
         """
-        _libcea.ffi_cea_set_output_options.argtypes = [c_void_p, POINTER(c_bool), POINTER(FFI_C_Ptr_Array), POINTER(c_bool), POINTER(c_bool),
-                                                       POINTER(c_double), POINTER(c_bool), c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_output_options(self._ffi, _c_bool_or_None(SI), _c_size_t_array_or_None(debug_points), _c_bool_or_None(mass_fractions),
-                                           _c_bool_or_None(short), _c_double_or_None(trace_tol), _c_bool_or_None(transport), *_c_char_array_or_None(plot))
+        _libcea._ffi_cea_set_output_options.argtypes = [c_void_p, POINTER(c_bool), POINTER(FFI_C_Ptr_Array), POINTER(c_bool), POINTER(c_bool),
+                                                        POINTER(c_double), POINTER(c_bool), c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea._ffi_cea_set_output_options(self._ffi, _c_bool_or_None(SI), _c_size_t_array_or_None(debug_points), _c_bool_or_None(mass_fractions),
+                                            _c_bool_or_None(short), _c_double_or_None(trace_tol), _c_bool_or_None(transport), *_c_char_array_or_None(plot))
 
     def set_chamber_pressures(self, pressures, unit = 'MPa'):
         """チャンバ圧力を設定します。
@@ -86,8 +86,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_chamber_pressures([1.0, 2.0, 5.0], 'MPa')
         """
-        _libcea.ffi_cea_set_chamber_pressures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
-        _libcea.ffi_cea_set_chamber_pressures(self._ffi, _c_double_array(pressures), _c_char_or_None(unit))
+        _libcea._ffi_cea_set_chamber_pressures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
+        _libcea._ffi_cea_set_chamber_pressures(self._ffi, _c_double_array(pressures), _c_char_or_None(unit))
 
     def set_chamber_temperatures(self, temperatures, unit = 'K'):
         """チャンバ温度を設定します。
@@ -102,8 +102,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_chamber_temperatures([300.0, 500.0, 1000.0])
         """
-        _libcea.ffi_cea_set_chamber_temperatures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
-        _libcea.ffi_cea_set_chamber_temperatures(self._ffi, _c_double_array(temperatures), _c_char_or_None(unit))
+        _libcea._ffi_cea_set_chamber_temperatures.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
+        _libcea._ffi_cea_set_chamber_temperatures(self._ffi, _c_double_array(temperatures), _c_char_or_None(unit))
 
     def set_chamber_densities(self, densities, unit = 'kg/m^3'):
         """``tv``, ``uv``, ``sv`` モードにおいて，比体積のかわりに密度を指定する場合に使用します。
@@ -118,8 +118,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_chamber_densities([9.1864e-5, 8.0877e-6, 6.6054e-7], unit = 'g/cc')
         """
-        _libcea.ffi_cea_set_chamber_densities.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
-        _libcea.ffi_cea_set_chamber_densities(self._ffi, _c_double_array(densities), _c_char_or_None(unit))
+        _libcea._ffi_cea_set_chamber_densities.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
+        _libcea._ffi_cea_set_chamber_densities(self._ffi, _c_double_array(densities), _c_char_or_None(unit))
 
     def set_chamber_internal_energy(self, uByR):
         """``uv`` モードにおいて，内部エネルギを指定する場合に使用します。
@@ -135,8 +135,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_chamber_internal_energy(-45.1343)
         """
-        _libcea.ffi_cea_set_chamber_internal_energy.argtypes = [c_void_p, POINTER(c_double)]
-        _libcea.ffi_cea_set_chamber_internal_energy(self._ffi, _c_double_or_None(uByR))
+        _libcea._ffi_cea_set_chamber_internal_energy.argtypes = [c_void_p, POINTER(c_double)]
+        _libcea._ffi_cea_set_chamber_internal_energy(self._ffi, _c_double_or_None(uByR))
 
     def set_mixture_ratios(self, ratios, type_ = None):
         """混合比を設定します。
@@ -151,8 +151,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_mixture_ratios([1.0, 1.5], type_ = 'eq.ratio')
         """
-        _libcea.ffi_cea_set_mixture_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
-        _libcea.ffi_cea_set_mixture_ratios(self._ffi, _c_double_array(ratios), _c_char_or_None(type_))
+        _libcea._ffi_cea_set_mixture_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), c_char_p]
+        _libcea._ffi_cea_set_mixture_ratios(self._ffi, _c_double_array(ratios), _c_char_or_None(type_))
 
     def set_pressure_ratios(self, ratios):
         """圧力比を設定します。
@@ -166,8 +166,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_pressure_ratios([10.0, 100.0, 1000.0])
         """
-        _libcea.ffi_cea_set_pressure_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_pressure_ratios(self._ffi, _c_double_array(ratios))
+        _libcea._ffi_cea_set_pressure_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea._ffi_cea_set_pressure_ratios(self._ffi, _c_double_array(ratios))
 
     def set_subsonic_area_ratios(self, ratios):
         """亜音速の面積比を設定します。
@@ -181,8 +181,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_subsonic_area_ratios([1.58])
         """
-        _libcea.ffi_cea_set_subsonic_area_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_subsonic_area_ratios(self._ffi, _c_double_array(ratios))
+        _libcea._ffi_cea_set_subsonic_area_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea._ffi_cea_set_subsonic_area_ratios(self._ffi, _c_double_array(ratios))
 
     def set_supersonic_area_ratios(self, ratios):
         """超音速の面積比を設定します。
@@ -196,8 +196,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_supersonic_area_ratios([25.0, 50.0, 75.0])
         """
-        _libcea.ffi_cea_set_supersonic_area_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_supersonic_area_ratios(self._ffi, _c_double_array(ratios))
+        _libcea._ffi_cea_set_supersonic_area_ratios.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea._ffi_cea_set_supersonic_area_ratios(self._ffi, _c_double_array(ratios))
 
     def set_finite_area_combustor(self, contraction_ratio = None, mass_flow_ratio = None):
         """有限面積の燃焼室を仮定する場合に指定します。
@@ -213,8 +213,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_finite_area_combustor(contraction_ratio = 1.58)
         """
-        _libcea.ffi_cea_set_finite_area_combustor.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double)]
-        _libcea.ffi_cea_set_finite_area_combustor(self._ffi, _c_double_or_None(contraction_ratio), _c_double_or_None(mass_flow_ratio))
+        _libcea._ffi_cea_set_finite_area_combustor.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double)]
+        _libcea._ffi_cea_set_finite_area_combustor(self._ffi, _c_double_or_None(contraction_ratio), _c_double_or_None(mass_flow_ratio))
 
     def set_initial_velocities(self, velocities, is_mach = False):
         """``shock`` モードにおいて，初期速度を指定する際に使用します。
@@ -229,8 +229,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_initial_velocities([1000, 1100, 1200, 1250, 1300, 1350, 1400])
         """
-        _libcea.ffi_cea_set_initial_velocities.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), POINTER(c_bool)]
-        _libcea.ffi_cea_set_initial_velocities(self._ffi, _c_double_array(velocities), _c_bool_or_None(is_mach))
+        _libcea._ffi_cea_set_initial_velocities.argtypes = [c_void_p, POINTER(FFI_C_Ptr_Array), POINTER(c_bool)]
+        _libcea._ffi_cea_set_initial_velocities(self._ffi, _c_double_array(velocities), _c_bool_or_None(is_mach))
 
     def add_reactant(self, type_, name, formula = None, ratio = None, T = None, rho = None, h = None, u = None,
                      T_unit = 'K', rho_unit = 'kg/m^3', h_unit = 'J/mol', u_unit = 'J/mol'):
@@ -257,12 +257,12 @@ class CEA_Problem:
             >>> prob.add_reactant('fuel', 'H2(L)', ratio = 100, T = 20.27)
             >>> prob.add_reactant('oxyd', 'O2(L)', ratio = 100, T = 90.17)
         """
-        _libcea.ffi_cea_add_reactant.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, POINTER(c_double),
-                                                 POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double),
-                                                 c_char_p, c_char_p, c_char_p, c_char_p]
-        _libcea.ffi_cea_add_reactant(self._ffi, type_.encode(), name.encode(), _c_char_or_None(formula), _c_double_or_None(ratio),
-                                     _c_double_or_None(T), _c_double_or_None(rho), _c_double_or_None(h), _c_double_or_None(u),
-                                     _c_char_or_None(T_unit), _c_char_or_None(rho_unit), _c_char_or_None(h_unit), _c_char_or_None(u_unit))
+        _libcea._ffi_cea_add_reactant.argtypes = [c_void_p, c_char_p, c_char_p, c_char_p, POINTER(c_double),
+                                                  POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double),
+                                                  c_char_p, c_char_p, c_char_p, c_char_p]
+        _libcea._ffi_cea_add_reactant(self._ffi, type_.encode(), name.encode(), _c_char_or_None(formula), _c_double_or_None(ratio),
+                                      _c_double_or_None(T), _c_double_or_None(rho), _c_double_or_None(h), _c_double_or_None(u),
+                                      _c_char_or_None(T_unit), _c_char_or_None(rho_unit), _c_char_or_None(h_unit), _c_char_or_None(u_unit))
 
     def set_reactant(self, index, ratio = None, T = None, rho = None, h = None, u = None,
                      T_unit = 'K', rho_unit = 'kg/m^3', h_unit = 'J/mol', u_unit = 'J/mol'):
@@ -283,12 +283,12 @@ class CEA_Problem:
         Returns:
             なし
         """
-        _libcea.ffi_cea_set_reactant.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_double),
-                                                 POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double),
-                                                 c_char_p, c_char_p, c_char_p, c_char_p]
-        _libcea.ffi_cea_set_reactant(self._ffi, byref(c_size_t(index + 1)), _c_double_or_None(ratio),
-                                     _c_double_or_None(T), _c_double_or_None(rho), _c_double_or_None(h), _c_double_or_None(u),
-                                     _c_char_or_None(T_unit), _c_char_or_None(rho_unit), _c_char_or_None(h_unit), _c_char_or_None(u_unit))
+        _libcea._ffi_cea_set_reactant.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_double),
+                                                  POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double),
+                                                  c_char_p, c_char_p, c_char_p, c_char_p]
+        _libcea._ffi_cea_set_reactant(self._ffi, byref(c_size_t(index + 1)), _c_double_or_None(ratio),
+                                      _c_double_or_None(T), _c_double_or_None(rho), _c_double_or_None(h), _c_double_or_None(u),
+                                      _c_char_or_None(T_unit), _c_char_or_None(rho_unit), _c_char_or_None(h_unit), _c_char_or_None(u_unit))
 
     def set_insert_species(self, species):
         """最初の計算点から考慮に追加する物質を指定します。
@@ -302,8 +302,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_insert_species(['BeO(L)'])
         """
-        _libcea.ffi_cea_set_insert_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_insert_species(self._ffi, *_c_char_array_or_None(species))
+        _libcea._ffi_cea_set_insert_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea._ffi_cea_set_insert_species(self._ffi, *_c_char_array_or_None(species))
 
     def set_omit_species(self, species):
         """燃焼過程において無視する物質を設定します。
@@ -317,8 +317,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_omit_species(['C(gr)'])
         """
-        _libcea.ffi_cea_set_omit_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_omit_species(self._ffi, *_c_char_array_or_None(species))
+        _libcea._ffi_cea_set_omit_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea._ffi_cea_set_omit_species(self._ffi, *_c_char_array_or_None(species))
 
     def set_only_species(self, species):
         """計算に考慮する物質を限定する場合に使用します。
@@ -332,8 +332,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_only_species(['Ar', 'CO', 'CO2', 'H2', 'H2O', 'HNO', 'HO2', 'NH', 'NO', 'N2', 'O2', 'OH'])
         """
-        _libcea.ffi_cea_set_only_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
-        _libcea.ffi_cea_set_only_species(self._ffi, *_c_char_array_or_None(species))
+        _libcea._ffi_cea_set_only_species.argtypes = [c_void_p, c_void_p, POINTER(FFI_C_Ptr_Array)]
+        _libcea._ffi_cea_set_only_species(self._ffi, *_c_char_array_or_None(species))
 
     def set_legacy_mode(self, legacy_mode = None):
         """なるべく本家 CEA に近い動作を再現したい場合に指定します。本家 CEA と同じ結果を保証するわけではありません。
@@ -347,8 +347,8 @@ class CEA_Problem:
         Example:
             >>> prob.set_legacy_mode(True)
         """
-        _libcea.ffi_cea_set_legacy_mode.argtypes = [c_void_p, POINTER(c_bool)]
-        _libcea.ffi_cea_set_legacy_mode(self._ffi, _c_bool_or_None(legacy_mode))
+        _libcea._ffi_cea_set_legacy_mode.argtypes = [c_void_p, POINTER(c_bool)]
+        _libcea._ffi_cea_set_legacy_mode(self._ffi, _c_bool_or_None(legacy_mode))
 
     def run(self, out_filename = None, plt_filename = None):
         """計算を実行します。
@@ -365,8 +365,8 @@ class CEA_Problem:
         Example:
             >>> prob.run(out_filename = 'example-12.out', plt_filename = 'example-12.plt')
         """
-        _libcea.ffi_cea_run.argtypes = [c_void_p, c_char_p, c_char_p]
-        _libcea.ffi_cea_run(self._ffi, _c_char_or_None(out_filename), _c_char_or_None(plt_filename))
+        _libcea._ffi_cea_run.argtypes = [c_void_p, c_char_p, c_char_p]
+        _libcea._ffi_cea_run(self._ffi, _c_char_or_None(out_filename), _c_char_or_None(plt_filename))
 
     def get_pressure(self, iOF, ipt):
         """計算結果の圧力の値を取得します。``.run()`` の実行より後で使用します。
@@ -381,9 +381,9 @@ class CEA_Problem:
         Example:
             >>> P = prob.get_pressure(0, 2)
         """
-        _libcea.ffi_cea_get_pressure.restype = c_double
-        _libcea.ffi_cea_get_pressure.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
-        return _libcea.ffi_cea_get_pressure(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+        _libcea._ffi_cea_get_pressure.restype = c_double
+        _libcea._ffi_cea_get_pressure.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea._ffi_cea_get_pressure(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
 
     def get_temperature(self, iOF, ipt):
         """計算結果の温度の値を取得します。``.run()`` の実行より後で使用します。
@@ -398,9 +398,9 @@ class CEA_Problem:
         Example:
             >>> T = prob.get_temperature(0, 2)
         """
-        _libcea.ffi_cea_get_temperature.restype = c_double
-        _libcea.ffi_cea_get_temperature.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
-        return _libcea.ffi_cea_get_temperature(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+        _libcea._ffi_cea_get_temperature.restype = c_double
+        _libcea._ffi_cea_get_temperature.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea._ffi_cea_get_temperature(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
 
     def get_chamber_temperature(self):
         """``rocket`` モードにおいて，計算結果のチャンバ温度の値を取得します。``.run()`` の実行より後で使用します。
@@ -416,9 +416,9 @@ class CEA_Problem:
         Example:
             >>> Tc = prob.get_chamber_temperature()
         """
-        _libcea.ffi_cea_get_chamber_temperature.restype = c_double
-        _libcea.ffi_cea_get_chamber_temperature.argtypes = [c_void_p]
-        return _libcea.ffi_cea_get_chamber_temperature(self._ffi)
+        _libcea._ffi_cea_get_chamber_temperature.restype = c_double
+        _libcea._ffi_cea_get_chamber_temperature.argtypes = [c_void_p]
+        return _libcea._ffi_cea_get_chamber_temperature(self._ffi)
 
     def get_molecular_weight(self, iOF, ipt):
         """計算結果のモル質量の値を取得します。``.run()`` の実行より後で使用します。
@@ -433,9 +433,9 @@ class CEA_Problem:
         Example:
             >>> M = prob.get_molecular_weight(0, 2)
         """
-        _libcea.ffi_cea_get_molecular_weight.restype = c_double
-        _libcea.ffi_cea_get_molecular_weight.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
-        return _libcea.ffi_cea_get_molecular_weight(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+        _libcea._ffi_cea_get_molecular_weight.restype = c_double
+        _libcea._ffi_cea_get_molecular_weight.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea._ffi_cea_get_molecular_weight(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
 
     def get_specific_heat(self, iOF, ipt):
         """計算結果の比熱の値を取得します。``.run()`` の実行より後で使用します。
@@ -450,9 +450,9 @@ class CEA_Problem:
         Example:
             >>> cp = prob.get_specific_heat(0, 2)
         """
-        _libcea.ffi_cea_get_specific_heat.restype = c_double
-        _libcea.ffi_cea_get_specific_heat.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
-        return _libcea.ffi_cea_get_specific_heat(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+        _libcea._ffi_cea_get_specific_heat.restype = c_double
+        _libcea._ffi_cea_get_specific_heat.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea._ffi_cea_get_specific_heat(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
 
     def get_specific_heat_ratio(self, iOF, ipt):
         """計算結果の比熱比の値を取得します。``.run()`` の実行より後で使用します。
@@ -467,9 +467,9 @@ class CEA_Problem:
         Example:
             >>> gamma = prob.get_specific_heat_ratio(0, 2)
         """
-        _libcea.ffi_cea_get_specific_heat_ratio.restype = c_double
-        _libcea.ffi_cea_get_specific_heat_ratio.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
-        return _libcea.ffi_cea_get_specific_heat_ratio(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
+        _libcea._ffi_cea_get_specific_heat_ratio.restype = c_double
+        _libcea._ffi_cea_get_specific_heat_ratio.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t)]
+        return _libcea._ffi_cea_get_specific_heat_ratio(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)))
 
     def get_characteristic_velocity(self):
         """``rocket`` モードにおいて，計算結果の特性排気速度の値を取得します。``.run()`` の実行より後で使用します。
@@ -483,9 +483,9 @@ class CEA_Problem:
         Example:
             >>> cstar = prob.get_characteristic_velocity()
         """
-        _libcea.ffi_cea_get_characteristic_velocity.restype = c_double
-        _libcea.ffi_cea_get_characteristic_velocity.argtypes = [c_void_p]
-        return _libcea.ffi_cea_get_characteristic_velocity(self._ffi)
+        _libcea._ffi_cea_get_characteristic_velocity.restype = c_double
+        _libcea._ffi_cea_get_characteristic_velocity.argtypes = [c_void_p]
+        return _libcea._ffi_cea_get_characteristic_velocity(self._ffi)
 
     def get_specific_impulse(self, iOF, ipt, vacuum = False):
         """``rocket`` モードにおいて，計算結果の比推力の値を取得します。``.run()`` の実行より後で使用します。
@@ -501,9 +501,9 @@ class CEA_Problem:
         Example:
             >>> Isp = prob.get_specific_impulse(0, 2)
         """
-        _libcea.ffi_cea_get_specific_impulse.restype = c_double
-        _libcea.ffi_cea_get_specific_impulse.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t), POINTER(c_bool)]
-        return _libcea.ffi_cea_get_specific_impulse(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)), _c_bool_or_None(vacuum))
+        _libcea._ffi_cea_get_specific_impulse.restype = c_double
+        _libcea._ffi_cea_get_specific_impulse.argtypes = [c_void_p, POINTER(c_size_t), POINTER(c_size_t), POINTER(c_bool)]
+        return _libcea._ffi_cea_get_specific_impulse(self._ffi, byref(c_size_t(iOF + 1)), byref(c_size_t(ipt + 1)), _c_bool_or_None(vacuum))
 
     def calc_frozen_exhaust(self, T):
         """凍結流として指定の温度になった場合の物性値を取得します。``.run()`` の実行より後で使用します。
@@ -518,9 +518,9 @@ class CEA_Problem:
         Example:
             >>> cp, gamma, mu, k, Pr = prob.calc_frozen_exhaust(650.)
         """
-        _libcea.ffi_cea_calc_frozen_exhaust.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+        _libcea._ffi_cea_calc_frozen_exhaust.argtypes = [c_void_p, POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double), POINTER(c_double)]
         _cp, _gamma, _mu, _k, _Pr = c_double(), c_double(), c_double(), c_double(), c_double()
-        _libcea.ffi_cea_calc_frozen_exhaust(self._ffi, _c_double_or_None(T), byref(_cp), byref(_gamma), byref(_mu), byref(_k), byref(_Pr))
+        _libcea._ffi_cea_calc_frozen_exhaust(self._ffi, _c_double_or_None(T), byref(_cp), byref(_gamma), byref(_mu), byref(_k), byref(_Pr))
         return _cp.value, _gamma.value, _mu.value, _k.value, _Pr.value
 
     def get_thermo_reference_properties(self, name: str):
@@ -535,9 +535,9 @@ class CEA_Problem:
         Example:
             >>> M, T_ref, h_ref = prob.get_thermo_reference_properties('O2(L)')
         """
-        _libcea.ffi_cea_get_thermo_reference_properties.argtypes = [c_void_p, c_char_p, POINTER(c_double), POINTER(c_double), POINTER(c_double)]
+        _libcea._ffi_cea_get_thermo_reference_properties.argtypes = [c_void_p, c_char_p, POINTER(c_double), POINTER(c_double), POINTER(c_double)]
         _M, _T_ref, _h0_ref = c_double(), c_double(), c_double()
-        _libcea.ffi_cea_get_thermo_reference_properties(self._ffi, name.encode(), byref(_M), byref(_T_ref), byref(_h0_ref))
+        _libcea._ffi_cea_get_thermo_reference_properties(self._ffi, name.encode(), byref(_M), byref(_T_ref), byref(_h0_ref))
         return _M.value, _T_ref.value, _h0_ref.value
 
 
@@ -550,8 +550,8 @@ class CEA_Problem:
         Returns:
             なし
         """
-        _libcea.ffi_cea_write_debug_output.argtypes = [c_void_p, c_char_p]
-        _libcea.ffi_cea_write_debug_output(self._ffi, filename.encode())
+        _libcea._ffi_cea_write_debug_output.argtypes = [c_void_p, c_char_p]
+        _libcea._ffi_cea_write_debug_output(self._ffi, filename.encode())
 
 
 def _c_bool_or_None(b: bool | None):
