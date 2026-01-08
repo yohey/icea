@@ -5,6 +5,7 @@ project(CEA Fortran)
 
 set(CEA_CORE cea-core)
 set(CEA_EXECUTABLE cea)
+set(CEA_OBJECTS cea-objects)
 
 set(CEA_Fortran_FLAGS
   -cpp
@@ -12,6 +13,8 @@ set(CEA_Fortran_FLAGS
   -DCEA_ROOT='${CMAKE_INSTALL_PREFIX}'
   $<$<CONFIG:Release>:-DNDEBUG>
 )
+
+option(WITH_MODELICA "Build with Modelica interfaces" OFF)
 
 
 add_library(${CEA_CORE} OBJECT)
@@ -76,6 +79,10 @@ set(CEA_SHARED_LIBRARY cea-shared)
 add_subdirectory(src/interfaces/c++)
 
 add_subdirectory(src/interfaces/python)
+
+if(WITH_MODELICA)
+  add_subdirectory(src/interfaces/modelica)
+endif()
 
 
 install(TARGETS ${CEA_EXECUTABLE})

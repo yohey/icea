@@ -1,0 +1,8 @@
+
+loadModel(CEA);
+getErrorString();
+
+setLinkerFlags("-L/opt/homebrew/lib/gcc/current"); // to find libgfortran.dylib
+
+simulate(CEA.Examples.Example08);
+getErrorString();

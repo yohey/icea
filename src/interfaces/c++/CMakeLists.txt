@@ -10,8 +10,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 
-set(CEA_OBJECTS cea-objects)
-
 add_library(${CEA_OBJECTS} OBJECT)
 
 target_sources(${CEA_OBJECTS}
