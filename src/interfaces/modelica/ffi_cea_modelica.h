@@ -7,9 +7,30 @@ extern "C" {
 #endif
 
   _FFI_CEA_Problem_Ptr _ffi_cea_new_problem();
-  void _ffi_cea_del_problem(_FFI_CEA_Problem_Ptr);
+  void _ffi_cea_del_problem(const _FFI_CEA_Problem_Ptr);
 
-  int _ffi_cea_sizeof_int(_FFI_CEA_Problem_Ptr);
+  void _ffi_cea_set_problem_C_impl(const _FFI_CEA_Problem_Ptr, const char*, const char*, int, int, int, int, int, int, int);
+
+  void _ffi_cea_set_output_options_C_impl(const _FFI_CEA_Problem_Ptr, int, const int*, size_t, int, int, double, int, const char**, size_t);
+
+  void _ffi_cea_set_chamber_pressures_C_impl(const _FFI_CEA_Problem_Ptr, const double*, size_t, const char*);
+
+  void _ffi_cea_set_mixture_ratios_C_impl(const _FFI_CEA_Problem_Ptr, const double*, size_t, const char*);
+  void _ffi_cea_set_pressure_ratios_C_impl(const _FFI_CEA_Problem_Ptr, const double*, size_t);
+  void _ffi_cea_set_subsonic_area_ratios_C_impl(const _FFI_CEA_Problem_Ptr, const double*, size_t);
+  void _ffi_cea_set_supersonic_area_ratios_C_impl(const _FFI_CEA_Problem_Ptr, const double*, size_t);
+
+  void _ffi_cea_add_reactant_C_impl(const _FFI_CEA_Problem_Ptr, const char*, const char*, const char*, double,
+                                    double, double, double, double, const char*, const char*, const char*, const char*);
+
+  void _ffi_cea_set_legacy_mode_C_impl(const _FFI_CEA_Problem_Ptr, int);
+  void _ffi_cea_run(const _FFI_CEA_Problem_Ptr, const char*, const char*);
+
+  void _ffi_cea_write_debug_output_C_impl(const _FFI_CEA_Problem_Ptr, const char*);
+
+  int _ffi_cea_sizeof_C_impl(const _FFI_CEA_Problem_Ptr);
+
+  double _ffi_cea_quiet_NaN_C_impl();
 
 #ifdef __cplusplus
 }

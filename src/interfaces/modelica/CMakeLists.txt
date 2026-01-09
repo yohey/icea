@@ -17,7 +17,23 @@ add_library(${CEA_MODELICA_LIBRARY} STATIC
   ffi_cea_modelica.cpp
 )
 
-target_include_directories(${CEA_MODELICA_LIBRARY} PRIVATE $<TARGET_PROPERTY:${CEA_STATIC_LIBRARY},SOURCE_DIR>)
+
+if (DEFINED MYCLASSES_MODELICA_INCLUDE)
+  if (EXISTS "${MYCLASSES_MODELICA_INCLUDE}/omc/c/ModelicaUtilities.h")
+    set(MYCLASSES_MODELICA_C_INCLUDE "${MYCLASSES_MODELICA_INCLUDE}/omc/c")
+  else()
+    message(FATAL_ERROR "\"${MYCLASSES_MODELICA_INCLUDE}/omc/c/ModelicaUtilities.h\" is not found.")
+  endif()
+else()
+  message(FATAL_ERROR "\"MYCLASSES_MODELICA_INCLUDE\" must be set.")
+endif()
+
+target_include_directories(${CEA_MODELICA_LIBRARY}
+  PRIVATE
+  $<TARGET_PROPERTY:${CEA_STATIC_LIBRARY},SOURCE_DIR>
+  ${MYCLASSES_MODELICA_C_INCLUDE}
+)
+
 
 install(TARGETS   ${CEA_MODELICA_LIBRARY}                ARCHIVE DESTINATION lib/omlibrary/CEA/Resources/Library)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/CEA                DESTINATION lib/omlibrary)
