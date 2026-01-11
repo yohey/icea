@@ -8,7 +8,7 @@ package Interfaces
 
     function constructor
       output CEA_Problem prob;
-    external "C" prob = _ffi_cea_new_problem()
+    external "C" prob = _ffi_cea_new_problem_C_impl()
         annotation(Include = "#include \"ffi_cea_modelica.h\"",
                    Library = {"cea_modelica", "-lc++", "-lc++abi", "-lgfortran"},
                    IncludeDirectory = "modelica://CEA/Resources/Include",
@@ -17,7 +17,7 @@ package Interfaces
 
     function destructor
       input CEA_Problem prob;
-    external "C" _ffi_cea_del_problem(prob);
+    external "C" _ffi_cea_del_problem_C_impl(prob);
     end destructor;
 
   end CEA_Problem;
@@ -96,6 +96,21 @@ package Interfaces
   external "C" _ffi_cea_add_reactant_C_impl(prob, _type, name, formula, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit);
   end ffi_cea_add_reactant;
 
+  function ffi_cea_set_reactant
+    input CEA_Problem prob;
+    input Integer index;
+    input Real ratio = ffi_cea_quiet_NaN();
+    input SI.Temperature T = ffi_cea_quiet_NaN();
+    input SI.Density rho = ffi_cea_quiet_NaN();
+    input SI.SpecificEnthalpy h = ffi_cea_quiet_NaN();
+    input SI.SpecificInternalEnergy u = ffi_cea_quiet_NaN();
+    input String T_unit = "";
+    input String rho_unit = "";
+    input String h_unit = "";
+    input String u_unit = "";
+  external "C" _ffi_cea_set_reactant_C_impl(prob, index, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit);
+  end ffi_cea_set_reactant;
+
   function ffi_cea_set_legacy_mode
     input CEA_Problem prob;
     input Boolean legacy_mode = true;
@@ -109,11 +124,26 @@ package Interfaces
   external "C" _ffi_cea_run_C_impl(prob, out_filename, plt_filename);
   end ffi_cea_run;
 
+  function ffi_cea_get_chamber_temperature
+    input CEA_Problem prob;
+    output SI.Temperature T;
+  external "C" T = _ffi_cea_get_chamber_temperature_C_impl(prob);
+  end ffi_cea_get_chamber_temperature;
+
   function ffi_cea_write_debug_output
     input CEA_Problem prob;
     input String filename;
   external "C" _ffi_cea_write_debug_output_C_impl(prob, filename);
   end ffi_cea_write_debug_output;
+
+  function ffi_cea_get_thermo_reference_properties
+    input CEA_Problem prob;
+    input String name;
+    output SI.MolarMass M;
+    output SI.Temperature T_ref;
+    output SI.SpecificEnthalpy h0_ref;
+  external "C" _ffi_cea_get_thermo_reference_properties_C_impl(prob, name, M, T_ref, h0_ref);
+  end ffi_cea_get_thermo_reference_properties;
 
   function ffi_cea_sizeof
     input CEA_Problem prob;

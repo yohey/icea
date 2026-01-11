@@ -66,6 +66,14 @@ contains
     T_ref = 0
     h0_ref = 0
 
+    if (.not. associated(cea%thermo_properties)) then
+#ifndef NDEBUG
+       write(stderr, *) '[WARNING] subroutine get_thermo_reference_properties: ' &
+            // 'cea%thermo_properties is not associated (Case = ).', cea%Case
+#endif
+       return
+    end if
+
     do i = 1, size(cea%thermo_properties)
        th => cea%thermo_properties(i)
 

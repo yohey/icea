@@ -8,6 +8,16 @@
 
 extern "C" {
 
+  _FFI_CEA_Problem_Ptr _ffi_cea_new_problem_C_impl()
+  {
+    return _ffi_cea_new_problem();
+  }
+
+  void _ffi_cea_del_problem_C_impl(const _FFI_CEA_Problem_Ptr p)
+  {
+    _ffi_cea_del_problem(p);
+  }
+
   void _ffi_cea_set_problem_C_impl(const _FFI_CEA_Problem_Ptr p, const char* mode, const char* name, int mole_ratios, int equilibrium, int ions,
                                    int frozen, int frozen_at_throat, int incident, int reflected)
   {
@@ -96,6 +106,22 @@ extern "C" {
     _ffi_cea_add_reactant(p, type, name, formula, _ratio, _T, _rho, _h, _u, _T_unit, _rho_unit, _h_unit, _u_unit);
   }
 
+  void _ffi_cea_set_reactant_C_impl(const _FFI_CEA_Problem_Ptr p, int index, double ratio,
+                                    double T, double rho, double h, double u, const char* T_unit, const char* rho_unit, const char* h_unit, const char* u_unit)
+  {
+    size_t _index = static_cast<size_t>(index);
+    double* _ratio = std::isnan(ratio) ? nullptr : &ratio;
+    double* _T = std::isnan(T) ? nullptr : &T;
+    double* _rho = std::isnan(rho) ? nullptr : &rho;
+    double* _h = std::isnan(h) ? nullptr : &h;
+    double* _u = std::isnan(u) ? nullptr : &u;
+    const char* _T_unit = strlen(T_unit) > 0 ? T_unit : nullptr;
+    const char* _rho_unit = strlen(rho_unit) > 0 ? rho_unit : nullptr;
+    const char* _h_unit = strlen(h_unit) > 0 ? h_unit : nullptr;
+    const char* _u_unit = strlen(u_unit) > 0 ? u_unit : nullptr;
+    _ffi_cea_set_reactant(p, _index, _ratio, _T, _rho, _h, _u, _T_unit, _rho_unit, _h_unit, _u_unit);
+  }
+
   void _ffi_cea_set_legacy_mode_C_impl(const _FFI_CEA_Problem_Ptr p, int legacy_mode)
   {
     const bool _legacy_mode = (legacy_mode != 0);
@@ -109,9 +135,20 @@ extern "C" {
     _ffi_cea_run(p, _out_filename, _plt_filename);
   }
 
+  double _ffi_cea_get_chamber_temperature_C_impl(const _FFI_CEA_Problem_Ptr p)
+  {
+    return _ffi_cea_get_chamber_temperature(p);
+  }
+
   void _ffi_cea_write_debug_output_C_impl(const _FFI_CEA_Problem_Ptr p, const char* filename)
   {
     _ffi_cea_write_debug_output(p, filename);
+  }
+
+  void _ffi_cea_get_thermo_reference_properties_C_impl(const _FFI_CEA_Problem_Ptr p, const char* name, double* M, double* T_ref, double* h0_ref)
+  {
+    _ffi_cea_get_thermo_reference_properties(p, name, M, T_ref, h0_ref);
+    *M *= 1e-3;
   }
 
   int _ffi_cea_sizeof_C_impl(const _FFI_CEA_Problem_Ptr p)

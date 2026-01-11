@@ -68,7 +68,7 @@ namespace CEA {
 
     void calc_frozen_exhaust(const double& T, const std::optional<const double*>& cp_ptr = std::nullopt, const std::optional<const double*>& gamma_ptr = std::nullopt,
                              const std::optional<const double*>& mu_ptr = std::nullopt, const std::optional<const double*>& k_ptr = std::nullopt, const std::optional<const double*>& Pr_ptr = std::nullopt);
-    void get_thermo_reference_properties(const char* name, const double* M_ptr, const double* T_ref_ptr, const double* h0_ref_ptr);
+    void get_thermo_reference_properties(const char* name, double* const M_ptr, double* const T_ref_ptr, double* const h0_ref_ptr);
 
     void write_debug_output(const char* out_filename);
   };

@@ -238,7 +238,7 @@ namespace CEA {
   }
 
 
-  void Problem::get_thermo_reference_properties(const char* name, const double* M_ptr, const double* T_ref_ptr, const double* h0_ref_ptr) {
+  void Problem::get_thermo_reference_properties(const char* name, double* const M_ptr, double* const T_ref_ptr, double* const h0_ref_ptr) {
     _ffi_cea_get_thermo_reference_properties(this->_ffi.get(), name, M_ptr, T_ref_ptr, h0_ref_ptr);
   }
 

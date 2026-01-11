@@ -530,7 +530,7 @@ class CEA_Problem:
             name (str): 物質名
 
         Returns:
-            tuple[float, float, float]: モル質量 [g/mol]，参照温度 [K]，参照エンタルピ [kJ/kg]
+            tuple[float, float, float]: モル質量 [g/mol]，参照温度 [K]，参照エンタルピ [J/mol]
 
         Example:
             >>> M, T_ref, h_ref = prob.get_thermo_reference_properties('O2(L)')

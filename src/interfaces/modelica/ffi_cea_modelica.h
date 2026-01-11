@@ -6,8 +6,8 @@ typedef void* _FFI_CEA_Problem_Ptr;
 extern "C" {
 #endif
 
-  _FFI_CEA_Problem_Ptr _ffi_cea_new_problem();
-  void _ffi_cea_del_problem(const _FFI_CEA_Problem_Ptr);
+  _FFI_CEA_Problem_Ptr _ffi_cea_new_problem_C_impl();
+  void _ffi_cea_del_problem_C_impl(const _FFI_CEA_Problem_Ptr);
 
   void _ffi_cea_set_problem_C_impl(const _FFI_CEA_Problem_Ptr, const char*, const char*, int, int, int, int, int, int, int);
 
@@ -23,8 +23,15 @@ extern "C" {
   void _ffi_cea_add_reactant_C_impl(const _FFI_CEA_Problem_Ptr, const char*, const char*, const char*, double,
                                     double, double, double, double, const char*, const char*, const char*, const char*);
 
+  void _ffi_cea_set_reactant_C_impl(const _FFI_CEA_Problem_Ptr, int, double, double, double, double, double,
+                                    const char*, const char*, const char*, const char*);
+
   void _ffi_cea_set_legacy_mode_C_impl(const _FFI_CEA_Problem_Ptr, int);
-  void _ffi_cea_run(const _FFI_CEA_Problem_Ptr, const char*, const char*);
+  void _ffi_cea_run_C_impl(const _FFI_CEA_Problem_Ptr, const char*, const char*);
+
+  double _ffi_cea_get_chamber_temperature_C_impl(const _FFI_CEA_Problem_Ptr);
+
+  void _ffi_cea_get_thermo_reference_properties_C_impl(const _FFI_CEA_Problem_Ptr, const char*, double*, double*, double*);
 
   void _ffi_cea_write_debug_output_C_impl(const _FFI_CEA_Problem_Ptr, const char*);
 

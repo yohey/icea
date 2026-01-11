@@ -74,7 +74,7 @@ extern "C" {
   double _ffi_cea_get_specific_impulse(const _FFI_CEA_Problem_Ptr, const size_t&, const size_t&, const bool& = false);
 
   void _ffi_cea_calc_frozen_exhaust(const _FFI_CEA_Problem_Ptr, const double&, const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr, const double* = nullptr);
-  void _ffi_cea_get_thermo_reference_properties(const _FFI_CEA_Problem_Ptr, const char*, const double*, const double*, const double*);
+  void _ffi_cea_get_thermo_reference_properties(const _FFI_CEA_Problem_Ptr, const char*, double* const, double* const, double* const);
 
   void _ffi_cea_write_debug_output(const _FFI_CEA_Problem_Ptr, const char*);
 
