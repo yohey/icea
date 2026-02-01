@@ -26,6 +26,8 @@ extern "C" {
   void _ffi_cea_set_reactant_C_impl(const _FFI_CEA_Problem_Ptr, int, double, double, double, double, double,
                                     const char*, const char*, const char*, const char*);
 
+  void _ffi_cea_set_omit_species_C_impl(const _FFI_CEA_Problem_Ptr, const char**, size_t);
+
   void _ffi_cea_set_legacy_mode_C_impl(const _FFI_CEA_Problem_Ptr, int);
   void _ffi_cea_run_C_impl(const _FFI_CEA_Problem_Ptr, const char*, const char*);
 

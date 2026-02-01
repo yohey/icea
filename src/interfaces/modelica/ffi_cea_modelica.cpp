@@ -122,6 +122,19 @@ extern "C" {
     _ffi_cea_set_reactant(p, _index, _ratio, _T, _rho, _h, _u, _T_unit, _rho_unit, _h_unit, _u_unit);
   }
 
+  void _ffi_cea_set_omit_species_C_impl(const _FFI_CEA_Problem_Ptr p, const char** species, size_t num_species)
+  {
+    std::vector<size_t> _char_length_array(num_species);
+    std::vector<const char*> _char_ptr_array(num_species);
+    for (size_t i = 0; i < num_species; ++i) {
+      _char_length_array[i] = strlen(species[i]);
+      _char_ptr_array[i] = species[i];
+    }
+    _FFI_SizeT_Array _char_length_array_ptr{_char_length_array.data(), _char_length_array.size()};
+
+    _ffi_cea_set_omit_species(p, _char_ptr_array.data(), _char_length_array_ptr);
+  }
+
   void _ffi_cea_set_legacy_mode_C_impl(const _FFI_CEA_Problem_Ptr p, int legacy_mode)
   {
     const bool _legacy_mode = (legacy_mode != 0);

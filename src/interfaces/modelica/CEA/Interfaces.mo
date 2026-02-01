@@ -111,6 +111,12 @@ package Interfaces
   external "C" _ffi_cea_set_reactant_C_impl(prob, index, ratio, T, rho, h, u, T_unit, rho_unit, h_unit, u_unit);
   end ffi_cea_set_reactant;
 
+  function ffi_cea_set_omit_species
+    input CEA_Problem prob;
+    input String species[:] = fill("", 0);
+  external "C" _ffi_cea_set_omit_species_C_impl(prob, species, size(species, 1));
+  end ffi_cea_set_omit_species;
+
   function ffi_cea_set_legacy_mode
     input CEA_Problem prob;
     input Boolean legacy_mode = true;
